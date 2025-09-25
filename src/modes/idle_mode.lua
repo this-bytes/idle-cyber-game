@@ -120,8 +120,45 @@ function IdleMode:keypressed(key)
             print("   " .. zone.name .. current .. " - " .. zone.description)
         end
     elseif key == "h" then
-        print("🏆 Achievement system not fully implemented yet")
-        print("   Progress tracking and rewards coming soon!")
+        print("🏆 Achievements:")
+        local achievements = self.systems.achievements:getAllAchievements()
+        local progress = self.systems.achievements:getProgress()
+        
+        print("   📊 Progress:")
+        print("      Total Clicks: " .. progress.totalClicks)
+        print("      Data Bits Earned: " .. format.number(progress.totalDataBitsEarned, 0))
+        print("      Upgrades Purchased: " .. progress.totalUpgradesPurchased)
+        print("      Max Combo: " .. format.number(progress.maxClickCombo, 1) .. "x")
+        print("      Critical Hits: " .. progress.criticalHits)
+        print("")
+        
+        local unlockedCount = 0
+        local totalCount = 0
+        for achievementId, achievement in pairs(achievements) do
+            totalCount = totalCount + 1
+            local status = achievement.unlocked and "✅" or "❌"
+            local reqText = ""
+            
+            if achievement.requirement.type == "clicks" then
+                reqText = " (" .. progress.totalClicks .. "/" .. achievement.requirement.value .. " clicks)"
+            elseif achievement.requirement.type == "maxCombo" then
+                reqText = " (" .. format.number(progress.maxClickCombo, 1) .. "/" .. achievement.requirement.value .. "x combo)"
+            elseif achievement.requirement.type == "upgrades" then
+                reqText = " (" .. progress.totalUpgradesPurchased .. "/" .. achievement.requirement.value .. " upgrades)"
+            elseif achievement.requirement.type == "totalEarned" then
+                reqText = " (" .. format.number(progress.totalDataBitsEarned, 0) .. "/" .. format.number(achievement.requirement.value, 0) .. " DB)"
+            end
+            
+            print("   " .. status .. " " .. achievement.name .. reqText)
+            print("      " .. achievement.description)
+            
+            if achievement.unlocked then
+                unlockedCount = unlockedCount + 1
+            end
+        end
+        
+        print("")
+        print("   🎯 Progress: " .. unlockedCount .. "/" .. totalCount .. " achievements unlocked")
     elseif key >= "1" and key <= "9" then
         -- Purchase upgrade by number
         local upgradeIndex = tonumber(key)

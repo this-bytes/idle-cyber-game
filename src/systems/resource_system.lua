@@ -95,6 +95,11 @@ function ResourceSystem:subscribeToEvents()
     self.eventBus:subscribe("zone_changed", function(data)
         self:applyZoneBonuses(data.bonuses)
     end)
+    
+    -- Handle achievement rewards
+    self.eventBus:subscribe("add_resource", function(data)
+        self:addResource(data.resource, data.amount)
+    end)
 end
 
 -- Apply upgrade effect
