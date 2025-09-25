@@ -99,6 +99,18 @@ local upgradeDefinitions = {
         },
     },
     
+    security = {
+        {
+            id = "basicPacketFilter",
+            name = "Basic Packet Filter",
+            description = "Elementary network security\n15% threat reduction",
+            baseCost = 500,
+            costMultiplier = 1.25,
+            effect = "security",
+            value = 0.15,
+        },
+    },
+    
     clicking = {
         {
             id = "ergonomicMouse",
@@ -183,7 +195,7 @@ end
 
 -- Draw category tabs
 function shop.drawCategoryTabs(x, y)
-    local categories = {"infrastructure", "processing", "clicking"}
+    local categories = {"infrastructure", "processing", "security", "clicking"}
     local tabWidth = 120
     local tabHeight = 30
     
@@ -226,6 +238,10 @@ function shop.drawUpgrades(x, y)
         
         -- Calculate current cost
         local owned = currentUpgrades[upgrade.id] or 0
+        -- Convert boolean ownership to numeric for one-time upgrades
+        if type(owned) == "boolean" then
+            owned = owned and 1 or 0
+        end
         local cost = shop.calculateCost(upgrade, owned)
         local canAfford = currentResources.dataBits >= cost
         local isMaxed = upgrade.oneTime and owned > 0
@@ -346,6 +362,10 @@ end
 function shop.purchaseUpgrade(upgrade)
     local currentUpgrades = resources.getUpgrades()
     local owned = currentUpgrades[upgrade.id] or 0
+    -- Convert boolean ownership to numeric for one-time upgrades
+    if type(owned) == "boolean" then
+        owned = owned and 1 or 0
+    end
     local cost = shop.calculateCost(upgrade, owned)
     
     if resources.purchaseUpgrade(upgrade.id, cost) then

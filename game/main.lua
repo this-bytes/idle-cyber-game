@@ -5,6 +5,7 @@
 local resources = require("resources")
 local resourceDisplay = require("display")
 local shop = require("shop")
+local threats = require("threats")
 local format = require("format")
 
 -- Game state
@@ -34,6 +35,7 @@ function love.load()
     resources.init()
     resourceDisplay.init()
     shop.init()
+    threats.init()
     
     gameState.initialized = true
     
@@ -54,6 +56,7 @@ function love.update(dt)
     resources.update(dt)
     resourceDisplay.update(dt)
     shop.update(dt)
+    threats.update(dt)
     
     -- Update performance tracking
     performance.updateTime = love.timer.getTime() - updateStart

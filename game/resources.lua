@@ -45,6 +45,9 @@ local gameState = {
         singleCoreProcessor = 0,    -- 0.1 PP/sec, 1.1x DB multiplier
         multiCoreArray = 0,         -- 1 PP/sec, 1.2x DB multiplier
         parallelProcessingGrid = 0, -- 10 PP/sec, 1.5x DB multiplier
+        
+        -- Security infrastructure
+        basicPacketFilter = 0,      -- 15% threat reduction per unit
     }
 }
 
@@ -104,14 +107,20 @@ function resources.update(dt)
     end
     
     -- Generate resources based on per-second rates
+    -- Apply threat-based generation reduction if threats module is available
+    local threatMultiplier = 1.0
+    if package.loaded.threats then
+        threatMultiplier = require("threats").getGenerationMultiplier()
+    end
+    
     gameState.resources.dataBits = gameState.resources.dataBits + 
-        (gameState.generation.dataBits * gameState.multipliers.dataBits * dt)
+        (gameState.generation.dataBits * gameState.multipliers.dataBits * threatMultiplier * dt)
     
     gameState.resources.processingPower = gameState.resources.processingPower + 
-        (gameState.generation.processingPower * gameState.multipliers.processingPower * dt)
+        (gameState.generation.processingPower * gameState.multipliers.processingPower * threatMultiplier * dt)
     
     gameState.resources.securityRating = gameState.resources.securityRating + 
-        (gameState.generation.securityRating * gameState.multipliers.securityRating * dt)
+        (gameState.generation.securityRating * gameState.multipliers.securityRating * threatMultiplier * dt)
 end
 
 -- Recalculate generation rates based on current upgrades
