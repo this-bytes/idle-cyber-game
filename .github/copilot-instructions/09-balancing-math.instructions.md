@@ -1,5 +1,188 @@
 # Balancing & Mathematical Framework
 
+## Dual-Mode Mathematical Systems
+
+### Idle Mode Mathematics
+*[Previous idle mode calculations remain as documented above]*
+
+### "The Admin's Watch" Mathematical Framework
+
+#### Budget & Resource Management
+
+**Daily Budget Allocation:**
+```
+Budget_allocation = Base_corporate_budget × Company_performance × Reputation_multiplier × Market_conditions
+
+Company_performance = (Uptime_percentage * 0.4) + (Incident_response_score * 0.3) + (Cost_efficiency * 0.3)
+Reputation_multiplier = 0.5 + (Professional_reputation / Max_reputation)
+Market_conditions = 0.8 to 1.2 (external economic factors)
+```
+
+**Resource Consumption Models:**
+```
+CPU_usage_per_operation = Base_cpu_cost × Complexity_multiplier × Efficiency_modifier
+Bandwidth_consumption = Data_volume × Encryption_overhead × Network_conditions
+Personnel_hours = Task_complexity × (1 - Automation_level) × Skill_efficiency
+
+Where:
+- Complexity_multiplier ranges from 0.5 (routine) to 5.0 (crisis response)
+- Efficiency_modifier improves with technology upgrades (0.5x to 2.0x)
+- Automation_level ranges from 0% (manual) to 95% (fully automated)
+```
+
+**Budget Constraint Optimization:**
+```
+Optimization_score = Threat_mitigation_effectiveness / Total_resource_cost
+
+Subject to constraints:
+- CPU_usage ≤ Available_CPU_cycles
+- Bandwidth_usage ≤ Available_bandwidth
+- Personnel_allocation ≤ Available_staff_hours
+- Total_spending ≤ Allocated_budget
+```
+
+#### Threat Response Mathematics
+
+**Persistent Threat Intensity:**
+```
+Threat_intensity(t) = Base_intensity × (1 + sin(t/Period) * Volatility) × Adaptation_factor
+
+Adaptation_factor = 1 + (Player_defense_success_rate - 0.5) × Learning_rate
+Learning_rate = 0.1 to 0.5 (how quickly attackers adapt)
+Period = 300 to 1800 seconds (attack pattern cycles)
+```
+
+**Multi-Vector Attack Calculations:**
+```
+Combined_attack_success = 1 - ∏(1 - Individual_attack_success_i)
+
+Where each attack vector has:
+Attack_success_i = max(0.01, min(0.99, 
+  (Threat_sophistication_i × Resource_allocation_i) / 
+  (Defense_effectiveness_i × Counter_measure_bonus_i)
+))
+```
+
+**Resource Allocation Efficiency:**
+```
+Defense_effectiveness = Σ(Resource_allocation_i × Synergy_multiplier_i × Diminishing_returns_i)
+
+Synergy_multiplier = 1 + (0.1 × Number_of_complementary_defenses)
+Diminishing_returns = 1 / (1 + 0.1 × Excessive_resource_allocation)
+```
+
+**Emergency Response Scaling:**
+```
+Crisis_response_multiplier = Base_multiplier × Urgency_factor × Coordination_bonus
+
+Urgency_factor = 1 + (Time_pressure / Max_time_pressure) × 2
+Coordination_bonus = 1 + (Team_size × Communication_efficiency - Coordination_overhead)
+Max effectiveness cap = 5.0x normal operations
+```
+
+#### Performance & Reputation Systems
+
+**Company Stock Price Model:**
+```
+Stock_price_change = Base_volatility × Performance_impact × Market_reaction × Time_decay
+
+Performance_impact = (Security_events × Event_severity × Media_attention) / Company_size
+Market_reaction = Investor_confidence × Industry_trends × Economic_conditions
+Time_decay = exp(-Time_since_event / Recovery_period)
+```
+
+**Professional Reputation Growth:**
+```
+Reputation_change = Success_bonus - Failure_penalty + Innovation_bonus + Client_satisfaction
+
+Success_bonus = Achievement_value × Difficulty_multiplier × Visibility_factor
+Failure_penalty = Failure_severity × Client_importance × Public_visibility
+Innovation_bonus = Novel_solution_value × Industry_adoption_rate
+```
+
+**Contract Performance Scoring:**
+```
+Contract_score = (Uptime_weight × Uptime_percentage +
+                 Response_weight × Response_time_score +
+                 Budget_weight × Budget_efficiency +
+                 Innovation_weight × Innovation_score) / Total_weights
+
+Uptime_percentage = Successful_operational_hours / Total_contract_hours
+Response_time_score = 1 - (Average_response_time / SLA_response_time)
+Budget_efficiency = 1 - (Actual_spending / Allocated_budget)
+Innovation_score = Novel_solutions_implemented / Total_incidents_handled
+```
+
+#### Cross-Mode Integration Mathematics
+
+**Technology Transfer Efficiency:**
+```
+Transfer_efficiency = Base_efficiency × Technology_compatibility × Integration_investment
+
+Idle_to_AdminWatch = min(0.75, Idle_tech_level / Required_corporate_standards)
+AdminWatch_to_Idle = min(0.90, Corporate_experience / Personal_infrastructure_complexity)
+```
+
+**Experience Cross-Pollination:**
+```
+Cross_mode_bonus = Experience_differential × Transfer_rate × Skill_overlap
+
+Experience_differential = |Mode_A_experience - Mode_B_experience| / Max_experience
+Transfer_rate = 0.1 to 0.3 (based on player activity in both modes)
+Skill_overlap = Shared_technologies / Total_technologies
+```
+
+#### Advanced Admin's Watch Formulas
+
+**Multi-Client Management:**
+```
+Portfolio_efficiency = Σ(Client_performance_i × Client_weight_i × Synergy_bonus_i) / Total_management_overhead
+
+Management_overhead = Base_overhead × Number_of_clients^1.2 × Complexity_factor
+Synergy_bonus = 1 + (Shared_infrastructure_savings + Cross_client_learning) × 0.1
+```
+
+**Predictive Threat Modeling:**
+```
+Threat_prediction_accuracy = Base_accuracy × Data_quality × Model_sophistication × Feedback_integration
+
+Data_quality = Historical_data_completeness × Real_time_data_freshness × Source_reliability
+Model_sophistication = AI_investment × Processing_power_allocation × Algorithm_advancement
+Feedback_integration = (Correct_predictions - Incorrect_predictions) / Total_predictions
+```
+
+### Balancing Constants for Admin's Watch
+
+```
+const ADMIN_WATCH_CONSTANTS = {
+  // Budget management
+  BASE_DAILY_BUDGET: 50000,
+  BUDGET_GROWTH_RATE: 1.1,
+  MAX_BUDGET_MULTIPLIER: 10.0,
+  
+  // Resource consumption
+  CPU_CYCLE_BASE_COST: 100,
+  BANDWIDTH_BASE_COST: 50,
+  PERSONNEL_HOUR_BASE_COST: 500,
+  
+  // Threat response
+  BASE_THREAT_INTENSITY: 1.0,
+  THREAT_ADAPTATION_RATE: 0.2,
+  MAX_THREAT_LEARNING: 3.0,
+  
+  // Performance scoring
+  UPTIME_WEIGHT: 0.4,
+  RESPONSE_WEIGHT: 0.3,
+  BUDGET_WEIGHT: 0.2,
+  INNOVATION_WEIGHT: 0.1,
+  
+  // Cross-mode integration
+  MAX_TECH_TRANSFER: 0.75,
+  EXPERIENCE_TRANSFER_RATE: 0.15,
+  SYNERGY_BONUS_CAP: 2.0
+}
+```
+
 ## Resource Generation Formulas
 
 ### Base Generation Calculations

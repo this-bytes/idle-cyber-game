@@ -42,6 +42,7 @@ This project uses a comprehensive modular approach to copilot instructions. Each
 - **Adding story content?** → `02-game-story-narrative.instructions.md` + `06-events-encounters.instructions.md`
 - **Working on progression?** → `05-progression-prestige.instructions.md` + `07-endgame-meta.instructions.md`
 - **Technical implementation?** → `11-technical-architecture.instructions.md`
+- **Developing "The Admin's Watch" mode?** → `02-game-story-narrative.instructions.md` + `03-core-mechanics.instructions.md` + `04-defense-threat-systems.instructions.md` + `10-ui-design.instructions.md`
 
 ---
 

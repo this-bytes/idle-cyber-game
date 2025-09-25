@@ -1,5 +1,96 @@
 # Visual Design & User Interface Goals
 
+## Dual-Mode Interface Framework
+
+### Mode Selection & Transition
+- **Mode Toggle:** Prominent button to switch between "Idle Empire" and "Admin's Watch"
+- **Transition Effects:** Smooth animated transformation between interfaces
+- **Context Preservation:** Seamless return to previous state when switching modes
+- **Visual Distinction:** Clear interface indicators showing current mode
+
+### "The Admin's Watch" Interface Design
+
+**Network Operations Center (NOC) Layout:**
+
+*Central Network Map:*
+- **Real-time topology visualization** with server nodes, network connections, and data flows
+- **Dynamic threat indicators:** Glowing red paths showing malicious traffic
+- **Interactive elements:** Click servers to examine status, drag-deploy defenses
+- **Zoom and pan capabilities** for large network exploration
+- **Minimap overview** for quick navigation of complex infrastructures
+
+*Resource Management Dashboard:*
+- **Budget allocation panel** with drag-and-drop spending categories
+- **CPU/Bandwidth gauges** with real-time utilization meters
+- **Personnel assignment board** showing specialist allocations and availability
+- **Emergency reserves indicator** with quick-access controls
+
+*Crisis Response Interface:*
+- **Priority incident queue** with severity color coding and countdown timers
+- **Quick response buttons** for common actions (quarantine, deep scan, emergency patch)
+- **Multi-incident management** with tabbed or split-screen incident handling
+- **Escalation protocols** with clear visual hierarchies and approval workflows
+
+*Company Performance Monitor:*
+- **Real-time stock price ticker** with trend indicators and alerts
+- **Uptime percentage** with historical performance graphs
+- **SLA compliance dashboard** showing current status vs. contractual obligations
+- **Client satisfaction metrics** with feedback alerts and reputation tracking
+
+**Admin's Watch Visual Themes:**
+
+*Corporate Command Center:*
+- **Clean, professional appearance** with corporate blues and whites
+- **Business-focused layouts** emphasizing metrics and performance indicators
+- **Formal typography and standardized iconography**
+- **Integration with business intelligence dashboards**
+
+*High-Tech Security Operations:*
+- **Dark theme with bright accent colors** for monitoring in low-light environments
+- **Military-inspired tactical displays** with threat assessment overlays
+- **Monospace fonts for technical data** and terminal-style interfaces
+- **LED-style indicators and warning lights**
+
+*Cyber Warfare Command:*
+- **Red alert themes** for high-stress crisis management
+- **Heads-up display (HUD) elements** for critical information overlay
+- **Emergency response color schemes** with high contrast for quick decision-making
+- **Threat level visualization** with escalating visual intensity
+
+### Cross-Mode Integration Elements
+
+**Shared Progress Indicators:**
+- **Technology transfer status** showing how idle research affects Admin's Watch capabilities
+- **Cross-mode experience bars** indicating skill development benefiting both modes
+- **Resource conversion interfaces** for moving assets between operational contexts
+- **Achievement progress** that spans both game modes
+
+**Unified Settings Panel:**
+- **Universal accessibility options** applying to both interfaces
+- **Audio preferences** with mode-specific customization
+- **Visual theme selection** with consistent design language
+- **Performance optimization** settings for both operational contexts
+
+### Advanced Admin's Watch Features
+
+**Multi-Client Management:**
+- **Contract portfolio dashboard** showing all active client accounts
+- **Client switching interface** with quick transition between company networks
+- **Comparative performance metrics** across different client engagements
+- **Portfolio optimization recommendations** based on success patterns
+
+**Predictive Analytics Display:**
+- **Threat prediction timelines** with probability assessments and confidence intervals
+- **Resource optimization suggestions** based on historical performance data
+- **Market trend integration** showing how external factors affect security posture
+- **AI recommendation engine** with explainable decision-making processes
+
+**Collaborative Operations Interface:**
+- **Team coordination tools** for managing security personnel across time zones
+- **Communication integration** with chat, video, and documentation systems
+- **Shared situation awareness** with real-time collaborative editing of response plans
+- **Knowledge management** with searchable incident database and response playbooks
+
 ## Core Interface Principles
 
 ### Design Philosophy

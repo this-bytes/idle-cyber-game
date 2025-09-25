@@ -49,9 +49,40 @@ Former executive who lost a power struggle within CyberCorp Collective. Has deep
 **Your Role in the Conflict:**
 As your digital empire grows, you become a player in these larger conflicts. Your choices determine alliances, enemies, and the ultimate fate of digital freedom. Will you join a faction, remain independent, or forge your own path to dominance?
 
+## Advanced Game Modes
+
+### "The Admin's Watch" - Real-Time Operations Mode
+
+**Unlocked at:** Security Rating 1,000+ and completion of "First Major Threat" milestone
+
+**Core Concept:** Transition from passive idle management to active real-time system administration. Players take direct control of a company's server farm, managing limited budgets and resources to defend against persistent, adaptive threats.
+
+**The Setting:** You've been hired as Chief Security Officer for TechFlow Industries, a mid-tier tech company whose digital infrastructure is under constant siege. Unlike your personal digital empire (idle mode), here you must work within corporate constraints—limited budgets, compliance requirements, and demanding stakeholders.
+
+**Key Differences from Idle Mode:**
+- **Real-Time Resource Management:** No passive generation; you get a daily/hourly budget allocation
+- **Persistent Threats:** Attacks are constant and adaptive, not wave-based
+- **Network Visualization:** Main interface shows live network topology with threat indicators
+- **Performance Metrics:** Success measured by uptime, security incidents, and company stock price
+- **Corporate Politics:** Must balance security needs with business demands
+
+**Gameplay Mechanics:**
+- **Budget Allocation:** Start each period with limited CPU cycles, bandwidth, and hardware budget
+- **Network Monitoring:** Real-time network map showing servers, traffic flows, and threat indicators
+- **Dynamic Threat Response:** Choose between quarantine (stops function but prevents spread) vs. deep scan (expensive but thorough)
+- **Strategic Deployment:** Place firewalls, IDS systems, and honeypots based on emerging threat patterns
+- **Stock Price Progression:** Successful defense increases company valuation and your budget; failures reduce both
+
+**Integration with Main Game:**
+- Experience gained in Admin's Watch mode provides bonuses to idle mode defense systems
+- Advanced technologies researched in idle mode become available as "experimental" options in Admin's Watch
+- Faction relationships from idle mode affect the types and intensity of corporate attacks
+
 ## The Ultimate Vision
 
 **The Digital Singularity:** Legend speaks of a theoretical state where a single entity controls enough of the global network to achieve "Digital Singularity" – complete mastery over all digital information and infrastructure. This becomes the ultimate endgame goal, requiring not just resources but political maneuvering, technological breakthroughs, and strategic alliances.
+
+**The Admin's Legacy:** Masters of both idle empire-building and real-time crisis management unlock the path to becoming legendary "Digital Architects" – individuals capable of designing and defending the most complex digital infrastructures in cyberspace.
 
 ## Faction Relations & Diplomacy
 
