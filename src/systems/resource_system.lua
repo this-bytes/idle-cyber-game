@@ -66,7 +66,65 @@ function ResourceSystem.new(eventBus)
     
     self.lastUpdateTime = love.timer.getTime()
     
+    -- Subscribe to events
+    self:subscribeToEvents()
+    
     return self
+end
+
+-- Subscribe to relevant events
+function ResourceSystem:subscribeToEvents()
+    -- Handle upgrade effects
+    self.eventBus:subscribe("apply_upgrade_effect", function(data)
+        self:applyUpgradeEffect(data.upgradeId, data.effectType, data.value)
+    end)
+    
+    -- Handle resource spend requests
+    self.eventBus:subscribe("check_can_afford", function(data)
+        local canAfford = self:canAfford(data.cost)
+        if data.callback then
+            data.callback(canAfford)
+        end
+    end)
+    
+    self.eventBus:subscribe("spend_resources", function(data)
+        self:spendResources(data.cost)
+    end)
+    
+    -- Handle zone bonuses
+    self.eventBus:subscribe("zone_changed", function(data)
+        self:applyZoneBonuses(data.bonuses)
+    end)
+end
+
+-- Apply upgrade effect
+function ResourceSystem:applyUpgradeEffect(upgradeId, effectType, value)
+    if effectType == "clickPower" then
+        self.clickPower = self.clickPower + value
+    elseif effectType == "dataBitsGeneration" then
+        self:addGeneration("dataBits", value)
+    elseif effectType == "processingPowerGeneration" then
+        self:addGeneration("processingPower", value)
+    elseif effectType == "dataBitsMultiplier" then
+        local currentMultiplier = self:getMultiplier("dataBits")
+        self:setMultiplier("dataBits", currentMultiplier + value)
+    elseif effectType == "securityRating" then
+        self:addResource("securityRating", value)
+    end
+end
+
+-- Apply zone bonuses to multipliers
+function ResourceSystem:applyZoneBonuses(bonuses)
+    for resource, multiplier in pairs(bonuses) do
+        if resource:find("Multiplier") then
+            local resourceName = resource:gsub("Multiplier", "")
+            if self.multipliers[resourceName] then
+                -- Zone bonuses are multiplicative with base multiplier
+                local baseMultiplier = self.multipliers[resourceName]
+                self.multipliers[resourceName] = baseMultiplier * multiplier
+            end
+        end
+    end
 end
 
 -- Update resource generation

@@ -12,6 +12,9 @@ function UpgradeSystem.new(eventBus)
     -- Player's owned upgrades
     self.owned = {}
     
+    -- Subscribe to events
+    self:subscribeToEvents()
+    
     -- Upgrade definitions from instruction files
     self.upgrades = {
         -- Manual Clicking Upgrades (Phase 1)
@@ -197,7 +200,22 @@ function UpgradeSystem.new(eventBus)
         -- More upgrades would be added for later phases...
     }
     
+    -- Initialize some basic upgrades as unlocked
+    self:initializeUnlockedUpgrades()
+    
     return self
+end
+
+-- Initialize basic upgrades as unlocked
+function UpgradeSystem:initializeUnlockedUpgrades()
+    -- Unlock basic starting upgrades
+    self.upgrades.ergonomicMouse.unlocked = true
+    self.upgrades.refurbishedDesktop.unlocked = true
+end
+
+-- Subscribe to relevant events
+function UpgradeSystem:subscribeToEvents()
+    -- Nothing specific for now, but ready for expansion
 end
 
 -- Update upgrade system
@@ -289,8 +307,8 @@ function UpgradeSystem:purchaseUpgrade(upgradeId)
     -- Calculate current cost
     local cost = self:getUpgradeCost(upgradeId)
     
-    -- Check if player can afford it (via event bus)
-    local canAfford = true
+    -- Check if player can afford it (synchronous for now)
+    local canAfford = false
     self.eventBus:publish("check_can_afford", {
         cost = cost,
         callback = function(result)
@@ -302,7 +320,7 @@ function UpgradeSystem:purchaseUpgrade(upgradeId)
         return false
     end
     
-    -- Spend resources (via event bus)
+    -- Spend resources
     self.eventBus:publish("spend_resources", {cost = cost})
     
     -- Add upgrade to owned
@@ -313,6 +331,9 @@ function UpgradeSystem:purchaseUpgrade(upgradeId)
     
     -- Apply upgrade effects
     self:applyUpgradeEffects(upgradeId, upgrade.effects)
+    
+    -- Check for newly unlocked upgrades
+    self:checkUpgradeUnlocks()
     
     -- Publish purchase event
     self.eventBus:publish("upgrade_purchased", {

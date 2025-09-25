@@ -219,7 +219,27 @@ function ZoneSystem.new(eventBus)
     self.currentZone = "garage"
     self.unlockedZones = {"garage"}
     
+    -- Subscribe to events
+    self:subscribeToEvents()
+    
     return self
+end
+
+-- Subscribe to relevant events
+function ZoneSystem:subscribeToEvents()
+    -- Handle zone unlock checks
+    self.eventBus:subscribe("check_zones_unlocked", function(data)
+        local allUnlocked = true
+        for _, zoneId in ipairs(data.zones) do
+            if not self:isZoneUnlocked(zoneId) then
+                allUnlocked = false
+                break
+            end
+        end
+        if data.callback then
+            data.callback(allUnlocked)
+        end
+    end)
 end
 
 -- Update zone system
