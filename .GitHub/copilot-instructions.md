@@ -1,76 +1,70 @@
-## Project: Idle Cybersecurity Game
+## Project: Cyberspace Tycoon - Idle Cybersecurity Game
 
-**Goal:** To develop an idle game using Lua and LÖVE 2D, focusing on learning software development principles, particularly Git version control, through a engaging cybersecurity theme.
-
----
-
-### Core Principles for Development
-
-1.  **Iterative Development:**
-    * Build features in small, manageable steps.
-    * Focus on getting basic functionality working before adding complexity.
-    * Each step should represent a logical, self-contained change.
-
-2.  **Git-First Workflow:**
-    * **Branches for Features:** Every new feature (e.g., adding a new resource, implementing an upgrade, fixing a bug) will be developed on its own dedicated branch.
-    * **Frequent, Atomic Commits:** Commits should be made regularly, after every small, functional change. Each commit message should clearly describe what was changed and why.
-        * *Good Example:* `git commit -m "Implement basic data generation per second"`
-        * *Bad Example:* `git commit -m "Lots of stuff"`
-    * **Clear Commit Messages:** Use imperative mood (e.g., "Add," "Fix," "Implement").
-    * **Regular Merging:** Once a feature branch is complete and tested, merge it back into the `main` branch.
-    * **No Direct Commits to `main` (unless hotfix):** All development should happen on feature branches. The `main` branch should always represent a stable, playable version of the game.
-
-3.  **Clean Code Practices:**
-    * **Readability:** Write code that is easy for others (and your future self) to understand.
-    * **Modularity:** Break down larger problems into smaller, testable functions or modules.
-    * **Comments:** Use comments to explain complex logic or design decisions, but avoid commenting on obvious code.
-
-4.  **Learning Focus:**
-    * Prioritize understanding *why* something works over simply copying code.
-    * Actively explore LÖVE 2D documentation and Lua language features.
-    * Don't be afraid to experiment and make mistakes – that's what Git branches are for!
+**Goal:** To develop an idle game using Lua and LÖVE 2D, focusing on learning software development principles, particularly Git version control, through an engaging cybersecurity theme.
 
 ---
 
-### Key Areas to Track for Git Practice
+## Modular Instruction System
 
-* **Initialization:** Setting up the initial Git repository.
-* **Basic Workflow:** `git add`, `git commit`.
-* **Branching:** `git branch`, `git checkout -b`.
-* **Merging:** `git merge`.
-* **Viewing History:** `git log`.
-* **Stashing (Optional but useful):** `git stash`.
+This project uses a comprehensive modular approach to copilot instructions. Each aspect of development has its own focused instruction file in the `.github/copilot-instructions/` directory:
+
+### Core Development Files
+- **[01-project-overview.md](./copilot-instructions/01-project-overview.md)** - Project goals, core principles, and development workflow
+- **[12-development-roadmap.md](./copilot-instructions/12-development-roadmap.md)** - Development phases, git workflow, and testing strategy
+
+### Game Design Files
+- **[02-game-story-narrative.md](./copilot-instructions/02-game-story-narrative.md)** - World setting, player origins, factions, and narrative context
+- **[03-core-mechanics.md](./copilot-instructions/03-core-mechanics.md)** - Resources, generation systems, and upgrade mechanics
+- **[04-defense-threat-systems.md](./copilot-instructions/04-defense-threat-systems.md)** - Comprehensive threat classification and defense infrastructure
+- **[05-progression-prestige.md](./copilot-instructions/05-progression-prestige.md)** - Character advancement, zones, achievements, and prestige systems
+- **[06-events-encounters.md](./copilot-instructions/06-events-encounters.md)** - Dynamic events, random encounters, and faction relations
+- **[07-endgame-meta.md](./copilot-instructions/07-endgame-meta.md)** - Singularity path, New Game Plus, and community features
+
+### Technical Implementation Files
+- **[08-quality-accessibility.md](./copilot-instructions/08-quality-accessibility.md)** - QoL features, automation, and accessibility options
+- **[09-balancing-math.md](./copilot-instructions/09-balancing-math.md)** - Mathematical frameworks and balancing formulas
+- **[10-ui-design.md](./copilot-instructions/10-ui-design.md)** - Visual design, audio concepts, and interface goals
+- **[11-technical-architecture.md](./copilot-instructions/11-technical-architecture.md)** - Platform considerations and performance optimization
 
 ---
 
-### Game Development Milestones (to be developed iteratively)
+## Quick Start Guide
 
-1.  **Core Resource Generation:** Implement a primary resource (e.g., "Data Bits," "Processing Power") that is generated over time or by clicks.
-2.  **Upgrades System:** Allow players to purchase upgrades that increase resource generation or unlock new features.
-3.  **Threat/Defense Mechanics:** Introduce a basic threat system (e.g., "Malware Attacks") and a defense system (e.g., "Firewall Upgrades," "Anti-Virus Scanners").
-4.  **UI/UX:** Basic visual display of resources, buttons, and progress.
+### For New Contributors
+1. Read `01-project-overview.md` for core principles and workflow
+2. Review `12-development-roadmap.md` for current development phase
+3. Consult the relevant specialized instruction file for your area of work
+
+### For Specific Development Tasks
+- **Working on gameplay mechanics?** → `03-core-mechanics.md` + `04-defense-threat-systems.md`
+- **Implementing UI/UX?** → `10-ui-design.md` + `08-quality-accessibility.md`
+- **Balancing game systems?** → `09-balancing-math.md`
+- **Adding story content?** → `02-game-story-narrative.md` + `06-events-encounters.md`
+- **Working on progression?** → `05-progression-prestige.md` + `07-endgame-meta.md`
+- **Technical implementation?** → `11-technical-architecture.md`
 
 ---
 
-## Story & Game Concept: "Cyberspace Tycoon" (or similar working title)
+## Current Development Phase
 
-**Setting:** The year is 2042. The world runs on data. You are a fledgling "Cyberspace Architect," starting your own digital fortress. Your goal is to expand your network, accumulate vast amounts of data, and defend against the constant barrage of digital threats from rival corporations, rogue hackers, and state-sponsored entities.
+**Phase 1 - Foundation (Weeks 1-2):**
+Currently building the basic game mechanics and core systems. Focus on:
+- Basic resource generation and clicking mechanics
+- Simple upgrade system
+- Basic threat system
+- Core UI framework
 
-**Player Role:** A "Cyberspace Architect" managing a growing digital infrastructure.
+See `12-development-roadmap.md` for detailed phase breakdown and feature branches.
 
-**Core Loop:**
-1.  **Generate Resources:** Accumulate "Data Bits" and "Processing Power."
-2.  **Upgrade Infrastructure:** Spend resources to buy new servers, better security software, and automated data miners to increase passive generation.
-3.  **Defend Against Threats:** Allocate resources (or automated defenses) to repel incoming cyberattacks that attempt to steal data or cripple your systems.
-4.  **Expand Network:** Unlock new zones or functionalities as you progress, requiring more complex defenses and offering higher rewards.
+---
 
-**Initial Resources:**
-* **Data Bits:** The primary currency. Used for upgrades and expansion.
-* **Processing Power:** Increases the rate at which Data Bits are generated.
+## Benefits of This Modular Approach
 
-**Initial Mechanics:**
-* **Manual Data Harvesting:** A button to click and generate a small amount of Data Bits.
-* **Basic Servers:** Purchase servers to automatically generate Data Bits per second (DP/s).
-* **Processing Cores:** Purchase cores to increase your overall Processing Power, which in turn boosts DP/s.
-* **Basic Firewall:** A simple defense that reduces the chance of an initial, minor threat getting through.
+- **Focused Instructions:** Each file targets specific development aspects
+- **Easier Maintenance:** Update individual sections without affecting others
+- **Better Collaboration:** Multiple developers can work on different aspects simultaneously
+- **Specialized AI Guidance:** AI agents can receive targeted instructions for their specific tasks
+- **Scalable Documentation:** Easy to add new instruction files as the project grows
+
+When working on any aspect of the game, consult the appropriate instruction file for detailed, actionable guidance specific to that area of development.
 
