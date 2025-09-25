@@ -1,4 +1,4 @@
--- Cyberspace Tycoon - Idle Cybersecurity Game
+-- Cyber Empire Command - Cybersecurity Consultancy Simulator
 -- Main entry point with proper modular architecture
 
 -- Import core game controller
@@ -8,7 +8,7 @@ local Game = require("src.game")
 function love.load()
     -- Set up LÖVE 2D configuration
     love.graphics.setDefaultFilter("nearest", "nearest")
-    love.window.setTitle("Cyberspace Tycoon - Idle Cybersecurity Game")
+    love.window.setTitle("Cyber Empire Command - Cybersecurity Consultancy Simulator")
     
     -- Set window size
     love.window.setMode(1024, 768, {resizable=true, minwidth=800, minheight=600})

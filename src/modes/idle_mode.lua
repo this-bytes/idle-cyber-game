@@ -44,13 +44,16 @@ function IdleMode:draw()
     
     -- Contract information
     local contractStats = self.systems.contracts:getStats()
-    love.graphics.print("📋 CONTRACT STATUS:", 20, y)
+    local specialistStats = self.systems.specialists:getStats()
+    love.graphics.print("📋 OPERATIONS STATUS:", 20, y)
     y = y + 25
     love.graphics.print("   Active Contracts: " .. contractStats.activeContracts, 30, y)
     y = y + 20
     love.graphics.print("   Available Contracts: " .. contractStats.availableContracts, 30, y)
     y = y + 20
     love.graphics.print("   Income Rate: $" .. format.number(contractStats.totalIncomeRate, 2) .. "/sec", 30, y)
+    y = y + 20
+    love.graphics.print("   Team: " .. specialistStats.available .. "/" .. specialistStats.total .. " specialists available", 30, y)
     y = y + 30
     
     -- Available contracts list
