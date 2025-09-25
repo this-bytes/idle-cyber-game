@@ -10,6 +10,8 @@ local ThreatSystem = require("src.systems.threat_system")
 local ZoneSystem = require("src.systems.zone_system")
 local FactionSystem = require("src.systems.faction_system")
 local AchievementSystem = require("src.systems.achievement_system")
+local ContractSystem = require("src.systems.contract_system")  -- NEW: Core business system
+local SpecialistSystem = require("src.systems.specialist_system")  -- NEW: Team management
 local SaveSystem = require("src.systems.save_system")
 local EventBus = require("src.utils.event_bus")
 
@@ -47,6 +49,8 @@ function Game.init()
     -- Initialize core systems in order
     gameState.systems.eventBus = EventBus.new()
     gameState.systems.resources = ResourceSystem.new(gameState.systems.eventBus)
+    gameState.systems.contracts = ContractSystem.new(gameState.systems.eventBus)  -- NEW: Contract system
+    gameState.systems.specialists = SpecialistSystem.new(gameState.systems.eventBus)  -- NEW: Specialist system
     gameState.systems.upgrades = UpgradeSystem.new(gameState.systems.eventBus)
     gameState.systems.threats = ThreatSystem.new(gameState.systems.eventBus)
     gameState.systems.zones = ZoneSystem.new(gameState.systems.eventBus)
@@ -92,7 +96,13 @@ end
 
 -- Initialize default game state for new games
 function Game.initializeDefaultState()
-    -- Start in Garage zone with basic resources
+    -- Set up initial Cyber Empire Command state
+    gameState.systems.resources:setResource("money", 1000)  -- Starting budget
+    gameState.systems.resources:setResource("reputation", 0)
+    gameState.systems.resources:setResource("xp", 0)
+    gameState.systems.resources:setResource("missionTokens", 0)
+    
+    -- Legacy resources (TODO: Remove after full refactor)
     gameState.systems.zones:setCurrentZone("garage")
     gameState.systems.resources:setResource("dataBits", 10)
     gameState.systems.resources:setResource("processingPower", 0)
@@ -105,6 +115,8 @@ end
 -- Load game state from saved data
 function Game.loadGameState(data)
     gameState.systems.resources:loadState(data.resources or {})
+    gameState.systems.contracts:loadState(data.contracts or {})  -- NEW: Load contract state
+    gameState.systems.specialists:loadState(data.specialists or {})  -- NEW: Load specialist state
     gameState.systems.upgrades:loadState(data.upgrades or {})
     gameState.systems.threats:loadState(data.threats or {})
     gameState.systems.zones:loadState(data.zones or {})
@@ -247,6 +259,8 @@ function Game.save()
     
     local saveData = {
         resources = gameState.systems.resources:getState(),
+        contracts = gameState.systems.contracts:getState(),  -- NEW: Save contract state
+        specialists = gameState.systems.specialists:getState(),  -- NEW: Save specialist state
         upgrades = gameState.systems.upgrades:getState(),
         threats = gameState.systems.threats:getState(),
         zones = gameState.systems.zones:getState(),

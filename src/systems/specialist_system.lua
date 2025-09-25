@@ -1,0 +1,343 @@
+-- Specialist Management System - Cyber Empire Command
+-- Handles team members who enhance contract performance and Crisis Mode
+
+local SpecialistSystem = {}
+SpecialistSystem.__index = SpecialistSystem
+
+-- Create new specialist system
+function SpecialistSystem.new(eventBus)
+    local self = setmetatable({}, SpecialistSystem)
+    self.eventBus = eventBus
+    
+    -- Hired specialists
+    self.specialists = {}
+    
+    -- Available specialists for hire
+    self.availableSpecialists = {}
+    
+    -- Specialist roles and their base stats
+    self.specialistTypes = {
+        -- Tier 1: Basic specialists
+        junior_analyst = {
+            name = "Junior Security Analyst",
+            cost = {money = 5000},
+            efficiency = 1.2,    -- Multiplier for contract income
+            speed = 1.1,         -- Reduces contract time
+            trace = 1.0,         -- Crisis Mode ability
+            defense = 1.1,       -- Threat resistance
+            description = "Entry-level analyst with basic security knowledge",
+            abilities = {"basic_scan", "log_analysis"}
+        },
+        
+        network_admin = {
+            name = "Network Administrator", 
+            cost = {money = 8000},
+            efficiency = 1.1,
+            speed = 1.3,
+            trace = 1.2,
+            defense = 1.4,
+            description = "Experienced in network infrastructure and monitoring",
+            abilities = {"network_scan", "firewall_config"}
+        },
+        
+        -- Tier 2: Advanced specialists (reputation requirements)
+        incident_responder = {
+            name = "Incident Response Specialist",
+            cost = {money = 15000, reputation = 25},
+            efficiency = 1.3,
+            speed = 1.2,
+            trace = 1.8,
+            defense = 1.2,
+            description = "Expert in crisis management and threat containment",
+            abilities = {"quarantine", "forensic_analysis", "rapid_response"}
+        },
+        
+        penetration_tester = {
+            name = "Penetration Tester",
+            cost = {money = 12000, reputation = 20},
+            efficiency = 1.4,
+            speed = 1.1,
+            trace = 1.6,
+            defense = 1.0,
+            description = "Offensive security expert who finds vulnerabilities",
+            abilities = {"vulnerability_scan", "exploit_analysis"}
+        },
+        
+        -- Tier 3: Elite specialists (mission token requirements)
+        security_architect = {
+            name = "Security Architect",
+            cost = {money = 50000, reputation = 100, missionTokens = 2},
+            efficiency = 2.0,
+            speed = 1.5,
+            trace = 1.4,
+            defense = 1.8,
+            description = "Designs comprehensive security solutions",
+            abilities = {"architecture_review", "strategic_planning", "advanced_defense"}
+        },
+        
+        threat_hunter = {
+            name = "Threat Hunter",
+            cost = {money = 75000, reputation = 150, missionTokens = 5},
+            efficiency = 1.6,
+            speed = 1.3,
+            trace = 2.5,
+            defense = 1.6,
+            description = "Elite investigator who proactively seeks threats",
+            abilities = {"advanced_hunting", "behavioral_analysis", "threat_intelligence"}
+        }
+    }
+    
+    self.nextSpecialistId = 1
+    
+    -- Initialize with player as the first specialist
+    self:addSpecialist("ceo", {
+        id = 0,
+        type = "ceo",
+        name = "You (CEO)",
+        level = 1,
+        xp = 0,
+        efficiency = 1.0,
+        speed = 1.0, 
+        trace = 1.0,
+        defense = 1.0,
+        status = "available", -- available, busy, cooldown
+        abilities = {"leadership", "basic_analysis"},
+        busyUntil = 0
+    })
+    
+    -- Generate some initial available specialists
+    self:generateAvailableSpecialist("junior_analyst")
+    self:generateAvailableSpecialist("network_admin")
+    
+    return self
+end
+
+-- Add a specialist to the team
+function SpecialistSystem:addSpecialist(specialistType, specialistData)
+    local specialist = specialistData or {}
+    
+    if not specialist.id then
+        specialist.id = self.nextSpecialistId
+        self.nextSpecialistId = self.nextSpecialistId + 1
+    end
+    
+    if not specialist.type then
+        specialist.type = specialistType
+    end
+    
+    if not specialist.name then
+        local typeData = self.specialistTypes[specialistType]
+        specialist.name = typeData and typeData.name or "Unknown Specialist"
+    end
+    
+    -- Set defaults if not provided
+    specialist.level = specialist.level or 1
+    specialist.xp = specialist.xp or 0
+    specialist.status = specialist.status or "available"
+    specialist.busyUntil = specialist.busyUntil or 0
+    
+    -- Copy base stats from type
+    local typeData = self.specialistTypes[specialistType]
+    if typeData then
+        specialist.efficiency = specialist.efficiency or typeData.efficiency
+        specialist.speed = specialist.speed or typeData.speed
+        specialist.trace = specialist.trace or typeData.trace
+        specialist.defense = specialist.defense or typeData.defense
+        specialist.abilities = specialist.abilities or typeData.abilities
+    end
+    
+    self.specialists[specialist.id] = specialist
+    
+    self.eventBus:publish("specialist_hired", {
+        specialist = specialist
+    })
+    
+    return specialist
+end
+
+-- Generate an available specialist for hire
+function SpecialistSystem:generateAvailableSpecialist(specialistType)
+    local typeData = self.specialistTypes[specialistType]
+    if not typeData then return nil end
+    
+    local specialist = {
+        type = specialistType,
+        name = typeData.name,
+        cost = typeData.cost,
+        efficiency = typeData.efficiency,
+        speed = typeData.speed,
+        trace = typeData.trace,
+        defense = typeData.defense,
+        description = typeData.description,
+        abilities = typeData.abilities
+    }
+    
+    table.insert(self.availableSpecialists, specialist)
+    return specialist
+end
+
+-- Hire a specialist
+function SpecialistSystem:hireSpecialist(index)
+    local specialist = self.availableSpecialists[index]
+    if not specialist then return false end
+    
+    -- Check if player can afford
+    local canAfford = true
+    for resource, cost in pairs(specialist.cost) do
+        -- TODO: Check actual resource values from resource system
+        -- For now, assume always affordable for testing
+    end
+    
+    if canAfford then
+        -- Deduct costs
+        for resource, cost in pairs(specialist.cost) do
+            self.eventBus:publish("spend_resource", {
+                resource = resource,
+                amount = cost
+            })
+        end
+        
+        -- Add to team
+        self:addSpecialist(specialist.type)
+        
+        -- Remove from available
+        table.remove(self.availableSpecialists, index)
+        
+        return true
+    end
+    
+    return false
+end
+
+-- Update specialist system
+function SpecialistSystem:update(dt)
+    local currentTime = (love and love.timer and love.timer.getTime()) or os.clock()
+    
+    -- Update specialist status
+    for id, specialist in pairs(self.specialists) do
+        if specialist.status == "busy" and currentTime >= specialist.busyUntil then
+            specialist.status = "available"
+            
+            self.eventBus:publish("specialist_available", {
+                specialist = specialist
+            })
+        end
+    end
+end
+
+-- Get available specialists for contracts/activities
+function SpecialistSystem:getAvailableSpecialists()
+    local available = {}
+    for id, specialist in pairs(self.specialists) do
+        if specialist.status == "available" then
+            available[id] = specialist
+        end
+    end
+    return available
+end
+
+-- Get specialist by ID
+function SpecialistSystem:getSpecialist(id)
+    return self.specialists[id]
+end
+
+-- Get all specialists
+function SpecialistSystem:getAllSpecialists()
+    return self.specialists
+end
+
+-- Get available specialists for hire
+function SpecialistSystem:getAvailableForHire()
+    return self.availableSpecialists
+end
+
+-- Assign specialist to activity (makes them busy)
+function SpecialistSystem:assignSpecialist(specialistId, duration)
+    local specialist = self.specialists[specialistId]
+    if not specialist or specialist.status ~= "available" then
+        return false
+    end
+    
+    specialist.status = "busy"
+    specialist.busyUntil = ((love and love.timer and love.timer.getTime()) or os.clock()) + duration
+    
+    self.eventBus:publish("specialist_assigned", {
+        specialist = specialist,
+        duration = duration
+    })
+    
+    return true
+end
+
+-- Calculate team bonuses for contracts
+function SpecialistSystem:getTeamBonuses()
+    local efficiency = 1.0
+    local speed = 1.0
+    local defense = 1.0
+    local availableCount = 0
+    
+    for id, specialist in pairs(self.specialists) do
+        if specialist.status == "available" then
+            efficiency = efficiency * specialist.efficiency
+            speed = speed * specialist.speed
+            defense = defense * specialist.defense
+            availableCount = availableCount + 1
+        end
+    end
+    
+    return {
+        efficiency = efficiency,
+        speed = speed,
+        defense = defense,
+        availableSpecialists = availableCount
+    }
+end
+
+-- Get stats for display
+function SpecialistSystem:getStats()
+    local totalSpecialists = 0
+    local availableSpecialists = 0
+    local busySpecialists = 0
+    
+    for id, specialist in pairs(self.specialists) do
+        totalSpecialists = totalSpecialists + 1
+        if specialist.status == "available" then
+            availableSpecialists = availableSpecialists + 1
+        elseif specialist.status == "busy" then
+            busySpecialists = busySpecialists + 1
+        end
+    end
+    
+    return {
+        total = totalSpecialists,
+        available = availableSpecialists,
+        busy = busySpecialists,
+        forHire = #self.availableSpecialists
+    }
+end
+
+-- Get state for saving
+function SpecialistSystem:getState()
+    return {
+        specialists = self.specialists,
+        availableSpecialists = self.availableSpecialists,
+        nextSpecialistId = self.nextSpecialistId
+    }
+end
+
+-- Load state from save
+function SpecialistSystem:loadState(state)
+    if state.specialists then
+        self.specialists = state.specialists
+    end
+    
+    if state.availableSpecialists then
+        self.availableSpecialists = state.availableSpecialists
+    end
+    
+    if state.nextSpecialistId then
+        self.nextSpecialistId = state.nextSpecialistId
+    end
+end
+
+return SpecialistSystem
