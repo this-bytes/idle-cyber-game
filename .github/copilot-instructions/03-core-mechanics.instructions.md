@@ -1,5 +1,138 @@
 # Core Game Mechanics
 
+## Game Mode Overview
+
+**Primary Mode - Idle Empire Building:**
+The main game progression where players build their personal digital empire through incremental upgrades and resource management.
+
+**Secondary Mode - "The Admin's Watch" (Real-Time Strategy):**
+Advanced gameplay mode focusing on active system administration and crisis management for corporate clients.
+
+## "The Admin's Watch" - Real-Time Operations
+
+### Core Resources (Budget-Based)
+
+**Budget Allocation (Daily/Hourly):**
+- *Description:* Limited funds allocated by corporate management for security operations
+- *Sources:* Company performance, successful defense bonuses, compliance audit rewards
+- *Usage:* Purchase temporary defenses, conduct emergency responses, hire consultants
+- *Scaling:* Budget increases with company stock price and your reputation
+
+**CPU Cycles (Computational Budget):**
+- *Description:* Available processing power for security operations and threat analysis
+- *Management:* Must allocate between monitoring, active scanning, threat response
+- *Constraints:* Heavy scans consume cycles, leaving systems vulnerable elsewhere
+- *Recovery:* Cycles regenerate over time or through efficiency upgrades
+
+**Network Bandwidth (Traffic Capacity):**
+- *Description:* Available network capacity for legitimate operations and threat mitigation
+- *Usage:* Absorbing DDoS attacks, data backups, emergency communications
+- *Limitations:* Exceeded bandwidth causes system slowdowns and failed operations
+- *Expansion:* Upgrade network infrastructure or implement traffic optimization
+
+**Security Personnel Hours:**
+- *Description:* Human expertise available for complex threat analysis and response
+- *Allocation:* Assign specialists to different network segments or threat types
+- *Efficiency:* Experienced personnel provide better results but cost more
+- *Development:* Train existing staff or hire specialists with specific expertise
+
+### Specialized Equipment & Software
+
+**Permanent Infrastructure Upgrades:**
+
+*Antivirus Suite Evolution:*
+- **Basic Signature Scanner** (5,000 Budget): Detects known malware, 40% effectiveness
+- **Heuristic Analyzer v2.0** (15,000 Budget): Adds polymorphic malware detection, 65% effectiveness  
+- **AI-Powered Threat Hunter v3.0** (50,000 Budget): Zero-day exploit analysis, 85% effectiveness
+- **Quantum Threat Predictor v4.0** (200,000 Budget): Prevents threats before manifestation, 95% effectiveness
+
+*Firewall Hardware Progression:*
+- **Standard Network Firewall** (8,000 Budget): Handles 1,000 simultaneous connections
+- **Enterprise-Grade Firewall** (25,000 Budget): 10,000 connections, advanced rule sets
+- **AI-Adaptive Firewall** (80,000 Budget): 100,000 connections, self-configuring rules
+- **Quantum Firewall Array** (300,000 Budget): Unlimited throughput, multidimensional filtering
+
+*Threat Intelligence Subscriptions:*
+- **Basic Feed** (1,000/month): Common threat signatures, 24-hour delay
+- **Premium Intelligence** (5,000/month): Real-time updates, attack trend analysis
+- **Elite Defense Network** (20,000/month): Zero-day warnings, attribution data
+- **Quantum Oracle Service** (100,000/month): Predictive threat modeling, timeline analysis
+
+*Server Infrastructure:*
+- **Additional Server Rack** (30,000 Budget): +25% total resource pool (CPU, bandwidth)
+- **High-Density Computing** (120,000 Budget): +100% resource pool, improved efficiency
+- **Distributed Cloud Array** (500,000 Budget): +500% resources, geographic redundancy
+- **Quantum Processing Grid** (2,000,000 Budget): Unlimited resource scaling, reality-bending capabilities
+
+### Temporary Abilities & Emergency Responses
+
+**Power-Up Consumables:**
+
+*Emergency Patch Kit:*
+- **Cost:** 2,000 Budget per use
+- **Effect:** Instantly patches all vulnerabilities on selected server
+- **Duration:** Permanent fix, but new vulnerabilities may emerge
+- **Cooldown:** None, but limited budget makes strategic use critical
+
+*Deep Network Scan:*
+- **Cost:** 50% of current CPU cycles + 10,000 Budget
+- **Effect:** Reveals all hidden threats, backdoors, and vulnerabilities network-wide
+- **Duration:** Instant analysis, results last until next major network change
+- **Risk:** Leaves systems vulnerable during intensive scan period
+
+*Bait & Switch Protocol:*
+- **Cost:** 5,000 Budget + 25% bandwidth for duration
+- **Effect:** Deploys network-wide honeypots, distracting low/medium threats
+- **Duration:** 300 seconds
+- **Bonus:** Captured threat data improves future defense effectiveness
+
+*Traffic Spike Shield:*
+- **Cost:** 15,000 Budget + specialized hardware
+- **Effect:** Triples network bandwidth temporarily
+- **Duration:** 180 seconds
+- **Usage:** Essential for surviving massive DDoS attacks without downtime
+
+*Crisis Management Mode:*
+- **Cost:** 20,000 Budget + all available personnel hours
+- **Effect:** All security personnel work overtime, doubling response effectiveness
+- **Duration:** 600 seconds
+- **Consequence:** 24-hour cooldown where personnel efficiency is reduced by 50%
+
+### Reward & Progression Systems
+
+**Threat Bounty System:**
+- **Script Kiddie Neutralization:** 500-1,000 credits
+- **Malware Eradication:** 1,500-3,000 credits
+- **Advanced Persistent Threat Removal:** 5,000-10,000 credits
+- **Zero-Day Exploit Discovery:** 20,000-50,000 credits
+- **State-Sponsored Attack Deflection:** 100,000+ credits
+
+**Compliance Audit Bonuses:**
+- **Monthly Security Review:** 10,000-50,000 credits based on performance
+- **100% Uptime Achievement:** 25,000 credit bonus + reputation boost
+- **Zero Breaches Milestone:** 75,000 credits + premium equipment access
+- **Industry Security Award:** 200,000 credits + partnership opportunities
+
+**Company Stock Performance Integration:**
+- **Successful Defense:** +0.5-2% stock price increase
+- **Major Breach Prevention:** +5-10% stock price boost
+- **Security Incident:** -2-15% stock price decline  
+- **Data Breach:** -20-50% stock price crash + potential job loss
+
+### Integration with Idle Mode
+
+**Cross-Mode Benefits:**
+- Admin's Watch experience provides 10-25% efficiency bonuses to idle mode defenses
+- Idle mode research unlocks "experimental" options in Admin's Watch contracts
+- Faction relationships affect Admin's Watch contract availability and threat types
+- Personnel trained in Admin's Watch can be permanently hired for idle mode operations
+
+**Technology Transfer:**
+- Advanced algorithms developed in idle mode reduce Admin's Watch CPU costs
+- Quantum technologies from idle mode enable reality-bending Admin's Watch abilities
+- AI systems from idle mode provide autonomous threat response options
+- Network architectures scale between both game modes
+
 ## Initial Resources (Phase 1 Implementation)
 
 **Data Bits (DB):**

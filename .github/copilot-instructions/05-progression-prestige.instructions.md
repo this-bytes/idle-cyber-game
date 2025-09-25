@@ -1,5 +1,84 @@
 # Progression & Prestige Systems
 
+## Dual-Mode Progression Framework
+
+### Character Advancement - Idle Mode
+*[Previous idle mode content remains as documented above]*
+
+### "The Admin's Watch" Professional Progression
+
+**Corporate Reputation System:**
+- **Entry Level:** Junior Security Analyst (unlocks basic Admin's Watch contracts)
+- **Professional:** Senior Cybersecurity Engineer (access to mid-tier corporate clients)
+- **Expert:** Chief Information Security Officer (high-value enterprise contracts)
+- **Elite:** Legendary Security Architect (fortune 500 companies, government contracts)
+- **Master:** Digital Crisis Savior (global corporations, nation-state clients)
+
+**Professional Certifications & Specializations:**
+
+*Incident Response Specialist:*
+- **Tier 1 - Basic Response:** +25% efficiency during crisis events
+- **Tier 2 - Advanced Coordination:** Can manage multiple simultaneous incidents
+- **Tier 3 - Crisis Leadership:** Unlocks emergency powers during major breaches
+- **Master Tier - Digital Fire Chief:** Global incident response coordination abilities
+
+*Network Architecture Expert:*
+- **Tier 1 - Infrastructure Basics:** Reduced cost for hardware upgrades
+- **Tier 2 - Advanced Topology:** Can design custom network configurations
+- **Tier 3 - Quantum Networks:** Access to reality-bending networking technologies
+- **Master Tier - Network Deity:** Can restructure client networks in real-time
+
+*Threat Intelligence Analyst:*
+- **Tier 1 - Pattern Recognition:** Earlier warning of incoming attacks
+- **Tier 2 - Behavioral Analysis:** Can predict attacker psychology and tactics
+- **Tier 3 - Quantum Prediction:** See potential attack timelines before they solidify
+- **Master Tier - Oracle of Cyber:** Prevent attacks through timeline manipulation
+
+**Client Relationship Management:**
+
+*Company Portfolio Growth:*
+- **Startup Contracts:** Low pay but rapid experience gain
+- **Mid-Market Enterprises:** Balanced challenge and rewards
+- **Fortune 500 Corporations:** High stakes, massive budgets, career-defining outcomes
+- **Government Agencies:** Classified projects, national security implications
+- **International Conglomerates:** Multi-timezone operations, cultural complexity
+
+*Contract Performance Metrics:*
+- **Uptime Percentage:** Direct impact on client renewal and referrals
+- **Incident Response Time:** Affects emergency contract bonuses
+- **Cost Efficiency:** Staying under budget increases profit margins
+- **Innovation Scores:** Novel solutions unlock experimental technology access
+- **Client Satisfaction:** Determines access to premium contract opportunities
+
+### Cross-Mode Progression Benefits
+
+**Idle → Admin's Watch:**
+- Research technologies from idle mode become "experimental options" in corporate contracts
+- High Security Rating provides baseline competency certifications
+- Faction relationships affect available contract types and threat intelligence quality
+- Resource management experience translates to budget allocation efficiency
+
+**Admin's Watch → Idle:**
+- Professional certifications provide passive bonuses to idle mode defense systems
+- Corporate contacts unlock exclusive idle mode upgrade vendors
+- Crisis management experience improves idle mode automation decision-making
+- Client testimonials increase faction reputation gains
+
+### Enhanced Achievement Categories
+
+**Professional Excellence (Admin's Watch Specific):**
+- "Perfect Record" - Complete 10 contracts with 100% uptime
+- "Crisis Manager" - Successfully handle 5 simultaneous critical incidents
+- "Budget Wizard" - Complete major contract 25% under budget
+- "Innovation Leader" - First to implement quantum defense in corporate environment
+- "Global Guardian" - Protect clients across all time zones simultaneously
+
+**Cross-Mode Mastery:**
+- "Digital Renaissance" - Achieve master tier in both idle and Admin's Watch modes
+- "Technology Transfer" - Successfully implement 10 idle technologies in corporate contracts
+- "Corporate Infiltrator" - Use Admin's Watch connections to boost idle mode faction standing
+- "System Architect Supreme" - Design networks that excel in both operational contexts
+
 ## Character Advancement
 
 ### Experience & Levels

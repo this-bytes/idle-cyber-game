@@ -1,5 +1,151 @@
 # Defense Mechanics & Threat Systems
 
+## Dual-Mode Threat Framework
+
+### Idle Mode Threats (Wave-Based)
+*[Previous content remains as documented above]*
+
+### "The Admin's Watch" Mode Threats (Persistent & Adaptive)
+
+**Core Threat Philosophy:**
+- Threats are **continuous**, not wave-based
+- Attackers **adapt** to your defensive strategies over time
+- **Multiple simultaneous** threats create resource allocation challenges
+- **Real-time decision making** under pressure is essential
+
+#### Persistent Low-Level Threats (Always Active)
+
+**Port Scanning Attempts:**
+- **Frequency:** Constant background activity (every 10-30 seconds)
+- **Impact:** Minimal direct damage, but provides intel to attackers
+- **Defense:** Basic firewall rules, port obfuscation
+- **Adaptation:** Scanning patterns change based on discovered open ports
+
+**Automated Bot Probes:**
+- **Frequency:** 3-5 attempts per minute across different attack vectors
+- **Impact:** Consumes bandwidth, may find vulnerabilities
+- **Defense:** Rate limiting, bot detection algorithms
+- **Adaptation:** Bots rotate IP addresses and attack patterns
+
+**Social Engineering Attempts:**
+- **Frequency:** 1-2 per hour targeting different employees
+- **Impact:** May compromise credentials or gain insider information
+- **Defense:** Security training, email filtering, behavioral monitoring
+- **Adaptation:** Attackers learn which employees are most susceptible
+
+#### Dynamic Medium Threats (Escalating Attacks)
+
+**Coordinated Brute Force Campaigns:**
+- **Trigger:** Multiple failed login attempts detected
+- **Escalation:** Increases intensity based on defensive response
+- **Impact:** Account lockouts, authentication system overload
+- **Defense Options:**
+  - *Immediate Lockdown:* Stop all attacks but halt legitimate access
+  - *Selective Filtering:* Resource-intensive but maintains operations
+  - *Counter-Intelligence:* Expensive but provides attacker information
+
+**Advanced Malware Deployment:**
+- **Trigger:** Successful initial compromise (from low-level threats)
+- **Behavior:** Spreads laterally, adapts to defensive countermeasures
+- **Impact:** Gradual system degradation, data corruption, backdoor installation
+- **Defense Options:**
+  - *Network Segmentation:* Limits spread but reduces operational efficiency
+  - *Full System Scan:* Comprehensive but resource-intensive
+  - *Surgical Removal:* Precise but requires expert personnel time
+
+**Supply Chain Infiltration:**
+- **Trigger:** Third-party vendor compromises (random events)
+- **Complexity:** May remain dormant until activated by external triggers
+- **Impact:** Deep system access, trusted process compromise
+- **Defense Options:**
+  - *Vendor Isolation:* Secure but limits business operations
+  - *Enhanced Monitoring:* Resource-heavy continuous surveillance
+  - *Trust Verification:* Expensive cryptographic validation
+
+#### High-Impact Crisis Events (Requiring Immediate Response)
+
+**Coordinated Nation-State Attack:**
+- **Warning:** 60-180 seconds advance notice from threat intelligence
+- **Duration:** 10-30 minutes of intensive assault
+- **Multiple Vectors:** Simultaneous DDoS, malware, social engineering, physical threats
+- **Resource Demand:** Requires all available CPU, bandwidth, and personnel
+- **Decision Pressure:** Must choose which systems to prioritize for protection
+
+**Zero-Day Exploit Chain:**
+- **Warning:** None (unless premium threat intelligence provides prediction)
+- **Impact:** Bypasses all conventional defenses
+- **Spread:** Exponential infection rate across vulnerable systems
+- **Response Options:**
+  - *Emergency Patch:* Use consumable to fix immediately
+  - *System Isolation:* Quarantine affected systems, halt operations
+  - *Deep Analysis:* Invest heavily in understanding the exploit
+
+**Insider Threat Activation:**
+- **Trigger:** Disgruntled employee or compromised insider
+- **Advantage:** Bypasses perimeter defenses, knows system weaknesses
+- **Detection:** Behavioral analysis systems may provide early warning
+- **Response Complexity:** Must balance investigation with operational security
+
+### Adaptive Threat Intelligence
+
+**Learning Algorithms:**
+- Attackers observe your defensive responses and adapt strategies
+- Repeated use of same defensive tactics reduces effectiveness over time
+- Successful novel defenses provide temporary advantages
+- Long-term success requires varied, unpredictable defensive strategies
+
+**Threat Attribution System:**
+- Track attack sources: Script kiddies, criminal organizations, nation-states, competitors
+- Each group has preferred tactics and different resource levels
+- Diplomatic relationships affect attack frequency and intensity
+- Counter-intelligence can provide advance warning of planned attacks
+
+**Economic Warfare Integration:**
+- Attacks may target company stock price rather than direct damage
+- Market manipulation through selective information leaks
+- Timing attacks to coincide with earnings reports or major announcements
+- Recovery strategies must consider both technical and economic impacts
+
+### Network Visualization & Management Interface
+
+**Real-Time Network Map:**
+- **Server Status:** Green (secure), Yellow (under attack), Red (compromised)
+- **Traffic Flow:** Visualize data movement and identify abnormal patterns
+- **Threat Indicators:** Glowing red lines showing malicious traffic paths
+- **Resource Allocation:** Drag-and-drop interface for deploying defenses
+
+**Dynamic Topology:**
+- Network layout changes based on business requirements
+- New servers come online during business expansion
+- Legacy systems create security weak points
+- Load balancing affects traffic patterns and attack surfaces
+
+**Crisis Management Dashboard:**
+- **Threat Level Indicator:** Overall system security status
+- **Resource Availability:** Real-time CPU, bandwidth, personnel allocation
+- **Incident Timeline:** Track ongoing attacks and defensive responses
+- **Stock Price Monitor:** Real-time company valuation feedback
+
+### Advanced Defense Integration
+
+**AI-Assisted Decision Making:**
+- **Threat Prediction:** AI analyzes patterns to forecast likely attack vectors
+- **Resource Optimization:** Automated suggestions for defensive resource allocation
+- **Response Automation:** Configurable AI responses to routine threats
+- **Learning Integration:** AI improves recommendations based on player success/failure
+
+**Multi-Layer Defense Strategy:**
+- **Perimeter Security:** Firewalls, IDS systems, network monitoring
+- **Internal Monitoring:** Behavioral analysis, privilege management, data flow tracking  
+- **Response Coordination:** Incident response teams, crisis management protocols
+- **Recovery Planning:** Backup systems, disaster recovery, business continuity
+
+**Integration with Idle Mode Systems:**
+- Technologies developed in idle mode provide enhanced options in Admin's Watch
+- Experience in Admin's Watch improves idle mode defensive automation
+- Personnel can be shared between modes with appropriate cost/benefit trade-offs
+- Research discoveries benefit both operational contexts
+
 ## Comprehensive Threat Classification
 
 ### Tier 1 Threats (Early Game)
