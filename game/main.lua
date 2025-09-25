@@ -7,6 +7,7 @@ local resourceDisplay = require("display")
 local shop = require("shop")
 local threats = require("threats")
 local adminMode = require("admin_mode")
+local achievements = require("achievements")
 local format = require("format")
 
 -- Game state
@@ -42,6 +43,7 @@ function love.load()
         shop.init()
         threats.init()
         adminMode.init()
+        achievements.init()
         
         -- Try to load saved game
         loadGame()
@@ -60,6 +62,7 @@ function love.load()
     print("⌨️  Controls:")
     print("   A - The Admin's Watch (Real-time mode)")
     print("   U - Upgrades shop")
+    print("   H - Achievements & Progress")
     print("   S - Detailed stats")
     print("   F - FPS display")
     print("   D - Debug mode")
@@ -83,6 +86,7 @@ function love.update(dt)
     shop.update(dt)
     threats.update(dt)
     adminMode.update(dt)
+    achievements.update(dt)
     
     -- Auto-save system
     autoSaveTimer = autoSaveTimer + dt
@@ -210,6 +214,9 @@ function love.keypressed(key)
     elseif key == "u" then
         -- Toggle shop
         shop.toggle()
+    elseif key == "h" then
+        -- Show achievements
+        achievements.showAchievements()
     elseif key == "f5" then
         -- Manual save
         saveGame()
@@ -357,7 +364,8 @@ end
 function saveGame()
     local saveData = {
         resources = resources.save(),
-        version = "0.1.0",
+        achievements = achievements.save(),
+        version = "0.2.0",
         timestamp = os.time()
     }
     
@@ -382,6 +390,9 @@ function loadGame()
         if success and saveData then
             if saveData.version and saveData.resources then
                 resources.load(saveData.resources)
+                if saveData.achievements then
+                    achievements.load(saveData.achievements)
+                end
                 print("Game loaded successfully! (saved " .. 
                       os.date("%Y-%m-%d %H:%M:%S", saveData.timestamp) .. ")")
             else

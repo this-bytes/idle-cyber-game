@@ -126,7 +126,11 @@ function threats.update(dt)
         if effect.duration <= 0 then
             -- Remove expired effect
             table.remove(threatState.activeEffects, i)
-            print("Effect expired: " .. effect.name)
+            print("✅ " .. effect.name .. " effect ended")
+            
+            -- Track threat defeat
+            local achievements = require("achievements")
+            achievements.trackThreatDefeated()
             
             -- Recalculate generation rates when effects end
             resources.recalculateGeneration()

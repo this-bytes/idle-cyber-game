@@ -104,6 +104,11 @@ function resources.clickForDataBits()
     -- Add to resources
     gameState.resources.dataBits = gameState.resources.dataBits + reward
     
+    -- Track achievement progress
+    local achievements = require("achievements")
+    achievements.trackClick(reward, comboMultiplier, isCritical)
+    achievements.trackDataEarned(reward)
+    
     -- Enhanced feedback
     if isCritical then
         print("💥 CRITICAL HIT! +" .. reward .. " Data Bits!")
@@ -222,6 +227,10 @@ function resources.purchaseUpgrade(upgradeName, cost)
             gameState.upgrades[upgradeName] = gameState.upgrades[upgradeName] + 1
         end
         
+        -- Track achievement progress
+        local achievements = require("achievements")
+        achievements.trackUpgradePurchase(upgradeName, cost)
+        
         -- Recalculate rates
         resources.recalculateGeneration()
         
@@ -243,12 +252,22 @@ function resources.getResources()
     }
 end
 
--- Get current generation rates
+-- Get current generation rates (with zone bonuses)
 function resources.getGeneration()
-    return {
+    local baseGeneration = {
         dataBits = gameState.generation.dataBits * gameState.multipliers.dataBits,
         processingPower = gameState.generation.processingPower * gameState.multipliers.processingPower,
         securityRating = gameState.generation.securityRating * gameState.multipliers.securityRating,
+    }
+    
+    -- Apply zone bonuses
+    local achievements = require("achievements")
+    local zoneBonus = achievements.getCurrentZoneBonus()
+    
+    return {
+        dataBits = baseGeneration.dataBits * zoneBonus.dataBitsMultiplier,
+        processingPower = baseGeneration.processingPower,
+        securityRating = baseGeneration.securityRating,
     }
 end
 

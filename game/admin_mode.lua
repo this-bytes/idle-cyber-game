@@ -74,6 +74,10 @@ function adminMode.toggle()
         print("🎯 Entering The Admin's Watch - Real-Time Operations")
         print("   You are now managing " .. adminState.currentClient.name)
         print("   Budget: $" .. format.currency(adminState.currentClient.budget))
+        
+        -- Track achievement for first entry
+        local achievements = require("achievements")
+        achievements.trackAdminModeEntry()
     else
         print("🏠 Returning to Idle Empire Building mode")
     end
@@ -295,6 +299,10 @@ function adminMode.respondToIncident(incidentId, response)
                 adminState.metrics.threatsBlocked = adminState.metrics.threatsBlocked + 1
                 adminState.metrics.client_satisfaction = math.min(100,
                     adminState.metrics.client_satisfaction + 5)
+                
+                -- Track achievement
+                local achievements = require("achievements")
+                achievements.trackIncidentHandled()
                 
                 return true
             else
