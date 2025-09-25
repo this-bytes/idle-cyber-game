@@ -6,27 +6,51 @@ local resources = require("resources")
 
 -- Threat system state
 local threatState = {
-    -- Active threats
+    -- Active threats (enhanced)
     threats = {
         scriptKiddie = {
-            name = "Script Kiddie Attack",
+            name = "🤖 Script Kiddie Attack",
             description = "Automated attack scripts targeting vulnerabilities",
-            minInterval = 60,  -- 60 seconds minimum
-            maxInterval = 120, -- 120 seconds maximum
+            minInterval = 45,  -- 45 seconds minimum
+            maxInterval = 90,  -- 90 seconds maximum
             nextAttack = 0,
-            damage = {min = 0.01, max = 0.05}, -- 1-5% of Data Bits
+            damage = {min = 0.02, max = 0.08}, -- 2-8% of Data Bits
             type = "steal_resources",
             active = true,
+            icon = "🤖",
         },
         basicMalware = {
-            name = "Basic Malware",
+            name = "🦠 Basic Malware",
             description = "Simple malicious software disrupting operations",
-            minInterval = 90,  -- 90 seconds minimum
-            maxInterval = 180, -- 180 seconds maximum
+            minInterval = 80,  -- 80 seconds minimum
+            maxInterval = 160, -- 160 seconds maximum
             nextAttack = 0,
-            damage = {reduction = 0.10, duration = 30}, -- 10% generation reduction for 30 seconds
+            damage = {reduction = 0.15, duration = 25}, -- 15% generation reduction for 25 seconds
             type = "reduce_generation",
             active = true,
+            icon = "🦠",
+        },
+        ddosAttack = {
+            name = "⚡ DDoS Attack",
+            description = "Distributed denial of service overwhelming your systems",
+            minInterval = 120, -- 2 minutes minimum
+            maxInterval = 300, -- 5 minutes maximum
+            nextAttack = 0,
+            damage = {reduction = 0.50, duration = 15}, -- 50% generation reduction for 15 seconds
+            type = "reduce_generation",
+            active = true,
+            icon = "⚡",
+        },
+        ransomware = {
+            name = "🔒 Ransomware",
+            description = "Malicious encryption of your data systems",
+            minInterval = 300, -- 5 minutes minimum
+            maxInterval = 600, -- 10 minutes maximum
+            nextAttack = 0,
+            damage = {percentage = 0.20}, -- Steals 20% of current Data Bits
+            type = "steal_resources",
+            active = true,
+            icon = "🔒",
         },
     },
     
@@ -67,13 +91,19 @@ function threats.calculateSecurityReduction()
     local upgrades = resources.getUpgrades()
     local totalReduction = 0
     
-    -- Basic Packet Filter provides 15% threat reduction per unit
+    -- Enhanced security calculation
     if upgrades.basicPacketFilter then
         totalReduction = totalReduction + (upgrades.basicPacketFilter * 0.15)
     end
+    if upgrades.advancedFirewall then
+        totalReduction = totalReduction + (upgrades.advancedFirewall * 0.25)
+    end
+    if upgrades.intrusionDetectionSystem then
+        totalReduction = totalReduction + (upgrades.intrusionDetectionSystem * 0.35)
+    end
     
-    -- Cap reduction at 90% (threats should always pose some risk)
-    return math.min(totalReduction, 0.90)
+    -- Cap reduction at 85% (threats should always pose some risk)
+    return math.min(totalReduction, 0.85)
 end
 
 -- Update threat system (called every frame)
@@ -115,16 +145,24 @@ function threats.executeAttack(threat)
     end
 end
 
--- Execute resource stealing attack (Script Kiddie)
+-- Execute resource stealing attack
 function threats.executeResourceSteal(threat, securityReduction)
     local currentResources = resources.getResources()
     
-    -- Calculate damage percentage (reduced by security)
-    local baseDamage = math.random() * (threat.damage.max - threat.damage.min) + threat.damage.min
+    -- Calculate damage with enhanced logic
+    local baseDamage
+    if threat.damage.percentage then
+        -- Percentage-based damage (like ransomware)
+        baseDamage = threat.damage.percentage
+    else
+        -- Range-based damage (like script kiddie)
+        baseDamage = math.random() * (threat.damage.max - threat.damage.min) + threat.damage.min
+    end
+    
     local actualDamage = baseDamage * (1 - securityReduction)
     
     -- Steal Data Bits
-    local stolenAmount = currentResources.dataBits * actualDamage
+    local stolenAmount = math.floor(currentResources.dataBits * actualDamage)
     local currentDB = currentResources.dataBits
     
     -- Update resources directly (this is a special case)
@@ -132,16 +170,19 @@ function threats.executeResourceSteal(threat, securityReduction)
     gameState.resources.dataBits = math.max(0, currentDB - stolenAmount)
     resources.load(gameState)
     
-    -- Log the attack
-    print(string.format("%s! Stole %.1f Data Bits (%.1f%% damage)", 
-          threat.name, stolenAmount, actualDamage * 100))
+    -- Enhanced attack feedback
+    print("🚨 CYBERATTACK! " .. threat.icon .. " " .. threat.name)
+    print("   💰 Stolen: " .. stolenAmount .. " Data Bits (" .. 
+          string.format("%.1f", actualDamage * 100) .. "% damage)")
     
     if securityReduction > 0 then
-        print(string.format("Security reduced damage by %.1f%%", securityReduction * 100))
+        print("   🛡️  Security mitigated " .. string.format("%.1f", securityReduction * 100) .. "% of damage")
+    else
+        print("   ⚠️  No security defenses active!")
     end
 end
 
--- Execute generation reduction attack (Basic Malware)
+-- Execute generation reduction attack
 function threats.executeGenerationReduction(threat, securityReduction)
     -- Calculate reduction percentage (reduced by security)
     local baseReduction = threat.damage.reduction
@@ -159,12 +200,15 @@ function threats.executeGenerationReduction(threat, securityReduction)
     
     table.insert(threatState.activeEffects, effect)
     
-    -- Log the attack
-    print(string.format("%s! Reducing generation by %.1f%% for %.0f seconds", 
-          threat.name, actualReduction * 100, duration))
+    -- Enhanced attack feedback
+    print("🚨 CYBERATTACK! " .. threat.icon .. " " .. threat.name)
+    print("   📉 Generation reduced by " .. string.format("%.1f", actualReduction * 100) .. 
+          "% for " .. duration .. " seconds")
     
     if securityReduction > 0 then
-        print(string.format("Security reduced effect by %.1f%%", securityReduction * 100))
+        print("   🛡️  Security mitigated " .. string.format("%.1f", securityReduction * 100) .. "% of effect")
+    else
+        print("   ⚠️  No security defenses active!")
     end
     
     -- Immediately recalculate generation to apply the reduction
