@@ -6,6 +6,7 @@ local resources = require("resources")
 local resourceDisplay = require("display")
 local shop = require("shop")
 local threats = require("threats")
+local adminMode = require("admin_mode")
 local format = require("format")
 
 -- Game state
@@ -40,6 +41,7 @@ function love.load()
         resourceDisplay.init()
         shop.init()
         threats.init()
+        adminMode.init()
         
         -- Try to load saved game
         loadGame()
@@ -56,12 +58,14 @@ function love.load()
     print("🚀 Welcome to the cybersecurity empire!")
     print("💡 Click on resources to earn Data Bits!")
     print("⌨️  Controls:")
+    print("   A - The Admin's Watch (Real-time mode)")
     print("   U - Upgrades shop")
     print("   S - Detailed stats")
     print("   F - FPS display")
     print("   D - Debug mode")
     print("   P - Pause game")
     print("   C - Compact display")
+    print("   F5 - Save game, F9 - Load game")
     print("   ESC - Quit")
 end
 
@@ -78,6 +82,7 @@ function love.update(dt)
     resourceDisplay.update(dt)
     shop.update(dt)
     threats.update(dt)
+    adminMode.update(dt)
     
     -- Auto-save system
     autoSaveTimer = autoSaveTimer + dt
@@ -112,15 +117,24 @@ function love.draw()
     -- Clear screen with dark background
     love.graphics.clear(0.05, 0.05, 0.1, 1)
     
-    -- Draw resource display system
-    resourceDisplay.draw()
-    
-    -- Draw shop system
-    shop.draw()
-    
-    -- Draw shop toggle button
-    if not shop.isOpen() then
-        drawShopButton()
+    -- Draw Admin's Watch interface (if active)
+    if adminMode.isActive() then
+        adminMode.draw()
+    else
+        -- Draw regular idle game interface
+        -- Draw resource display system
+        resourceDisplay.draw()
+        
+        -- Draw shop system
+        shop.draw()
+        
+        -- Draw shop toggle button
+        if not shop.isOpen() then
+            drawShopButton()
+        end
+        
+        -- Draw mode toggle button
+        drawAdminModeButton()
     end
     
     -- Draw debug information
@@ -137,9 +151,19 @@ function love.mousepressed(x, y, button, istouch, presses)
         return
     end
     
+    -- Let Admin's Watch mode handle clicks first (if active)
+    if adminMode.mousepressed(x, y, button) then
+        return -- Click was handled by admin mode
+    end
+    
     -- Let the shop handle clicks first (if open)
     if shop.mousepressed(x, y, button) then
         return -- Click was handled by shop system
+    end
+    
+    -- Check for admin mode button click
+    if checkAdminModeButtonClick(x, y) then
+        return -- Admin mode button was clicked
     end
     
     -- Check for shop button click
@@ -155,6 +179,11 @@ end
 
 -- Handle keyboard input
 function love.keypressed(key)
+    -- Let Admin's Watch mode handle keys first
+    if adminMode.keypressed(key) then
+        return -- Key was handled by admin mode
+    end
+    
     if key == "escape" then
         love.event.quit()
     elseif key == "s" then
@@ -263,6 +292,50 @@ function drawShopButton()
     local text = "Upgrades (U)"
     local textW = love.graphics.getFont():getWidth(text)
     love.graphics.print(text, x + (buttonW - textW) / 2, y + 10)
+end
+
+-- Draw Admin's Watch toggle button
+function drawAdminModeButton()
+    local screenW = love.graphics.getWidth()
+    local buttonW = 150
+    local buttonH = 40
+    local x = screenW - buttonW - 20
+    local y = 70  -- Below the shop button
+    
+    -- Button background
+    if adminMode.isActive() then
+        love.graphics.setColor(0.8, 0.4, 0.2, 0.8)  -- Orange when active
+    else
+        love.graphics.setColor(0.2, 0.2, 0.3, 0.8)  -- Dark when inactive
+    end
+    love.graphics.rectangle("fill", x, y, buttonW, buttonH)
+    
+    -- Button border
+    love.graphics.setColor(0.4, 0.4, 0.5, 1.0)
+    love.graphics.setLineWidth(2)
+    love.graphics.rectangle("line", x, y, buttonW, buttonH)
+    
+    -- Button text
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.setFont(love.graphics.newFont(14))
+    local text = adminMode.isActive() and "🏢 Admin Mode (A)" or "🎯 Admin's Watch (A)"
+    local textW = love.graphics.getFont():getWidth(text)
+    love.graphics.print(text, x + (buttonW - textW) / 2, y + 12)
+end
+
+-- Check if admin mode button was clicked
+function checkAdminModeButtonClick(x, y)
+    local screenW = love.graphics.getWidth()
+    local buttonW = 150
+    local buttonH = 40
+    local buttonX = screenW - buttonW - 20
+    local buttonY = 70
+    
+    if x >= buttonX and x <= buttonX + buttonW and y >= buttonY and y <= buttonY + buttonH then
+        adminMode.toggle()
+        return true
+    end
+    return false
 end
 
 -- Check if shop button was clicked
