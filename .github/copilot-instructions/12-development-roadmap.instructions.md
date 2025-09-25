@@ -4,33 +4,7 @@
 
 ### Phase 1 - Foundation (Weeks 1-2)
 **Core Objectives:**
-- Establish basic game loop and mechanics
-- Implement fundamental resource system
-- Create minimal viable product
-
-**Deliverables:**
-- Basic resource generation and clicking mechanics
-- Simple upgrade system
-- Basic threat system
-- Core UI framework
-
-**Phase 1 Feature Branches:**
-- `feature/manual-data-harvest` - Clickable data generation
-- `feature/basic-server-farm` - First automated resource generation
-- `feature/processing-cores` - Processing power multiplier system
-- `feature/basic-firewall` - Simple defense mechanism
-- `feature/core-ui` - Basic interface and resource display
-
-### Phase 2 - Expansion (Weeks 3-4)
-**Core Objectives:**
-- Expand upgrade variety and complexity
-- Introduce multiple resource types
-- Implement zone system foundation
-- Add basic faction mechanics
-
-**Deliverables:**
-- Advanced upgrade trees
-# Development Roadmap & Git Workflow Integration
+## Development Roadmap & Git Workflow Integration
 
 ## Development Phases
 
@@ -173,8 +147,8 @@ Provide CI pipeline examples when repo CI is configured. Typical steps: install 
 ## Project Management and Tracking
 
 Use issues, PR templates, and milestone tracking to manage scope. Prioritize small, testable features.
-- **System Documentation:** High-level overview of each major system
-- **API Documentation:** Document all external interfaces
+
+## Documentation
 
 ### Player Documentation
 - **Game Manual:** Comprehensive guide to all game mechanics
