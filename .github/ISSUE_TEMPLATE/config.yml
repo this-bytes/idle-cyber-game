@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Discord Community
+    url: https://discord.gg/cybertycoon
+    about: Join our Discord server for real-time chat, gameplay tips, and community discussions
+  - name: 📖 Game Documentation
+    url: https://github.com/this-bytes/idle-cyber-game/wiki
+    about: Check the wiki for gameplay guides, development docs, and frequently asked questions
+  - name: 🎮 Game Releases
+    url: https://github.com/this-bytes/idle-cyber-game/releases
+    about: Download the latest version of Cyberspace Tycoon
