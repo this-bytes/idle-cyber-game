@@ -39,3 +39,10 @@ luac.out
 *.x86_64
 *.hex
 
+# LÖVE-specific
+*.love
+
+# Temporary issue creation files
+/tmp/
+/temp/
+
