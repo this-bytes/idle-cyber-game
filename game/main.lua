@@ -6,6 +6,8 @@ local resources = require("resources")
 local resourceDisplay = require("display")
 local shop = require("shop")
 local threats = require("threats")
+local adminMode = require("admin_mode")
+local achievements = require("achievements")
 local format = require("format")
 
 -- Game state
@@ -31,17 +33,43 @@ function love.load()
     love.graphics.setDefaultFilter("nearest", "nearest")
     love.window.setTitle("Cyberspace Tycoon - Idle Cybersecurity Game")
     
-    -- Initialize game systems
-    resources.init()
-    resourceDisplay.init()
-    shop.init()
-    threats.init()
+    -- Set window size to be reasonable
+    love.window.setMode(1024, 768, {resizable=true, minwidth=800, minheight=600})
+    
+    -- Initialize game systems with error handling
+    local success, error_msg = pcall(function()
+        resources.init()
+        resourceDisplay.init()
+        shop.init()
+        threats.init()
+        adminMode.init()
+        achievements.init()
+        
+        -- Try to load saved game
+        loadGame()
+    end)
+    
+    if not success then
+        print("Error during initialization: " .. tostring(error_msg))
+        -- Continue with default values
+    end
     
     gameState.initialized = true
     
-    print("Cyberspace Tycoon initialized successfully!")
-    print("Click on the resource panel to earn Data Bits!")
-    print("Press 'U' to open upgrades, 'S' for stats, 'F' for FPS, 'D' for debug mode")
+    print("=== Cyberspace Tycoon ===")
+    print("🚀 Welcome to the cybersecurity empire!")
+    print("💡 Click on resources to earn Data Bits!")
+    print("⌨️  Controls:")
+    print("   A - The Admin's Watch (Real-time mode)")
+    print("   U - Upgrades shop")
+    print("   H - Achievements & Progress")
+    print("   S - Detailed stats")
+    print("   F - FPS display")
+    print("   D - Debug mode")
+    print("   P - Pause game")
+    print("   C - Compact display")
+    print("   F5 - Save game, F9 - Load game")
+    print("   ESC - Quit")
 end
 
 -- Update game logic
@@ -57,6 +85,15 @@ function love.update(dt)
     resourceDisplay.update(dt)
     shop.update(dt)
     threats.update(dt)
+    adminMode.update(dt)
+    achievements.update(dt)
+    
+    -- Auto-save system
+    autoSaveTimer = autoSaveTimer + dt
+    if autoSaveTimer >= AUTO_SAVE_INTERVAL then
+        autoSaveTimer = 0
+        saveGame()
+    end
     
     -- Update performance tracking
     performance.updateTime = love.timer.getTime() - updateStart
@@ -84,15 +121,24 @@ function love.draw()
     -- Clear screen with dark background
     love.graphics.clear(0.05, 0.05, 0.1, 1)
     
-    -- Draw resource display system
-    resourceDisplay.draw()
-    
-    -- Draw shop system
-    shop.draw()
-    
-    -- Draw shop toggle button
-    if not shop.isOpen() then
-        drawShopButton()
+    -- Draw Admin's Watch interface (if active)
+    if adminMode.isActive() then
+        adminMode.draw()
+    else
+        -- Draw regular idle game interface
+        -- Draw resource display system
+        resourceDisplay.draw()
+        
+        -- Draw shop system
+        shop.draw()
+        
+        -- Draw shop toggle button
+        if not shop.isOpen() then
+            drawShopButton()
+        end
+        
+        -- Draw mode toggle button
+        drawAdminModeButton()
     end
     
     -- Draw debug information
@@ -109,9 +155,19 @@ function love.mousepressed(x, y, button, istouch, presses)
         return
     end
     
+    -- Let Admin's Watch mode handle clicks first (if active)
+    if adminMode.mousepressed(x, y, button) then
+        return -- Click was handled by admin mode
+    end
+    
     -- Let the shop handle clicks first (if open)
     if shop.mousepressed(x, y, button) then
         return -- Click was handled by shop system
+    end
+    
+    -- Check for admin mode button click
+    if checkAdminModeButtonClick(x, y) then
+        return -- Admin mode button was clicked
     end
     
     -- Check for shop button click
@@ -127,6 +183,11 @@ end
 
 -- Handle keyboard input
 function love.keypressed(key)
+    -- Let Admin's Watch mode handle keys first
+    if adminMode.keypressed(key) then
+        return -- Key was handled by admin mode
+    end
+    
     if key == "escape" then
         love.event.quit()
     elseif key == "s" then
@@ -139,11 +200,12 @@ function love.keypressed(key)
         resourceDisplay.toggleCompactMode()
     elseif key == "p" then
         gameState.paused = not gameState.paused
+        print(gameState.paused and "⏸️  Game paused" or "▶️  Game resumed")
     elseif key == "r" and gameState.debugMode then
         -- Debug: reset game state
         resources.init()
         resourceDisplay.init()
-        print("Game state reset!")
+        print("🔄 Game state reset!")
     elseif key == "space" then
         -- Alternative click method (accessibility)
         local screenW = love.graphics.getWidth()
@@ -152,6 +214,16 @@ function love.keypressed(key)
     elseif key == "u" then
         -- Toggle shop
         shop.toggle()
+    elseif key == "h" then
+        -- Show achievements
+        achievements.showAchievements()
+    elseif key == "f5" then
+        -- Manual save
+        saveGame()
+    elseif key == "f9" then
+        -- Manual load
+        loadGame()
+        resourceDisplay.init()  -- Refresh display
     end
 end
 
@@ -229,6 +301,50 @@ function drawShopButton()
     love.graphics.print(text, x + (buttonW - textW) / 2, y + 10)
 end
 
+-- Draw Admin's Watch toggle button
+function drawAdminModeButton()
+    local screenW = love.graphics.getWidth()
+    local buttonW = 150
+    local buttonH = 40
+    local x = screenW - buttonW - 20
+    local y = 70  -- Below the shop button
+    
+    -- Button background
+    if adminMode.isActive() then
+        love.graphics.setColor(0.8, 0.4, 0.2, 0.8)  -- Orange when active
+    else
+        love.graphics.setColor(0.2, 0.2, 0.3, 0.8)  -- Dark when inactive
+    end
+    love.graphics.rectangle("fill", x, y, buttonW, buttonH)
+    
+    -- Button border
+    love.graphics.setColor(0.4, 0.4, 0.5, 1.0)
+    love.graphics.setLineWidth(2)
+    love.graphics.rectangle("line", x, y, buttonW, buttonH)
+    
+    -- Button text
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.setFont(love.graphics.newFont(14))
+    local text = adminMode.isActive() and "🏢 Admin Mode (A)" or "🎯 Admin's Watch (A)"
+    local textW = love.graphics.getFont():getWidth(text)
+    love.graphics.print(text, x + (buttonW - textW) / 2, y + 12)
+end
+
+-- Check if admin mode button was clicked
+function checkAdminModeButtonClick(x, y)
+    local screenW = love.graphics.getWidth()
+    local buttonW = 150
+    local buttonH = 40
+    local buttonX = screenW - buttonW - 20
+    local buttonY = 70
+    
+    if x >= buttonX and x <= buttonX + buttonW and y >= buttonY and y <= buttonY + buttonH then
+        adminMode.toggle()
+        return true
+    end
+    return false
+end
+
 -- Check if shop button was clicked
 function checkShopButtonClick(x, y)
     local screenW = love.graphics.getWidth()
@@ -244,8 +360,74 @@ function checkShopButtonClick(x, y)
     return false
 end
 
+-- Save/Load functionality
+function saveGame()
+    local saveData = {
+        resources = resources.save(),
+        achievements = achievements.save(),
+        version = "0.2.0",
+        timestamp = os.time()
+    }
+    
+    local success, error_msg = pcall(function()
+        local serialized = serialize(saveData)
+        love.filesystem.write("savegame.lua", serialized)
+        print("Game saved successfully!")
+    end)
+    
+    if not success then
+        print("Save failed: " .. tostring(error_msg))
+    end
+end
+
+function loadGame()
+    if love.filesystem.getInfo("savegame.lua") then
+        local success, saveData = pcall(function()
+            local saveString = love.filesystem.read("savegame.lua")
+            return loadstring("return " .. saveString)()
+        end)
+        
+        if success and saveData then
+            if saveData.version and saveData.resources then
+                resources.load(saveData.resources)
+                if saveData.achievements then
+                    achievements.load(saveData.achievements)
+                end
+                print("Game loaded successfully! (saved " .. 
+                      os.date("%Y-%m-%d %H:%M:%S", saveData.timestamp) .. ")")
+            else
+                print("Save file corrupted, starting fresh")
+            end
+        else
+            print("Could not load save file, starting fresh")
+        end
+    end
+end
+
+-- Simple serialization for save data
+function serialize(t)
+    local result = "{"
+    for k, v in pairs(t) do
+        if type(v) == "table" then
+            result = result .. k .. "=" .. serialize(v) .. ","
+        elseif type(v) == "string" then
+            result = result .. k .. "=\"" .. v .. "\","
+        else
+            result = result .. k .. "=" .. tostring(v) .. ","
+        end
+    end
+    result = result .. "}"
+    return result
+end
+
+-- Auto-save every 30 seconds
+local autoSaveTimer = 0
+local AUTO_SAVE_INTERVAL = 30
+
 -- Clean shutdown
 function love.quit()
+    print("💾 Saving game before exit...")
+    saveGame()
     print("Thanks for playing Cyberspace Tycoon!")
     return false
 end
