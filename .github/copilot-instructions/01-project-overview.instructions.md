@@ -50,16 +50,16 @@
 
 This project uses a modular approach to copilot instructions. Each aspect of development has its own focused instruction file:
 
-- `02-game-story-narrative.md` - World setting, factions, and narrative context
-- `03-core-mechanics.md` - Resources, generation systems, and upgrade mechanics
-- `04-defense-threat-systems.md` - Threat classification and defense infrastructure
-- `05-progression-prestige.md` - Character advancement and prestige systems
-- `06-events-encounters.md` - Dynamic events and faction relations
-- `07-endgame-meta.md` - Endgame content and meta-progression
-- `08-quality-accessibility.md` - Quality of life and accessibility features
-- `09-balancing-math.md` - Mathematical frameworks and balancing
-- `10-ui-design.md` - Visual design and interface goals
-- `11-technical-architecture.md` - Platform considerations and optimization
-- `12-development-roadmap.md` - Development phases and roadmap
+- `02-game-story-narrative.instructions.md` - World setting, factions, and narrative context
+- `03-core-mechanics.instructions.md` - Resources, generation systems, and upgrade mechanics
+- `04-defense-threat-systems.instructions.md` - Threat classification and defense infrastructure
+- `05-progression-prestige.instructions.md` - Character advancement and prestige systems
+- `06-events-encounters.instructions.md` - Dynamic events and faction relations
+- `07-endgame-meta.instructions.md` - Endgame content and meta-progression
+- `08-quality-accessibility.instructions.md` - Quality of life and accessibility features
+- `09-balancing-math.instructions.md` - Mathematical frameworks and balancing
+- `10-ui-design.instructions.md` - Visual design and interface goals
+- `11-technical-architecture.instructions.md` - Platform considerations and optimization
+- `12-development-roadmap.instructions.md` - Development phases and roadmap
 
 When working on specific features, reference the appropriate instruction file for detailed guidance on that aspect of the game.
