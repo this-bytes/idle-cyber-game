@@ -5,6 +5,7 @@ local Game = {}
 
 -- Import game systems
 local ResourceSystem = require("src.systems.resource_system")
+local SkillSystem = require("src.systems.skill_system")  -- NEW: Skill system
 local ProgressionSystem = require("src.systems.progression_system")  -- NEW: Comprehensive progression
 local UpgradeSystem = require("src.systems.upgrade_system")
 local ThreatSystem = require("src.systems.threat_system")
@@ -72,10 +73,13 @@ function Game.init()
     -- Make gameState accessible to systems/modes for cross-cutting data (e.g., loaded player state)
     gameState.systems.gameState = gameState
     gameState.systems.resources = ResourceSystem.new(gameState.systems.eventBus)
+    gameState.systems.skills = SkillSystem.new(gameState.systems.eventBus)  -- NEW: Skill system
+    gameState.systems.progression = ProgressionSystem.new(gameState.systems.eventBus)  -- NEW: Progression system
     gameState.systems.progression = ProgressionSystem.new(gameState.systems.eventBus, gameState.systems.resources)  -- NEW: Progression system (need resources)
     gameState.systems.contracts = ContractSystem.new(gameState.systems.eventBus)  -- NEW: Contract system
     gameState.systems.contracts:setResourceSystem(gameState.systems.resources)  -- NEW: Connect systems
     gameState.systems.specialists = SpecialistSystem.new(gameState.systems.eventBus)  -- NEW: Specialist system
+    gameState.systems.specialists:setSkillSystem(gameState.systems.skills)  -- NEW: Connect skill system
     gameState.systems.upgrades = UpgradeSystem.new(gameState.systems.eventBus)
     gameState.systems.threats = ThreatSystem.new(gameState.systems.eventBus)
     -- Initialize idle system after core systems (needs resources, threats, upgrades)
@@ -180,6 +184,7 @@ end
 -- Load game state from saved data
 function Game.loadGameState(data)
     gameState.systems.resources:loadState(data.resources or {})
+    gameState.systems.skills:loadState(data.skills or {})  -- NEW: Load skill state
     gameState.systems.progression:loadState(data.progression or {})  -- NEW: Load progression state
     gameState.systems.contracts:loadState(data.contracts or {})  -- NEW: Load contract state
     gameState.systems.specialists:loadState(data.specialists or {})  -- NEW: Load specialist state
@@ -418,6 +423,7 @@ function Game.save()
     
     local saveData = {
         resources = gameState.systems.resources:getState(),
+        skills = gameState.systems.skills:getState(),  -- NEW: Save skill state
         progression = gameState.systems.progression:getState(),  -- NEW: Save progression state
         contracts = gameState.systems.contracts:getState(),  -- NEW: Save contract state
         specialists = gameState.systems.specialists:getState(),  -- NEW: Save specialist state

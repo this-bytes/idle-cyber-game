@@ -85,7 +85,6 @@ function ProgressionSystem:loadProgressionData()
 function ProgressionSystem:loadProgressionConfig()
     local dataPath = "src/data/progression.json"
     local config = nil
-
     
     -- Try to load from file system
     if love and love.filesystem and love.filesystem.getInfo then
