@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Cyberspace Tycoon - Data Editor</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+      body { font-family: Arial, sans-serif; background:#071022; color:#e6f6ff; padding:20px }
+      textarea { width:100%; height:360px; font-family: monospace; font-size:13px; background:#04101a; color:#dff; border:1px solid #234; }
+      .controls { margin:8px 0 }
+      button { background:#0ff; color:#012; border:none; padding:8px 12px; margin-right:6px; cursor:pointer }
+      .muted { color:#99b }
+      .status { margin-top:8px; font-size:13px }
+    </style>
+  </head>
+  <body>
+    <h1>Data Editor</h1>
+    <p class="muted">Edit core tuning data (contracts.json / defs.json). Changes are validated before saving.</p>
+
+    <div>
+      <label><strong>defs.json</strong></label>
+      <div class="controls">
+        <button id="loadDefs">Load defs.json</button>
+        <button id="saveDefs">Save defs.json</button>
+      </div>
+      <textarea id="defsArea" spellcheck="false"></textarea>
+      <div id="defsStatus" class="status"></div>
+    </div>
+
+    <hr style="margin:20px 0; border-color:#123" />
+
+    <div>
+      <label><strong>contracts.json</strong></label>
+      <div class="controls">
+        <button id="loadContracts">Load contracts.json</button>
+        <button id="saveContracts">Save contracts.json</button>
+      </div>
+      <textarea id="contractsArea" spellcheck="false"></textarea>
+      <div id="contractsStatus" class="status"></div>
+    </div>
+
+    <script src="/static/admin.js"></script>
+  </body>
+</html>

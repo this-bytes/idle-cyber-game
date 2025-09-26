@@ -3,14 +3,19 @@ Flask REST API for Cyberspace Tycoon idle game backend.
 Provides endpoints for game client and admin panel functionality.
 """
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from datetime import datetime
 import os
 
 from game_data import db, Player, GlobalGameState, init_db
+import json as pyjson
+from flask import send_file
+from functools import wraps
+from pathlib import Path
 
 # Initialize Flask app
-app = Flask(__name__)
+static_dir = os.path.join(os.path.dirname(__file__), 'static')
+app = Flask(__name__, static_folder=static_dir, static_url_path='/static')
 
 # Configure SQLite database
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -294,6 +299,92 @@ def update_global_state():
         return jsonify({'error': f'Failed to update global state: {str(e)}'}), 500
 
 
+# ===== DATA FILE ENDPOINTS (for tuning) =====
+DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'src', 'data')
+DATA_DIR = os.path.normpath(DATA_DIR)
+
+def safe_join(base, *paths):
+    p = os.path.normpath(os.path.join(base, *paths))
+    if not p.startswith(base):
+        raise ValueError("Invalid path")
+    return p
+
+def atomic_write(path, content):
+    tmp = path + '.tmp'
+    with open(tmp, 'w', encoding='utf-8') as f:
+        f.write(content)
+    os.replace(tmp, path)
+
+def validate_contracts_json(data):
+    if not isinstance(data, list):
+        return False, 'contracts must be a JSON array'
+    for entry in data:
+        if not isinstance(entry, dict) or 'id' not in entry:
+            return False, 'each contract must be an object with an id field'
+    return True, None
+
+def validate_defs_json(data):
+    if not isinstance(data, dict):
+        return False, 'defs must be a JSON object'
+    if 'Resources' not in data or 'Departments' not in data or 'GameModes' not in data:
+        return False, 'defs must include Resources, Departments, and GameModes'
+    return True, None
+
+
+@app.route('/admin/data/contracts', methods=['GET'])
+def get_contracts_data():
+    try:
+        path = safe_join(DATA_DIR, 'contracts.json')
+        with open(path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        return app.response_class(content, mimetype='application/json')
+    except Exception as e:
+        return jsonify({'error': f'Failed to read contracts.json: {str(e)}'}), 500
+
+
+@app.route('/admin/data/contracts', methods=['PUT'])
+def put_contracts_data():
+    try:
+        data = request.get_json()
+        if data is None:
+            return jsonify({'error': 'No JSON provided'}), 400
+        ok, err = validate_contracts_json(data)
+        if not ok:
+            return jsonify({'error': err}), 400
+        path = safe_join(DATA_DIR, 'contracts.json')
+        atomic_write(path, pyjson.dumps(data, indent=2))
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        return jsonify({'error': f'Failed to write contracts.json: {str(e)}'}), 500
+
+
+@app.route('/admin/data/defs', methods=['GET'])
+def get_defs_data():
+    try:
+        path = safe_join(DATA_DIR, 'defs.json')
+        with open(path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        return app.response_class(content, mimetype='application/json')
+    except Exception as e:
+        return jsonify({'error': f'Failed to read defs.json: {str(e)}'}), 500
+
+
+@app.route('/admin/data/defs', methods=['PUT'])
+def put_defs_data():
+    try:
+        data = request.get_json()
+        if data is None:
+            return jsonify({'error': 'No JSON provided'}), 400
+        ok, err = validate_defs_json(data)
+        if not ok:
+            return jsonify({'error': err}), 400
+        path = safe_join(DATA_DIR, 'defs.json')
+        atomic_write(path, pyjson.dumps(data, indent=2))
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        return jsonify({'error': f'Failed to write defs.json: {str(e)}'}), 500
+
+
 # ===== HEALTH CHECK ENDPOINT =====
 
 @app.route('/health', methods=['GET'])
@@ -305,6 +396,17 @@ def health_check():
         'version': '1.0.0',
         'timestamp': datetime.utcnow().isoformat()
     }), 200
+
+
+@app.route('/admin')
+def admin_ui():
+    """Serve the admin UI HTML from the static folder."""
+    try:
+        return send_from_directory(static_dir, 'admin.html')
+    except Exception:
+        # Fallback: serve index file if present
+        return send_from_directory(static_dir, 'admin.html')
+
 
 
 # ===== ERROR HANDLERS =====
