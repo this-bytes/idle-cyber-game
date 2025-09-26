@@ -9,6 +9,9 @@ function ContractSystem.new(eventBus)
     local self = setmetatable({}, ContractSystem)
     self.eventBus = eventBus
     
+    -- Store reference to resource system for checking requirements
+    self.resourceSystem = nil -- Will be set externally or retrieved via event bus
+    
     -- Active contracts
     self.activeContracts = {}
     
@@ -18,7 +21,7 @@ function ContractSystem.new(eventBus)
     -- Contract generation parameters
     self.nextContractId = 1
     self.contractGenerationTimer = 0
-    self.contractGenerationInterval = 30 -- Generate new contract every 30 seconds
+    self.contractGenerationInterval = 15 -- Generate new contract every 15 seconds (reduced from 30 for better idle flow)
     
     -- Client types and their properties
     self.clientTypes = {
@@ -74,6 +77,11 @@ function ContractSystem.new(eventBus)
     return self
 end
 
+-- Set resource system reference for checking unlock requirements
+function ContractSystem:setResourceSystem(resourceSystem)
+    self.resourceSystem = resourceSystem
+end
+
 -- Update contract system
 function ContractSystem:update(dt)
     -- Update active contracts
@@ -115,8 +123,8 @@ function ContractSystem:generateContract(clientType)
         -- Financial details
         totalBudget = math.random(clientData.budgetRange[1], clientData.budgetRange[2]),
         duration = math.random(clientData.durationRange[1], clientData.durationRange[2]),
-        originalDuration = 0, -- Set when contract is accepted
-        remainingTime = 0,
+        originalDuration = 0, -- Will be set when contract is accepted
+        remainingTime = 0, -- Will be set when contract is accepted
         
         -- Rewards
         reputationReward = math.random(clientData.reputationReward[1], clientData.reputationReward[2]),
@@ -130,24 +138,34 @@ function ContractSystem:generateContract(clientType)
         acceptedTime = 0
     }
     
-    contract.originalDuration = contract.duration
-    contract.remainingTime = contract.duration
-    
     self.nextContractId = self.nextContractId + 1
     
     return contract
 end
 
--- Generate a random contract based on reputation level
+-- Generate a random contract based on reputation level  
 function ContractSystem:generateRandomContract()
-    -- TODO: Get reputation from resource system
-    local reputation = 0 -- Placeholder
+    -- Get current reputation from resource system (simplified approach)
+    local currentReputation = 0
+    local currentMissionTokens = 0
+    
+    -- If resource system is available, get actual values
+    if self.resourceSystem then
+        currentReputation = self.resourceSystem:getResource("reputation") or 0
+        currentMissionTokens = self.resourceSystem:getResource("missionTokens") or 0
+    end
     
     local availableTypes = {}
     for clientType, data in pairs(self.clientTypes) do
         local canUnlock = true
         if data.unlockRequirement then
-            -- TODO: Check unlock requirements against actual resources
+            -- Check unlock requirements against actual resources
+            if data.unlockRequirement.reputation and currentReputation < data.unlockRequirement.reputation then
+                canUnlock = false
+            end
+            if data.unlockRequirement.missionTokens and currentMissionTokens < data.unlockRequirement.missionTokens then
+                canUnlock = false
+            end
         end
         
         if canUnlock then
@@ -177,6 +195,10 @@ function ContractSystem:acceptContract(contractId)
     -- Move to active contracts
     contract.status = "active"
     contract.acceptedTime = (love and love.timer and love.timer.getTime()) or os.clock()
+    
+    -- Critical fix: Properly initialize duration and remaining time
+    contract.originalDuration = contract.duration
+    contract.remainingTime = contract.duration
     
     self.activeContracts[contractId] = contract
     self.availableContracts[contractId] = nil

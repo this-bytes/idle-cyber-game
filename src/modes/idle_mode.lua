@@ -130,6 +130,52 @@ function IdleMode:draw()
                       leftPanelX + 30, contractY + 10, theme:getColor("warning"))
     end
     
+    -- Active contracts panel (NEW: Show running contracts for better idle feedback)
+    y = y + 200
+    theme:drawPanel(leftPanelX, y, panelWidth * 2 + 20, 160, "ACTIVE CONTRACTS")
+    local activeY = y + 25
+    
+    local activeContracts = self.systems.contracts:getActiveContracts()
+    local activeCount = 0
+    for contractId, contract in pairs(activeContracts) do
+        if activeCount >= 2 then break end -- Show max 2 active contracts
+        
+        -- Calculate progress
+        local progress = 1.0 - (contract.remainingTime / contract.originalDuration)
+        local progressPercent = math.floor(progress * 100)
+        local incomeRate = contract.totalBudget / contract.originalDuration
+        
+        -- Contract display
+        theme:drawText("►", leftPanelX + 10, activeY, theme:getColor("success"))
+        theme:drawText(contract.clientName, leftPanelX + 30, activeY, theme:getColor("primary"))
+        activeY = activeY + 15
+        
+        -- Progress bar
+        local barWidth = panelWidth * 2 - 40
+        local progressWidth = math.floor(barWidth * progress)
+        
+        -- Draw progress bar background
+        love.graphics.setColor(theme:getColor("muted"))
+        love.graphics.rectangle("fill", leftPanelX + 30, activeY, barWidth, 8)
+        
+        -- Draw progress bar fill
+        love.graphics.setColor(theme:getColor("success"))
+        love.graphics.rectangle("fill", leftPanelX + 30, activeY, progressWidth, 8)
+        
+        activeY = activeY + 12
+        
+        theme:drawText("  PROGRESS: " .. progressPercent .. "% | REMAINING: " .. 
+                      math.ceil(contract.remainingTime) .. "s | INCOME: $" .. 
+                      format.number(incomeRate, 2) .. "/sec", 
+                      leftPanelX + 30, activeY, theme:getColor("dimmed"))
+        activeY = activeY + 25
+        activeCount = activeCount + 1
+    end
+    
+    if activeCount == 0 then
+        theme:drawText("[ NO ACTIVE CONTRACTS - ACCEPT CONTRACTS TO START EARNING ]", leftPanelX + 30, activeY, theme:getColor("muted"))
+    end
+    
     -- Status bar with controls  
     theme:drawStatusBar("READY | [CLICK] Select Contract | [SPACE] Accept Selected | [A] Crisis Mode | [ESC] Quit")
 end

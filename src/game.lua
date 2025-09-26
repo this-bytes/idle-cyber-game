@@ -50,6 +50,7 @@ function Game.init()
     gameState.systems.eventBus = EventBus.new()
     gameState.systems.resources = ResourceSystem.new(gameState.systems.eventBus)
     gameState.systems.contracts = ContractSystem.new(gameState.systems.eventBus)  -- NEW: Contract system
+    gameState.systems.contracts:setResourceSystem(gameState.systems.resources)  -- NEW: Connect systems
     gameState.systems.specialists = SpecialistSystem.new(gameState.systems.eventBus)  -- NEW: Specialist system
     gameState.systems.upgrades = UpgradeSystem.new(gameState.systems.eventBus)
     gameState.systems.threats = ThreatSystem.new(gameState.systems.eventBus)
