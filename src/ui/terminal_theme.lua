@@ -119,9 +119,24 @@ function TerminalTheme:drawHeader(title, subtitle)
     
     -- Main title with ASCII styling
     self:drawText("╔══════════════════════════════════════════════════════════════════════════════════════╗", 10, 10, self.colors.border, false)
-    self:drawText("║  " .. title .. string.rep(" ", 86 - string.len(title) - 4) .. "║", 10, 25, self.colors.secondary)
+    
+    -- Pad title to fit within border (86 chars max)
+    local paddedTitle = title
+    if string.len(title) > 82 then
+        paddedTitle = string.sub(title, 1, 82)
+    end
+    local titlePadding = math.max(0, 82 - string.len(paddedTitle))
+    
+    self:drawText("║  " .. paddedTitle .. string.rep(" ", titlePadding) .. "  ║", 10, 25, self.colors.secondary)
+    
     if subtitle then
-        self:drawText("║  " .. subtitle .. string.rep(" ", 86 - string.len(subtitle) - 4) .. "║", 10, 40, self.colors.dimmed)
+        local paddedSubtitle = subtitle
+        if string.len(subtitle) > 82 then
+            paddedSubtitle = string.sub(subtitle, 1, 82)
+        end
+        local subtitlePadding = math.max(0, 82 - string.len(paddedSubtitle))
+        
+        self:drawText("║  " .. paddedSubtitle .. string.rep(" ", subtitlePadding) .. "  ║", 10, 40, self.colors.dimmed)
         self:drawText("╚══════════════════════════════════════════════════════════════════════════════════════╝", 10, 55, self.colors.border, false)
         return 70 -- Return Y offset for content
     else
@@ -148,8 +163,7 @@ function TerminalTheme:drawStatusBar(statusText)
     
     -- Current time in corner
     local timeStr = os.date("%H:%M:%S")
-    local font = love.graphics.getFont()
-    local textWidth = font:getWidth(timeStr)
+    local textWidth = string.len(timeStr) * 8 -- Approximate character width
     self:drawText(timeStr, width - textWidth - 10, height - 20, self.colors.dimmed)
 end
 
