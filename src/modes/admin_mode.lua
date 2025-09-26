@@ -1,6 +1,8 @@
 -- Admin Mode - "The Admin's Watch" - Crisis Response Mode
 -- Real-time operations mode for handling security incidents
 
+local ConfigLoader = require("src.utils.config_loader")
+
 local AdminMode = {}
 AdminMode.__index = AdminMode
 
@@ -14,8 +16,34 @@ function AdminMode.new(systems)
     self.crisisTimer = 0
     self.responseLog = {}
     
-    -- Sample crisis scenario (TODO: Move to dedicated Crisis System)
-    self.sampleCrisis = {
+    -- Config loader for dynamic crisis scenarios
+    self.configLoader = ConfigLoader.new()
+    
+    -- Load crisis definitions from config file
+    self.crisisDefinitions = self:loadCrisisConfigurations()
+    
+    -- Sample crisis scenario (fallback if config loading fails)
+    self.sampleCrisis = self:getSampleCrisis()
+    
+    return self
+end
+
+-- Load crisis configurations from JSON file
+function AdminMode:loadCrisisConfigurations()
+    local configPath = "data/config/crises.json"
+    local crises = self.configLoader:loadConfig("crises", configPath)
+    
+    if not crises then
+        print("⚠️ Failed to load crisis config, using fallback crises")
+        return {phishing_campaign_001 = self:getSampleCrisis()}
+    end
+    
+    return crises
+end
+
+-- Get sample crisis definition (fallback)
+function AdminMode:getSampleCrisis()
+    return {
         id = "phishing_campaign_001",
         title = "PHISHING CAMPAIGN DETECTED",
         description = "Targeted phishing emails detected across client network",
@@ -44,11 +72,87 @@ function AdminMode.new(systems)
             }
         }
     }
+end
+
+-- Reload crisis configurations from file
+function AdminMode:reloadCrisisConfigurations()
+    local configPath = "data/config/crises.json"
+    local wasUpdated = self.configLoader:checkForUpdates("crises", configPath)
     
-    return self
+    if wasUpdated then
+        self.crisisDefinitions = self.configLoader:getConfig("crises")
+        print("🔄 Crisis configurations reloaded")
+        
+        -- If we have an active crisis, update it if the config changed
+        if self.currentCrisis then
+            local updatedCrisis = self.crisisDefinitions[self.currentCrisis.id]
+            if updatedCrisis then
+                -- Preserve current progress but update stages and options
+                local savedTimer = self.crisisTimer
+                self.currentCrisis = self:deepCopy(updatedCrisis)
+                self.crisisTimer = savedTimer
+                print("🔄 Updated active crisis configuration")
+            end
+        end
+        
+        return true
+    end
+    
+    return false
+end
+
+-- Deep copy table (for crisis updates)
+function AdminMode:deepCopy(original)
+    local originalType = type(original)
+    local copy
+    if originalType == 'table' then
+        copy = {}
+        for originalKey, originalValue in next, original, nil do
+            copy[self:deepCopy(originalKey)] = self:deepCopy(originalValue)
+        end
+        setmetatable(copy, self:deepCopy(getmetatable(original)))
+    else
+        copy = original
+    end
+    return copy
+end
+
+-- Trigger a specific crisis by ID
+function AdminMode:triggerCrisis(crisisId)
+    local crisisDef = self.crisisDefinitions[crisisId]
+    if not crisisDef then
+        print("❌ Crisis not found: " .. tostring(crisisId))
+        return false
+    end
+    
+    self.currentCrisis = self:deepCopy(crisisDef)
+    self.crisisTimer = 0
+    self.responseLog = {}
+    
+    table.insert(self.responseLog, "🚨 CRISIS INITIATED: " .. self.currentCrisis.title)
+    print("🚨 Crisis triggered: " .. self.currentCrisis.title)
+    return true
+end
+
+-- Trigger random crisis for testing
+function AdminMode:triggerRandomCrisis()
+    local crisisIds = {}
+    for id, _ in pairs(self.crisisDefinitions) do
+        table.insert(crisisIds, id)
+    end
+    
+    if #crisisIds > 0 then
+        local randomId = crisisIds[math.random(#crisisIds)]
+        return self:triggerCrisis(randomId)
+    end
+    
+    return false
 end
 
 function AdminMode:update(dt)
+    -- Check for configuration updates (hot-reload)
+    self:reloadCrisisConfigurations()
+    
     -- Update crisis timer if in crisis
     if self.currentCrisis then
         self.crisisTimer = self.crisisTimer + dt
@@ -184,9 +288,18 @@ function AdminMode:keypressed(key)
             self:handleCrisisResponse(key)
         end
     else
-        -- No active crisis
+        -- No active crisis - monitoring mode
         if key == "c" then
-            self:startCrisis()
+            self:startCrisis() -- Legacy crisis start
+        elseif key == "t" then
+            -- Trigger random crisis from config
+            if not self:triggerRandomCrisis() then
+                self:startCrisis() -- Fallback to legacy
+            end
+        elseif key == "r" then
+            -- Reload configurations manually
+            self:reloadCrisisConfigurations()
+            print("🔄 Manually reloaded crisis configurations")
         end
     end
 end

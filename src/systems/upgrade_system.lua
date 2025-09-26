@@ -1,6 +1,8 @@
 -- Upgrade Management System
 -- Handles all upgrades, their costs, effects, and progression
 
+local ConfigLoader = require("src.utils.config_loader")
+
 local UpgradeSystem = {}
 UpgradeSystem.__index = UpgradeSystem
 
@@ -12,11 +14,17 @@ function UpgradeSystem.new(eventBus)
     -- Player's owned upgrades
     self.owned = {}
     
+    -- Config loader for dynamic upgrades
+    self.configLoader = ConfigLoader.new()
+    
+    -- Load upgrade definitions from config file
+    self.upgrades = self:loadUpgradeConfigurations()
+    
     -- Subscribe to events
     self:subscribeToEvents()
     
-    -- Upgrade definitions from instruction files
-    self.upgrades = {
+    -- Legacy hardcoded upgrades (fallback if config fails)
+    self.fallbackUpgrades = {
         -- Manual Clicking Upgrades (Phase 1)
         ergonomicMouse = {
             id = "ergonomicMouse",
@@ -206,6 +214,74 @@ function UpgradeSystem.new(eventBus)
     return self
 end
 
+-- Load upgrade configurations from JSON file
+function UpgradeSystem:loadUpgradeConfigurations()
+    local configPath = "data/config/upgrades.json"
+    local upgrades = self.configLoader:loadConfig("upgrades", configPath)
+    
+    if not upgrades then
+        print("⚠️ Failed to load upgrade config, using fallback upgrades")
+        return self.fallbackUpgrades
+    end
+    
+    return upgrades
+end
+
+-- Reload upgrade configurations from file
+function UpgradeSystem:reloadUpgradeConfigurations()
+    local configPath = "data/config/upgrades.json"
+    local wasUpdated = self.configLoader:checkForUpdates("upgrades", configPath)
+    
+    if wasUpdated then
+        self.upgrades = self.configLoader:getConfig("upgrades")
+        print("🔄 Upgrade configurations reloaded")
+        
+        -- Re-initialize unlocked upgrades
+        self:initializeUnlockedUpgrades()
+        
+        -- Publish reload event
+        self.eventBus:publish("upgrades_reloaded", {
+            upgrades = self.upgrades
+        })
+        
+        return true
+    end
+    
+    return false
+end
+
+-- Update specific upgrade configuration (for admin panel)
+function UpgradeSystem:updateUpgradeConfig(upgradeId, upgradeData)
+    local success = self.configLoader:updateConfigItem("upgrades", upgradeId, upgradeData)
+    if success then
+        self.upgrades[upgradeId] = upgradeData
+        
+        -- Save to file
+        local configPath = "data/config/upgrades.json"
+        self.configLoader:saveConfig("upgrades", configPath)
+        
+        -- Publish update event
+        self.eventBus:publish("upgrade_config_updated", {
+            upgradeId = upgradeId,
+            upgrade = upgradeData
+        })
+        
+        print("🔧 Updated upgrade config: " .. upgradeId)
+        return true
+    end
+    return false
+end
+
+-- Get upgrade configuration for admin panel
+function UpgradeSystem:getUpgradeConfig(upgradeId)
+    return self.configLoader:getConfigItem("upgrades", upgradeId)
+end
+
+-- Get all upgrade configurations for admin panel  
+function UpgradeSystem:getAllUpgradeConfigs()
+    return self.configLoader:getConfig("upgrades")
+end
+
 -- Initialize basic upgrades as unlocked
 function UpgradeSystem:initializeUnlockedUpgrades()
     -- Unlock basic starting upgrades
@@ -220,6 +296,9 @@ end
 
 -- Update upgrade system
 function UpgradeSystem:update(dt)
+    -- Check for configuration updates (hot-reload)
+    self:reloadUpgradeConfigurations()
+    
     -- Check for newly unlocked upgrades
     self:checkUpgradeUnlocks()
 end

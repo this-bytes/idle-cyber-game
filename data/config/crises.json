@@ -1,0 +1,125 @@
+{
+  "phishing_campaign_001": {
+    "id": "phishing_campaign_001",
+    "title": "PHISHING CAMPAIGN DETECTED",
+    "description": "Targeted phishing emails detected across client network",
+    "severity": "HIGH",
+    "timeLimit": 300,
+    "stages": [
+      {
+        "name": "Initial Detection",
+        "description": "Unusual email traffic patterns detected",
+        "complete": true
+      },
+      {
+        "name": "Analysis Required",
+        "description": "Determine scope and impact of phishing campaign",
+        "complete": false,
+        "options": [
+          {
+            "key": "1",
+            "action": "Deploy Incident Responder",
+            "cost": "specialist_time"
+          },
+          {
+            "key": "2", 
+            "action": "Run Automated Analysis",
+            "cost": "processing_power"
+          },
+          {
+            "key": "3",
+            "action": "Manual Investigation",
+            "cost": "time"
+          }
+        ]
+      },
+      {
+        "name": "Containment",
+        "description": "Block malicious emails and quarantine affected systems",
+        "complete": false
+      }
+    ]
+  },
+  "ransomware_outbreak": {
+    "id": "ransomware_outbreak",
+    "title": "RANSOMWARE OUTBREAK",
+    "description": "Multiple systems encrypted by ransomware variant",
+    "severity": "CRITICAL", 
+    "timeLimit": 180,
+    "stages": [
+      {
+        "name": "Initial Infection",
+        "description": "Ransomware detected on client workstations",
+        "complete": true
+      },
+      {
+        "name": "Containment",
+        "description": "Isolate infected systems to prevent spread",
+        "complete": false,
+        "options": [
+          {
+            "key": "1",
+            "action": "Emergency Network Isolation",
+            "cost": "mission_tokens"
+          },
+          {
+            "key": "2",
+            "action": "Selective Quarantine",
+            "cost": "reputation"
+          },
+          {
+            "key": "3",
+            "action": "Monitor and Document",
+            "cost": "money"
+          }
+        ]
+      },
+      {
+        "name": "Recovery",
+        "description": "Restore systems from backup and patch vulnerabilities",
+        "complete": false
+      }
+    ]
+  },
+  "data_breach_alert": {
+    "id": "data_breach_alert",
+    "title": "DATA BREACH DETECTED",
+    "description": "Unauthorized access to sensitive client database detected",
+    "severity": "HIGH",
+    "timeLimit": 240,
+    "stages": [
+      {
+        "name": "Breach Confirmation",
+        "description": "Verify scope and nature of data access",
+        "complete": true
+      },
+      {
+        "name": "Damage Assessment",
+        "description": "Determine what data was compromised",
+        "complete": false,
+        "options": [
+          {
+            "key": "1",
+            "action": "Full Database Audit",
+            "cost": "specialist_time"
+          },
+          {
+            "key": "2",
+            "action": "Log Analysis",
+            "cost": "processing_power"
+          },
+          {
+            "key": "3",
+            "action": "Client Interview",
+            "cost": "reputation"
+          }
+        ]
+      },
+      {
+        "name": "Incident Response",
+        "description": "Secure systems and notify stakeholders",
+        "complete": false
+      }
+    ]
+  }
+}
