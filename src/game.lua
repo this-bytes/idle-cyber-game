@@ -12,7 +12,7 @@ local FactionSystem = require("src.systems.faction_system")
 local AchievementSystem = require("src.systems.achievement_system")
 local ContractSystem = require("src.systems.contract_system")  -- NEW: Core business system
 local SpecialistSystem = require("src.systems.specialist_system")  -- NEW: Team management
-local SaveSystem = require("src.systems.save_system")
+local NetworkSaveSystem = require("src.systems.network_save_system")  -- NEW: Network-aware save system
 local EventBus = require("src.utils.event_bus")
 
 -- Import UI systems
@@ -56,7 +56,11 @@ function Game.init()
     gameState.systems.zones = ZoneSystem.new(gameState.systems.eventBus)
     gameState.systems.factions = FactionSystem.new(gameState.systems.eventBus)
     gameState.systems.achievements = AchievementSystem.new(gameState.systems.eventBus)
-    gameState.systems.save = SaveSystem.new()
+    gameState.systems.save = NetworkSaveSystem.new()
+    
+    -- Configure network save system
+    gameState.systems.save:setUsername("player_" .. love.system.getOS() .. "_" .. os.time())
+    gameState.systems.save:setSaveMode("hybrid") -- Default to hybrid mode
     
     -- Initialize UI
     gameState.systems.ui = UIManager.new(gameState.systems.eventBus)
@@ -68,30 +72,39 @@ function Game.init()
     }
     
     -- Try to load saved game
-    local savedData = gameState.systems.save:load()
-    if savedData then
-        Game.loadGameState(savedData)
-        print("📁 Loaded saved game")
-    else
-        -- Initialize with default values
-        Game.initializeDefaultState()
-        print("✨ Starting new game")
-    end
-    
-    gameState.initialized = true
-    
-    print("=== Cyberspace Tycoon ===")
-    print("🔥 Welcome to the cybersecurity empire!")
-    print("⌨️  Controls:")
-    print("   A - Crisis Response Mode (Real-time incident handling)")
-    print("   U - Upgrades shop")
-    print("   H - Achievements & Progress")
-    print("   Z - Zone management")
-    print("   F - Faction relations")
-    print("   S - Statistics")
-    print("   P - Pause game")
-    print("   D - Debug mode")
-    print("   ESC - Quit")
+    gameState.systems.save:load(function(success, savedData)
+        if success and savedData then
+            Game.loadGameState(savedData)
+            
+            -- Apply offline earnings if available
+            if savedData.idleTimeSeconds and savedData.idleTimeSeconds > 0 then
+                savedData = gameState.systems.save:applyOfflineEarnings(savedData, savedData.idleTimeSeconds)
+                Game.loadGameState(savedData) -- Reload with offline earnings applied
+            end
+            
+            print("📁 Loaded saved game")
+        else
+            -- Initialize with default values
+            Game.initializeDefaultState()
+            print("✨ Starting new game")
+        end
+        
+        gameState.initialized = true
+        
+        print("=== Cyberspace Tycoon ===")
+        print("🔥 Welcome to the cybersecurity empire!")
+        print("⌨️  Controls:")
+        print("   A - Crisis Response Mode (Real-time incident handling)")
+        print("   U - Upgrades shop")
+        print("   H - Achievements & Progress")
+        print("   Z - Zone management")
+        print("   F - Faction relations")
+        print("   S - Statistics")
+        print("   P - Pause game")
+        print("   D - Debug mode")
+        print("   N - Network status")
+        print("   ESC - Quit")
+    end)
 end
 
 -- Initialize default game state for new games
@@ -214,6 +227,14 @@ function Game.keypressed(key)
         print(gameState.paused and "⏸️  Game paused" or "▶️  Game resumed")
     elseif key == "d" then
         gameState.debugMode = not gameState.debugMode
+    elseif key == "n" then
+        -- Show network status
+        local status = gameState.systems.save:getConnectionStatus()
+        print("🌐 Network Status:")
+        print("   Online: " .. (status.isOnline and "YES" or "NO"))
+        print("   Save Mode: " .. status.saveMode)
+        print("   Username: " .. status.username)
+        print("   Offline Mode: " .. (status.offlineMode and "YES" or "NO"))
     elseif key == "a" then
         -- Toggle between idle and admin modes
         gameState.currentMode = gameState.currentMode == "idle" and "admin" or "idle"
@@ -267,8 +288,13 @@ function Game.save()
         timestamp = os.time()
     }
     
-    gameState.systems.save:save(saveData)
-    print("💾 Game saved")
+    gameState.systems.save:save(saveData, function(success, result)
+        if success then
+            print("💾 Game saved: " .. result)
+        else
+            print("❌ Save failed: " .. result)
+        end
+    end)
 end
 
 -- Auto-save periodically

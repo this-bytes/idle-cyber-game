@@ -75,6 +75,24 @@ function IdleMode:draw()
     
     theme:drawText("TEAM STATUS:", rightPanelX + 10, opsY, theme:getColor("secondary"))
     theme:drawText(specialistStats.available .. "/" .. specialistStats.total .. " ready", rightPanelX + 200, opsY, theme:getColor("primary"))
+    opsY = opsY + 20
+    
+    -- Network status
+    if self.systems.save and self.systems.save.getConnectionStatus then
+        local status = self.systems.save:getConnectionStatus()
+        theme:drawText("NETWORK:", rightPanelX + 10, opsY, theme:getColor("secondary"))
+        local networkColor = status.isOnline and theme:getColor("success") or theme:getColor("error")
+        local networkText = status.isOnline and "ONLINE" or "OFFLINE"
+        if status.offlineMode then
+            networkText = "DISABLED"
+            networkColor = theme:getColor("muted")
+        end
+        theme:drawText(networkText, rightPanelX + 200, opsY, networkColor)
+        opsY = opsY + 20
+        
+        theme:drawText("SAVE MODE:", rightPanelX + 10, opsY, theme:getColor("secondary"))
+        theme:drawText(string.upper(status.saveMode), rightPanelX + 200, opsY, theme:getColor("accent"))
+    end
     
     -- Available contracts panel with improved selection
     y = y + 220
@@ -245,6 +263,18 @@ function IdleMode:keypressed(key)
         local contractStats = self.systems.contracts:getStats()
         print("   Active Contracts: " .. contractStats.activeContracts)
         print("   Revenue Rate: $" .. format.number(contractStats.totalIncomeRate, 2) .. "/sec")
+        
+        -- Network status information
+        if self.systems.save and self.systems.save.getConnectionStatus then
+            local status = self.systems.save:getConnectionStatus()
+            print("🌐 NETWORK STATUS:")
+            print("   Server Connection: " .. (status.isOnline and "ONLINE" or "OFFLINE"))
+            print("   Save Mode: " .. string.upper(status.saveMode))
+            print("   Player ID: " .. status.username)
+            if status.offlineMode then
+                print("   Mode: OFFLINE (Network disabled)")
+            end
+        end
     elseif key == "z" then
         print("🗺️ Zone System:")
         local zones = self.systems.zones:getUnlockedZones()
