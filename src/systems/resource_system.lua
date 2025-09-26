@@ -71,6 +71,14 @@ function ResourceSystem:subscribeToEvents()
         self:spendResources(data.cost)
     end)
     
+    -- Handle resource amount queries
+    self.eventBus:subscribe("get_resource_amount", function(data)
+        local amount = self:getResource(data.resource)
+        if data.callback then
+            data.callback(amount)
+        end
+    end)
+    
     -- Handle zone changes (updated for business-focused zones)
     self.eventBus:subscribe("zone_changed", function(data)
         -- The new zone system uses business capabilities instead of resource bonuses
@@ -155,6 +163,14 @@ function ResourceSystem:addResource(resourceName, amount)
         newAmount = newAmount,
         addedAmount = newAmount - currentAmount
     })
+    
+    -- Publish resource earned event for progression system
+    if newAmount > currentAmount then
+        self.eventBus:publish("resource_earned", {
+            resource = resourceName,
+            amount = newAmount - currentAmount
+        })
+    end
     
     return true
 end

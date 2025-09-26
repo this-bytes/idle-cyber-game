@@ -1,0 +1,374 @@
+{
+  "currencies": {
+    "primary": {
+      "money": {
+        "id": "money",
+        "name": "💰 Money",
+        "symbol": "$",
+        "description": "Primary currency for hiring, equipment, and facilities",
+        "startingAmount": 1000,
+        "maxStorage": -1,
+        "canGenerate": true,
+        "canSpend": true,
+        "displayOrder": 1,
+        "rarity": "common"
+      },
+      "reputation": {
+        "id": "reputation",
+        "name": "⭐ Reputation",
+        "symbol": "REP",
+        "description": "Unlocks higher-tier contracts and factions",
+        "startingAmount": 0,
+        "maxStorage": -1,
+        "canGenerate": true,
+        "canSpend": false,
+        "displayOrder": 2,
+        "rarity": "uncommon"
+      },
+      "xp": {
+        "id": "xp",
+        "name": "📈 Experience",
+        "symbol": "XP",
+        "description": "General experience for company growth and skill development",
+        "startingAmount": 0,
+        "maxStorage": -1,
+        "canGenerate": true,
+        "canSpend": true,
+        "displayOrder": 3,
+        "rarity": "common"
+      }
+    },
+    "premium": {
+      "missionTokens": {
+        "id": "missionTokens",
+        "name": "🎖️ Mission Tokens",
+        "symbol": "MT",
+        "description": "Rare currency from Crisis Mode for elite upgrades",
+        "startingAmount": 0,
+        "maxStorage": -1,
+        "canGenerate": false,
+        "canSpend": true,
+        "displayOrder": 4,
+        "rarity": "legendary"
+      },
+      "prestigePoints": {
+        "id": "prestigePoints",
+        "name": "🏆 Prestige Points",
+        "symbol": "PP",
+        "description": "Points earned from company rebirths, provide permanent bonuses",
+        "startingAmount": 0,
+        "maxStorage": -1,
+        "canGenerate": false,
+        "canSpend": true,
+        "displayOrder": 5,
+        "rarity": "mythic"
+      },
+      "skillPoints": {
+        "id": "skillPoints",
+        "name": "🧠 Skill Points",
+        "symbol": "SP",
+        "description": "Specialized points for unlocking advanced capabilities",
+        "startingAmount": 0,
+        "maxStorage": -1,
+        "canGenerate": false,
+        "canSpend": true,
+        "displayOrder": 6,
+        "rarity": "rare"
+      }
+    },
+    "special": {
+      "researchCredits": {
+        "id": "researchCredits",
+        "name": "🔬 Research Credits",
+        "symbol": "RC",
+        "description": "Generated from Research department for unlocking new technologies",
+        "startingAmount": 0,
+        "maxStorage": 1000,
+        "canGenerate": true,
+        "canSpend": true,
+        "displayOrder": 7,
+        "rarity": "uncommon"
+      },
+      "trainingCertificates": {
+        "id": "trainingCertificates",
+        "name": "📜 Training Certificates",
+        "symbol": "TC",
+        "description": "Earned from Training department for specialist advancement",
+        "startingAmount": 0,
+        "maxStorage": 500,
+        "canGenerate": true,
+        "canSpend": true,
+        "displayOrder": 8,
+        "rarity": "uncommon"
+      },
+      "securityClearance": {
+        "id": "securityClearance",
+        "name": "🛡️ Security Clearance",
+        "symbol": "SC",
+        "description": "Special authorization for high-level contracts and zones",
+        "startingAmount": 0,
+        "maxStorage": 10,
+        "canGenerate": false,
+        "canSpend": false,
+        "displayOrder": 9,
+        "rarity": "epic"
+      }
+    }
+  },
+  "progressionTiers": {
+    "startup": {
+      "id": "startup",
+      "name": "🏠 Startup Phase",
+      "description": "Building your cybersecurity consultancy from the ground up",
+      "level": 1,
+      "requirements": {
+        "money": 0,
+        "reputation": 0,
+        "contracts": 0
+      },
+      "bonuses": {
+        "moneyGeneration": 1.0,
+        "xpGeneration": 1.0,
+        "contractCapacity": 2
+      },
+      "unlocks": [
+        "department_desk",
+        "department_contracts"
+      ]
+    },
+    "smallBusiness": {
+      "id": "smallBusiness",
+      "name": "🏢 Small Business",
+      "description": "Established local presence with steady client base",
+      "level": 2,
+      "requirements": {
+        "money": 5000,
+        "reputation": 10,
+        "contracts": 5
+      },
+      "bonuses": {
+        "moneyGeneration": 1.25,
+        "xpGeneration": 1.2,
+        "contractCapacity": 4,
+        "specialistCapacity": 3
+      },
+      "unlocks": [
+        "department_research",
+        "department_hr",
+        "zone_coworking"
+      ]
+    },
+    "growingCompany": {
+      "id": "growingCompany",
+      "name": "🏙️ Growing Company",
+      "description": "Expanding operations with specialized teams",
+      "level": 3,
+      "requirements": {
+        "money": 25000,
+        "reputation": 50,
+        "specialists": 5
+      },
+      "bonuses": {
+        "moneyGeneration": 1.5,
+        "xpGeneration": 1.4,
+        "contractCapacity": 8,
+        "specialistCapacity": 10,
+        "researchGeneration": 0.5
+      },
+      "unlocks": [
+        "department_training",
+        "department_ops",
+        "zone_office",
+        "currency_researchCredits"
+      ]
+    },
+    "enterprise": {
+      "id": "enterprise",
+      "name": "🏛️ Enterprise",
+      "description": "Major cybersecurity firm with industry influence",
+      "level": 4,
+      "requirements": {
+        "money": 100000,
+        "reputation": 200,
+        "specialists": 15,
+        "missionTokens": 5
+      },
+      "bonuses": {
+        "moneyGeneration": 2.0,
+        "xpGeneration": 1.8,
+        "contractCapacity": 15,
+        "specialistCapacity": 25,
+        "researchGeneration": 1.0,
+        "trainingGeneration": 0.3
+      },
+      "unlocks": [
+        "department_security",
+        "zone_corporate",
+        "currency_trainingCertificates",
+        "prestige_system"
+      ]
+    },
+    "cybersecGiant": {
+      "id": "cybersecGiant",
+      "name": "🌐 Cybersecurity Giant",
+      "description": "Global leader in cybersecurity with government contracts",
+      "level": 5,
+      "requirements": {
+        "money": 500000,
+        "reputation": 500,
+        "missionTokens": 20,
+        "securityClearance": 3
+      },
+      "bonuses": {
+        "moneyGeneration": 3.0,
+        "xpGeneration": 2.5,
+        "contractCapacity": 30,
+        "specialistCapacity": 50,
+        "researchGeneration": 2.0,
+        "trainingGeneration": 1.0,
+        "missionTokenGeneration": 0.1
+      },
+      "unlocks": [
+        "zone_government",
+        "zone_international",
+        "currency_securityClearance",
+        "advanced_prestige_bonuses"
+      ]
+    }
+  },
+  "prestigeSystem": {
+    "enabled": true,
+    "unlockRequirements": {
+      "progressionTier": "enterprise",
+      "money": 100000,
+      "reputation": 200
+    },
+    "resetResources": [
+      "money",
+      "contracts",
+      "specialists",
+      "facilities"
+    ],
+    "keepResources": [
+      "prestigePoints",
+      "missionTokens",
+      "securityClearance"
+    ],
+    "prestigeFormula": {
+      "base": 1,
+      "moneyDivisor": 50000,
+      "reputationDivisor": 100,
+      "bonusMultiplier": 1.0
+    },
+    "prestigeBonuses": {
+      "moneyGeneration": {
+        "formula": "1 + (prestigePoints * 0.1)",
+        "description": "10% money generation bonus per prestige point"
+      },
+      "xpGeneration": {
+        "formula": "1 + (prestigePoints * 0.05)",
+        "description": "5% XP generation bonus per prestige point"
+      },
+      "contractCapacity": {
+        "formula": "Math.floor(prestigePoints * 0.5)",
+        "description": "0.5 extra contract slots per prestige point"
+      },
+      "startingMoney": {
+        "formula": "1000 + (prestigePoints * 500)",
+        "description": "Start with extra money based on prestige"
+      }
+    }
+  },
+  "milestones": {
+    "firstDollar": {
+      "id": "firstDollar",
+      "name": "💵 First Dollar Earned",
+      "description": "Complete your first contract",
+      "requirements": {
+        "totalEarnings": 1
+      },
+      "rewards": {
+        "xp": 10,
+        "skillPoints": 1
+      },
+      "oneTime": true
+    },
+    "thousandaire": {
+      "id": "thousandaire",
+      "name": "💰 Thousandaire",
+      "description": "Accumulate $1,000",
+      "requirements": {
+        "money": 1000
+      },
+      "rewards": {
+        "xp": 50,
+        "skillPoints": 2
+      },
+      "oneTime": true
+    },
+    "firstHire": {
+      "id": "firstHire",
+      "name": "👥 Team Builder",
+      "description": "Hire your first specialist",
+      "requirements": {
+        "specialists": 2
+      },
+      "rewards": {
+        "xp": 100,
+        "skillPoints": 3,
+        "trainingCertificates": 1
+      },
+      "oneTime": true
+    },
+    "reputationBuilder": {
+      "id": "reputationBuilder",
+      "name": "⭐ Reputation Builder",
+      "description": "Reach 50 reputation",
+      "requirements": {
+        "reputation": 50
+      },
+      "rewards": {
+        "money": 2500,
+        "skillPoints": 5
+      },
+      "oneTime": true
+    },
+    "missionComplete": {
+      "id": "missionComplete",
+      "name": "🎖️ Mission Accomplished",
+      "description": "Complete your first crisis mission",
+      "requirements": {
+        "missionTokens": 1
+      },
+      "rewards": {
+        "xp": 200,
+        "skillPoints": 10,
+        "money": 5000
+      },
+      "oneTime": true
+    }
+  },
+  "currencyConversions": {
+    "xpToSkillPoints": {
+      "enabled": true,
+      "ratio": 100,
+      "description": "Convert 100 XP to 1 Skill Point",
+      "maxPerDay": 10
+    },
+    "moneyToResearch": {
+      "enabled": true,
+      "ratio": 1000,
+      "description": "Convert $1000 to 1 Research Credit",
+      "maxPerDay": 5
+    },
+    "reputationToMissionTokens": {
+      "enabled": false,
+      "ratio": 50,
+      "description": "Convert 50 Reputation to 1 Mission Token",
+      "maxPerDay": 1,
+      "unlockRequirement": {
+        "progressionTier": "enterprise"
+      }
+    }
+  }
+}
