@@ -195,6 +195,117 @@ function UpgradeSystem.new(eventBus)
                 upgrades = {"basicPacketFilter"},
                 count = {basicPacketFilter = 3}
             }
+        },
+        
+        -- Specialized Security Defenses (for idle system)
+        emailFilter = {
+            id = "emailFilter",
+            name = "📧 Email Security Filter",
+            description = "Advanced phishing protection",
+            category = "security",
+            tier = 2,
+            maxCount = 3,
+            baseCost = {dataBits = 800},
+            costGrowth = 1.3,
+            effects = {
+                securityRating = 40,
+                threatReduction = 0.1
+            },
+            unlockRequirements = {
+                upgrades = {"basicPacketFilter"}
+            }
+        },
+        
+        antivirus = {
+            id = "antivirus",
+            name = "🦠 Enterprise Antivirus",
+            description = "Real-time malware protection",
+            category = "security", 
+            tier = 2,
+            maxCount = 3,
+            baseCost = {dataBits = 1200},
+            costGrowth = 1.3,
+            effects = {
+                securityRating = 60,
+                threatReduction = 0.15
+            },
+            unlockRequirements = {
+                upgrades = {"basicPacketFilter"}
+            }
+        },
+        
+        accessControl = {
+            id = "accessControl",
+            name = "🔐 Access Control System",
+            description = "Multi-factor authentication and access management",
+            category = "security",
+            tier = 3,
+            maxCount = 2,
+            baseCost = {dataBits = 2000},
+            costGrowth = 1.4,
+            effects = {
+                securityRating = 100,
+                threatReduction = 0.2
+            },
+            unlockRequirements = {
+                upgrades = {"advancedFirewall"}
+            }
+        },
+        
+        trafficShaping = {
+            id = "trafficShaping",
+            name = "🌐 Traffic Analysis System",
+            description = "DDoS protection and traffic management",
+            category = "security",
+            tier = 3,
+            maxCount = 2,
+            baseCost = {dataBits = 2500},
+            costGrowth = 1.4,
+            effects = {
+                securityRating = 120,
+                threatReduction = 0.25
+            },
+            unlockRequirements = {
+                upgrades = {"advancedFirewall"}
+            }
+        },
+        
+        threatIntelligence = {
+            id = "threatIntelligence",
+            name = "🕵️ Threat Intelligence Platform",
+            description = "Advanced persistent threat detection",
+            category = "security",
+            tier = 4,
+            maxCount = 1,
+            baseCost = {dataBits = 5000},
+            costGrowth = 1.5,
+            effects = {
+                securityRating = 200,
+                threatReduction = 0.3
+            },
+            unlockRequirements = {
+                upgrades = {"accessControl", "trafficShaping"},
+                resources = {xp = 1000}
+            }
+        },
+        
+        behavioralAnalysis = {
+            id = "behavioralAnalysis",
+            name = "🧠 Behavioral Analysis Engine",
+            description = "AI-powered zero-day detection",
+            category = "security",
+            tier = 5,
+            maxCount = 1,
+            baseCost = {dataBits = 10000, money = 50000},
+            costGrowth = 1.6,
+            effects = {
+                securityRating = 300,
+                threatReduction = 0.35
+            },
+            unlockRequirements = {
+                upgrades = {"threatIntelligence"},
+                resources = {xp = 2000, reputation = 100}
+            }
         }
         
         -- More upgrades would be added for later phases...
@@ -260,10 +371,35 @@ function UpgradeSystem:canUnlockUpgrade(upgradeId)
         end
     end
     
+    -- Check resource requirements
+    if requirements.resources then
+        for resource, requiredAmount in pairs(requirements.resources) do
+            local currentAmount = self.eventBus and self:getResourceAmount(resource) or 0
+            if currentAmount < requiredAmount then
+                return false
+            end
+        end
+    end
+    
     -- Other requirements would be checked via event bus
-    -- (zones, resources, achievements, etc.)
+    -- (zones, achievements, etc.)
     
     return true
+end
+
+-- Helper function to get current resource amounts
+function UpgradeSystem:getResourceAmount(resourceName)
+    -- This would need to be connected to the resource system
+    -- For now, return 0 as placeholder
+    if self.eventBus then
+        local amount = 0
+        self.eventBus:publish("get_resource_amount", {
+            resource = resourceName,
+            callback = function(value) amount = value end
+        })
+        return amount
+    end
+    return 0
 end
 
 -- Unlock an upgrade

@@ -89,6 +89,9 @@ function Game.init()
         gameState.systems.rooms:connectResourceSystem(gameState.systems.resources)  -- Connect for unlocking
         gameState.systems.roomEvents = RoomEventSystem.new(gameState.systems.eventBus, gameState.systems.rooms)  -- NEW: Room events
     end
+    gameState.systems.rooms = RoomSystem.new(gameState.systems.eventBus)  -- NEW: Enhanced room system
+    gameState.systems.rooms:connectResourceSystem(gameState.systems.resources)  -- Connect for unlocking
+    gameState.systems.roomEvents = RoomEventSystem.new(gameState.systems.eventBus, gameState.systems.rooms)  -- NEW: Room events
     gameState.systems.factions = FactionSystem.new(gameState.systems.eventBus)
     gameState.systems.achievements = AchievementSystem.new(gameState.systems.eventBus)
     gameState.systems.save = NetworkSaveSystem.new()
@@ -99,6 +102,14 @@ function Game.init()
     
     -- Initialize UI (pass systems so UI can trigger saves / inspect game flags)
     gameState.systems.ui = UIManager.new(gameState.systems)
+    
+    -- Subscribe to offline progress events
+    gameState.systems.eventBus:subscribe("offline_progress_calculated", function(progress)
+        -- Show offline progress summary to player
+        gameState.systems.ui:showOfflineProgress(progress, function()
+            print("📊 Offline progress summary dismissed")
+        end)
+    end)
     
     -- Initialize game modes
     gameState.modes = {
@@ -114,10 +125,11 @@ function Game.init()
         if success and savedData then
             Game.loadGameState(savedData)
             
-            -- Apply offline earnings if available
+            -- Apply offline progress if available
             if savedData.idleTimeSeconds and savedData.idleTimeSeconds > 0 then
-                savedData = gameState.systems.save:applyOfflineEarnings(savedData, savedData.idleTimeSeconds)
-                Game.loadGameState(savedData) -- Reload with offline earnings applied
+                local offlineProgress = gameState.systems.idle:calculateOfflineProgress(savedData.idleTimeSeconds)
+                gameState.systems.idle:applyOfflineProgress(offlineProgress)
+                print("⏰ Processed " .. math.floor(savedData.idleTimeSeconds/60) .. " minutes of offline time")
             end
             
             print("📁 Loaded saved game")
@@ -132,6 +144,9 @@ function Game.init()
         print("=== Cyberspace Tycoon ===")
         print("🔥 Welcome to the cybersecurity empire!")
         print("⌨️  Controls:")
+        print("   WASD/Arrows - Move character")
+        print("   E - Interact with departments/areas")
+        print("   R - Room navigation menu")
         print("   A - Crisis Response Mode (Real-time incident handling)")
         print("   U - Upgrades shop")
         print("   H - Achievements & Progress")
@@ -165,10 +180,12 @@ end
 -- Load game state from saved data
 function Game.loadGameState(data)
     gameState.systems.resources:loadState(data.resources or {})
+    gameState.systems.progression:loadState(data.progression or {})  -- NEW: Load progression state
     gameState.systems.contracts:loadState(data.contracts or {})  -- NEW: Load contract state
     gameState.systems.specialists:loadState(data.specialists or {})  -- NEW: Load specialist state
     gameState.systems.upgrades:loadState(data.upgrades or {})
     gameState.systems.threats:loadState(data.threats or {})
+    gameState.systems.idle:loadState(data.idle or {})  -- NEW: Load idle system state
     gameState.systems.zones:loadState(data.zones or {})
     gameState.systems.factions:loadState(data.factions or {})
     gameState.systems.achievements:loadState(data.achievements or {})
@@ -423,6 +440,8 @@ function Game.save()
     
     gameState.systems.save:save(saveData, function(success, result)
         if success then
+            -- Update idle system save timestamp
+            gameState.systems.idle:updateSaveTime()
             print("💾 Game saved: " .. result)
         else
             print("❌ Save failed: " .. result)

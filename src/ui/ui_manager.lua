@@ -148,6 +148,90 @@ function UIManager:showTutorial(title, body, onClose)
     self.modal = { title = title, body = body, onClose = onClose }
 end
 
+-- Show offline progress summary
+function UIManager:showOfflineProgress(progress, onClose)
+    if not progress or not progress.idleTime then
+        return
+    end
+    
+    local idleMinutes = math.floor(progress.idleTime / 60)
+    local idleHours = math.floor(idleMinutes / 60)
+    local remainingMinutes = idleMinutes % 60
+    
+    local timeStr = ""
+    if idleHours > 0 then
+        timeStr = idleHours .. "h " .. remainingMinutes .. "m"
+    else
+        timeStr = idleMinutes .. "m"
+    end
+    
+    local title = "⏰ Welcome Back! (" .. timeStr .. " offline)"
+    
+    local body = ""
+    
+    -- Earnings section
+    if progress.earnings > 0 then
+        body = body .. "💰 Earnings: $" .. progress.earnings .. "\n"
+    end
+    
+    -- Damage section
+    if progress.damage > 0 then
+        body = body .. "⚠️ Cyber Damage: $" .. progress.damage .. "\n"
+    end
+    
+    -- Net result
+    body = body .. "\n"
+    if progress.netGain > 0 then
+        body = body .. "📈 Net Gain: $" .. progress.netGain .. "\n"
+    elseif progress.netGain < 0 then
+        body = body .. "📉 Net Loss: $" .. (-progress.netGain) .. "\n"
+    else
+        body = body .. "⚖️ Break Even\n"
+    end
+    
+    -- Event summary
+    if #progress.events > 0 then
+        body = body .. "\n🛡️ Security Events:\n"
+        
+        -- Count events by type and track mitigation
+        local eventCounts = {}
+        local mitigatedCount = 0
+        for _, event in ipairs(progress.events) do
+            eventCounts[event.name] = (eventCounts[event.name] or 0) + 1
+            if event.mitigated then
+                mitigatedCount = mitigatedCount + 1
+            end
+        end
+        
+        -- Show mitigation effectiveness
+        local mitigationRate = math.floor((mitigatedCount / #progress.events) * 100)
+        body = body .. "  🔒 " .. mitigationRate .. "% of attacks mitigated\n"
+        
+        -- Show top 3 most frequent
+        local sortedEvents = {}
+        for name, count in pairs(eventCounts) do
+            table.insert(sortedEvents, {name = name, count = count})
+        end
+        table.sort(sortedEvents, function(a, b) return a.count > b.count end)
+        
+        for i = 1, math.min(3, #sortedEvents) do
+            local event = sortedEvents[i]
+            body = body .. "  • " .. event.name .. " x" .. event.count .. "\n"
+        end
+        
+        if #sortedEvents > 3 then
+            body = body .. "  • +" .. (#sortedEvents - 3) .. " other event types\n"
+        end
+    else
+        body = body .. "\n🛡️ No security incidents detected\n"
+        body = body .. "  Your defenses held strong!\n"
+    end
+    
+    body = body .. "\nPress any key to continue..."
+    
+    self.modal = { title = title, body = body, onClose = onClose }
+end
+
 function UIManager:resize(w, h)
     -- Handle window resize
 end

@@ -44,6 +44,7 @@ function ZoneSystem.new(eventBus)
             reputationBonus = 1.2,
             
             unlockRequirements = {
+                progressionTier = "smallBusiness",
                 money = 5000,
                 reputation = 25
             },
@@ -64,6 +65,7 @@ function ZoneSystem.new(eventBus)
             reputationBonus = 1.5,
             
             unlockRequirements = {
+                progressionTier = "growingCompany",
                 money = 25000,
                 reputation = 75
             },
@@ -255,12 +257,47 @@ function ZoneSystem:canUnlockZone(zoneId)
         return false
     end
     
-    -- Check requirements through event bus
-    local requirementsMet = true
+    -- Check basic unlock requirements through event bus
+    local requirements = zone.unlockRequirements or {}
     
-    -- This would be expanded to check actual resources/achievements/etc
-    -- For now, just return false for locked zones
-    return false
+    -- Check progression tier requirements (new)
+    if requirements.progressionTier then
+        local canUnlock = false
+        self.eventBus:publish("check_progression_tier", {
+            requiredTier = requirements.progressionTier,
+            callback = function(hasAccess)
+                canUnlock = hasAccess
+            end
+        })
+        if not canUnlock then
+            return false
+        end
+    end
+    
+    -- Check resource requirements through event bus
+    if next(requirements) then
+        local resourcesAvailable = true
+        self.eventBus:publish("check_can_afford", {
+            cost = requirements,
+            callback = function(canAfford)
+                resourcesAvailable = canAfford
+            end
+        })
+        if not resourcesAvailable then
+            return false
+        end
+    end
+    
+    -- Check if required zones are unlocked
+    if requirements.zones then
+        for _, requiredZoneId in ipairs(requirements.zones) do
+            if not self:isZoneUnlocked(requiredZoneId) then
+                return false
+            end
+        end
+    end
+    
+    return true
 end
 
 -- Unlock a zone
