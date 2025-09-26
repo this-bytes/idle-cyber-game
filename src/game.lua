@@ -1,17 +1,16 @@
--- Core Game Controller
--- Manages all game systems and state
+-- Core Game Controller - Cyber Empire Command
+-- Bootstrap architecture following instruction files
+-- Manages all game systems and state with data-driven approach
 
 local Game = {}
 
--- Import game systems
+-- Import configuration
+local GameConfig = require("src.config.game_config")
+
+-- Import core systems
 local ResourceSystem = require("src.systems.resource_system")
-local UpgradeSystem = require("src.systems.upgrade_system")
-local ThreatSystem = require("src.systems.threat_system")
-local ZoneSystem = require("src.systems.zone_system")
-local FactionSystem = require("src.systems.faction_system")
-local AchievementSystem = require("src.systems.achievement_system")
-local ContractSystem = require("src.systems.contract_system")  -- NEW: Core business system
-local SpecialistSystem = require("src.systems.specialist_system")  -- NEW: Team management
+local ContractSystem = require("src.systems.contract_system")
+local SpecialistSystem = require("src.systems.specialist_system")
 local SaveSystem = require("src.systems.save_system")
 local EventBus = require("src.utils.event_bus")
 
@@ -22,50 +21,65 @@ local UIManager = require("src.ui.ui_manager")
 local IdleMode = require("src.modes.idle_mode")
 local AdminMode = require("src.modes.admin_mode")
 
--- Game state
+-- Optional legacy systems (will be phased out)
+local UpgradeSystem = require("src.systems.upgrade_system")
+local ThreatSystem = require("src.systems.threat_system")
+local ZoneSystem = require("src.systems.zone_system")
+local FactionSystem = require("src.systems.faction_system")
+local AchievementSystem = require("src.systems.achievement_system")
+
+-- Game state - Clean bootstrap architecture
 local gameState = {
     initialized = false,
     paused = false,
     currentMode = "idle", -- "idle" or "admin"
     debugMode = false,
     
-    -- Core systems
+    -- Core systems (prioritized)
     systems = {},
     
-    -- Performance tracking
+    -- Performance and state tracking
     performance = {
         frameCount = 0,
         fps = 0,
         lastFPSUpdate = 0,
         updateTime = 0,
         drawTime = 0,
-    }
+    },
+    
+    -- Save/load state
+    lastSaveTime = 0,
 }
 
--- Initialize the game
+-- Initialize the game - Bootstrap architecture
 function Game.init()
-    print("🚀 Initializing Cyberspace Tycoon...")
+    print("🚀 Initializing " .. GameConfig.GAME_TITLE .. "...")
+    print("📋 Version: " .. GameConfig.VERSION)
     
-    -- Initialize core systems in order
+    -- Initialize core systems in dependency order
     gameState.systems.eventBus = EventBus.new()
+    
+    -- Core business systems (priority)
     gameState.systems.resources = ResourceSystem.new(gameState.systems.eventBus)
-    gameState.systems.contracts = ContractSystem.new(gameState.systems.eventBus)  -- NEW: Contract system
-    gameState.systems.specialists = SpecialistSystem.new(gameState.systems.eventBus)  -- NEW: Specialist system
+    gameState.systems.contracts = ContractSystem.new(gameState.systems.eventBus)
+    gameState.systems.specialists = SpecialistSystem.new(gameState.systems.eventBus)
+    gameState.systems.save = SaveSystem.new()
+    
+    -- UI and interaction systems
+    gameState.systems.ui = UIManager.new(gameState.systems.eventBus)
+    
+    -- Game modes
+    gameState.modes = {
+        idle = IdleMode.new(gameState.systems),
+        admin = AdminMode.new(gameState.systems)
+    }
+    
+    -- Legacy systems (will be gradually removed)
     gameState.systems.upgrades = UpgradeSystem.new(gameState.systems.eventBus)
     gameState.systems.threats = ThreatSystem.new(gameState.systems.eventBus)
     gameState.systems.zones = ZoneSystem.new(gameState.systems.eventBus)
     gameState.systems.factions = FactionSystem.new(gameState.systems.eventBus)
     gameState.systems.achievements = AchievementSystem.new(gameState.systems.eventBus)
-    gameState.systems.save = SaveSystem.new()
-    
-    -- Initialize UI
-    gameState.systems.ui = UIManager.new(gameState.systems.eventBus)
-    
-    -- Initialize game modes
-    gameState.modes = {
-        idle = IdleMode.new(gameState.systems),
-        admin = AdminMode.new(gameState.systems)
-    }
     
     -- Try to load saved game
     local savedData = gameState.systems.save:load()
@@ -73,22 +87,26 @@ function Game.init()
         Game.loadGameState(savedData)
         print("📁 Loaded saved game")
     else
-        -- Initialize with default values
+        -- Initialize with default values from config
         Game.initializeDefaultState()
-        print("✨ Starting new game")
+        print("✨ Starting new " .. GameConfig.GAME_TITLE)
     end
     
     gameState.initialized = true
     
-    print("=== Cyberspace Tycoon ===")
-    print("🔥 Welcome to the cybersecurity empire!")
+    print("=== " .. GameConfig.GAME_TITLE .. " ===")
+    print("🔥 Welcome to your cybersecurity consultancy!")
+    Game.printControls()
+end
+
+-- Print game controls
+function Game.printControls()
     print("⌨️  Controls:")
-    print("   A - The Admin's Watch (Real-time mode)")
-    print("   U - Upgrades shop")
-    print("   H - Achievements & Progress")
-    print("   Z - Zone management")
-    print("   F - Faction relations")
-    print("   S - Statistics")
+    print("   A - The Admin's Watch (Crisis response mode)")
+    print("   U - Upgrades & Equipment")
+    print("   C - Contracts & Clients") 
+    print("   T - Team & Specialists")
+    print("   S - Statistics & Analytics")
     print("   P - Pause game")
     print("   D - Debug mode")
     print("   ESC - Quit")
@@ -96,19 +114,19 @@ end
 
 -- Initialize default game state for new games
 function Game.initializeDefaultState()
-    -- Set up initial Cyber Empire Command state
-    gameState.systems.resources:setResource("money", 1000)  -- Starting budget
-    gameState.systems.resources:setResource("reputation", 0)
-    gameState.systems.resources:setResource("xp", 0)
-    gameState.systems.resources:setResource("missionTokens", 0)
+    -- Set up initial resources from config
+    for resourceName, resourceConfig in pairs(GameConfig.RESOURCES) do
+        gameState.systems.resources:setResource(resourceName, resourceConfig.startingAmount)
+    end
     
-    -- Legacy resources (TODO: Remove after full refactor)
-    gameState.systems.zones:setCurrentZone("garage")
-    gameState.systems.resources:setResource("dataBits", 10)
-    gameState.systems.resources:setResource("processingPower", 0)
-    gameState.systems.resources:setResource("securityRating", 100)
+    -- Legacy initialization (TODO: Remove after full refactor)
+    if gameState.systems.zones then
+        gameState.systems.zones:setCurrentZone("garage")
+    end
     
-    -- Give player basic achievements progress
+    print("💼 Started with $" .. GameConfig.RESOURCES.money.startingAmount .. " initial capital")
+    print("🎯 Ready to build your cybersecurity empire!")
+end
     gameState.systems.achievements:initializeProgress()
 end
 

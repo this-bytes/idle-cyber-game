@@ -1,6 +1,6 @@
--- LÖVE 2D Configuration
+-- LÖVE 2D Configuration - Cyber Empire Command
 function love.conf(t)
-    t.identity = "cyberspace_tycoon"
+    t.identity = "cyber_empire_command"
     t.version = "11.3"
     t.console = false
     
