@@ -90,6 +90,12 @@ function IdleSystem:calculateOfflineProgress(idleTimeSeconds)
     local baseEarningsPerSecond = self.resourceSystem.generation.money or 0
     local totalEarnings = math.floor(baseEarningsPerSecond * idleTimeSeconds)
     
+    -- Apply idle earnings bonus if resource generation is low (help early game)
+    if baseEarningsPerSecond < 1 then
+        local idleBonus = math.min(10, 2 + securityRating * 5) -- 2-7 per second based on security
+        totalEarnings = totalEarnings + math.floor(idleBonus * idleTimeSeconds)
+    end
+    
     -- Calculate threats and damage over idle period
     local damageEvents = self:simulateThreats(idleTimeSeconds, threatReduction, securityRating)
     local totalDamage = 0
@@ -99,7 +105,7 @@ function IdleSystem:calculateOfflineProgress(idleTimeSeconds)
     end
     
     -- Apply damage caps to prevent complete resource loss
-    local maxDamagePercent = 0.25 -- Never lose more than 25% of money
+    local maxDamagePercent = math.max(0.1, 0.3 - securityRating * 0.2) -- 10%-30% based on security
     local maxDamage = math.floor(resources.money * maxDamagePercent)
     totalDamage = math.min(totalDamage, maxDamage)
     
@@ -130,9 +136,10 @@ function IdleSystem:simulateThreats(idleTimeSeconds, threatReduction, securityRa
         local actualEvents = self:poissonSample(expectedEvents)
         
         for i = 1, actualEvents do
-            -- Calculate damage with threat reduction applied
+            -- Calculate damage with advanced threat mitigation
             local baseDamage = threat.baseDamage
-            local reducedDamage = baseDamage * (1 - threatReduction)
+            local mitigation = self:calculateThreatMitigation(threatId, securityRating, threatReduction)
+            local reducedDamage = baseDamage * (1 - mitigation)
             
             -- Add some randomness to damage
             local variance = 0.3 -- ±30% variance
@@ -146,7 +153,8 @@ function IdleSystem:simulateThreats(idleTimeSeconds, threatReduction, securityRa
                 description = threat.description,
                 damage = math.max(0, finalDamage),
                 timestamp = currentTime + (i * adjustedFrequency / actualEvents),
-                mitigated = threatReduction > 0
+                mitigated = mitigation > 0.1, -- Consider mitigated if >10% reduction
+                mitigationLevel = mitigation
             })
         end
     end
@@ -204,14 +212,58 @@ function IdleSystem:calculateSecurityRating()
     -- Sum up security ratings from all owned upgrades
     for upgradeId, count in pairs(self.upgradeSystem.owned) do
         local upgrade = self.upgradeSystem.upgrades[upgradeId]
-        if upgrade and upgrade.effects and upgrade.effects.securityRating then
-            totalRating = totalRating + (upgrade.effects.securityRating * count)
+        if upgrade and upgrade.effects then
+            if upgrade.effects.securityRating then
+                totalRating = totalRating + (upgrade.effects.securityRating * count)
+            end
+            -- Also consider threat reduction upgrades
+            if upgrade.effects.threatReduction then
+                -- Convert threat reduction to security rating equivalent
+                totalRating = totalRating + (upgrade.effects.threatReduction * 100 * count)
+            end
         end
     end
     
+    -- Add base security from experience (cyber skills progression)
+    local resources = self.resourceSystem:getResources()
+    local xp = resources.xp or 0
+    local xpSecurityBonus = math.floor(xp / 100) * 10 -- +10 security per 100 XP
+    totalRating = totalRating + xpSecurityBonus
+    
     -- Convert to normalized rating (0.0 to 1.0)
-    -- Assume max practical security rating of 1000
+    -- Assume max practical security rating of 1000 for balanced gameplay
     return math.min(totalRating / 1000, 1.0)
+end
+
+-- Advanced threat mitigation based on player's security infrastructure
+function IdleSystem:calculateThreatMitigation(threatType, securityRating, threatReduction)
+    local mitigation = threatReduction -- Base from threat system
+    
+    -- Different security infrastructures are better against different threats
+    local specializedDefenses = {
+        phishing = self:getUpgradeCount("emailFilter") * 0.1,
+        malware = self:getUpgradeCount("antivirus") * 0.15,
+        bruteforce = self:getUpgradeCount("accessControl") * 0.2,
+        ddos = self:getUpgradeCount("trafficShaping") * 0.25,
+        apt = self:getUpgradeCount("threatIntelligence") * 0.3,
+        zeroday = self:getUpgradeCount("behavioralAnalysis") * 0.35
+    }
+    
+    -- Add specialized defense bonus
+    local specialized = specializedDefenses[threatType] or 0
+    mitigation = mitigation + specialized
+    
+    -- Add general security rating bonus (diminishing returns)
+    local generalBonus = securityRating * 0.5 * (1 - mitigation) -- Less effective if already high mitigation
+    mitigation = mitigation + generalBonus
+    
+    -- Cap at 95% mitigation (never 100% secure)
+    return math.min(mitigation, 0.95)
+end
+
+-- Helper function to get upgrade counts (with fallback for non-existent upgrades)
+function IdleSystem:getUpgradeCount(upgradeId)
+    return self.upgradeSystem.owned[upgradeId] or 0
 end
 
 -- Apply offline progress to game state

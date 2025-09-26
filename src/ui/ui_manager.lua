@@ -193,11 +193,19 @@ function UIManager:showOfflineProgress(progress, onClose)
     if #progress.events > 0 then
         body = body .. "\n🛡️ Security Events:\n"
         
-        -- Count events by type
+        -- Count events by type and track mitigation
         local eventCounts = {}
+        local mitigatedCount = 0
         for _, event in ipairs(progress.events) do
             eventCounts[event.name] = (eventCounts[event.name] or 0) + 1
+            if event.mitigated then
+                mitigatedCount = mitigatedCount + 1
+            end
         end
+        
+        -- Show mitigation effectiveness
+        local mitigationRate = math.floor((mitigatedCount / #progress.events) * 100)
+        body = body .. "  🔒 " .. mitigationRate .. "% of attacks mitigated\n"
         
         -- Show top 3 most frequent
         local sortedEvents = {}
@@ -214,6 +222,9 @@ function UIManager:showOfflineProgress(progress, onClose)
         if #sortedEvents > 3 then
             body = body .. "  • +" .. (#sortedEvents - 3) .. " other event types\n"
         end
+    else
+        body = body .. "\n🛡️ No security incidents detected\n"
+        body = body .. "  Your defenses held strong!\n"
     end
     
     body = body .. "\nPress any key to continue..."
