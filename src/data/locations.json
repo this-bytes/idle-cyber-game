@@ -1,0 +1,282 @@
+{
+  "buildings": {
+    "home_office": {
+      "id": "home_office",
+      "name": "🏠 Home Office Building",
+      "description": "Your cozy starting location with basic setup",
+      "unlocked": true,
+      "tier": 1,
+      "floors": {
+        "main": {
+          "id": "main",
+          "name": "Main Floor",
+          "description": "The primary workspace area",
+          "rooms": {
+            "my_office": {
+              "id": "my_office",
+              "name": "My Office",
+              "description": "Your personal workspace with a desk and basic equipment",
+              "x": 160,
+              "y": 120,
+              "width": 100,
+              "height": 80,
+              "departments": ["desk"],
+              "atmosphere": "Cozy and private",
+              "bonuses": {
+                "focus": 1.1
+              }
+            },
+            "kitchen": {
+              "id": "kitchen",
+              "name": "Kitchen",
+              "description": "Small kitchen area for coffee and snacks",
+              "x": 50,
+              "y": 200,
+              "width": 80,
+              "height": 60,
+              "departments": [],
+              "atmosphere": "Relaxing break area",
+              "bonuses": {
+                "energy_regen": 1.2
+              }
+            }
+          },
+          "connections": {
+            "stairs": {"x": 300, "y": 150, "leads_to": "upper"}
+          }
+        }
+      },
+      "unlockRequirements": {},
+      "maxContracts": 2,
+      "contractTypes": ["startup"]
+    },
+    "corporate_office": {
+      "id": "corporate_office",
+      "name": "🏢 Corporate Office Building",
+      "description": "Professional multi-floor office building",
+      "unlocked": false,
+      "tier": 2,
+      "floors": {
+        "lobby": {
+          "id": "lobby",
+          "name": "Lobby",
+          "description": "Reception and waiting area",
+          "rooms": {
+            "reception": {
+              "id": "reception",
+              "name": "Reception",
+              "description": "Professional reception desk and waiting area",
+              "x": 200,
+              "y": 150,
+              "width": 120,
+              "height": 80,
+              "departments": ["contracts"],
+              "atmosphere": "Professional and welcoming",
+              "bonuses": {
+                "reputation": 1.1
+              }
+            },
+            "security_desk": {
+              "id": "security_desk",
+              "name": "Security Desk",
+              "description": "Building security and access control",
+              "x": 50,
+              "y": 100,
+              "width": 80,
+              "height": 60,
+              "departments": ["security"],
+              "atmosphere": "Secure and monitored",
+              "bonuses": {
+                "threat_defense": 1.2
+              }
+            }
+          },
+          "connections": {
+            "elevator": {"x": 350, "y": 150, "leads_to": "main_floor"},
+            "stairs": {"x": 400, "y": 150, "leads_to": "main_floor"}
+          }
+        },
+        "main_floor": {
+          "id": "main_floor",
+          "name": "Main Office Floor",
+          "description": "Primary work area with departments",
+          "rooms": {
+            "my_office": {
+              "id": "my_office",
+              "name": "Executive Office",
+              "description": "Large private office with premium equipment",
+              "x": 100,
+              "y": 100,
+              "width": 120,
+              "height": 100,
+              "departments": ["desk"],
+              "atmosphere": "Executive and prestigious",
+              "bonuses": {
+                "focus": 1.3,
+                "reputation": 1.1
+              }
+            },
+            "operations_center": {
+              "id": "operations_center",
+              "name": "Operations Center",
+              "description": "Main operational hub with monitoring systems",
+              "x": 300,
+              "y": 80,
+              "width": 140,
+              "height": 100,
+              "departments": ["ops"],
+              "atmosphere": "High-tech monitoring environment",
+              "bonuses": {
+                "processing_power": 1.4
+              }
+            },
+            "conference_room": {
+              "id": "conference_room",
+              "name": "Conference Room",
+              "description": "Meeting room for client presentations",
+              "x": 200,
+              "y": 220,
+              "width": 100,
+              "height": 80,
+              "departments": [],
+              "atmosphere": "Professional meeting space",
+              "bonuses": {
+                "contract_success": 1.15
+              }
+            },
+            "break_room": {
+              "id": "break_room",
+              "name": "Break Room",
+              "description": "Employee lounge and kitchen area",
+              "x": 50,
+              "y": 250,
+              "width": 80,
+              "height": 60,
+              "departments": [],
+              "atmosphere": "Casual and relaxing",
+              "bonuses": {
+                "energy_regen": 1.3,
+                "team_morale": 1.1
+              }
+            }
+          },
+          "connections": {
+            "elevator": {"x": 350, "y": 150, "leads_to": "hr_floor"},
+            "stairs": {"x": 400, "y": 150, "leads_to": "hr_floor"}
+          }
+        },
+        "hr_floor": {
+          "id": "hr_floor",
+          "name": "HR & Training Floor",
+          "description": "Human resources and training departments",
+          "rooms": {
+            "hr_office": {
+              "id": "hr_office",
+              "name": "HR Office",
+              "description": "Human resources department",
+              "x": 150,
+              "y": 120,
+              "width": 120,
+              "height": 80,
+              "departments": ["hr"],
+              "atmosphere": "Supportive and organized",
+              "bonuses": {
+                "specialist_efficiency": 1.2
+              }
+            },
+            "training_room": {
+              "id": "training_room",
+              "name": "Training Room",
+              "description": "Skills development and training facility",
+              "x": 300,
+              "y": 100,
+              "width": 140,
+              "height": 100,
+              "departments": ["training"],
+              "atmosphere": "Learning-focused environment",
+              "bonuses": {
+                "skill_gain": 1.3,
+                "xp_multiplier": 1.2
+              }
+            }
+          },
+          "connections": {
+            "elevator": {"x": 350, "y": 150, "leads_to": "research_floor"}
+          }
+        },
+        "research_floor": {
+          "id": "research_floor",
+          "name": "Research & Development Floor",
+          "description": "Advanced research and development facilities",
+          "rooms": {
+            "research_lab": {
+              "id": "research_lab",
+              "name": "Research Lab",
+              "description": "Advanced cybersecurity research facility",
+              "x": 200,
+              "y": 120,
+              "width": 160,
+              "height": 120,
+              "departments": ["research"],
+              "atmosphere": "Cutting-edge research environment",
+              "bonuses": {
+                "research_speed": 1.5,
+                "innovation_rate": 1.3
+              }
+            },
+            "server_room": {
+              "id": "server_room",
+              "name": "Server Room",
+              "description": "High-performance computing infrastructure",
+              "x": 400,
+              "y": 100,
+              "width": 100,
+              "height": 100,
+              "departments": [],
+              "atmosphere": "High-tech server environment",
+              "bonuses": {
+                "processing_power": 1.6,
+                "data_capacity": 1.4
+              }
+            }
+          },
+          "connections": {
+            "elevator": {"x": 350, "y": 150, "leads_to": "main_floor"}
+          }
+        }
+      },
+      "unlockRequirements": {
+        "money": 25000,
+        "reputation": 75,
+        "contracts_completed": 10
+      },
+      "maxContracts": 8,
+      "contractTypes": ["startup", "smallBusiness", "enterprise"]
+    }
+  },
+  "navigation": {
+    "default_building": "home_office",
+    "default_floor": "main",
+    "default_room": "my_office",
+    "movement_speed": 120,
+    "transition_time": 1.5
+  },
+  "bonuses": {
+    "description": "Location bonuses stack multiplicatively with other bonuses",
+    "types": {
+      "focus": "Increases work efficiency",
+      "energy_regen": "Faster energy recovery",
+      "reputation": "Reputation gain multiplier",
+      "threat_defense": "Better threat resistance",
+      "processing_power": "Computing capability bonus",
+      "contract_success": "Higher contract completion rates",
+      "team_morale": "Team efficiency bonus",
+      "specialist_efficiency": "Specialist performance bonus",
+      "skill_gain": "Faster skill development",
+      "xp_multiplier": "Experience point bonus",
+      "research_speed": "Research completion speed",
+      "innovation_rate": "Innovation discovery rate",
+      "data_capacity": "Data storage bonus"
+    }
+  }
+}
