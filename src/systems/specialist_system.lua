@@ -9,6 +9,9 @@ function SpecialistSystem.new(eventBus)
     local self = setmetatable({}, SpecialistSystem)
     self.eventBus = eventBus
     
+    -- Reference to skill system (will be set externally)
+    self.skillSystem = nil
+    
     -- Hired specialists
     self.specialists = {}
     
@@ -112,6 +115,11 @@ function SpecialistSystem.new(eventBus)
     return self
 end
 
+-- Set skill system reference
+function SpecialistSystem:setSkillSystem(skillSystem)
+    self.skillSystem = skillSystem
+end
+
 -- Add a specialist to the team
 function SpecialistSystem:addSpecialist(specialistType, specialistData)
     local specialist = specialistData or {}
@@ -147,6 +155,11 @@ function SpecialistSystem:addSpecialist(specialistType, specialistData)
     end
     
     self.specialists[specialist.id] = specialist
+    
+    -- Initialize skills if skill system is available
+    if self.skillSystem then
+        self.skillSystem:initializeEntity(specialist.id, specialist.type)
+    end
     
     self.eventBus:publish("specialist_hired", {
         specialist = specialist
@@ -278,9 +291,26 @@ function SpecialistSystem:getTeamBonuses()
     
     for id, specialist in pairs(self.specialists) do
         if specialist.status == "available" then
-            efficiency = efficiency * specialist.efficiency
-            speed = speed * specialist.speed
-            defense = defense * specialist.defense
+            local specEfficiency = specialist.efficiency
+            local specSpeed = specialist.speed
+            local specDefense = specialist.defense
+            
+            -- Apply skill bonuses if skill system is available
+            if self.skillSystem then
+                local skillEffects = self.skillSystem:getSkillEffects(specialist.id)
+                specEfficiency = specEfficiency * (1 + skillEffects.efficiency)
+                specSpeed = specSpeed * (1 + skillEffects.speed)
+                specDefense = specDefense * (1 + skillEffects.defense)
+                
+                -- Apply team-wide bonuses (typically from CEO leadership skills)
+                if skillEffects.teamEfficiencyBonus and skillEffects.teamEfficiencyBonus > 0 then
+                    efficiency = efficiency * (1 + skillEffects.teamEfficiencyBonus)
+                end
+            end
+            
+            efficiency = efficiency * specEfficiency
+            speed = speed * specSpeed
+            defense = defense * specDefense
             availableCount = availableCount + 1
         end
     end
@@ -314,6 +344,30 @@ function SpecialistSystem:getStats()
         busy = busySpecialists,
         forHire = #self.availableSpecialists
     }
+end
+
+-- Get specialist skills (for UI display)
+function SpecialistSystem:getSpecialistSkills(specialistId)
+    if not self.skillSystem then
+        return {}
+    end
+    return self.skillSystem:getEntitySkills(specialistId)
+end
+
+-- Get specialist skill effects (for detailed stats)
+function SpecialistSystem:getSpecialistSkillEffects(specialistId)
+    if not self.skillSystem then
+        return {}
+    end
+    return self.skillSystem:getSkillEffects(specialistId)
+end
+
+-- Award XP to a specialist
+function SpecialistSystem:awardSpecialistXp(specialistId, skillId, amount)
+    if not self.skillSystem then
+        return false
+    end
+    return self.skillSystem:awardXp(specialistId, skillId, amount)
 end
 
 -- Get state for saving
