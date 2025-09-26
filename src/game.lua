@@ -8,6 +8,8 @@ local ResourceSystem = require("src.systems.resource_system")
 local UpgradeSystem = require("src.systems.upgrade_system")
 local ThreatSystem = require("src.systems.threat_system")
 local ZoneSystem = require("src.systems.zone_system")
+local RoomSystem = require("src.systems.room_system")  -- NEW: Enhanced room/environment system
+local RoomEventSystem = require("src.systems.room_event_system")  -- NEW: Dynamic room events
 local FactionSystem = require("src.systems.faction_system")
 local AchievementSystem = require("src.systems.achievement_system")
 local ContractSystem = require("src.systems.contract_system")  -- NEW: Core business system
@@ -73,6 +75,9 @@ function Game.init()
     gameState.systems.upgrades = UpgradeSystem.new(gameState.systems.eventBus)
     gameState.systems.threats = ThreatSystem.new(gameState.systems.eventBus)
     gameState.systems.zones = ZoneSystem.new(gameState.systems.eventBus)
+    gameState.systems.rooms = RoomSystem.new(gameState.systems.eventBus)  -- NEW: Enhanced room system
+    gameState.systems.rooms:connectResourceSystem(gameState.systems.resources)  -- Connect for unlocking
+    gameState.systems.roomEvents = RoomEventSystem.new(gameState.systems.eventBus, gameState.systems.rooms)  -- NEW: Room events
     gameState.systems.factions = FactionSystem.new(gameState.systems.eventBus)
     gameState.systems.achievements = AchievementSystem.new(gameState.systems.eventBus)
     gameState.systems.save = NetworkSaveSystem.new()
@@ -116,6 +121,9 @@ function Game.init()
         print("=== Cyberspace Tycoon ===")
         print("🔥 Welcome to the cybersecurity empire!")
         print("⌨️  Controls:")
+        print("   WASD/Arrows - Move character")
+        print("   E - Interact with departments/areas")
+        print("   R - Room navigation menu")
         print("   A - Crisis Response Mode (Real-time incident handling)")
         print("   U - Upgrades shop")
         print("   H - Achievements & Progress")
