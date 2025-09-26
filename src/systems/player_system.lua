@@ -102,12 +102,26 @@ function PlayerSystem:update(dt)
     self.x = self.x + self.vx * dt
     self.y = self.y + self.vy * dt
 
-    -- Clamp to reasonable bounds to avoid leaving the office area
-    local minX, minY, maxX, maxY = 0, 0, 2000, 2000
-    if self.x < minX then self.x = minX end
-    if self.y < minY then self.y = minY end
-    if self.x > maxX then self.x = maxX end
-    if self.y > maxY then self.y = maxY end
+    -- Clamp to room bounds if room system is available
+    if self.roomSystem then
+        local currentRoom = self.roomSystem:getCurrentRoom()
+        if currentRoom then
+            local minX, minY = 20, 20
+            local maxX = (currentRoom.width or 640) - 20
+            local maxY = (currentRoom.height or 200) - 20
+            if self.x < minX then self.x = minX end
+            if self.y < minY then self.y = minY end
+            if self.x > maxX then self.x = maxX end
+            if self.y > maxY then self.y = maxY end
+        end
+    else
+        -- Fallback to reasonable bounds to avoid leaving the office area
+        local minX, minY, maxX, maxY = 0, 0, 2000, 2000
+        if self.x < minX then self.x = minX end
+        if self.y < minY then self.y = minY end
+        if self.x > maxX then self.x = maxX end
+        if self.y > maxY then self.y = maxY end
+    end
 end
 
 function PlayerSystem:draw(theme)
@@ -210,10 +224,16 @@ function PlayerSystem:getCurrentExits()
 end
 
 function PlayerSystem:getState()
+    local roomId = nil
+    if self.roomSystem then
+        roomId = self.roomSystem.currentRoom
+    end
+    
     return {
         x = self.x,
         y = self.y,
-        stats = self.stats
+        stats = self.stats,
+        currentRoom = roomId
     }
 end
 
@@ -228,6 +248,11 @@ function PlayerSystem:loadState(state)
         for k, v in pairs(state.stats) do
             self.stats[k] = v
         end
+    end
+    if state.currentRoom and self.roomSystem then
+        -- Restore room without triggering events during load
+        self.roomSystem.currentRoom = state.currentRoom
+        self:updateDepartmentsFromRoom()
     end
 end
 

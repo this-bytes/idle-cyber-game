@@ -184,6 +184,22 @@ function IdleMode:draw()
         exits = exits 
     })
     love.graphics.pop()
+    
+    -- Draw current room indicator
+    if currentRoom then
+        love.graphics.setColor(0, 0, 0, 0.7)
+        love.graphics.rectangle("fill", 20, 20, 300, 40, 8, 8)
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.rectangle("line", 20, 20, 300, 40, 8, 8)
+        love.graphics.printf("📍 " .. currentRoom.name, 30, 32, 280, "left")
+        if currentRoom.description then
+            love.graphics.setColor(0.8, 0.8, 0.8, 1)
+            love.graphics.setFont(love.graphics.newFont(10))
+            love.graphics.printf(currentRoom.description, 30, 45, 280, "left")
+            love.graphics.setFont(love.graphics.newFont(12)) -- Reset font
+        end
+    end
+    
     -- If UI is in compact mode, don't draw the large terminal UI here so the office remains the main view
     local showFull = false
     if self.systems and self.systems.ui and self.systems.ui.showFullTerminal then
@@ -453,8 +469,17 @@ function IdleMode:keypressed(key)
 
         -- Interaction
         if key == "e" then
-            local interacted, dept = self.player:interact()
-            if not interacted then print("🔍 No department nearby to interact with. Move closer and press E.") end
+            local interacted, target = self.player:interact()
+            if not interacted then 
+                print("🔍 No department or exit nearby to interact with. Move closer and press E.") 
+            else
+                -- Check if this was an exit (has targetRoom) or department
+                if target and target.targetRoom then
+                    print("🚪 Moving to: " .. (target.name or target.targetRoom))
+                elseif target and target.name then
+                    print("🤝 Interacted with: " .. target.name)
+                end
+            end
             return
         end
     end

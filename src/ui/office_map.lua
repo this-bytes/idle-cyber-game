@@ -87,7 +87,16 @@ end
 
 -- Draw player sprite at player.x, player.y
 -- Draw exit/door sprite
-function OfficeMap:drawExit(exit)
+function OfficeMap:drawExit(exit, player)
+    -- Check if player is near this exit for visual feedback
+    local isNear = false
+    if player then
+        local dx = player.x - exit.x
+        local dy = player.y - exit.y
+        local dist = math.sqrt(dx * dx + dy * dy)
+        isNear = dist <= exit.radius + (player.size or 12) + 4
+    end
+    
     -- Draw exit as a door-like shape
     love.graphics.setColor(0.3, 0.2, 0.1, 1) -- Door frame
     love.graphics.circle("fill", exit.x, exit.y, exit.radius)
@@ -98,9 +107,26 @@ function OfficeMap:drawExit(exit)
     love.graphics.setColor(0.8, 0.6, 0.4, 1) -- Door handle
     love.graphics.circle("fill", exit.x + exit.radius/3, exit.y, 2)
     
+    -- Add glow effect if player is nearby
+    if isNear then
+        love.graphics.setColor(1, 1, 0.5, 0.4) -- Yellow glow
+        love.graphics.circle("line", exit.x, exit.y, exit.radius + 6)
+        love.graphics.setColor(1, 1, 0.5, 0.2)
+        love.graphics.circle("line", exit.x, exit.y, exit.radius + 10)
+    end
+    
     -- Label
     love.graphics.setColor(1, 1, 1, 0.9)
+    if isNear then
+        love.graphics.setColor(1, 1, 0.5, 1) -- Highlighted text when near
+    end
     love.graphics.printf(exit.name or "Exit", exit.x - exit.radius - 10, exit.y + exit.radius + 6, exit.radius*2 + 20, "center")
+    
+    -- Show "Press E" hint when near
+    if isNear then
+        love.graphics.setColor(1, 1, 1, 0.8)
+        love.graphics.printf("Press E", exit.x - exit.radius - 10, exit.y - exit.radius - 20, exit.radius*2 + 20, "center")
+    end
 end
 
 function OfficeMap:drawPlayer(player)
@@ -195,7 +221,7 @@ function OfficeMap:draw(player, departments, opts)
     -- Draw exits/doors
     if exits and #exits > 0 then
         for _, exit in ipairs(exits) do
-            self:drawExit(exit)
+            self:drawExit(exit, player)
         end
     end
 
