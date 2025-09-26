@@ -420,9 +420,9 @@ function IdleMode:draw()
     
     -- Status bar with controls
     if showFull then
-        theme:drawStatusBar("READY | [CLICK] Select Contract | [SPACE] Accept Selected | [A] Crisis Mode | [ESC] Quit")
+        theme:drawStatusBar("READY | [CLICK] Select Contract | [SPACE] Accept | [P] Prestige | [C] Convert | [M] Milestones | [A] Crisis Mode | [ESC] Quit")
     else
-        theme:drawStatusBar("READY | [TAB] Toggle Terminal | [A] Crisis Mode | [ESC] Quit")
+        theme:drawStatusBar("READY | [TAB] Toggle Terminal | [P] Prestige | [C] Convert | [M] Milestones | [A] Crisis Mode | [ESC] Quit")
     end
 
     -- (Office map drawn earlier as the main background)
@@ -639,6 +639,44 @@ function IdleMode:keypressed(key)
             print("   [3] Show conversion status")
             print("   [ESC] Exit conversion mode")
             print("   Press number to perform conversion.")
+        end
+        return
+    elseif key == "m" then
+        -- Show progression milestones and status
+        if self.systems.progression then
+            print("🎯 PROGRESSION STATUS:")
+            local currentTier = self.systems.progression:getCurrentTier()
+            print("   Current Tier: " .. (currentTier.name or "Unknown"))
+            print("   Tier Description: " .. (currentTier.description or ""))
+            
+            print("")
+            print("🏆 COMPLETED MILESTONES:")
+            local milestones = self.systems.progression.config.milestones or {}
+            local completed = self.systems.progression.completedMilestones or {}
+            for milestoneId, milestone in pairs(milestones) do
+                local status = completed[milestoneId] and "✅" or "❌"
+                print("   " .. status .. " " .. milestone.name)
+                print("      " .. milestone.description)
+                if milestone.rewards then
+                    local rewardText = "Rewards: "
+                    for rewardType, amount in pairs(milestone.rewards) do
+                        rewardText = rewardText .. amount .. " " .. rewardType .. " "
+                    end
+                    print("      " .. rewardText)
+                end
+            end
+            
+            print("")
+            print("💰 CURRENCY STATUS:")
+            local currencies = self.systems.progression:getAllCurrencies()
+            for currencyId, data in pairs(currencies) do
+                local config = data.config
+                local symbol = config.symbol or currencyId:upper()
+                print("   " .. config.name .. ": " .. format.number(data.amount, 0) .. " " .. symbol)
+                if data.totalEarned > 0 then
+                    print("      Total Earned: " .. format.number(data.totalEarned, 0))
+                end
+            end
         end
         return
     elseif key >= "1" and key <= "9" then

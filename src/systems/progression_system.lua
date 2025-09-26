@@ -120,6 +120,34 @@ function ProgressionSystem:subscribeToEvents()
         self:awardCurrency("missionTokens", data.tokens or 1)
         self:checkMilestones()
     end)
+    
+    -- Check progression tier access
+    self.eventBus:subscribe("check_progression_tier", function(data)
+        local hasAccess = false
+        local requiredTier = self.config.progressionTiers[data.requiredTier]
+        local currentTier = self.config.progressionTiers[self.currentTier]
+        
+        if requiredTier and currentTier then
+            hasAccess = currentTier.level >= requiredTier.level
+        end
+        
+        if data.callback then
+            data.callback(hasAccess)
+        end
+    end)
+    
+    -- Get currency amount for achievements
+    self.eventBus:subscribe("get_currency_amount", function(data)
+        local amount = self:getCurrency(data.currency)
+        if data.callback then
+            data.callback(amount)
+        end
+    end)
+    
+    -- Award currency from achievements
+    self.eventBus:subscribe("award_currency", function(data)
+        self:awardCurrency(data.currency, data.amount)
+    end)
 end
 
 -- Award currency to player

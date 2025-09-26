@@ -62,6 +62,43 @@ function AchievementSystem.new(eventBus)
             requirement = {type = "contractsCompleted", value = 10},
             reward = {type = "reputation", value = 10},
             unlocked = false
+        },
+        
+        -- Progression-based achievements
+        businessGrowth = {
+            id = "businessGrowth",
+            name = "📈 Business Growth",
+            description = "Advance to Small Business tier",
+            requirement = {type = "progressionTier", value = "smallBusiness"},
+            reward = {type = "money", value = 5000},
+            unlocked = false
+        },
+        
+        enterpriseExpansion = {
+            id = "enterpriseExpansion", 
+            name = "🏛️ Enterprise Expansion",
+            description = "Reach Enterprise tier",
+            requirement = {type = "progressionTier", value = "enterprise"},
+            reward = {type = "skillPoints", value = 10},
+            unlocked = false
+        },
+        
+        firstPrestige = {
+            id = "firstPrestige",
+            name = "🌟 First Prestige",
+            description = "Complete your first company prestige",
+            requirement = {type = "prestigeLevel", value = 1},
+            reward = {type = "prestigePoints", value = 5},
+            unlocked = false
+        },
+        
+        currencyMaster = {
+            id = "currencyMaster",
+            name = "💎 Currency Master",
+            description = "Accumulate 100 skill points",
+            requirement = {type = "currency", currency = "skillPoints", value = 100},
+            reward = {type = "researchCredits", value = 10},
+            unlocked = false
         }
     }
     
@@ -82,6 +119,23 @@ function AchievementSystem:subscribeToEvents()
     -- Track upgrade purchases
     self.eventBus:subscribe("upgrade_purchased", function(data)
         self.progress.totalUpgradesPurchased = self.progress.totalUpgradesPurchased + 1
+        self:checkAchievements()
+    end)
+    
+    -- Track progression tier advances
+    self.eventBus:subscribe("tier_advanced", function(data)
+        self.progress.currentTier = data.newTier
+        self:checkAchievements()
+    end)
+    
+    -- Track prestige completions
+    self.eventBus:subscribe("prestige_performed", function(data)
+        self.progress.prestigeLevel = data.level
+        self:checkAchievements()
+    end)
+    
+    -- Track currency awards for currency-based achievements
+    self.eventBus:subscribe("currency_awarded", function(data)
         self:checkAchievements()
     end)
 end
@@ -113,6 +167,28 @@ function AchievementSystem:checkRequirement(requirement)
         return self.progress.totalUpgradesPurchased >= reqValue
     elseif reqType == "contractsCompleted" then
         return self.progress.totalContractsCompleted >= reqValue
+    elseif reqType == "progressionTier" then
+        -- Check if current tier meets or exceeds required tier
+        local hasAccess = false
+        self.eventBus:publish("check_progression_tier", {
+            requiredTier = reqValue,
+            callback = function(access)
+                hasAccess = access
+            end
+        })
+        return hasAccess
+    elseif reqType == "prestigeLevel" then
+        return (self.progress.prestigeLevel or 0) >= reqValue
+    elseif reqType == "currency" then
+        -- Check specific currency amount
+        local hasAmount = false
+        self.eventBus:publish("get_currency_amount", {
+            currency = requirement.currency,
+            callback = function(amount)
+                hasAmount = amount >= reqValue
+            end
+        })
+        return hasAmount
     end
     
     return false
@@ -153,6 +229,12 @@ function AchievementSystem:applyReward(reward)
     elseif reward.type == "reputation" then  
         self.eventBus:publish("add_resource", {
             resource = "reputation",
+            amount = reward.value
+        })
+    elseif reward.type == "skillPoints" or reward.type == "prestigePoints" or reward.type == "researchCredits" then
+        -- Award progression system currencies
+        self.eventBus:publish("award_currency", {
+            currency = reward.type,
             amount = reward.value
         })
     end
