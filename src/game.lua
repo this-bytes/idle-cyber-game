@@ -126,8 +126,11 @@ function Game.initializeDefaultState()
     
     print("💼 Started with $" .. GameConfig.RESOURCES.money.startingAmount .. " initial capital")
     print("🎯 Ready to build your cybersecurity empire!")
-end
-    gameState.systems.achievements:initializeProgress()
+    
+    -- Initialize achievements if system exists
+    if gameState.systems.achievements then
+        gameState.systems.achievements:initializeProgress()
+    end
 end
 
 -- Load game state from saved data
