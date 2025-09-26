@@ -301,26 +301,52 @@ end
 function AdminMode:resolveCrisis(outcome)
     if not self.currentCrisis then return end
     
+    local timeBonus = 1.0
     if outcome == "success" then
-        table.insert(self.responseLog, "✅ CRISIS RESOLVED SUCCESSFULLY")
+        -- Calculate time bonus (faster resolution = better rewards)
+        local timeUsed = self.crisisTimer
+        local timeLimit = self.currentCrisis.timeLimit
+        timeBonus = math.max(0.5, (timeLimit - timeUsed) / timeLimit + 0.5)
         
-        -- Award reputation and money
+        local baseReward = {
+            reputation = 15,
+            money = 8000,
+            missionTokens = 2
+        }
+        
+        -- Apply time bonus
+        local reputationGain = math.floor(baseReward.reputation * timeBonus)
+        local moneyGain = math.floor(baseReward.money * timeBonus)
+        local tokenGain = baseReward.missionTokens
+        
+        table.insert(self.responseLog, "✅ CRISIS RESOLVED SUCCESSFULLY")
+        table.insert(self.responseLog, string.format("⏱️ Response Time: %.1fs (%.0f%% efficiency)", timeUsed, timeBonus * 100))
+        table.insert(self.responseLog, string.format("💰 Earned: $%d, +%d reputation, +%d tokens", moneyGain, reputationGain, tokenGain))
+        
+        -- Award scaled rewards
         self.systems.eventBus:publish("add_resource", {
             resource = "reputation",
-            amount = 10
+            amount = reputationGain
         })
         
         self.systems.eventBus:publish("add_resource", {
             resource = "money", 
-            amount = 5000
+            amount = moneyGain
         })
         
-        print("✅ Crisis resolved successfully! +10 reputation, +$5000, +mission tokens")
+        self.systems.eventBus:publish("add_resource", {
+            resource = "missionTokens",
+            amount = tokenGain
+        })
+        
+        print(string.format("✅ Crisis resolved! +$%d, +%d reputation, +%d tokens (%.0f%% efficiency)", 
+              moneyGain, reputationGain, tokenGain, timeBonus * 100))
         
     elseif outcome == "timeout" then
-        table.insert(self.responseLog, "❌ CRISIS TIMEOUT - Partial failure")
+        table.insert(self.responseLog, "❌ CRISIS TIMED OUT - REPUTATION DAMAGE")
+        table.insert(self.responseLog, "⚠️ Client confidence decreased")
         
-        -- Minor penalties
+        -- Penalty for timeout
         self.systems.eventBus:publish("add_resource", {
             resource = "reputation",
             amount = -5
