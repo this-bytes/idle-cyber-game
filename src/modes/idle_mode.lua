@@ -11,6 +11,10 @@ function IdleMode.new(systems)
     local self = setmetatable({}, IdleMode)
     self.systems = systems
     
+    -- UI state for contract selection
+    self.contractAreas = {}  -- Store clickable areas for contracts
+    self.selectedContract = nil
+    
     return self
 end
 
@@ -72,17 +76,39 @@ function IdleMode:draw()
     theme:drawText("TEAM STATUS:", rightPanelX + 10, opsY, theme:getColor("secondary"))
     theme:drawText(specialistStats.available .. "/" .. specialistStats.total .. " ready", rightPanelX + 200, opsY, theme:getColor("primary"))
     
-    -- Available contracts panel
+    -- Available contracts panel with improved selection
     y = y + 220
-    theme:drawPanel(leftPanelX, y, panelWidth * 2 + 20, 180, "AVAILABLE CONTRACTS - [CLICK TO ACCEPT]")
+    theme:drawPanel(leftPanelX, y, panelWidth * 2 + 20, 180, "AVAILABLE CONTRACTS")
     local contractY = y + 25
+    
+    -- Clear previous contract areas and rebuild them
+    self.contractAreas = {}
     
     local availableContracts = self.systems.contracts:getAvailableContracts()
     local count = 0
     for contractId, contract in pairs(availableContracts) do
         if count >= 3 then break end -- Show max 3 contracts
         
-        theme:drawText("►", leftPanelX + 10, contractY, theme:getColor("accent"))
+        -- Track clickable area for this contract
+        local contractHeight = 60
+        self.contractAreas[count + 1] = {
+            x = leftPanelX + 10,
+            y = contractY,
+            width = panelWidth * 2,
+            height = contractHeight,
+            contractId = contractId,
+            contract = contract
+        }
+        
+        -- Highlight selected contract
+        local isSelected = (self.selectedContract == contractId)
+        if isSelected then
+            theme:drawPanel(leftPanelX + 5, contractY - 5, panelWidth * 2 + 10, contractHeight, nil)
+        end
+        
+        -- Contract display
+        local arrowColor = isSelected and theme:getColor("warning") or theme:getColor("accent")
+        theme:drawText("►", leftPanelX + 10, contractY, arrowColor)
         theme:drawText(contract.clientName, leftPanelX + 30, contractY, theme:getColor("primary"))
         contractY = contractY + 15
         
@@ -98,79 +124,127 @@ function IdleMode:draw()
     
     if count == 0 then
         theme:drawText("[ NO CONTRACTS AVAILABLE - BUILDING REPUTATION... ]", leftPanelX + 30, contractY, theme:getColor("muted"))
+    else
+        theme:drawText("Click contract to select, then SPACE to accept | Selected: " .. 
+                      (self.selectedContract and "Contract " .. (self:getSelectedContractIndex() or "?") or "None"), 
+                      leftPanelX + 30, contractY + 10, theme:getColor("warning"))
     end
     
     -- Status bar with controls  
-    theme:drawText("PRESS [ENTER] FOR CONTRACT DETAILS | [SPACE] QUICK ACCEPT", leftPanelX + 30, contractY + 20, theme:getColor("warning"))
-    theme:drawStatusBar("READY | [CLICK] Accept Contract | [A] Crisis Mode | [U] Upgrades | [ESC] Quit")
+    theme:drawStatusBar("READY | [CLICK] Select Contract | [SPACE] Accept Selected | [A] Crisis Mode | [ESC] Quit")
+end
+
+-- Helper function to get selected contract index for display
+function IdleMode:getSelectedContractIndex()
+    if not self.selectedContract then return nil end
+    
+    for i, area in ipairs(self.contractAreas) do
+        if area.contractId == self.selectedContract then
+            return i
+        end
+    end
+    return nil
 end
 
 function IdleMode:mousepressed(x, y, button)
-    -- Handle clicking to accept contracts (Cyber Empire Command core mechanic)
+    -- Handle clicking to select contracts (improved UI framework)
     if button == 1 then -- Left click
-        -- Try to accept the first available contract
-        local availableContracts = self.systems.contracts:getAvailableContracts()
-        
-        for contractId, contract in pairs(availableContracts) do
-            local success = self.systems.contracts:acceptContract(contractId)
-            if success then
-                print("📝 Accepted contract: " .. contract.clientName .. 
-                      " - Budget: $" .. contract.totalBudget .. 
-                      " | Duration: " .. math.floor(contract.duration) .. "s")
-                
-                -- Show immediate feedback
-                self.systems.ui.lastAction = {
-                    message = "Contract accepted: " .. contract.clientName,
-                    timer = 3.0
-                }
+        -- Check if click is within any contract area
+        for i, area in ipairs(self.contractAreas) do
+            if x >= area.x and x <= area.x + area.width and
+               y >= area.y and y <= area.y + area.height then
+                -- Select this contract
+                self.selectedContract = area.contractId
+                print("📋 Selected contract: " .. area.contract.clientName .. 
+                      " - Budget: $" .. area.contract.totalBudget)
                 return true
             end
-            break -- Only try the first one
         end
         
-        -- Show feedback if no contracts available
-        print("💼 No contracts available. Build reputation to unlock better opportunities!")
+        -- If no contract area was clicked, try to accept selected contract
+        if self.selectedContract then
+            local success = self.systems.contracts:acceptContract(self.selectedContract)
+            if success then
+                local contract = self:getSelectedContractData()
+                if contract then
+                    print("📝 Accepted contract: " .. contract.clientName .. 
+                          " - Budget: $" .. contract.totalBudget .. 
+                          " | Duration: " .. math.floor(contract.duration) .. "s")
+                    
+                    -- Show immediate feedback
+                    if self.systems.ui then
+                        self.systems.ui.lastAction = {
+                            message = "Contract accepted: " .. contract.clientName,
+                            timer = 3.0
+                        }
+                    end
+                    self.selectedContract = nil -- Clear selection
+                    return true
+                end
+            end
+        else
+            print("💼 Click on a contract to select it, then press SPACE to accept or click again to accept directly.")
+        end
     end
     return false
+end
+
+-- Helper function to get selected contract data
+function IdleMode:getSelectedContractData()
+    if not self.selectedContract then return nil end
+    
+    local availableContracts = self.systems.contracts:getAvailableContracts()
+    return availableContracts[self.selectedContract]
 end
 
 function IdleMode:keypressed(key)
     -- Handle idle mode specific keys
     if key == "space" then
-        -- Quick accept first available contract
-        self:mousepressed(0, 0, 1) -- Simulate click
-    elseif key == "enter" then
-        -- Show detailed contract information
-        local availableContracts = self.systems.contracts:getAvailableContracts()
-        for _, contract in pairs(availableContracts) do
-            print("📋 CONTRACT DETAILS:")
-            print("   Client: " .. contract.clientName)
-            print("   Description: " .. contract.description)
-            print("   Budget: $" .. format.number(contract.totalBudget, 0))
-            print("   Duration: " .. math.floor(contract.duration) .. "s")
-            print("   Reputation Reward: +" .. contract.reputationReward)
-            print("   Risk Level: " .. (contract.riskLevel or "LOW"))
-            break -- Only show first one
-        end
-    elseif key == "u" then
-        print("📦 Upgrade Shop:")
-        local upgrades = self.systems.upgrades:getUnlockedUpgrades()
-        local count = 0
-        for upgradeId, upgrade in pairs(upgrades) do
-            local cost = self.systems.upgrades:getUpgradeCost(upgradeId)
-            local owned = self.systems.upgrades:getUpgradeCount(upgradeId)
-            local costText = ""
-            for resource, amount in pairs(cost) do
-                costText = costText .. format.number(amount, 0) .. " " .. resource .. " "
+        -- Accept selected contract
+        if self.selectedContract then
+            local success = self.systems.contracts:acceptContract(self.selectedContract)
+            if success then
+                local contract = self:getSelectedContractData()
+                if contract then
+                    print("📝 Accepted contract: " .. contract.clientName .. 
+                          " - Budget: $" .. contract.totalBudget .. 
+                          " | Duration: " .. math.floor(contract.duration) .. "s")
+                    self.selectedContract = nil -- Clear selection
+                end
+            else
+                print("❌ Failed to accept contract. Check requirements.")
             end
-            print("   [" .. (count + 1) .. "] " .. upgrade.name .. " (x" .. owned .. "/" .. upgrade.maxCount .. ") - " .. costText)
-            count = count + 1
-        end
-        if count == 0 then
-            print("   No upgrades available yet. Keep playing to unlock more!")
         else
-            print("   Press 1-" .. count .. " to purchase upgrades")
+            print("💼 No contract selected. Click on a contract first.")
         end
+    elseif key == "enter" then
+        -- Show detailed information about selected contract
+        if self.selectedContract then
+            local contract = self:getSelectedContractData()
+            if contract then
+                print("📋 CONTRACT DETAILS:")
+                print("   Client: " .. contract.clientName)
+                print("   Description: " .. contract.description)
+                print("   Budget: $" .. format.number(contract.totalBudget, 0))
+                print("   Duration: " .. math.floor(contract.duration) .. "s")
+                print("   Reputation Reward: +" .. contract.reputationReward)
+                print("   Risk Level: " .. (contract.riskLevel or "LOW"))
+            end
+        else
+            print("💼 No contract selected. Click on a contract to view details.")
+        end
+    elseif key == "i" then
+        -- Show information about current business status
+        print("💼 BUSINESS INFORMATION:")
+        local resources = self.systems.resources:getAllResources()
+        print("   Current Funds: $" .. format.number(resources.money or 0, 0))
+        print("   Reputation Level: " .. format.number(resources.reputation or 0, 0))
+        print("   Experience Points: " .. format.number(resources.xp or 0, 0))
+        print("   Mission Tokens: " .. format.number(resources.missionTokens or 0, 0))
+        
+        local contractStats = self.systems.contracts:getStats()
+        print("   Active Contracts: " .. contractStats.activeContracts)
+        print("   Revenue Rate: $" .. format.number(contractStats.totalIncomeRate, 2) .. "/sec")
     elseif key == "z" then
         print("🗺️ Zone System:")
         local zones = self.systems.zones:getUnlockedZones()

@@ -14,71 +14,62 @@ function ZoneSystem.new(eventBus)
         -- Tier 1: Personal Network
         garage = {
             id = "garage",
-            name = "🏠 Garage Setup",
-            description = "Your humble beginnings in cybersecurity",
+            name = "🏠 Home Office",
+            description = "Starting your cybersecurity consultancy from home",
             unlocked = true,
             tier = 1,
-            difficulty = 1.0,
             
-            -- Resource bonuses
-            bonuses = {
-                dataBitsMultiplier = 1.0,
-                processingPowerMultiplier = 1.0,
-                securityRatingMultiplier = 1.0
-            },
+            -- Business capabilities
+            maxContracts = 2,
+            contractTypes = {"startup"},
+            reputationBonus = 1.0,
             
             -- Unlock requirements
             unlockRequirements = {},
             
-            -- Zone-specific upgrades/threats will be handled by other systems
-            threatLevel = "Low",
+            -- Business context
+            riskLevel = "Low",
             atmosphere = "Cozy but limited workspace with basic equipment"
         },
         
-        basement = {
-            id = "basement",
-            name = "🔧 Basement Lab",
-            description = "Expanded workspace with better equipment",
+        coworking = {
+            id = "coworking",
+            name = "🏢 Co-working Space",
+            description = "Professional shared workspace environment",
             unlocked = false,
-            tier = 1,
-            difficulty = 1.2,
+            tier = 2,
             
-            bonuses = {
-                dataBitsMultiplier = 1.1,
-                processingPowerMultiplier = 1.2,
-                securityRatingMultiplier = 1.0
-            },
+            maxContracts = 4,
+            contractTypes = {"startup", "smallBusiness"},
+            reputationBonus = 1.2,
             
             unlockRequirements = {
-                dataBits = 1000,
-                upgrades = {"basicServerRack"}
+                money = 5000,
+                reputation = 25
             },
             
-            threatLevel = "Low",
-            atmosphere = "Better cooling and space for server racks"
+            riskLevel = "Low-Medium",
+            atmosphere = "Professional environment with better networking"
         },
         
-        apartment = {
-            id = "apartment",
-            name = "🏢 Apartment Office",
-            description = "Professional home office setup",
+        smallOffice = {
+            id = "smallOffice",
+            name = "🏢 Small Office",
+            description = "Your own dedicated office space",
             unlocked = false,
-            tier = 1,
-            difficulty = 1.5,
+            tier = 3,
             
-            bonuses = {
-                dataBitsMultiplier = 1.2,
-                processingPowerMultiplier = 1.1,
-                securityRatingMultiplier = 1.1
-            },
+            maxContracts = 6,
+            contractTypes = {"startup", "smallBusiness", "enterprise"},
+            reputationBonus = 1.5,
             
             unlockRequirements = {
-                dataBits = 10000,
-                securityRating = 200
+                money = 25000,
+                reputation = 75
             },
             
-            threatLevel = "Low-Medium",
-            atmosphere = "Clean, organized space with fiber internet"
+            riskLevel = "Medium",
+            atmosphere = "Professional office with proper security setup"
         },
         
         -- Tier 2: Small Operations
