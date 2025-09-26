@@ -15,6 +15,7 @@ local AchievementSystem = require("src.systems.achievement_system")
 local ContractSystem = require("src.systems.contract_system")  -- NEW: Core business system
 local SpecialistSystem = require("src.systems.specialist_system")  -- NEW: Team management
 local NetworkSaveSystem = require("src.systems.network_save_system")  -- NEW: Network-aware save system
+local IdleSystem = require("src.systems.idle_system")  -- NEW: Comprehensive idle mechanics
 local EventBus = require("src.utils.event_bus")
 
 -- Import UI systems
@@ -74,6 +75,8 @@ function Game.init()
     gameState.systems.specialists = SpecialistSystem.new(gameState.systems.eventBus)  -- NEW: Specialist system
     gameState.systems.upgrades = UpgradeSystem.new(gameState.systems.eventBus)
     gameState.systems.threats = ThreatSystem.new(gameState.systems.eventBus)
+    -- Initialize idle system after core systems (needs resources, threats, upgrades)
+    gameState.systems.idle = IdleSystem.new(gameState.systems.eventBus, gameState.systems.resources, gameState.systems.threats, gameState.systems.upgrades)
     gameState.systems.zones = ZoneSystem.new(gameState.systems.eventBus)
     gameState.systems.rooms = RoomSystem.new(gameState.systems.eventBus)  -- NEW: Enhanced room system
     gameState.systems.rooms:connectResourceSystem(gameState.systems.resources)  -- Connect for unlocking
@@ -89,6 +92,14 @@ function Game.init()
     -- Initialize UI (pass systems so UI can trigger saves / inspect game flags)
     gameState.systems.ui = UIManager.new(gameState.systems)
     
+    -- Subscribe to offline progress events
+    gameState.systems.eventBus:subscribe("offline_progress_calculated", function(progress)
+        -- Show offline progress summary to player
+        gameState.systems.ui:showOfflineProgress(progress, function()
+            print("📊 Offline progress summary dismissed")
+        end)
+    end)
+    
     -- Initialize game modes
     gameState.modes = {
         idle = IdleMode.new(gameState.systems),
@@ -103,10 +114,11 @@ function Game.init()
         if success and savedData then
             Game.loadGameState(savedData)
             
-            -- Apply offline earnings if available
+            -- Apply offline progress if available
             if savedData.idleTimeSeconds and savedData.idleTimeSeconds > 0 then
-                savedData = gameState.systems.save:applyOfflineEarnings(savedData, savedData.idleTimeSeconds)
-                Game.loadGameState(savedData) -- Reload with offline earnings applied
+                local offlineProgress = gameState.systems.idle:calculateOfflineProgress(savedData.idleTimeSeconds)
+                gameState.systems.idle:applyOfflineProgress(offlineProgress)
+                print("⏰ Processed " .. math.floor(savedData.idleTimeSeconds/60) .. " minutes of offline time")
             end
             
             print("📁 Loaded saved game")
@@ -161,6 +173,7 @@ function Game.loadGameState(data)
     gameState.systems.specialists:loadState(data.specialists or {})  -- NEW: Load specialist state
     gameState.systems.upgrades:loadState(data.upgrades or {})
     gameState.systems.threats:loadState(data.threats or {})
+    gameState.systems.idle:loadState(data.idle or {})  -- NEW: Load idle system state
     gameState.systems.zones:loadState(data.zones or {})
     gameState.systems.factions:loadState(data.factions or {})
     gameState.systems.achievements:loadState(data.achievements or {})
@@ -397,6 +410,7 @@ function Game.save()
         specialists = gameState.systems.specialists:getState(),  -- NEW: Save specialist state
         upgrades = gameState.systems.upgrades:getState(),
         threats = gameState.systems.threats:getState(),
+        idle = gameState.systems.idle:getState(),  -- NEW: Save idle system state
         zones = gameState.systems.zones:getState(),
         factions = gameState.systems.factions:getState(),
         achievements = gameState.systems.achievements:getState(),
@@ -410,6 +424,8 @@ function Game.save()
     
     gameState.systems.save:save(saveData, function(success, result)
         if success then
+            -- Update idle system save timestamp
+            gameState.systems.idle:updateSaveTime()
             print("💾 Game saved: " .. result)
         else
             print("❌ Save failed: " .. result)
