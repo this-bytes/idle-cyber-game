@@ -76,7 +76,9 @@ function json.decode(str)
         for i = 1, #content do
             local char = content:sub(i, i)
             if char == ',' and depth == 0 then
-                table.insert(result, json.decode(current))
+                if current:match("%S") then -- Only decode non-empty/non-whitespace strings
+                    table.insert(result, json.decode(current:match("^%s*(.-)%s*$"))) -- trim whitespace
+                end
                 current = ""
             else
                 if char == '{' or char == '[' then
@@ -88,8 +90,8 @@ function json.decode(str)
             end
         end
         
-        if current ~= "" then
-            table.insert(result, json.decode(current))
+        if current:match("%S") then -- Only decode non-empty/non-whitespace strings
+            table.insert(result, json.decode(current:match("^%s*(.-)%s*$"))) -- trim whitespace
         end
         
         return result
