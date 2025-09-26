@@ -89,7 +89,13 @@ function AdminMode:draw()
     love.graphics.setColor(0.8, 0.8, 0.8)
     love.graphics.print("Press 'A' to return to Idle Mode | Use 1-5 to switch tabs", 20, love.graphics.getHeight() - 60)
     if self.currentTab == "resources" then
-        love.graphics.print("Click resource to edit | 'E' to toggle edit mode | 'R' to reset resources", 20, love.graphics.getHeight() - 40)
+        love.graphics.print("E=Edit Mode | R=Reset | M=+1000 DB | P=+100 PP | X=Max All", 20, love.graphics.getHeight() - 40)
+    elseif self.currentTab == "upgrades" then
+        love.graphics.print("G=Grant Upgrade | C=Clear All", 20, love.graphics.getHeight() - 40)
+    elseif self.currentTab == "systems" then
+        love.graphics.print("S=Save | L=Load | N=New Game", 20, love.graphics.getHeight() - 40)
+    elseif self.currentTab == "debug" then
+        love.graphics.print("M=GC | T=Debug Toggle | P=Print State", 20, love.graphics.getHeight() - 40)
     end
 end
 
@@ -194,7 +200,7 @@ function AdminMode:drawUpgradesTab(y)
     love.graphics.print("Owned Upgrades:", 30, y)
     y = y + 25
     
-    local owned = self.systems.upgrades:getAllOwned()
+    local owned = self.systems.upgrades:getOwnedUpgrades()
     local hasUpgrades = false
     
     for upgradeId, count in pairs(owned) do
@@ -207,7 +213,7 @@ function AdminMode:drawUpgradesTab(y)
                 love.graphics.setColor(0.7, 0.7, 0.7)
                 love.graphics.print("    " .. upgrade.description, 40, y)
                 love.graphics.setColor(1, 1, 1)
-                y = y + 20
+                y = y + 25
             end
         end
     end
@@ -218,9 +224,40 @@ function AdminMode:drawUpgradesTab(y)
     end
     
     y = y + 20
+    love.graphics.print("Available Upgrades:", 30, y)
+    y = y + 25
+    
+    local allUpgrades = self.systems.upgrades:getAllUpgrades()
+    local availableCount = 0
+    for upgradeId, upgrade in pairs(allUpgrades) do
+        if upgrade.unlocked and (not owned[upgradeId] or owned[upgradeId] < upgrade.maxCount) then
+            availableCount = availableCount + 1
+            local cost = self.systems.upgrades:getUpgradeCost(upgradeId)
+            local costText = ""
+            for resource, amount in pairs(cost) do
+                costText = costText .. format.number(amount, 0) .. " " .. resource .. " "
+            end
+            
+            love.graphics.setColor(0.8, 0.8, 1.0)
+            love.graphics.print("  " .. upgrade.name .. " - " .. costText, 40, y)
+            love.graphics.setColor(1, 1, 1)
+            y = y + 20
+            if y > love.graphics.getHeight() - 120 then
+                love.graphics.print("  ... and more", 40, y)
+                break
+            end
+        end
+    end
+    
+    if availableCount == 0 then
+        love.graphics.print("  No upgrades available for purchase", 40, y)
+        y = y + 20
+    end
+    
+    y = math.max(y + 20, love.graphics.getHeight() - 100)
     love.graphics.print("Available Actions:", 30, y)
     y = y + 20
-    love.graphics.print("  Press 'G' to grant random upgrade", 40, y)
+    love.graphics.print("  Press 'G' to grant first available upgrade", 40, y)
     y = y + 20
     love.graphics.print("  Press 'C' to clear all upgrades", 40, y)
 end
@@ -389,19 +426,62 @@ function AdminMode:keypressed(key)
                 self.systems.resources:setResource(resourceName, 0)
             end
             print("All resources reset to 0")
+        elseif key == "m" then
+            -- Give money (Data Bits)
+            local currentBits = self.systems.resources:getResource("dataBits")
+            self.systems.resources:setResource("dataBits", currentBits + 1000)
+            print("💎 Added 1000 Data Bits")
+        elseif key == "p" then
+            -- Give processing power
+            local currentPower = self.systems.resources:getResource("processingPower")
+            self.systems.resources:setResource("processingPower", currentPower + 100)
+            print("⚡ Added 100 Processing Power")
+        elseif key == "x" then
+            -- Max out all resources
+            print("Maxing out all resources...")
+            local bigNumber = 999999999
+            for resourceName, _ in pairs(self.systems.resources:getAllResources()) do
+                self.systems.resources:setResource(resourceName, bigNumber)
+            end
+            print("All resources set to maximum")
         end
     end
     
     -- Handle upgrades tab
     if self.currentTab == "upgrades" then
         if key == "g" then
-            -- Grant random upgrade (placeholder - would need access to upgrade definitions)
-            print("Granting random upgrade...")
-            -- This would need proper implementation based on available upgrades
+            -- Grant first available upgrade
+            print("Granting first available upgrade...")
+            local allUpgrades = self.systems.upgrades:getAllUpgrades()
+            local owned = self.systems.upgrades:getOwnedUpgrades()
+            
+            for upgradeId, upgrade in pairs(allUpgrades) do
+                if upgrade.unlocked and (not owned[upgradeId] or owned[upgradeId] < upgrade.maxCount) then
+                    -- Add one copy of this upgrade directly
+                    if not owned[upgradeId] then
+                        owned[upgradeId] = 0
+                    end
+                    owned[upgradeId] = owned[upgradeId] + 1
+                    
+                    -- Apply upgrade effects via resource system
+                    if self.systems.resources and upgrade.effects then
+                        for effectType, value in pairs(upgrade.effects) do
+                            self.systems.resources:applyUpgradeEffect(upgradeId, effectType, value)
+                        end
+                    end
+                    
+                    print("✨ Granted: " .. upgrade.name .. " (now x" .. owned[upgradeId] .. ")")
+                    break
+                end
+            end
         elseif key == "c" then
             -- Clear all upgrades
             print("Clearing all upgrades...")
-            -- This would need proper implementation to reset upgrade counts
+            local owned = self.systems.upgrades:getOwnedUpgrades()
+            for upgradeId, _ in pairs(owned) do
+                owned[upgradeId] = 0
+            end
+            print("All upgrades cleared")
         end
     end
     
@@ -411,17 +491,67 @@ function AdminMode:keypressed(key)
             -- Force save
             print("Force saving game...")
             if self.systems.save then
-                -- Would need to call the game's save function
-                print("Game saved")
+                local gameData = {
+                    resources = self.systems.resources:getState(),
+                    upgrades = self.systems.upgrades:getState(),
+                    threats = self.systems.threats and self.systems.threats:getState() or {},
+                    zones = self.systems.zones and self.systems.zones:getState() or {},
+                    factions = self.systems.factions and self.systems.factions:getState() or {},
+                    achievements = self.systems.achievements and self.systems.achievements:getState() or {},
+                    version = "1.0.0",
+                    timestamp = os.time()
+                }
+                
+                if self.systems.save:save(gameData) then
+                    print("✅ Game saved successfully")
+                else
+                    print("❌ Save failed")
+                end
+            else
+                print("❌ Save system not available")
             end
         elseif key == "l" then
             -- Reload game
             print("Reloading game...")
-            -- This would need proper implementation
+            if self.systems.save then
+                local savedData = self.systems.save:load()
+                if savedData then
+                    -- Load the saved data into systems
+                    if savedData.resources and self.systems.resources then
+                        self.systems.resources:loadState(savedData.resources)
+                    end
+                    if savedData.upgrades and self.systems.upgrades then
+                        self.systems.upgrades:loadState(savedData.upgrades)
+                    end
+                    print("✅ Game reloaded successfully")
+                else
+                    print("❌ No save file found")
+                end
+            else
+                print("❌ Save system not available")
+            end
         elseif key == "n" then
-            -- New game
+            -- New game (reset to default state)
             print("Starting new game...")
-            -- This would need proper implementation
+            
+            -- Reset all resources
+            for resourceName, _ in pairs(self.systems.resources:getAllResources()) do
+                self.systems.resources:setResource(resourceName, 0)
+                self.systems.resources:setGeneration(resourceName, 0)
+            end
+            
+            -- Set default starting resources
+            self.systems.resources:setResource("dataBits", 0)
+            self.systems.resources:setResource("processingPower", 0)
+            self.systems.resources:setResource("securityRating", 0)
+            
+            -- Clear all upgrades
+            local owned = self.systems.upgrades:getOwnedUpgrades()
+            for upgradeId, _ in pairs(owned) do
+                owned[upgradeId] = 0
+            end
+            
+            print("✅ New game started - all progress reset")
         end
     end
     
