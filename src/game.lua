@@ -5,6 +5,7 @@ local Game = {}
 
 -- Import game systems
 local ResourceSystem = require("src.systems.resource_system")
+local ProgressionSystem = require("src.systems.progression_system")  -- NEW: Comprehensive progression
 local UpgradeSystem = require("src.systems.upgrade_system")
 local ThreatSystem = require("src.systems.threat_system")
 local ZoneSystem = require("src.systems.zone_system")
@@ -67,6 +68,7 @@ function Game.init()
     -- Make gameState accessible to systems/modes for cross-cutting data (e.g., loaded player state)
     gameState.systems.gameState = gameState
     gameState.systems.resources = ResourceSystem.new(gameState.systems.eventBus)
+    gameState.systems.progression = ProgressionSystem.new(gameState.systems.eventBus)  -- NEW: Progression system
     gameState.systems.contracts = ContractSystem.new(gameState.systems.eventBus)  -- NEW: Contract system
     gameState.systems.contracts:setResourceSystem(gameState.systems.resources)  -- NEW: Connect systems
     gameState.systems.specialists = SpecialistSystem.new(gameState.systems.eventBus)  -- NEW: Specialist system
@@ -149,6 +151,7 @@ end
 -- Load game state from saved data
 function Game.loadGameState(data)
     gameState.systems.resources:loadState(data.resources or {})
+    gameState.systems.progression:loadState(data.progression or {})  -- NEW: Load progression state
     gameState.systems.contracts:loadState(data.contracts or {})  -- NEW: Load contract state
     gameState.systems.specialists:loadState(data.specialists or {})  -- NEW: Load specialist state
     gameState.systems.upgrades:loadState(data.upgrades or {})
@@ -385,6 +388,7 @@ function Game.save()
     
     local saveData = {
         resources = gameState.systems.resources:getState(),
+        progression = gameState.systems.progression:getState(),  -- NEW: Save progression state
         contracts = gameState.systems.contracts:getState(),  -- NEW: Save contract state
         specialists = gameState.systems.specialists:getState(),  -- NEW: Save specialist state
         upgrades = gameState.systems.upgrades:getState(),

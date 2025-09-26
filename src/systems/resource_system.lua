@@ -156,6 +156,14 @@ function ResourceSystem:addResource(resourceName, amount)
         addedAmount = newAmount - currentAmount
     })
     
+    -- Publish resource earned event for progression system
+    if newAmount > currentAmount then
+        self.eventBus:publish("resource_earned", {
+            resource = resourceName,
+            amount = newAmount - currentAmount
+        })
+    end
+    
     return true
 end
 
