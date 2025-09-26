@@ -47,14 +47,11 @@ function ResourceSystem.new(eventBus)
     for resourceName in pairs(self.resources) do
         self.storage[resourceName] = math.huge -- No limits initially
     end
-        dataBits = math.huge,           -- No limit initially
-        processingPower = math.huge,
-        securityRating = 1000,          -- Security has a cap
-        reputationPoints = 100,         -- Limited reputation storage initially
-        researchData = 50,              -- Limited research storage
-        neuralNetworkFragments = 10,    -- Very limited storage
-        quantumEntanglementTokens = 1   -- Extremely limited
-    }
+    
+    -- Legacy storage settings (TODO: Remove after full refactor)
+    self.storage.dataBits = math.huge
+    self.storage.processingPower = math.huge
+    self.storage.securityRating = 1000
     
     self.lastUpdateTime = (love and love.timer and love.timer.getTime()) or os.clock()
     
