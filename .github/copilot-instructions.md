@@ -55,3 +55,23 @@ This project uses a comprehensive modular approach to copilot instructions. Each
 - **Scalable Documentation:** Easy to add new instruction files as the project grows
 
 When working on any aspect of the game, consult the appropriate instruction file for detailed, actionable guidance specific to that area of development.
+
+### Code Style and Conventions
+- Follow Lua best practices and existing code patterns
+- Use descriptive variable and function names
+- Comment complex game mechanics and mathematical formulas
+- Keep functions focused and modular
+- Use the event bus system for cross-system communication
+
+### Testing Requirements
+- All new systems should have corresponding tests in `tests/systems/`
+- Test both happy path and edge cases
+- Validate game balance with simulation tools
+- Ensure save/load compatibility after data structure changes
+
+### Dependencies and Constraints
+- **Lua 5.3+ required** - Do not use features from newer versions
+- **LÖVE 2D framework** - Follow Love2D conventions and limitations
+- **No external dependencies** - Keep the game self-contained
+- **Cross-platform compatibility** - Ensure code works on Windows, Mac, and Linux
+- **Performance considerations** - Game must run smoothly on modest hardware

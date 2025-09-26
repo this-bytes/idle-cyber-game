@@ -69,7 +69,8 @@ if arg and arg[0] and arg[0]:match("test_runner%.lua$") then
         "tests/systems/test_contract_system.lua", 
         "tests/systems/test_specialist_system.lua",
         "tests/systems/test_location_system.lua",     -- NEW: Location system tests
-        "tests/systems/test_progression_system.lua"  -- NEW: Progression system tests
+        "tests/systems/test_progression_system.lua", -- NEW: Progression system tests
+        "tests/systems/test_idle_system.lua"         -- NEW: Idle system tests from main
     }
     
     -- Track total tests across all modules
