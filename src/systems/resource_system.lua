@@ -1,67 +1,52 @@
 -- Resource Management System - Cyber Empire Command
 -- Handles resources for cybersecurity consultancy business
+-- Now config-driven following bootstrap architecture
 
 local ResourceSystem = {}
 ResourceSystem.__index = ResourceSystem
+
+-- Import configuration
+local GameConfig = require("src.config.game_config")
 
 -- Create new resource system
 function ResourceSystem.new(eventBus)
     local self = setmetatable({}, ResourceSystem)
     self.eventBus = eventBus
     
-    -- Core resources as defined in Cyber Empire Command instructions
-    self.resources = {
-        -- Primary Resources (Core Mechanics)
-        money = 1000,           -- Currency for hiring, equipment, facilities
-        reputation = 0,         -- Unlocks higher-tier contracts and factions
-        xp = 0,                 -- General experience for company growth
-        missionTokens = 0,      -- Rare resource from Crisis Mode for elite upgrades
-        
-        -- Secondary Resources (Business Operations)
-        contracts = 0,          -- Active contracts providing income
-        specialists = 1,        -- Team members (start with player)
-        facilities = 1,         -- Office space and equipment capacity
-        
-        -- Legacy resources (TODO: Remove after refactoring complete)  
-        dataBits = 0,           -- DEPRECATED - will be removed
-        processingPower = 0,    -- DEPRECATED - will be removed
-        securityRating = 0,     -- DEPRECATED - will be removed
-    }
+    -- Initialize resources from config
+    self.resources = {}
+    for resourceName, resourceConfig in pairs(GameConfig.RESOURCES) do
+        self.resources[resourceName] = resourceConfig.startingAmount
+    end
+    
+    -- Legacy resources (TODO: Remove after full refactor)
+    self.resources.dataBits = 10
+    self.resources.processingPower = 0
+    self.resources.securityRating = 100
     
     -- Generation rates (per second) - mainly from active contracts
-    self.generation = {
-        money = 0,              -- From contracts and crisis resolutions
-        reputation = 0,         -- From successful contracts
-        xp = 0,                 -- From all activities
-        missionTokens = 0,      -- Only from Crisis Mode successes
-        
-        -- Legacy
-        dataBits = 0,
-        processingPower = 0,
-        securityRating = 0,
-    }
+    self.generation = {}
+    for resourceName in pairs(self.resources) do
+        self.generation[resourceName] = 0
+    end
     
     -- Resource multipliers from facilities and upgrades
-    self.multipliers = {
-        money = 1.0,
-        reputation = 1.0,
-        xp = 1.0,
-        missionTokens = 1.0,
-        
-        -- Legacy
-        dataBits = 1.0,
-        processingPower = 1.0,
-        securityRating = 1.0,
-    }
+    self.multipliers = {}
+    for resourceName in pairs(self.resources) do
+        self.multipliers[resourceName] = 1.0
+    end
     
-    -- Click mechanics
+    -- Click mechanics for active gameplay
     self.clickPower = 1
     self.clickCombo = 1.0
     self.lastClickTime = 0
     self.comboDecayTime = 2.0
     
     -- Storage limitations (expandable through upgrades)
-    self.storage = {
+    self.storage = {}
+    for resourceName in pairs(self.resources) do
+        self.storage[resourceName] = math.huge -- No limits initially
+    end
         dataBits = math.huge,           -- No limit initially
         processingPower = math.huge,
         securityRating = 1000,          -- Security has a cap

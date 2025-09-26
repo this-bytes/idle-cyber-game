@@ -292,15 +292,17 @@ function Game.save()
     print("💾 Game saved")
 end
 
--- Auto-save periodically
+-- Auto-save periodically using config interval
 local autoSaveTimer = 0
-local AUTO_SAVE_INTERVAL = 60 -- seconds
 
 function Game.handleAutoSave(dt)
+    if not gameState.initialized then return end
+    
     autoSaveTimer = autoSaveTimer + dt
-    if autoSaveTimer >= AUTO_SAVE_INTERVAL then
+    if autoSaveTimer >= GameConfig.BALANCE.autoSaveInterval then
         Game.save()
         autoSaveTimer = 0
+        gameState.lastSaveTime = love.timer.getTime()
     end
 end
 

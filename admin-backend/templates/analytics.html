@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics - Cyber Empire Command Admin{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Resource Trends Chart -->
+    <div class="col-md-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-line"></i> Resource Trends</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="resourceChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Metrics -->
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-tachometer-alt"></i> Performance Metrics</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>System Uptime:</strong><br>
+                    <span id="system-uptime" class="metric-value">Calculating...</span>
+                </div>
+                <div class="mb-3">
+                    <strong>CPU Usage:</strong><br>
+                    <span id="cpu-usage" class="metric-value">0%</span>
+                </div>
+                <div class="mb-3">
+                    <strong>Memory Usage:</strong><br>
+                    <span id="memory-usage" class="metric-value">0%</span>
+                </div>
+                <div class="mb-3">
+                    <strong>Game Updates/min:</strong><br>
+                    <span id="update-rate" class="metric-value">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Contract Analytics -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-handshake"></i> Contract Analytics</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="contractChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Crisis Response Analytics -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-exclamation-triangle"></i> Crisis Response Analytics</h5>
+            </div>
+            <div class="card-body">
+                <div id="crisis-analytics">
+                    <div class="text-center text-muted">
+                        <i class="fas fa-chart-pie fa-3x mb-2"></i>
+                        <div>No crisis data available yet</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Historical Data Table -->
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-table"></i> Historical Data</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-dark table-striped">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Money</th>
+                                <th>Reputation</th>
+                                <th>XP</th>
+                                <th>Mission Tokens</th>
+                                <th>Active Contracts</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historical-data">
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">Loading historical data...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Initialize charts
+    let resourceChart = null;
+    let contractChart = null;
+
+    // Initialize resource trends chart
+    function initResourceChart() {
+        const ctx = document.getElementById('resourceChart').getContext('2d');
+        resourceChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'Money',
+                        data: [],
+                        borderColor: '#00ff00',
+                        backgroundColor: 'rgba(0, 255, 0, 0.1)',
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Reputation',
+                        data: [],
+                        borderColor: '#ffff00',
+                        backgroundColor: 'rgba(255, 255, 0, 0.1)',
+                        tension: 0.4
+                    },
+                    {
+                        label: 'XP',
+                        data: [],
+                        borderColor: '#00ffff',
+                        backgroundColor: 'rgba(0, 255, 255, 0.1)',
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#00ff00'
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            color: '#00ff00'
+                        },
+                        grid: {
+                            color: 'rgba(0, 255, 0, 0.1)'
+                        }
+                    },
+                    y: {
+                        ticks: {
+                            color: '#00ff00'
+                        },
+                        grid: {
+                            color: 'rgba(0, 255, 0, 0.1)'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Initialize contract distribution chart
+    function initContractChart() {
+        const ctx = document.getElementById('contractChart').getContext('2d');
+        contractChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Startup', 'Small Business', 'Enterprise', 'Government'],
+                datasets: [{
+                    data: [0, 0, 0, 0],
+                    backgroundColor: [
+                        '#00ff00',
+                        '#ffff00',
+                        '#00ffff',
+                        '#ff00ff'
+                    ],
+                    borderColor: '#000000',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#00ff00'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Update analytics data
+    function updateAnalytics() {
+        fetch('/api/analytics')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    updatePerformanceMetrics(data.system_info);
+                    updateResourceHistory(data.analytics.resource_history);
+                    updateHistoricalTable(data.analytics.resource_history);
+                }
+            })
+            .catch(error => {
+                console.error('Failed to fetch analytics:', error);
+            });
+    }
+
+    // Update performance metrics
+    function updatePerformanceMetrics(systemInfo) {
+        if (systemInfo) {
+            document.getElementById('cpu-usage').textContent = systemInfo.cpu_percent.toFixed(1) + '%';
+            document.getElementById('memory-usage').textContent = systemInfo.memory_percent.toFixed(1) + '%';
+            
+            const hours = Math.floor(systemInfo.uptime / 3600);
+            const minutes = Math.floor((systemInfo.uptime % 3600) / 60);
+            document.getElementById('system-uptime').textContent = `${hours}h ${minutes}m`;
+        }
+    }
+
+    // Update resource history chart
+    function updateResourceHistory(history) {
+        if (!resourceChart || !history || history.length === 0) return;
+
+        const last20 = history.slice(-20); // Show last 20 data points
+        const labels = last20.map(entry => {
+            const date = new Date(entry.timestamp);
+            return date.toLocaleTimeString();
+        });
+
+        resourceChart.data.labels = labels;
+        resourceChart.data.datasets[0].data = last20.map(entry => entry.resources.money || 0);
+        resourceChart.data.datasets[1].data = last20.map(entry => entry.resources.reputation || 0);
+        resourceChart.data.datasets[2].data = last20.map(entry => entry.resources.xp || 0);
+        
+        resourceChart.update();
+    }
+
+    // Update historical data table
+    function updateHistoricalTable(history) {
+        if (!history || history.length === 0) return;
+
+        const tbody = document.getElementById('historical-data');
+        tbody.innerHTML = '';
+
+        const last10 = history.slice(-10).reverse(); // Show last 10 entries, newest first
+        
+        last10.forEach(entry => {
+            const row = document.createElement('tr');
+            const date = new Date(entry.timestamp);
+            
+            row.innerHTML = `
+                <td>${date.toLocaleString()}</td>
+                <td>$${formatNumber(entry.resources.money || 0)}</td>
+                <td>${formatNumber(entry.resources.reputation || 0)}</td>
+                <td>${formatNumber(entry.resources.xp || 0)}</td>
+                <td>${formatNumber(entry.resources.missionTokens || 0)}</td>
+                <td>N/A</td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        initResourceChart();
+        initContractChart();
+        updateAnalytics();
+        
+        // Update analytics every 10 seconds
+        setInterval(updateAnalytics, 10000);
+    });
+
+    // Enhanced update function for analytics page
+    function updateGameState(gameState) {
+        // Call parent function if it exists
+        if (window.updateGameStateBase) {
+            window.updateGameStateBase(gameState);
+        }
+        
+        // Update analytics-specific displays
+        // (Additional analytics updates can be added here)
+    }
+</script>
+{% endblock %}

@@ -210,7 +210,7 @@ def api_save_backup():
         logger.error(f"Failed to create backup: {e}")
         return jsonify({
             'status': 'error',
-            'message': f'Backup failed: {str(e)}'
+            'message': 'Backup operation failed. Check server logs for details.'
         }), 500
 
 # WebSocket Events

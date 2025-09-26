@@ -1,8 +1,12 @@
 -- Contract Management System - Cyber Empire Command
 -- Handles client contracts, the primary idle gameplay loop
+-- Now config-driven following bootstrap architecture
 
 local ContractSystem = {}
 ContractSystem.__index = ContractSystem
+
+-- Import configuration
+local GameConfig = require("src.config.game_config")
 
 -- Create new contract system
 function ContractSystem.new(eventBus)
@@ -15,55 +19,13 @@ function ContractSystem.new(eventBus)
     -- Available contracts (not yet taken)
     self.availableContracts = {}
     
-    -- Contract generation parameters
+    -- Contract generation parameters from config
     self.nextContractId = 1
     self.contractGenerationTimer = 0
-    self.contractGenerationInterval = 30 -- Generate new contract every 30 seconds
+    self.contractGenerationInterval = GameConfig.BALANCE.contractGenerationInterval
     
-    -- Client types and their properties
-    self.clientTypes = {
-        startup = {
-            name = "Tech Startup",
-            budgetRange = {500, 2000},
-            durationRange = {60, 180}, -- seconds
-            reputationReward = {1, 5},
-            riskLevel = "low",
-            threatTypes = {"script_kiddies", "basic_malware"},
-            description = "Small tech company needing basic security"
-        },
-        
-        smallBusiness = {
-            name = "Small Business",
-            budgetRange = {1500, 5000},
-            durationRange = {120, 300},
-            reputationReward = {3, 10},
-            riskLevel = "medium",
-            threatTypes = {"phishing", "ransomware"},
-            description = "Growing business with moderate security needs"
-        },
-        
-        enterprise = {
-            name = "Enterprise Corp",
-            budgetRange = {10000, 50000},
-            durationRange = {300, 600},
-            reputationReward = {15, 50},
-            riskLevel = "high",
-            threatTypes = {"apt", "supply_chain", "zero_day"},
-            description = "Large corporation requiring comprehensive security",
-            unlockRequirement = {reputation = 50}
-        },
-        
-        government = {
-            name = "Government Agency",
-            budgetRange = {25000, 100000},
-            durationRange = {600, 1200},
-            reputationReward = {30, 100},
-            riskLevel = "critical",
-            threatTypes = {"nation_state", "advanced_persistent", "zero_day"},
-            description = "High-security government contract",
-            unlockRequirement = {reputation = 200, missionTokens = 5}
-        }
-    }
+    -- Use client types from configuration
+    self.clientTypes = GameConfig.CLIENT_TIERS
     
     -- Initialize with a basic contract
     local initialContract = self:generateContract("startup")
