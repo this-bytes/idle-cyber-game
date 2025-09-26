@@ -1,4 +1,4 @@
-## Project: Cyberspace Tycoon - Idle Cybersecurity Game
+## Project: Cyber Empire Command - Idle Cybersecurity Consulting FirmGame
 
 **Goal:** To develop an idle game using Lua and LÖVE 2D, focusing on learning software development principles, particularly Git version control, through an engaging cybersecurity theme.
 

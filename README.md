@@ -25,9 +25,20 @@ Based on the modular instruction system in `.github/copilot-instructions/`, this
 
 ## Running the Game
 
+Use the project directory when launching LÖVE (do not pass a single file path). From the project root run:
+
 ```bash
-love game/
+# run using the helper script
+bash run-love.sh
+
+# or run love directly from the project directory
+love .
 ```
+
+Troubleshooting:
+
+- If you see: "Cannot load game at path '/.../main.lua'" then you passed a file path to LÖVE. Use `love .` instead so LÖVE loads the folder containing `main.lua`.
+- Ensure LÖVE is installed and on your PATH.
 
 ## Development
 
