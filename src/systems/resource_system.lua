@@ -21,11 +21,6 @@ function ResourceSystem.new(eventBus)
         contracts = 0,          -- Active contracts providing income
         specialists = 1,        -- Team members (start with player)
         facilities = 1,         -- Office space and equipment capacity
-        
-        -- Legacy resources (TODO: Remove after refactoring complete)  
-        dataBits = 0,           -- DEPRECATED - will be removed
-        processingPower = 0,    -- DEPRECATED - will be removed
-        securityRating = 0,     -- DEPRECATED - will be removed
     }
     
     -- Generation rates (per second) - mainly from active contracts
@@ -34,11 +29,6 @@ function ResourceSystem.new(eventBus)
         reputation = 0,         -- From successful contracts
         xp = 0,                 -- From all activities
         missionTokens = 0,      -- Only from Crisis Mode successes
-        
-        -- Legacy
-        dataBits = 0,
-        processingPower = 0,
-        securityRating = 0,
     }
     
     -- Resource multipliers from facilities and upgrades
@@ -47,28 +37,11 @@ function ResourceSystem.new(eventBus)
         reputation = 1.0,
         xp = 1.0,
         missionTokens = 1.0,
-        
-        -- Legacy
-        dataBits = 1.0,
-        processingPower = 1.0,
-        securityRating = 1.0,
     }
     
-    -- Click mechanics
-    self.clickPower = 1
-    self.clickCombo = 1.0
-    self.lastClickTime = 0
-    self.comboDecayTime = 2.0
-    
-    -- Storage limitations (expandable through upgrades)
+    -- Storage limitations (can be expanded through upgrades if needed)
     self.storage = {
-        dataBits = math.huge,           -- No limit initially
-        processingPower = math.huge,
-        securityRating = 1000,          -- Security has a cap
-        reputationPoints = 100,         -- Limited reputation storage initially
-        researchData = 50,              -- Limited research storage
-        neuralNetworkFragments = 10,    -- Very limited storage
-        quantumEntanglementTokens = 1   -- Extremely limited
+        -- Core resources have unlimited storage by default
     }
     
     self.lastUpdateTime = (love and love.timer and love.timer.getTime()) or os.clock()
@@ -111,17 +84,13 @@ end
 
 -- Apply upgrade effect
 function ResourceSystem:applyUpgradeEffect(upgradeId, effectType, value)
-    if effectType == "clickPower" then
-        self.clickPower = self.clickPower + value
-    elseif effectType == "dataBitsGeneration" then
-        self:addGeneration("dataBits", value)
-    elseif effectType == "processingPowerGeneration" then
-        self:addGeneration("processingPower", value)
-    elseif effectType == "dataBitsMultiplier" then
-        local currentMultiplier = self:getMultiplier("dataBits")
-        self:setMultiplier("dataBits", currentMultiplier + value)
-    elseif effectType == "securityRating" then
-        self:addResource("securityRating", value)
+    if effectType == "moneyGeneration" then
+        self:addGeneration("money", value)
+    elseif effectType == "reputationMultiplier" then
+        local currentMultiplier = self:getMultiplier("reputation")
+        self:setMultiplier("reputation", currentMultiplier + value)
+    else
+        print("⚠️ Unknown upgrade effect: " .. effectType)
     end
 end
 
@@ -152,12 +121,6 @@ function ResourceSystem:update(dt)
         end
     end
     
-    -- Update click combo decay
-    local timeSinceLastClick = (love and love.timer and love.timer.getTime() or os.clock()) - self.lastClickTime
-    if timeSinceLastClick > self.comboDecayTime then
-        self.clickCombo = math.max(1.0, self.clickCombo - (dt * 2.0))
-    end
-    
     -- Update last update time if in Love2D environment
     if love and love.timer then
         self.lastUpdateTime = love.timer.getTime()
@@ -168,48 +131,6 @@ function ResourceSystem:update(dt)
         resources = self.resources,
         generation = self.generation
     })
-end
-
--- Manual click for resources (primarily Data Bits)
-function ResourceSystem:click()
-    local currentTime = love.timer.getTime()
-    local timeSinceLastClick = currentTime - self.lastClickTime
-    
-    -- Update click combo
-    if timeSinceLastClick <= self.comboDecayTime then
-        self.clickCombo = math.min(self.clickCombo + 0.2, 5.0)
-    else
-        self.clickCombo = 1.0
-    end
-    
-    self.lastClickTime = currentTime
-    
-    -- Calculate click reward
-    local baseReward = self.clickPower
-    local comboMultiplier = self.clickCombo
-    
-    -- Critical hit chance (5% base + processing power bonus)
-    local critChance = 0.05 + (self.resources.processingPower * 0.0005)
-    local isCritical = math.random() < critChance
-    local criticalMultiplier = isCritical and 10 or 1
-    
-    local totalReward = baseReward * comboMultiplier * criticalMultiplier
-    
-    self:addResource("dataBits", totalReward)
-    
-    -- Publish click event
-    self.eventBus:publish("resource_clicked", {
-        resource = "dataBits",
-        amount = totalReward,
-        combo = comboMultiplier,
-        critical = isCritical
-    })
-    
-    return {
-        reward = totalReward,
-        combo = comboMultiplier,
-        critical = isCritical
-    }
 end
 
 -- Add resource with storage limits
@@ -346,27 +267,12 @@ function ResourceSystem:getStorageLimit(resourceName)
     return self.storage[resourceName] or math.huge
 end
 
--- Get click information
-function ResourceSystem:getClickInfo()
-    return {
-        power = self.clickPower,
-        combo = self.clickCombo,
-        maxCombo = 5.0
-    }
-end
-
--- Set click power
-function ResourceSystem:setClickPower(power)
-    self.clickPower = power
-end
-
 -- Get state for saving
 function ResourceSystem:getState()
     return {
         resources = self.resources,
         generation = self.generation,
         multipliers = self.multipliers,
-        clickPower = self.clickPower,
         storage = self.storage
     }
 end
@@ -389,10 +295,6 @@ function ResourceSystem:loadState(state)
         for name, value in pairs(state.multipliers) do
             self.multipliers[name] = value or 1.0
         end
-    end
-    
-    if state.clickPower then
-        self.clickPower = state.clickPower
     end
     
     if state.storage then

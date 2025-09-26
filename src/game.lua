@@ -83,7 +83,7 @@ function Game.init()
     print("=== Cyberspace Tycoon ===")
     print("🔥 Welcome to the cybersecurity empire!")
     print("⌨️  Controls:")
-    print("   A - The Admin's Watch (Real-time mode)")
+    print("   A - Crisis Response Mode (Real-time incident handling)")
     print("   U - Upgrades shop")
     print("   H - Achievements & Progress")
     print("   Z - Zone management")
@@ -102,11 +102,8 @@ function Game.initializeDefaultState()
     gameState.systems.resources:setResource("xp", 0)
     gameState.systems.resources:setResource("missionTokens", 0)
     
-    -- Legacy resources (TODO: Remove after full refactor)
+    -- Initialize current zone
     gameState.systems.zones:setCurrentZone("garage")
-    gameState.systems.resources:setResource("dataBits", 10)
-    gameState.systems.resources:setResource("processingPower", 0)
-    gameState.systems.resources:setResource("securityRating", 100)
     
     -- Give player basic achievements progress
     gameState.systems.achievements:initializeProgress()

@@ -12,7 +12,7 @@ function AchievementSystem.new(eventBus)
     -- Achievement progress tracking
     self.progress = {
         totalClicks = 0,
-        totalDataBitsEarned = 0,
+        totalContractsCompleted = 0,
         totalUpgradesPurchased = 0,
         maxClickCombo = 1.0,
         criticalHits = 0
@@ -41,10 +41,10 @@ function AchievementSystem.new(eventBus)
         },
         comboKing = {
             id = "comboKing",
-            name = "🔥 Combo King",
-            description = "Achieve a 5x click combo",
+            name = "🔥 Action Specialist",
+            description = "Execute 5 consecutive successful actions",
             requirement = {type = "maxCombo", value = 5.0},
-            reward = {type = "dataBits", value = 100},
+            reward = {type = "money", value = 500},
             unlocked = false
         },
         firstUpgrade = {
@@ -52,15 +52,15 @@ function AchievementSystem.new(eventBus)
             name = "🛒 First Purchase",
             description = "Buy your first upgrade",
             requirement = {type = "upgrades", value = 1},
-            reward = {type = "dataBits", value = 50},
+            reward = {type = "money", value = 250},
             unlocked = false
         },
-        dataCollector = {
-            id = "dataCollector",
-            name = "💎 Data Collector",
-            description = "Earn 1,000 Data Bits",
-            requirement = {type = "totalEarned", value = 1000},
-            reward = {type = "clickPower", value = 5},
+        businessBuilder = {
+            id = "businessBuilder",
+            name = "💼 Business Builder",
+            description = "Complete 10 contracts successfully",
+            requirement = {type = "contractsCompleted", value = 10},
+            reward = {type = "reputation", value = 10},
             unlocked = false
         }
     }
@@ -73,25 +73,16 @@ end
 
 -- Subscribe to relevant events
 function AchievementSystem:subscribeToEvents()
-    -- Track clicking achievements
-    self.eventBus:subscribe("resource_clicked", function(data)
-        if data.resource == "dataBits" then
-            self.progress.totalClicks = self.progress.totalClicks + 1
-            self.progress.totalDataBitsEarned = self.progress.totalDataBitsEarned + data.amount
-            
-            if data.combo > self.progress.maxClickCombo then
-                self.progress.maxClickCombo = data.combo
-            end
-            
-            if data.critical then
-                self.progress.criticalHits = self.progress.criticalHits + 1
-            end
-        end
+    -- Track contract completions
+    self.eventBus:subscribe("contract_completed", function(data)
+        self.progress.totalContractsCompleted = self.progress.totalContractsCompleted + 1
+        self:checkAchievements()
     end)
     
     -- Track upgrade purchases
     self.eventBus:subscribe("upgrade_purchased", function(data)
         self.progress.totalUpgradesPurchased = self.progress.totalUpgradesPurchased + 1
+        self:checkAchievements()
     end)
 end
 
@@ -120,8 +111,8 @@ function AchievementSystem:checkRequirement(requirement)
         return self.progress.maxClickCombo >= reqValue
     elseif reqType == "upgrades" then
         return self.progress.totalUpgradesPurchased >= reqValue
-    elseif reqType == "totalEarned" then
-        return self.progress.totalDataBitsEarned >= reqValue
+    elseif reqType == "contractsCompleted" then
+        return self.progress.totalContractsCompleted >= reqValue
     end
     
     return false
@@ -154,16 +145,15 @@ end
 
 -- Apply achievement reward
 function AchievementSystem:applyReward(reward)
-    if reward.type == "dataBits" then
+    if reward.type == "money" then
         self.eventBus:publish("add_resource", {
-            resource = "dataBits",
+            resource = "money",
             amount = reward.value
         })
-    elseif reward.type == "clickPower" then
-        self.eventBus:publish("apply_upgrade_effect", {
-            upgradeId = "achievement_reward",
-            effectType = "clickPower",
-            value = reward.value
+    elseif reward.type == "reputation" then  
+        self.eventBus:publish("add_resource", {
+            resource = "reputation",
+            amount = reward.value
         })
     end
 end
@@ -172,7 +162,7 @@ function AchievementSystem:initializeProgress()
     -- Initialize progress tracking
     self.progress = {
         totalClicks = 0,
-        totalDataBitsEarned = 0,
+        totalContractsCompleted = 0,
         totalUpgradesPurchased = 0,
         maxClickCombo = 1.0,
         criticalHits = 0

@@ -100,15 +100,8 @@ function IdleMode:draw()
         theme:drawText("[ NO CONTRACTS AVAILABLE - BUILDING REPUTATION... ]", leftPanelX + 30, contractY, theme:getColor("muted"))
     end
     
-    -- Legacy systems notice (if any exist)
-    if resources.dataBits and resources.dataBits > 0 then
-        y = y + 200
-        theme:drawPanel(leftPanelX, y, panelWidth, 60, "LEGACY SYSTEMS")
-        theme:drawText("Data Bits: " .. format.number(resources.dataBits, 0), leftPanelX + 10, y + 25, theme:getColor("muted"))
-        theme:drawText("(Migration in progress...)", leftPanelX + 10, y + 40, theme:getColor("muted"))
-    end
-    
-    -- Status bar with controls
+    -- Status bar with controls  
+    theme:drawText("PRESS [ENTER] FOR CONTRACT DETAILS | [SPACE] QUICK ACCEPT", leftPanelX + 30, contractY + 20, theme:getColor("warning"))
     theme:drawStatusBar("READY | [CLICK] Accept Contract | [A] Crisis Mode | [U] Upgrades | [ESC] Quit")
 end
 
@@ -124,30 +117,42 @@ function IdleMode:mousepressed(x, y, button)
                 print("📝 Accepted contract: " .. contract.clientName .. 
                       " - Budget: $" .. contract.totalBudget .. 
                       " | Duration: " .. math.floor(contract.duration) .. "s")
+                
+                -- Show immediate feedback
+                self.systems.ui.lastAction = {
+                    message = "Contract accepted: " .. contract.clientName,
+                    timer = 3.0
+                }
                 return true
             end
             break -- Only try the first one
         end
         
-        -- Fallback: Legacy clicking for data bits (TODO: Remove after full refactor)
-        local result = self.systems.resources:click()
-        if result then
-            local message = "💎 Legacy click: " .. format.number(result.reward, 2) .. " Data Bits"
-            if result.critical then
-                message = message .. " (CRITICAL!)"
-            end
-            if result.combo > 1 then
-                message = message .. " (combo: " .. format.number(result.combo, 1) .. "x)"
-            end
-            print(message)
-        end
+        -- Show feedback if no contracts available
+        print("💼 No contracts available. Build reputation to unlock better opportunities!")
     end
     return false
 end
 
 function IdleMode:keypressed(key)
     -- Handle idle mode specific keys
-    if key == "u" then
+    if key == "space" then
+        -- Quick accept first available contract
+        self:mousepressed(0, 0, 1) -- Simulate click
+    elseif key == "enter" then
+        -- Show detailed contract information
+        local availableContracts = self.systems.contracts:getAvailableContracts()
+        for _, contract in pairs(availableContracts) do
+            print("📋 CONTRACT DETAILS:")
+            print("   Client: " .. contract.clientName)
+            print("   Description: " .. contract.description)
+            print("   Budget: $" .. format.number(contract.totalBudget, 0))
+            print("   Duration: " .. math.floor(contract.duration) .. "s")
+            print("   Reputation Reward: +" .. contract.reputationReward)
+            print("   Risk Level: " .. (contract.riskLevel or "LOW"))
+            break -- Only show first one
+        end
+    elseif key == "u" then
         print("📦 Upgrade Shop:")
         local upgrades = self.systems.upgrades:getUnlockedUpgrades()
         local count = 0
@@ -181,7 +186,6 @@ function IdleMode:keypressed(key)
         
         print("   📊 Progress:")
         print("      Total Clicks: " .. progress.totalClicks)
-        print("      Data Bits Earned: " .. format.number(progress.totalDataBitsEarned, 0))
         print("      Upgrades Purchased: " .. progress.totalUpgradesPurchased)
         print("      Max Combo: " .. format.number(progress.maxClickCombo, 1) .. "x")
         print("      Critical Hits: " .. progress.criticalHits)
@@ -201,7 +205,7 @@ function IdleMode:keypressed(key)
             elseif achievement.requirement.type == "upgrades" then
                 reqText = " (" .. progress.totalUpgradesPurchased .. "/" .. achievement.requirement.value .. " upgrades)"
             elseif achievement.requirement.type == "totalEarned" then
-                reqText = " (" .. format.number(progress.totalDataBitsEarned, 0) .. "/" .. format.number(achievement.requirement.value, 0) .. " DB)"
+                reqText = " (Achievement system needs update)"
             end
             
             print("   " .. status .. " " .. achievement.name .. reqText)

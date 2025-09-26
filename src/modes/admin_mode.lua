@@ -1,4 +1,4 @@
--- Admin Mode - "The Admin's Watch" - Crisis Response Mode
+-- Crisis Response Mode - Real-time Incident Management
 -- Real-time operations mode for handling security incidents
 
 local AdminMode = {}
@@ -65,7 +65,7 @@ function AdminMode:draw()
     local theme = self.systems.ui.theme
     
     -- Draw crisis mode header with special styling
-    local contentY = theme:drawHeader("⚠️ THE ADMIN'S WATCH - CRISIS RESPONSE TERMINAL ⚠️", "Real-time Incident Management System")
+    local contentY = theme:drawHeader("🚨 CRISIS RESPONSE CENTER 🚨", "Real-time Incident Management System")
     
     local y = contentY + 20
     
