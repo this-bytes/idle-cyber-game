@@ -1,0 +1,47 @@
+{
+  "startup": {
+    "name": "Tech Startup",
+    "budgetRange": [500, 2000],
+    "durationRange": [60, 180],
+    "reputationReward": [1, 5],
+    "riskLevel": "low",
+    "threatTypes": ["script_kiddies", "basic_malware"],
+    "description": "Small tech company needing basic security",
+    "unlockRequirement": {}
+  },
+  "smallBusiness": {
+    "name": "Small Business",
+    "budgetRange": [1500, 5000],
+    "durationRange": [120, 300],
+    "reputationReward": [3, 10],
+    "riskLevel": "medium",
+    "threatTypes": ["phishing", "ransomware"],
+    "description": "Growing business with moderate security needs",
+    "unlockRequirement": {}
+  },
+  "enterprise": {
+    "name": "Enterprise Corp",
+    "budgetRange": [10000, 50000],
+    "durationRange": [300, 600],
+    "reputationReward": [15, 50],
+    "riskLevel": "high",
+    "threatTypes": ["apt", "supply_chain", "zero_day"],
+    "description": "Large corporation requiring comprehensive security",
+    "unlockRequirement": {
+      "reputation": 50
+    }
+  },
+  "government": {
+    "name": "Government Agency",
+    "budgetRange": [25000, 100000],
+    "durationRange": [600, 1200],
+    "reputationReward": [30, 100],
+    "riskLevel": "critical",
+    "threatTypes": ["nation_state", "advanced_persistent", "zero_day"],
+    "description": "High-security government contract",
+    "unlockRequirement": {
+      "reputation": 200,
+      "missionTokens": 5
+    }
+  }
+}

@@ -1,6 +1,8 @@
 -- Contract Management System - Cyber Empire Command
 -- Handles client contracts, the primary idle gameplay loop
 
+local ConfigLoader = require("src.utils.config_loader")
+
 local ContractSystem = {}
 ContractSystem.__index = ContractSystem
 
@@ -20,8 +22,37 @@ function ContractSystem.new(eventBus)
     self.contractGenerationTimer = 0
     self.contractGenerationInterval = 30 -- Generate new contract every 30 seconds
     
-    -- Client types and their properties
-    self.clientTypes = {
+    -- Config loader for dynamic contract types
+    self.configLoader = ConfigLoader.new()
+    
+    -- Load client types from config file
+    self.clientTypes = self:loadContractConfigurations()
+    
+    -- Initialize with a basic contract
+    local initialContract = self:generateContract("startup")
+    if initialContract then
+        self.availableContracts[initialContract.id] = initialContract
+    end
+    
+    return self
+end
+
+-- Load contract configurations from JSON file
+function ContractSystem:loadContractConfigurations()
+    local configPath = "data/config/contracts.json"
+    local contracts = self.configLoader:loadConfig("contracts", configPath)
+    
+    if not contracts then
+        print("⚠️ Failed to load contract config, using fallback contracts")
+        return self:getFallbackContracts()
+    end
+    
+    return contracts
+end
+
+-- Get fallback contract definitions
+function ContractSystem:getFallbackContracts()
+    return {
         startup = {
             name = "Tech Startup",
             budgetRange = {500, 2000},
@@ -64,18 +95,65 @@ function ContractSystem.new(eventBus)
             unlockRequirement = {reputation = 200, missionTokens = 5}
         }
     }
+end
+
+-- Reload contract configurations from file
+function ContractSystem:reloadContractConfigurations()
+    local configPath = "data/config/contracts.json"
+    local wasUpdated = self.configLoader:checkForUpdates("contracts", configPath)
     
-    -- Initialize with a basic contract
-    local initialContract = self:generateContract("startup")
-    if initialContract then
-        self.availableContracts[initialContract.id] = initialContract
+    if wasUpdated then
+        self.clientTypes = self.configLoader:getConfig("contracts")
+        print("🔄 Contract configurations reloaded")
+        
+        -- Publish reload event
+        self.eventBus:publish("contracts_reloaded", {
+            clientTypes = self.clientTypes
+        })
+        
+        return true
     end
     
-    return self
+    return false
+end
+
+-- Update specific contract configuration (for admin panel)
+function ContractSystem:updateContractConfig(contractType, contractData)
+    local success = self.configLoader:updateConfigItem("contracts", contractType, contractData)
+    if success then
+        self.clientTypes[contractType] = contractData
+        
+        -- Save to file
+        local configPath = "data/config/contracts.json"
+        self.configLoader:saveConfig("contracts", configPath)
+        
+        -- Publish update event
+        self.eventBus:publish("contract_config_updated", {
+            contractType = contractType,
+            contract = contractData
+        })
+        
+        print("🔧 Updated contract config: " .. contractType)
+        return true
+    end
+    return false
+end
+
+-- Get contract configuration for admin panel
+function ContractSystem:getContractConfig(contractType)
+    return self.configLoader:getConfigItem("contracts", contractType)
+end
+
+-- Get all contract configurations for admin panel  
+function ContractSystem:getAllContractConfigs()
+    return self.configLoader:getConfig("contracts")
 end
 
 -- Update contract system
 function ContractSystem:update(dt)
+    -- Check for configuration updates (hot-reload)
+    self:reloadContractConfigurations()
+    
     -- Update active contracts
     for contractId, contract in pairs(self.activeContracts) do
         contract.remainingTime = contract.remainingTime - dt

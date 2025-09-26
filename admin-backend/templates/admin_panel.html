@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber Empire Command - Admin Panel</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #0a0a0a;
+            color: #00ff00;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            border: 2px solid #00ff00;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        .section {
+            border: 1px solid #00ff00;
+            margin: 20px 0;
+            padding: 15px;
+        }
+        .section h2 {
+            color: #00ffff;
+            margin-top: 0;
+        }
+        .upgrade-list, .contract-list {
+            display: grid;
+            gap: 10px;
+        }
+        .upgrade-item, .contract-item {
+            background: #001100;
+            padding: 10px;
+            border: 1px solid #004400;
+            cursor: pointer;
+        }
+        .upgrade-item:hover, .contract-item:hover {
+            border-color: #00ff00;
+            background: #002200;
+        }
+        .btn {
+            background: #001100;
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-family: inherit;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #00ff00;
+            color: #000000;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background: #004400;
+            border: 1px solid #00ff00;
+        }
+        .status.error {
+            background: #440000;
+            border: 1px solid #ff0000;
+            color: #ff4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚨 CYBER EMPIRE COMMAND - ADMIN PANEL 🚨</h1>
+        <p>Asset Management & Balance Control System</p>
+        <div id="status" style="margin-top: 20px;"></div>
+    </div>
+
+    <div class="section">
+        <h2>🛠️ UPGRADE CONFIGURATIONS</h2>
+        <div id="upgrade-list" class="upgrade-list"></div>
+        <button class="btn" onclick="loadUpgrades()">🔄 Reload Upgrades</button>
+    </div>
+
+    <div class="section">
+        <h2>📋 CONTRACT CONFIGURATIONS</h2>
+        <div id="contract-list" class="contract-list"></div>
+        <button class="btn" onclick="loadContracts()">🔄 Reload Contracts</button>
+    </div>
+
+    <div class="section">
+        <h2>🚨 SYSTEM STATUS</h2>
+        <button class="btn" onclick="checkHealth()">🔍 Health Check</button>
+        <button class="btn" onclick="listBackups()">💾 List Backups</button>
+        <div id="system-info"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:5000/api';
+
+        function showStatus(message, type = 'success') {
+            const status = document.getElementById('status');
+            status.innerHTML = `<div class="status ${type}">${message}</div>`;
+            setTimeout(() => status.innerHTML = '', 3000);
+        }
+
+        async function apiCall(endpoint, method = 'GET', data = null) {
+            try {
+                const options = {
+                    method,
+                    headers: {'Content-Type': 'application/json'}
+                };
+                if (data) options.body = JSON.stringify(data);
+
+                const response = await fetch(`${API_BASE}${endpoint}`, options);
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.error || 'API Error');
+                }
+                
+                return result;
+            } catch (error) {
+                console.error('API Error:', error);
+                showStatus(`Error: ${error.message}`, 'error');
+                return null;
+            }
+        }
+
+        async function loadUpgrades() {
+            const result = await apiCall('/upgrades');
+            if (!result) return;
+
+            const list = document.getElementById('upgrade-list');
+            list.innerHTML = '';
+
+            for (const [id, upgrade] of Object.entries(result.upgrades)) {
+                const div = document.createElement('div');
+                div.className = 'upgrade-item';
+                div.innerHTML = `
+                    <strong>${upgrade.name}</strong> (${id})<br>
+                    Category: ${upgrade.category} | Tier: ${upgrade.tier} | Max: ${upgrade.maxCount}<br>
+                    Cost: ${JSON.stringify(upgrade.baseCost)} | Growth: ${upgrade.costGrowth}
+                `;
+                list.appendChild(div);
+            }
+
+            showStatus(`Loaded ${result.count} upgrades`);
+        }
+
+        async function loadContracts() {
+            const result = await apiCall('/contracts');
+            if (!result) return;
+
+            const list = document.getElementById('contract-list');
+            list.innerHTML = '';
+
+            for (const [id, contract] of Object.entries(result.contracts)) {
+                const div = document.createElement('div');
+                div.className = 'contract-item';
+                div.innerHTML = `
+                    <strong>${contract.name}</strong> (${id})<br>
+                    Budget: $${contract.budgetRange[0]}-${contract.budgetRange[1]} | Duration: ${contract.durationRange[0]}-${contract.durationRange[1]}s<br>
+                    Risk: ${contract.riskLevel} | Reputation: ${contract.reputationReward[0]}-${contract.reputationReward[1]}
+                `;
+                list.appendChild(div);
+            }
+
+            showStatus(`Loaded ${result.count} contracts`);
+        }
+
+        async function checkHealth() {
+            const result = await apiCall('/health');
+            if (result) {
+                showStatus(`Backend Status: ${result.status} (${result.timestamp})`);
+            }
+        }
+
+        async function listBackups() {
+            const result = await apiCall('/backups');
+            if (result) {
+                const info = document.getElementById('system-info');
+                info.innerHTML = `<h4>Available Backups (${result.count}):</h4>` +
+                    result.backups.map(b => `<div>${b.filename} - ${b.size} bytes - ${new Date(b.created).toLocaleString()}</div>`).join('');
+            }
+        }
+
+        // Load initial data
+        window.onload = () => {
+            loadUpgrades();
+            loadContracts();
+            checkHealth();
+        };
+    </script>
+</body>
+</html>

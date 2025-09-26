@@ -38,3 +38,60 @@
 2025-09-26 12:33:26,703 - werkzeug - INFO - 127.0.0.1 - - [26/Sep/2025 12:33:26] "[31m[1mPOST /socket.io/?EIO=4&transport=polling&t=Pc3taUf&sid=FSldzsfuCs9l_DrlAAAD HTTP/1.1[0m" 400 -
 2025-09-26 12:33:26,705 - werkzeug - INFO - 127.0.0.1 - - [26/Sep/2025 12:33:26] "[31m[1mGET /socket.io/?EIO=4&transport=websocket&sid=FSldzsfuCs9l_DrlAAAD HTTP/1.1[0m" 400 -
 2025-09-26 12:33:26,715 - werkzeug - INFO - 127.0.0.1 - - [26/Sep/2025 12:33:26] "[31m[1mPOST /socket.io/?EIO=4&transport=polling&t=Pc3taUp&sid=FSldzsfuCs9l_DrlAAAD HTTP/1.1[0m" 400 -
+2025-09-26 03:16:32,701 - INFO - Starting Cyber Empire Command Admin Backend Server
+2025-09-26 03:16:32,701 - INFO - Config directory: /home/runner/work/idle-cyber-game/idle-cyber-game/data/config
+2025-09-26 03:16:32,701 - INFO - Backup directory: /home/runner/work/idle-cyber-game/idle-cyber-game/admin-backend/backups
+2025-09-26 03:16:32,723 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-09-26 03:16:32,723 - INFO - [33mPress CTRL+C to quit[0m
+2025-09-26 03:16:32,723 - INFO -  * Restarting with watchdog (inotify)
+2025-09-26 03:16:32,869 - INFO - Starting Cyber Empire Command Admin Backend Server
+2025-09-26 03:16:32,869 - INFO - Config directory: /home/runner/work/idle-cyber-game/idle-cyber-game/data/config
+2025-09-26 03:16:32,869 - INFO - Backup directory: /home/runner/work/idle-cyber-game/idle-cyber-game/admin-backend/backups
+2025-09-26 03:16:32,875 - WARNING -  * Debugger is active!
+2025-09-26 03:16:32,877 - INFO -  * Debugger PIN: 190-369-922
+2025-09-26 03:16:50,174 - INFO - 127.0.0.1 - - [26/Sep/2025 03:16:50] "GET /api/health HTTP/1.1" 200 -
+2025-09-26 03:16:56,278 - INFO - 127.0.0.1 - - [26/Sep/2025 03:16:56] "GET /api/upgrades HTTP/1.1" 200 -
+2025-09-26 03:17:06,825 - INFO - Created backup: backups/upgrades.json.backup.20250926_031706
+2025-09-26 03:17:06,826 - INFO - Configuration file modified: ../data/config/upgrades.json
+2025-09-26 03:17:06,826 - INFO - Configuration file modified: ../data/config/upgrades.json
+2025-09-26 03:17:06,826 - INFO - Configuration file modified: ../data/config/upgrades.json
+2025-09-26 03:17:06,826 - INFO - Configuration file modified: ../data/config/upgrades.json
+2025-09-26 03:17:06,826 - INFO - Saved configuration: ../data/config/upgrades.json
+2025-09-26 03:17:06,827 - INFO - Updated upgrade configuration: ergonomicMouse
+2025-09-26 03:17:06,827 - INFO - 127.0.0.1 - - [26/Sep/2025 03:17:06] "PUT /api/upgrades/ergonomicMouse HTTP/1.1" 200 -
+2025-09-26 03:18:35,455 - INFO - Configuration file modified: ../data/config/upgrades.json
+2025-09-26 03:18:35,455 - INFO - Configuration file modified: ../data/config/upgrades.json
+2025-09-26 03:18:45,083 - INFO - Created backup: backups/upgrades.json.backup.20250926_031845
+2025-09-26 03:18:45,084 - INFO - Configuration file modified: ../data/config/upgrades.json
+2025-09-26 03:18:45,085 - INFO - Configuration file modified: ../data/config/upgrades.json
+2025-09-26 03:18:45,085 - INFO - Saved configuration: ../data/config/upgrades.json
+2025-09-26 03:18:45,085 - INFO - Configuration file modified: ../data/config/upgrades.json
+2025-09-26 03:18:45,085 - INFO - Updated upgrade configuration: ergonomicMouse
+2025-09-26 03:18:45,086 - INFO - 127.0.0.1 - - [26/Sep/2025 03:18:45] "PUT /api/upgrades/ergonomicMouse HTTP/1.1" 200 -
+2025-09-26 03:19:22,188 - INFO - Configuration file modified: ../data/config/upgrades_simple.json
+2025-09-26 03:19:22,188 - INFO - Configuration file modified: ../data/config/upgrades_simple.json
+2025-09-26 03:19:46,531 - INFO - 127.0.0.1 - - [26/Sep/2025 03:19:46] "GET / HTTP/1.1" 200 -
+2025-09-26 03:19:46,826 - INFO - 127.0.0.1 - - [26/Sep/2025 03:19:46] "GET /api/upgrades HTTP/1.1" 200 -
+2025-09-26 03:19:46,829 - INFO - 127.0.0.1 - - [26/Sep/2025 03:19:46] "GET /api/contracts HTTP/1.1" 200 -
+2025-09-26 03:19:46,830 - INFO - 127.0.0.1 - - [26/Sep/2025 03:19:46] "GET /api/health HTTP/1.1" 200 -
+2025-09-26 03:20:08,112 - INFO - Created backup: backups/contracts.json.backup.20250926_032008
+2025-09-26 03:20:08,112 - INFO - Configuration file modified: ../data/config/contracts.json
+2025-09-26 03:20:08,113 - INFO - Configuration file modified: ../data/config/contracts.json
+2025-09-26 03:20:08,113 - INFO - Configuration file modified: ../data/config/contracts.json
+2025-09-26 03:20:08,113 - INFO - Saved configuration: ../data/config/contracts.json
+2025-09-26 03:20:08,113 - INFO - Updated contract configuration: startup
+2025-09-26 03:20:08,114 - INFO - 127.0.0.1 - - [26/Sep/2025 03:20:08] "PUT /api/contracts/startup HTTP/1.1" 200 -
+2025-09-26 03:20:15,944 - INFO - 127.0.0.1 - - [26/Sep/2025 03:20:15] "GET /api/backups HTTP/1.1" 200 -
+2025-09-26 03:20:24,330 - INFO - 127.0.0.1 - - [26/Sep/2025 03:20:24] "GET /api/backups HTTP/1.1" 200 -
+2025-09-26 03:20:37,082 - INFO -  * Detected change in '/home/runner/work/idle-cyber-game/idle-cyber-game/admin-backend/server.py', reloading
+2025-09-26 03:20:37,082 - INFO -  * Detected change in '/home/runner/work/idle-cyber-game/idle-cyber-game/admin-backend/server.py', reloading
+2025-09-26 03:20:37,083 - INFO -  * Detected change in '/home/runner/work/idle-cyber-game/idle-cyber-game/admin-backend/server.py', reloading
+2025-09-26 03:20:37,806 - INFO -  * Restarting with watchdog (inotify)
+2025-09-26 03:20:37,954 - INFO - Starting Cyber Empire Command Admin Backend Server
+2025-09-26 03:20:37,955 - INFO - Config directory: /home/runner/work/idle-cyber-game/idle-cyber-game/data/config
+2025-09-26 03:20:37,955 - INFO - Backup directory: /home/runner/work/idle-cyber-game/idle-cyber-game/admin-backend/backups
+2025-09-26 03:20:37,963 - WARNING -  * Debugger is active!
+2025-09-26 03:20:37,966 - INFO -  * Debugger PIN: 190-369-922
+2025-09-26 03:20:44,167 - INFO - 127.0.0.1 - - [26/Sep/2025 03:20:44] "GET /api/contracts HTTP/1.1" 200 -
+2025-09-26 03:20:53,213 - INFO - 127.0.0.1 - - [26/Sep/2025 03:20:53] "GET /api/backups HTTP/1.1" 200 -

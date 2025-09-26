@@ -1,0 +1,196 @@
+{
+  "ergonomicMouse": {
+    "id": "ergonomicMouse",
+    "name": "🖱️ Ergonomic Mouse",
+    "description": "Reduces hand strain, increases clicking efficiency",
+    "category": "clicking",
+    "tier": 1,
+    "maxCount": 1,
+    "baseCost": {
+      "dataBits": 5
+    },
+    "costGrowth": 1.0,
+    "effects": {
+      "clickPower": 1
+    },
+    "unlockRequirements": {}
+  },
+  "mechanicalKeyboard": {
+    "id": "mechanicalKeyboard",
+    "name": "⌨️ Mechanical Keyboard",
+    "description": "Tactile feedback improves data entry speed",
+    "category": "clicking",
+    "tier": 1,
+    "maxCount": 1,
+    "baseCost": {
+      "dataBits": 25
+    },
+    "costGrowth": 1.0,
+    "effects": {
+      "clickPower": 2
+    },
+    "unlockRequirements": {
+      "upgrades": ["ergonomicMouse"]
+    }
+  },
+  "gamingSetup": {
+    "id": "gamingSetup",
+    "name": "🎮 Gaming Setup",
+    "description": "High-end peripherals enable combo clicking",
+    "category": "clicking",
+    "tier": 1,
+    "maxCount": 1,
+    "baseCost": {
+      "dataBits": 100
+    },
+    "costGrowth": 1.0,
+    "effects": {
+      "clickPower": 5,
+      "comboBonus": 0.5
+    },
+    "unlockRequirements": {
+      "upgrades": ["mechanicalKeyboard"]
+    }
+  },
+  "refurbishedDesktop": {
+    "id": "refurbishedDesktop",
+    "name": "💻 Refurbished Desktop",
+    "description": "Your first automated data generation",
+    "category": "servers",
+    "tier": 1,
+    "maxCount": 10,
+    "baseCost": {
+      "dataBits": 10
+    },
+    "costGrowth": 1.15,
+    "effects": {
+      "dataBitsGeneration": 0.1
+    },
+    "unlockRequirements": {}
+  },
+  "basicServerRack": {
+    "id": "basicServerRack",
+    "name": "🖥️ Basic Server Rack",
+    "description": "Professional server hardware",
+    "category": "servers",
+    "tier": 1,
+    "maxCount": 25,
+    "baseCost": {
+      "dataBits": 100
+    },
+    "costGrowth": 1.15,
+    "effects": {
+      "dataBitsGeneration": 1.0
+    },
+    "unlockRequirements": {
+      "upgrades": ["refurbishedDesktop"],
+      "count": {
+        "refurbishedDesktop": 5
+      }
+    }
+  },
+  "smallDataCenter": {
+    "id": "smallDataCenter",
+    "name": "🏢 Small Data Center",
+    "description": "Dedicated facility for serious operations",
+    "category": "servers",
+    "tier": 2,
+    "maxCount": 10,
+    "baseCost": {
+      "dataBits": 1000
+    },
+    "costGrowth": 1.15,
+    "effects": {
+      "dataBitsGeneration": 10.0
+    },
+    "unlockRequirements": {
+      "upgrades": ["basicServerRack"],
+      "count": {
+        "basicServerRack": 10
+      },
+      "zones": ["basement"]
+    }
+  },
+  "singleCoreProcessor": {
+    "id": "singleCoreProcessor",
+    "name": "⚡ Single-Core Processor",
+    "description": "Basic computational power",
+    "category": "processing",
+    "tier": 1,
+    "maxCount": 20,
+    "baseCost": {
+      "dataBits": 50
+    },
+    "costGrowth": 1.2,
+    "effects": {
+      "processingPowerGeneration": 0.1,
+      "dataBitsMultiplier": 0.1
+    },
+    "unlockRequirements": {
+      "upgrades": ["basicServerRack"]
+    }
+  },
+  "multiCoreArray": {
+    "id": "multiCoreArray",
+    "name": "🔄 Multi-Core Array",  
+    "description": "Parallel processing capabilities",
+    "category": "processing",
+    "tier": 2,
+    "maxCount": 15,
+    "baseCost": {
+      "dataBits": 500
+    },
+    "costGrowth": 1.2,
+    "effects": {
+      "processingPowerGeneration": 1.0,
+      "dataBitsMultiplier": 0.2
+    },
+    "unlockRequirements": {
+      "upgrades": ["singleCoreProcessor"],
+      "count": {
+        "singleCoreProcessor": 5
+      }
+    }
+  },
+  "basicPacketFilter": {
+    "id": "basicPacketFilter",
+    "name": "🛡️ Basic Packet Filter",
+    "description": "Filters out common attack patterns",
+    "category": "security",
+    "tier": 1,
+    "maxCount": 10,
+    "baseCost": {
+      "dataBits": 200
+    },
+    "costGrowth": 1.25,
+    "effects": {
+      "securityRating": 15,
+      "threatReduction": 0.15
+    },
+    "unlockRequirements": {
+      "zones": ["apartment"]
+    }
+  },
+  "advancedFirewall": {
+    "id": "advancedFirewall",
+    "name": "🔥 Advanced Firewall",
+    "description": "Sophisticated intrusion prevention",
+    "category": "security",
+    "tier": 2,
+    "maxCount": 5,
+    "baseCost": {
+      "dataBits": 1000
+    },
+    "costGrowth": 1.25,
+    "effects": {
+      "securityRating": 50,
+      "threatReduction": 0.25
+    },
+    "unlockRequirements": {
+      "upgrades": ["basicPacketFilter"],
+      "count": {
+        "basicPacketFilter": 3
+      }
+    }
+  }
+}
