@@ -219,7 +219,8 @@ function ProgressionSystem:update(dt)
     self:updateFocusDecay(dt)
     
     -- Check for tier progression periodically
-    if love.timer and love.timer.getTime() % 5 < dt then
+    -- In LÖVE, we can use love.timer, otherwise skip periodic checks
+    if love and love.timer and love.timer.getTime() % 5 < dt then
         self:checkTierProgression()
     end
 end
@@ -342,7 +343,7 @@ function ProgressionSystem:unlockAchievement(achievementId)
     if not achievement then return end
     
     self.achievements[achievementId] = {
-        unlocked_at = love.timer and love.timer.getTime() or os.time(),
+        unlocked_at = (love and love.timer and love.timer.getTime()) or os.time(),
         id = achievementId
     }
     
