@@ -307,8 +307,60 @@ function IdleMode:draw()
         end
     end
     
+    -- Add progression panel between resources and contracts
+    if showFull and self.systems.progression then
+        y = y + 220
+        theme:drawPanel(leftPanelX, y, panelWidth * 2 + 20, 120, "PROGRESSION STATUS")
+        local progY = y + 25
+        
+        -- Get progression info
+        local currentTier = self.systems.progression:getCurrentTier()
+        local tierName = currentTier.name or "Unknown"
+        local currencies = self.systems.progression:getAllCurrencies()
+        
+        -- Current tier
+        theme:drawText("CURRENT TIER:", leftPanelX + 10, progY, theme:getColor("secondary"))
+        theme:drawText(tierName, leftPanelX + 150, progY, theme:getColor("accent"))
+        progY = progY + 20
+        
+        -- Prestige info
+        local prestigeLevel = self.systems.progression.prestigeLevel or 0
+        local prestigePoints = self.systems.progression:getCurrency("prestigePoints") or 0
+        theme:drawText("PRESTIGE LEVEL:", leftPanelX + 10, progY, theme:getColor("secondary"))
+        theme:drawText(tostring(prestigeLevel) .. " (" .. format.number(prestigePoints, 0) .. " PP)", leftPanelX + 150, progY, theme:getColor("warning"))
+        progY = progY + 20
+        
+        -- Additional currencies (right side)
+        local rightProgX = leftPanelX + 500
+        progY = y + 25
+        
+        -- Research Credits
+        local researchCredits = self.systems.progression:getCurrency("researchCredits") or 0
+        if researchCredits > 0 then
+            theme:drawText("RESEARCH CREDITS:", rightProgX, progY, theme:getColor("secondary"))
+            theme:drawText(format.number(researchCredits, 0), rightProgX + 150, progY, theme:getColor("primary"))
+            progY = progY + 20
+        end
+        
+        -- Skill Points
+        local skillPoints = self.systems.progression:getCurrency("skillPoints") or 0
+        if skillPoints > 0 then
+            theme:drawText("SKILL POINTS:", rightProgX, progY, theme:getColor("secondary"))
+            theme:drawText(format.number(skillPoints, 0), rightProgX + 150, progY, theme:getColor("accent"))
+            progY = progY + 20
+        end
+        
+        -- Prestige availability
+        if self.systems.progression:canPrestige() then
+            theme:drawText("[P] PRESTIGE AVAILABLE!", leftPanelX + 400, y + 85, theme:getColor("warning"))
+        end
+        
+        y = y + 120
+    else
+        y = y + 220
+    end
+    
     -- Available contracts panel with improved selection
-    y = y + 220
     if showFull then
         theme:drawPanel(leftPanelX, y, panelWidth * 2 + 20, 180, "AVAILABLE CONTRACTS")
     else
@@ -419,9 +471,9 @@ function IdleMode:draw()
     
     -- Status bar with controls
     if showFull then
-        theme:drawStatusBar("READY | [CLICK] Select Contract | [SPACE] Accept Selected | [A] Crisis Mode | [ESC] Quit")
+        theme:drawStatusBar("READY | [CLICK] Select Contract | [SPACE] Accept | [P] Prestige | [C] Convert | [M] Milestones | [A] Crisis Mode | [ESC] Quit")
     else
-        theme:drawStatusBar("READY | [TAB] Toggle Terminal | [A] Crisis Mode | [ESC] Quit")
+        theme:drawStatusBar("READY | [TAB] Toggle Terminal | [P] Prestige | [C] Convert | [M] Milestones | [A] Crisis Mode | [ESC] Quit")
     end
 
     -- (Office map drawn earlier as the main background)
@@ -485,6 +537,13 @@ end
 -- Input handling for player movement and interactions
 -- Consolidated input handling for player movement and interactions
 function IdleMode:keypressed(key)
+    -- Handle escape key for conversion mode exit
+    if key == "escape" and self.conversionMode then
+        self.conversionMode = false
+        print("💱 Exited conversion mode.")
+        return
+    end
+    
     -- Movement keys: set input state
     if self.player then
         if key == "up" or key == "w" then self.player:setInput("up", true) end
@@ -665,8 +724,110 @@ function IdleMode:keypressed(key)
         print("")
         print("   🎯 Progress: " .. unlockedCount .. "/" .. totalCount .. " achievements unlocked")
         return
+    elseif key == "p" then
+        -- Handle prestige
+        if self.systems.progression and self.systems.progression:canPrestige() then
+            local pointsToEarn = self.systems.progression:calculatePrestigePoints()
+            print("🌟 PRESTIGE AVAILABLE!")
+            print("   Points to earn: " .. pointsToEarn)
+            print("   Current level: " .. (self.systems.progression.prestigeLevel or 0))
+            print("   This will reset your company but grant permanent bonuses.")
+            print("   Press P again to confirm prestige.")
+            -- Simple confirmation - in real game, you'd want a proper confirmation dialog
+            if self.prestigeConfirmation then
+                local success = self.systems.progression:performPrestige()
+                if success then
+                    print("🌟 PRESTIGE COMPLETE! Welcome to your new company!")
+                end
+                self.prestigeConfirmation = false
+            else
+                self.prestigeConfirmation = true
+            end
+        else
+            print("🌟 Prestige not available. Check progression requirements.")
+        end
+        return
+    elseif key == "c" then
+        -- Handle currency conversions
+        if self.systems.progression then
+            self.conversionMode = true
+            print("💱 CURRENCY CONVERSIONS:")
+            print("   [1] Convert 100 XP → 1 Skill Point")
+            print("   [2] Convert $1000 → 1 Research Credit") 
+            print("   [3] Show conversion status")
+            print("   [ESC] Exit conversion mode")
+            print("   Press number to perform conversion.")
+        end
+        return
+    elseif key == "m" then
+        -- Show progression milestones and status
+        if self.systems.progression then
+            print("🎯 PROGRESSION STATUS:")
+            local currentTier = self.systems.progression:getCurrentTier()
+            print("   Current Tier: " .. (currentTier.name or "Unknown"))
+            print("   Tier Description: " .. (currentTier.description or ""))
+            
+            print("")
+            print("🏆 COMPLETED MILESTONES:")
+            local milestones = self.systems.progression.config.milestones or {}
+            local completed = self.systems.progression.completedMilestones or {}
+            for milestoneId, milestone in pairs(milestones) do
+                local status = completed[milestoneId] and "✅" or "❌"
+                print("   " .. status .. " " .. milestone.name)
+                print("      " .. milestone.description)
+                if milestone.rewards then
+                    local rewardText = "Rewards: "
+                    for rewardType, amount in pairs(milestone.rewards) do
+                        rewardText = rewardText .. amount .. " " .. rewardType .. " "
+                    end
+                    print("      " .. rewardText)
+                end
+            end
+            
+            print("")
+            print("💰 CURRENCY STATUS:")
+            local currencies = self.systems.progression:getAllCurrencies()
+            for currencyId, data in pairs(currencies) do
+                local config = data.config
+                local symbol = config.symbol or currencyId:upper()
+                print("   " .. config.name .. ": " .. format.number(data.amount, 0) .. " " .. symbol)
+                if data.totalEarned > 0 then
+                    print("      Total Earned: " .. format.number(data.totalEarned, 0))
+                end
+            end
+        end
+        return
     elseif key >= "1" and key <= "9" then
-        local upgradeIndex = tonumber(key)
+        local numKey = tonumber(key)
+        
+        -- Handle currency conversions if in conversion mode
+        if self.conversionMode and self.systems.progression then
+            if numKey == 1 then
+                local success = self.systems.progression:convertCurrency("xpToSkillPoints")
+                if success then
+                    print("✅ Converted 100 XP to 1 Skill Point!")
+                else
+                    print("❌ Conversion failed. Check XP amount and daily limits.")
+                end
+            elseif numKey == 2 then
+                local success = self.systems.progression:convertCurrency("moneyToResearch")
+                if success then
+                    print("✅ Converted $1000 to 1 Research Credit!")
+                else
+                    print("❌ Conversion failed. Check money amount and daily limits.")
+                end
+            elseif numKey == 3 then
+                local dailyConversions = self.systems.progression.dailyConversions[os.date("%Y-%m-%d")] or {}
+                print("📊 Today's Conversions:")
+                print("   XP→SP: " .. (dailyConversions["xpToSkillPoints"] or 0) .. "/10")
+                print("   Money→RC: " .. (dailyConversions["moneyToResearch"] or 0) .. "/5")
+            end
+            self.conversionMode = false
+            return
+        end
+        
+        -- Handle upgrade purchases (original behavior)
+        local upgradeIndex = numKey
         local upgrades = self.systems.upgrades:getUnlockedUpgrades()
         local upgradeIds = {}
         for upgradeId, upgrade in pairs(upgrades) do table.insert(upgradeIds, upgradeId) end
