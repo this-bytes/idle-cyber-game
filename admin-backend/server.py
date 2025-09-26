@@ -254,7 +254,7 @@ def list_backups():
     try:
         backups = []
         for filename in os.listdir(BACKUP_DIR):
-            if filename.endswith('.backup'):
+            if '.backup.' in filename:  # Changed to match our backup naming
                 filepath = os.path.join(BACKUP_DIR, filename)
                 stat = os.stat(filepath)
                 backups.append({

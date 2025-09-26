@@ -1,23 +1,23 @@
 {
   "ergonomicMouse": {
     "id": "ergonomicMouse",
-    "name": "Ergonomic Mouse (MODIFIED)",
-    "description": "Reduces hand strain, increases clicking efficiency - TESTING",
+    "name": "🖱️ Ergonomic Mouse",
+    "description": "Reduces hand strain, increases clicking efficiency",
     "category": "clicking",
     "tier": 1,
     "maxCount": 1,
     "baseCost": {
-      "dataBits": 15
+      "dataBits": 5
     },
     "costGrowth": 1.0,
     "effects": {
-      "clickPower": 3
+      "clickPower": 1
     },
     "unlockRequirements": {}
   },
   "mechanicalKeyboard": {
     "id": "mechanicalKeyboard",
-    "name": "\u2328\ufe0f Mechanical Keyboard",
+    "name": "⌨️ Mechanical Keyboard",
     "description": "Tactile feedback improves data entry speed",
     "category": "clicking",
     "tier": 1,
@@ -30,14 +30,12 @@
       "clickPower": 2
     },
     "unlockRequirements": {
-      "upgrades": [
-        "ergonomicMouse"
-      ]
+      "upgrades": ["ergonomicMouse"]
     }
   },
   "gamingSetup": {
     "id": "gamingSetup",
-    "name": "\ud83c\udfae Gaming Setup",
+    "name": "🎮 Gaming Setup",
     "description": "High-end peripherals enable combo clicking",
     "category": "clicking",
     "tier": 1,
@@ -51,14 +49,12 @@
       "comboBonus": 0.5
     },
     "unlockRequirements": {
-      "upgrades": [
-        "mechanicalKeyboard"
-      ]
+      "upgrades": ["mechanicalKeyboard"]
     }
   },
   "refurbishedDesktop": {
     "id": "refurbishedDesktop",
-    "name": "\ud83d\udcbb Refurbished Desktop",
+    "name": "💻 Refurbished Desktop",
     "description": "Your first automated data generation",
     "category": "servers",
     "tier": 1,
@@ -74,7 +70,7 @@
   },
   "basicServerRack": {
     "id": "basicServerRack",
-    "name": "\ud83d\udda5\ufe0f Basic Server Rack",
+    "name": "🖥️ Basic Server Rack",
     "description": "Professional server hardware",
     "category": "servers",
     "tier": 1,
@@ -87,9 +83,7 @@
       "dataBitsGeneration": 1.0
     },
     "unlockRequirements": {
-      "upgrades": [
-        "refurbishedDesktop"
-      ],
+      "upgrades": ["refurbishedDesktop"],
       "count": {
         "refurbishedDesktop": 5
       }
@@ -97,7 +91,7 @@
   },
   "smallDataCenter": {
     "id": "smallDataCenter",
-    "name": "\ud83c\udfe2 Small Data Center",
+    "name": "🏢 Small Data Center",
     "description": "Dedicated facility for serious operations",
     "category": "servers",
     "tier": 2,
@@ -110,20 +104,16 @@
       "dataBitsGeneration": 10.0
     },
     "unlockRequirements": {
-      "upgrades": [
-        "basicServerRack"
-      ],
+      "upgrades": ["basicServerRack"],
       "count": {
         "basicServerRack": 10
       },
-      "zones": [
-        "basement"
-      ]
+      "zones": ["basement"]
     }
   },
   "singleCoreProcessor": {
     "id": "singleCoreProcessor",
-    "name": "\u26a1 Single-Core Processor",
+    "name": "⚡ Single-Core Processor",
     "description": "Basic computational power",
     "category": "processing",
     "tier": 1,
@@ -137,14 +127,12 @@
       "dataBitsMultiplier": 0.1
     },
     "unlockRequirements": {
-      "upgrades": [
-        "basicServerRack"
-      ]
+      "upgrades": ["basicServerRack"]
     }
   },
   "multiCoreArray": {
     "id": "multiCoreArray",
-    "name": "\ud83d\udd04 Multi-Core Array",
+    "name": "🔄 Multi-Core Array",  
     "description": "Parallel processing capabilities",
     "category": "processing",
     "tier": 2,
@@ -158,9 +146,7 @@
       "dataBitsMultiplier": 0.2
     },
     "unlockRequirements": {
-      "upgrades": [
-        "singleCoreProcessor"
-      ],
+      "upgrades": ["singleCoreProcessor"],
       "count": {
         "singleCoreProcessor": 5
       }
@@ -168,7 +154,7 @@
   },
   "basicPacketFilter": {
     "id": "basicPacketFilter",
-    "name": "\ud83d\udee1\ufe0f Basic Packet Filter",
+    "name": "🛡️ Basic Packet Filter",
     "description": "Filters out common attack patterns",
     "category": "security",
     "tier": 1,
@@ -182,14 +168,12 @@
       "threatReduction": 0.15
     },
     "unlockRequirements": {
-      "zones": [
-        "apartment"
-      ]
+      "zones": ["apartment"]
     }
   },
   "advancedFirewall": {
     "id": "advancedFirewall",
-    "name": "\ud83d\udd25 Advanced Firewall",
+    "name": "🔥 Advanced Firewall",
     "description": "Sophisticated intrusion prevention",
     "category": "security",
     "tier": 2,
@@ -203,9 +187,7 @@
       "threatReduction": 0.25
     },
     "unlockRequirements": {
-      "upgrades": [
-        "basicPacketFilter"
-      ],
+      "upgrades": ["basicPacketFilter"],
       "count": {
         "basicPacketFilter": 3
       }
