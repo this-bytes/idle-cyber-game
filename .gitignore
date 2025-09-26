@@ -46,3 +46,11 @@ luac.out
 /tmp/
 /temp/
 
+# Backend artifacts
+backend/database.db
+backend/__pycache__/
+backend/*.pyc
+backend/.env
+backend/venv/
+backend/env/
+
