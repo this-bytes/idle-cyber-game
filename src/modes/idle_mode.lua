@@ -19,73 +19,121 @@ function IdleMode:update(dt)
 end
 
 function IdleMode:draw()
-    -- Draw idle mode UI
+    -- Draw Cyber Empire Command UI
+    love.graphics.setColor(0.1, 0.8, 0.1) -- Cyberpunk green theme
+    love.graphics.print("🔐 CYBER EMPIRE COMMAND - Security Consultancy HQ", 20, 20)
     love.graphics.setColor(1, 1, 1)
-    love.graphics.print("🏠 IDLE MODE - Cyberspace Tycoon", 20, 20)
-    love.graphics.print("Build your cybersecurity empire through strategic upgrades", 20, 40)
+    love.graphics.print("Build your cybersecurity empire through strategic contracts", 20, 40)
     
-    -- Draw resources with proper formatting
-    local resources = self.systems.resources:getAllResources()
-    local generation = self.systems.resources:getAllGeneration()
     local y = 80
     
-    love.graphics.print("💼 RESOURCES:", 20, y)
+    -- Show core business resources
+    local resources = self.systems.resources:getAllResources()
+    love.graphics.print("💼 BUSINESS RESOURCES:", 20, y)
     y = y + 25
     
-    for name, value in pairs(resources) do
-        if value > 0 or generation[name] > 0 then
-            local displayValue = format.number(value, 2)
-            local rate = generation[name]
-            local rateText = rate > 0 and " (+" .. format.rate(rate, 1) .. ")" or ""
+    -- Primary resources
+    love.graphics.print("   💰 Money: $" .. format.number(resources.money or 0, 0), 30, y)
+    y = y + 20
+    love.graphics.print("   ⭐ Reputation: " .. format.number(resources.reputation or 0, 0), 30, y)
+    y = y + 20
+    love.graphics.print("   📈 XP: " .. format.number(resources.xp or 0, 0), 30, y)
+    y = y + 20
+    love.graphics.print("   🎖️ Mission Tokens: " .. format.number(resources.missionTokens or 0, 0), 30, y)
+    y = y + 30
+    
+    -- Contract information
+    local contractStats = self.systems.contracts:getStats()
+    local specialistStats = self.systems.specialists:getStats()
+    love.graphics.print("📋 OPERATIONS STATUS:", 20, y)
+    y = y + 25
+    love.graphics.print("   Active Contracts: " .. contractStats.activeContracts, 30, y)
+    y = y + 20
+    love.graphics.print("   Available Contracts: " .. contractStats.availableContracts, 30, y)
+    y = y + 20
+    love.graphics.print("   Income Rate: $" .. format.number(contractStats.totalIncomeRate, 2) .. "/sec", 30, y)
+    y = y + 20
+    love.graphics.print("   Team: " .. specialistStats.available .. "/" .. specialistStats.total .. " specialists available", 30, y)
+    y = y + 30
+    
+    -- Available contracts list
+    local availableContracts = self.systems.contracts:getAvailableContracts()
+    local hasAvailable = false
+    for _ in pairs(availableContracts) do
+        hasAvailable = true
+        break
+    end
+    
+    if hasAvailable then
+        love.graphics.print("📝 AVAILABLE CONTRACTS:", 20, y)
+        y = y + 25
+        
+        local count = 0
+        for contractId, contract in pairs(availableContracts) do
+            if count >= 3 then break end -- Show max 3 contracts
             
-            local emoji = ""
-            if name == "dataBits" then emoji = "💎"
-            elseif name == "processingPower" then emoji = "⚡"
-            elseif name == "securityRating" then emoji = "🛡️"
-            elseif name == "reputationPoints" then emoji = "⭐"
-            elseif name == "researchData" then emoji = "🔬"
-            end
-            
-            love.graphics.print(emoji .. " " .. name .. ": " .. displayValue .. rateText, 30, y)
-            y = y + 20
+            love.graphics.print("   " .. contract.clientName, 30, y)
+            y = y + 15
+            love.graphics.print("      Budget: $" .. format.number(contract.totalBudget, 0) .. 
+                              " | Duration: " .. math.floor(contract.duration) .. "s" ..
+                              " | Rep: +" .. contract.reputationReward, 30, y)
+            y = y + 15
+            love.graphics.print("      \"" .. contract.description .. "\"", 30, y)
+            y = y + 25
+            count = count + 1
         end
     end
     
-    -- Draw current zone
-    local currentZone = self.systems.zones:getCurrentZone()
-    if currentZone then
-        y = y + 10
-        love.graphics.print("🗺️ LOCATION:", 20, y)
-        love.graphics.print("📍 " .. currentZone.name, 30, y + 20)
-        love.graphics.print("   " .. currentZone.description, 30, y + 40)
-        y = y + 70
+    -- Legacy resources (TODO: Remove after full refactor)
+    if resources.dataBits and resources.dataBits > 0 then
+        y = y + 20
+        love.graphics.setColor(0.7, 0.7, 0.7) -- Dimmed for legacy
+        love.graphics.print("🔧 LEGACY SYSTEMS (Migration in progress):", 20, y)
+        y = y + 20
+        love.graphics.print("   Data Bits: " .. format.number(resources.dataBits, 0), 30, y)
+        love.graphics.setColor(1, 1, 1)
     end
     
-    -- Draw click info
-    local clickInfo = self.systems.resources:getClickInfo()
-    love.graphics.print("🖱️ CLICK POWER:", 20, y)
-    love.graphics.print("   Power: " .. format.number(clickInfo.power, 0) .. " DB per click", 30, y + 20)
-    love.graphics.print("   Combo: " .. format.number(clickInfo.combo, 1) .. "x (max " .. clickInfo.maxCombo .. "x)", 30, y + 40)
-    
-    -- Instructions
-    love.graphics.print("Click anywhere to earn Data Bits! Hold clicks for combo bonus!", 20, love.graphics.getHeight() - 60)
-    love.graphics.print("Press U for upgrades, Z for zones, H for achievements", 20, love.graphics.getHeight() - 40)
-    love.graphics.print("Press A to switch to Admin Mode (\"The Admin's Watch\")", 20, love.graphics.getHeight() - 20)
+    -- Instructions  
+    y = love.graphics.getHeight() - 100
+    love.graphics.print("Controls:", 20, y)
+    y = y + 20
+    love.graphics.print("• Click to accept first available contract", 20, y)
+    y = y + 15
+    love.graphics.print("• Press 'A' to enter Admin Mode (Crisis Response)", 20, y)
+    y = y + 15
+    love.graphics.print("• Press 'C' to view all contracts • Press 'U' for upgrades", 20, y)
 end
 
 function IdleMode:mousepressed(x, y, button)
-    -- Handle clicking for resources
+    -- Handle clicking to accept contracts (Cyber Empire Command core mechanic)
     if button == 1 then -- Left click
+        -- Try to accept the first available contract
+        local availableContracts = self.systems.contracts:getAvailableContracts()
+        
+        for contractId, contract in pairs(availableContracts) do
+            local success = self.systems.contracts:acceptContract(contractId)
+            if success then
+                print("📝 Accepted contract: " .. contract.clientName .. 
+                      " - Budget: $" .. contract.totalBudget .. 
+                      " | Duration: " .. math.floor(contract.duration) .. "s")
+                return true
+            end
+            break -- Only try the first one
+        end
+        
+        -- Fallback: Legacy clicking for data bits (TODO: Remove after full refactor)
         local result = self.systems.resources:click()
-        local message = "💎 Earned " .. format.number(result.reward, 2) .. " Data Bits"
-        if result.critical then
-            message = message .. " (CRITICAL!)"
+        if result then
+            local message = "💎 Legacy click: " .. format.number(result.reward, 2) .. " Data Bits"
+            if result.critical then
+                message = message .. " (CRITICAL!)"
+            end
+            if result.combo > 1 then
+                message = message .. " (combo: " .. format.number(result.combo, 1) .. "x)"
+            end
+            print(message)
         end
-        if result.combo > 1 then
-            message = message .. " (combo: " .. format.number(result.combo, 1) .. "x)"
-        end
-        print(message)
-        return true
     end
     return false
 end
