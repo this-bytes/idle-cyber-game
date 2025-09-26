@@ -294,11 +294,10 @@ function ZoneSystem:setCurrentZone(zoneId)
     local oldZone = self.currentZone
     self.currentZone = zoneId
     
-    -- Apply zone bonuses through event bus
+    -- Apply zone capabilities through event bus
     self.eventBus:publish("zone_changed", {
         oldZone = oldZone,
         newZone = zoneId,
-        bonuses = zone.bonuses,
         zone = zone
     })
     
@@ -341,10 +340,14 @@ function ZoneSystem:isZoneUnlocked(zoneId)
     return zone and zone.unlocked
 end
 
--- Get zone bonuses for current zone
-function ZoneSystem:getCurrentZoneBonuses()
+-- Get zone capabilities for current zone
+function ZoneSystem:getCurrentZoneCapabilities()
     local currentZone = self:getCurrentZone()
-    return currentZone and currentZone.bonuses or {}
+    return currentZone and {
+        maxContracts = currentZone.maxContracts or 2,
+        contractTypes = currentZone.contractTypes or {"startup"},
+        reputationBonus = currentZone.reputationBonus or 1.0
+    } or {}
 end
 
 -- Get zone difficulty multiplier

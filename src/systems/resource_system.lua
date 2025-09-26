@@ -71,9 +71,15 @@ function ResourceSystem:subscribeToEvents()
         self:spendResources(data.cost)
     end)
     
-    -- Handle zone bonuses
+    -- Handle zone changes (updated for business-focused zones)
     self.eventBus:subscribe("zone_changed", function(data)
-        self:applyZoneBonuses(data.bonuses)
+        -- The new zone system uses business capabilities instead of resource bonuses
+        -- Apply reputation bonus if the zone has one
+        if data.zone and data.zone.reputationBonus then
+            -- Apply reputation multiplier based on zone
+            local currentMultiplier = self:getMultiplier("reputation")
+            self:setMultiplier("reputation", currentMultiplier * data.zone.reputationBonus)
+        end
     end)
     
     -- Handle achievement rewards
@@ -94,17 +100,14 @@ function ResourceSystem:applyUpgradeEffect(upgradeId, effectType, value)
     end
 end
 
--- Apply zone bonuses to multipliers
-function ResourceSystem:applyZoneBonuses(bonuses)
-    for resource, multiplier in pairs(bonuses) do
-        if resource:find("Multiplier") then
-            local resourceName = resource:gsub("Multiplier", "")
-            if self.multipliers[resourceName] then
-                -- Zone bonuses are multiplicative with base multiplier
-                local baseMultiplier = self.multipliers[resourceName]
-                self.multipliers[resourceName] = baseMultiplier * multiplier
-            end
-        end
+-- Apply business zone capabilities (updated for new zone system)
+function ResourceSystem:applyZoneCapabilities(zone)
+    -- Modern zone system focuses on business capabilities rather than resource multipliers
+    -- Zone capabilities like maxContracts, contractTypes are handled by respective systems
+    if zone and zone.reputationBonus then
+        -- Apply reputation bonus from zone
+        local currentMultiplier = self:getMultiplier("reputation")
+        self:setMultiplier("reputation", currentMultiplier * zone.reputationBonus)
     end
 end
 
