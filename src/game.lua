@@ -51,6 +51,16 @@ function Game.init()
     if ok and placeholderWriter and love and love.filesystem then
         placeholderWriter.ensure()
     end
+
+    -- Diagnostic: print whether common asset files are visible to love.filesystem
+    if love and love.filesystem and love.filesystem.getInfo then
+        local assets_to_check = { "assets/player.png", "assets/department.png", "assets/splash.jpeg", "assets/splash.png", "assets/office.png" }
+        print("🔎 Asset visibility check:")
+        for _, p in ipairs(assets_to_check) do
+            local info = love.filesystem.getInfo(p)
+            print("   ", p, "->", info ~= nil and "FOUND" or "MISSING")
+        end
+    end
     
     -- Initialize core systems in order
     gameState.systems.eventBus = EventBus.new()
@@ -200,11 +210,18 @@ function Game.draw()
         love.graphics.push()
         love.graphics.origin()
         local w, h = love.graphics.getDimensions()
-        -- load splash image if available
+        -- load splash image if available (accept .jpeg or .png)
         -- TODO: load splash image asynchronously during init to avoid hitches
         local splashImage = nil
-        if love.filesystem.getInfo("assets/splash.png") then
-            splashImage = love.graphics.newImage("assets/splash.jpeg")
+        local splashPath = nil
+        if love.filesystem.getInfo("assets/splash.jpeg") then
+            splashPath = "assets/splash.jpeg"
+        elseif love.filesystem.getInfo("assets/splash.png") then
+            splashPath = "assets/splash.png"
+        end
+        if splashPath then
+            local ok, img = pcall(function() return love.graphics.newImage(splashPath) end)
+            if ok and img then splashImage = img end
         end
         if splashImage then
             local imgW, imgH = splashImage:getDimensions()

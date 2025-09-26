@@ -46,6 +46,9 @@ local function populateDefaults()
         { id = "training", name = "Training", x = 300, y = 260, radius = 28 },
         { id = "security", name = "Security", x = 520, y = 260, radius = 28 },
     }
+    defs.Defaults = {
+        department_proximity = 40
+    }
     defs.GameModes = {
         IDLE = "idle",
         ADMIN = "admin",

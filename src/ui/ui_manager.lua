@@ -57,9 +57,9 @@ function UIManager:draw()
     -- Draw HUD (compact overlay) instead of full-screen background to avoid covering game mode
     local w, h = love.graphics.getDimensions()
 
-    -- HUD panel (top-left)
-    local hudX, hudY, hudW, hudH = 10, 10, 320, 70
-    self.theme:drawPanel(hudX, hudY, hudW, hudH, "HUD")
+    -- HUD panel (bottom right)
+    local hudX, hudY, hudW, hudH = w - 330, h - 80, 320, 70
+    self.theme:drawPanel(hudX, hudY, hudW, hudH, "Player Stats")
     if self.systems and self.systems.resources then
         local res = self.systems.resources:getAllResources()
         local money = res.money or 0

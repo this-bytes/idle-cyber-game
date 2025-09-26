@@ -31,8 +31,22 @@ function PlayerSystem.new(eventBus)
 
     -- Office departments (centralized defaults)
     self.departments = {}
+    -- Determine default proximity extra radius (configurable in defs if provided)
+    local defaultProximity = 40
+    if defs.Defaults and defs.Defaults.department_proximity then
+        defaultProximity = defs.Defaults.department_proximity
+    elseif defs.department_proximity then
+        defaultProximity = defs.department_proximity
+    end
     for _, d in ipairs(defs.Departments) do
-        table.insert(self.departments, { id = d.id, name = d.name, x = d.x, y = d.y, radius = d.radius })
+        table.insert(self.departments, {
+            id = d.id,
+            name = d.name,
+            x = d.x,
+            y = d.y,
+            radius = d.radius,
+            proximity = d.proximity or defaultProximity
+        })
     end
 
     -- Input state

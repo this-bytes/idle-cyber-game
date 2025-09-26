@@ -143,7 +143,14 @@ function IdleMode:draw()
     local deptNodes = {}
     if self.player and self.player.departments then
         for _, d in ipairs(self.player.departments) do
-            table.insert(deptNodes, { x = d.x, y = d.y - 16, radius = d.radius, name = d.name, label = d.name })
+            table.insert(deptNodes, {
+                x = d.x,
+                y = d.y - 16,
+                radius = d.radius,
+                name = d.name,
+                label = d.name,
+                proximity = d.proximity
+            })
         end
     end
 
@@ -161,7 +168,11 @@ function IdleMode:draw()
     -- Position the office map slightly below the header/panels so overlays read comfortably
     love.graphics.translate(40, 140)
     love.graphics.setColor(1,1,1,1)
-    self.officeMap:draw(self.player, deptNodes)
+    local debugFlag = false
+    if self.systems and self.systems.gameState and self.systems.gameState.debugMode then
+        debugFlag = true
+    end
+    self.officeMap:draw(self.player, deptNodes, { debug = debugFlag })
     love.graphics.pop()
     -- If UI is in compact mode, don't draw the large terminal UI here so the office remains the main view
     local showFull = false

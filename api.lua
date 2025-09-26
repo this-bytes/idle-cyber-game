@@ -7,7 +7,9 @@ local http = require("socket.http")
 local ltn12 = require("ltn12")
 
 -- IMPORTANT: Replace with the actual URL of your Flask backend
-local BASE_URL = "http://localhost:5000/api/player"
+-- Allow overriding via environment or a single SERVER_HOST constant
+local SERVER_HOST = "http://localhost:5001"
+local BASE_URL = SERVER_HOST .. "/api/player"
 
 local M = {}
 
@@ -46,11 +48,13 @@ local function makeSyncRequest(method, endpoint, data)
     if result and statusCode and statusCode >= 200 and statusCode < 300 then
         local responseString = table.concat(responseBody)
         if responseString and responseString ~= "" then
-            local decoded_data, err = json.decode(responseString)
-            if decoded_data and not err then
+            -- dkjson.decode returns: value, pos, err_message (err_message may be nil)
+            local decoded_data, _pos, decode_err = json.decode(responseString)
+            if decoded_data then
                 return true, decoded_data
             else
-                return false, "JSON decode error: " .. (err or "unknown")
+                local msg = decode_err or ("invalid JSON at position " .. tostring(_pos))
+                return false, "JSON decode error: " .. tostring(msg)
             end
         else
             return true, {}
@@ -132,12 +136,14 @@ function M.update()
     while response do
         local requestInfo = M.pendingRequests[response.requestId]
         if requestInfo and requestInfo.callback then
-            if response.success then
-                local decoded_data, err = json.decode(response.body)
-                if decoded_data and not err then
+                if response.success then
+                -- decode response body robustly (dkjson returns value, pos, err)
+                local decoded_data, _pos, decode_err = json.decode(response.body)
+                if decoded_data then
                     requestInfo.callback(true, decoded_data)
                 else
-                    requestInfo.callback(false, "JSON decode error: " .. (err or "unknown"))
+                    local msg = decode_err or ("invalid JSON at position " .. tostring(_pos))
+                    requestInfo.callback(false, "JSON decode error: " .. tostring(msg))
                 end
             else
                 local errorMessage = response.error or ("HTTP " .. (response.statusCode or "unknown"))
@@ -237,7 +243,7 @@ end
 -- @param useAsync boolean Optional, defaults to true. Set false for synchronous operation.
 function M.getGlobalState(callback, useAsync)
     -- Use admin endpoint for global state
-    local globalUrl = "http://localhost:5000/admin/global"
+    local globalUrl = SERVER_HOST .. "/admin/global"
     
     local function makeGlobalRequest(method, data, isAsync)
         local responseBody = {}
@@ -255,11 +261,12 @@ function M.getGlobalState(callback, useAsync)
             local result, statusCode = http.request(options)
             if result and statusCode and statusCode >= 200 and statusCode < 300 then
                 local responseString = table.concat(responseBody)
-                local decoded_data, err = json.decode(responseString)
-                if decoded_data and not err then
+                local decoded_data, _pos, decode_err = json.decode(responseString)
+                if decoded_data then
                     return true, decoded_data
                 else
-                    return false, "JSON decode error: " .. (err or "unknown")
+                    local msg = decode_err or ("invalid JSON at position " .. tostring(_pos))
+                    return false, "JSON decode error: " .. tostring(msg)
                 end
             else
                 return false, "HTTP error " .. (statusCode or "unknown")
@@ -324,7 +331,7 @@ end
 -- @param callback function Called on completion (takes success, result/error).
 -- @param useAsync boolean Optional, defaults to true.
 function M.testConnection(callback, useAsync)
-    local healthUrl = "http://localhost:5000/health"
+    local healthUrl = SERVER_HOST .. "/health"
     
     if useAsync == false then
         local responseBody = {}

@@ -26,10 +26,28 @@ end
 
 -- Attempt to load external assets if available
 local function tryLoadImage(path)
+    -- Try the exact path first
     if love.filesystem.getInfo(path) then
         local ok, img = pcall(function() return love.graphics.newImage(path) end)
         if ok and img then return img end
     end
+
+    -- If path has an extension, try common alternatives (png, jpeg, jpg)
+    local alternatives = {}
+    local base, ext = string.match(path, "^(.*)%.([^.]+)$")
+    if base and ext then
+        alternatives = { base .. ".png", base .. ".jpeg", base .. ".jpg" }
+    else
+        alternatives = { path .. ".png", path .. ".jpeg", path .. ".jpg" }
+    end
+
+    for _, p in ipairs(alternatives) do
+        if love.filesystem.getInfo(p) then
+            local ok, img = pcall(function() return love.graphics.newImage(p) end)
+            if ok and img then return img end
+        end
+    end
+
     return nil
 end
 
@@ -106,12 +124,33 @@ function OfficeMap:drawPlayer(player)
     love.graphics.printf("You", player.x - 20, player.y - player.size - 16, 40, "center")
 end
 
-function OfficeMap:draw(player, departments)
+function OfficeMap:draw(player, departments, opts)
     -- Draw background panel
-    love.graphics.setColor(self.bgColor)
-    love.graphics.rectangle("fill", 0, 0, self.width, self.height, 6, 6)
+    -- Draw background (image first if available)
+    if not self.officeBgTried then
+        -- Try to load an office background image (png/jpeg/jpg)
+        self.officeBg = tryLoadImage("assets/office.png") or tryLoadImage("assets/office.jpeg") or tryLoadImage("assets/office.jpg")
+        self.officeBgTried = true
+        if self.officeBg then
+            -- Cache scale later when drawing
+            self.officeBgW = self.officeBg:getWidth()
+            self.officeBgH = self.officeBg:getHeight()
+        end
+    end
 
-    -- Draw subtle grid
+    if self.officeBg then
+        love.graphics.setColor(1,1,1,1)
+        -- Cover background into the panel while preserving aspect (may crop)
+        local scale = math.max(self.width / self.officeBgW, self.height / self.officeBgH)
+        local imgW = self.officeBgW * scale
+        local imgH = self.officeBgH * scale
+        love.graphics.draw(self.officeBg, (self.width - imgW) / 2, (self.height - imgH) / 2, 0, scale, scale)
+    else
+        love.graphics.setColor(self.bgColor)
+        love.graphics.rectangle("fill", 0, 0, self.width, self.height, 6, 6)
+    end
+
+    -- Always draw subtle grid
     love.graphics.setColor(self.gridColor)
     local spacing = 32
     for gx = 0, self.width, spacing do
@@ -126,6 +165,12 @@ function OfficeMap:draw(player, departments)
     love.graphics.setLineWidth(2)
     love.graphics.rectangle("line", 2, 2, self.width - 4, self.height - 4, 6, 6)
 
+    -- Debug outline if requested
+    if opts and opts.debug then
+        love.graphics.setColor(1,0,0,0.2)
+        love.graphics.setLineWidth(2)
+        love.graphics.rectangle("line", 1, 1, self.width - 2, self.height - 2, 6, 6)
+    end
     -- Draw departments if provided, otherwise draw default placeholders
     if departments then
         -- Create sprites lazily if possible
@@ -171,6 +216,27 @@ function OfficeMap:draw(player, departments)
     -- Draw the player
     if player then
         self:drawPlayer(player)
+    end
+
+    -- Debug overlays: draw department proximity ranges if opts.debug is true
+    local debug = opts and opts.debug
+    if debug and departments then
+        love.graphics.setLineWidth(1)
+        for _, dept in ipairs(departments) do
+            -- Proximity circle (semi-transparent)
+            love.graphics.setColor(1, 0.2, 0.2, 0.25)
+            love.graphics.circle("fill", dept.x, dept.y, dept.radius + (dept.proximity or 0))
+            love.graphics.setColor(1, 0.2, 0.2, 0.9)
+            love.graphics.circle("line", dept.x, dept.y, dept.radius + (dept.proximity or 0))
+            -- Numeric range label
+            local rangeVal = math.floor((dept.proximity or 0) + dept.radius)
+            local label = "Range: " .. tostring(rangeVal) .. "px"
+            local lx = dept.x + (dept.radius or 0) + 8
+            local ly = dept.y - (dept.radius or 0) - 8
+            love.graphics.setColor(1,1,1,0.95)
+            love.graphics.printf(label, lx, ly, 120, "left")
+        end
+        love.graphics.setColor(1,1,1,1)
     end
 end
 
