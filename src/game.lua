@@ -13,6 +13,7 @@ local AchievementSystem = require("src.systems.achievement_system")
 local ContractSystem = require("src.systems.contract_system")  -- NEW: Core business system
 local SpecialistSystem = require("src.systems.specialist_system")  -- NEW: Team management
 local NetworkSaveSystem = require("src.systems.network_save_system")  -- NEW: Network-aware save system
+local RoomSystem = require("src.systems.room_system")  -- NEW: Room/location management
 local EventBus = require("src.utils.event_bus")
 
 -- Import UI systems
@@ -63,6 +64,7 @@ function Game.init()
     gameState.systems.upgrades = UpgradeSystem.new(gameState.systems.eventBus)
     gameState.systems.threats = ThreatSystem.new(gameState.systems.eventBus)
     gameState.systems.zones = ZoneSystem.new(gameState.systems.eventBus)
+    gameState.systems.rooms = RoomSystem.new(gameState.systems.eventBus)  -- NEW: Room system
     gameState.systems.factions = FactionSystem.new(gameState.systems.eventBus)
     gameState.systems.achievements = AchievementSystem.new(gameState.systems.eventBus)
     gameState.systems.save = NetworkSaveSystem.new()
@@ -73,6 +75,9 @@ function Game.init()
     
     -- Initialize UI (pass systems so UI can trigger saves / inspect game flags)
     gameState.systems.ui = UIManager.new(gameState.systems)
+    
+    -- Subscribe systems to events
+    gameState.systems.rooms:subscribeToEvents()
     
     -- Initialize game modes
     gameState.modes = {

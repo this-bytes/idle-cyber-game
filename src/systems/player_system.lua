@@ -7,9 +7,10 @@ PlayerSystem.__index = PlayerSystem
 local defs = require("src.data.defs")
 
 -- Create new player system
-function PlayerSystem.new(eventBus)
+function PlayerSystem.new(eventBus, roomSystem)
     local self = setmetatable({}, PlayerSystem)
     self.eventBus = eventBus
+    self.roomSystem = roomSystem  -- Reference to room system
 
     -- Player state
     self.x = 160
@@ -29,14 +30,26 @@ function PlayerSystem.new(eventBus)
         energy = 100
     }
 
-    -- Office departments (centralized defaults)
+    -- Office departments (now dynamically loaded from room system or defaults)
     self.departments = {}
-    for _, d in ipairs(defs.Departments) do
-        table.insert(self.departments, { id = d.id, name = d.name, x = d.x, y = d.y, radius = d.radius })
+    if self.roomSystem then
+        self:updateDepartmentsFromRoom()
+    else
+        -- Fallback to old system for compatibility
+        for _, d in ipairs(defs.Departments) do
+            table.insert(self.departments, { id = d.id, name = d.name, x = d.x, y = d.y, radius = d.radius })
+        end
     end
 
     -- Input state
     self.input = { up = false, down = false, left = false, right = false }
+
+    -- Subscribe to room changes
+    if self.eventBus and self.roomSystem then
+        self.eventBus:subscribe("room_changed", function(data)
+            self:onRoomChanged(data)
+        end)
+    end
 
     return self
 end
@@ -120,6 +133,16 @@ function PlayerSystem:setInput(key, isDown)
 end
 
 function PlayerSystem:interact()
+    -- Check for room exits first
+    if self.roomSystem then
+        local exit = self.roomSystem:checkExits(self.x, self.y, self.size)
+        if exit then
+            -- Use room transition
+            self:changeRoom(exit.targetRoom, exit.targetX, exit.targetY)
+            return true, exit
+        end
+    end
+    
     -- Find nearest department within interaction radius
     for _, dept in ipairs(self.departments) do
         local dx = self.x - dept.x
@@ -135,6 +158,55 @@ function PlayerSystem:interact()
         end
     end
     return false, nil
+end
+
+-- Update departments from current room
+function PlayerSystem:updateDepartmentsFromRoom()
+    if not self.roomSystem then return end
+    
+    self.departments = {}
+    local currentDepts = self.roomSystem:getCurrentDepartments()
+    for _, d in ipairs(currentDepts) do
+        table.insert(self.departments, {
+            id = d.id,
+            name = d.name,
+            x = d.x,
+            y = d.y,
+            radius = d.radius,
+            proximity = d.proximity or 40
+        })
+    end
+end
+
+-- Handle room change
+function PlayerSystem:onRoomChanged(data)
+    -- Update player position to the target position
+    if data.playerX and data.playerY then
+        self.x = data.playerX
+        self.y = data.playerY
+        -- Reset velocity
+        self.vx = 0
+        self.vy = 0
+    end
+    
+    -- Update departments for new room
+    self:updateDepartmentsFromRoom()
+end
+
+-- Change room (called by interact when near an exit)
+function PlayerSystem:changeRoom(targetRoom, targetX, targetY)
+    if self.roomSystem then
+        return self.roomSystem:changeRoom(targetRoom, targetX, targetY)
+    end
+    return false
+end
+
+-- Get current room exits for drawing
+function PlayerSystem:getCurrentExits()
+    if self.roomSystem then
+        return self.roomSystem:getCurrentExits()
+    end
+    return {}
 end
 
 function PlayerSystem:getState()

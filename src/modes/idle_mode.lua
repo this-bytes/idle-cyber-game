@@ -23,7 +23,7 @@ end
 -- Initialize player system when entering idle mode
 function IdleMode:enter()
     if not self.player then
-        self.player = PlayerSystem.new(self.systems.eventBus)
+        self.player = PlayerSystem.new(self.systems.eventBus, self.systems.rooms)
         -- Subscribe to player interactions
         self.systems.eventBus:subscribe("player_interact", function(data)
             print("🤝 Interacted with department: " .. data.name .. " (" .. data.department .. ")")
@@ -151,17 +151,38 @@ function IdleMode:draw()
     if not self.officeMap then
         self.officeMap = OfficeMap.new(640, 200)
     end
-    -- Make office map size adapt to the window so it feels like the main scene
+    -- Make office map size adapt to the current room and window
     local winW, winH = love.graphics.getDimensions()
-    -- Reserve some space for top UI; draw the office underneath the terminal panels
-    self.officeMap.width = math.max(480, winW - 80)
-    self.officeMap.height = math.max(200, winH - 340)
+    local currentRoom = self.systems.rooms and self.systems.rooms:getCurrentRoom()
+    
+    -- Use room dimensions if available, otherwise fallback to window-based sizing
+    if currentRoom then
+        self.officeMap.width = currentRoom.width or math.max(480, winW - 80)
+        self.officeMap.height = currentRoom.height or math.max(200, winH - 340)
+    else
+        -- Fallback to original sizing
+        self.officeMap.width = math.max(480, winW - 80)
+        self.officeMap.height = math.max(200, winH - 340)
+    end
 
     love.graphics.push()
     -- Position the office map slightly below the header/panels so overlays read comfortably
     love.graphics.translate(40, 140)
     love.graphics.setColor(1,1,1,1)
-    self.officeMap:draw(self.player, deptNodes)
+    
+    -- Get current room data and exits for rendering
+    local currentRoom = self.systems.rooms and self.systems.rooms:getCurrentRoom()
+    local exits = self.player and self.player:getCurrentExits() or {}
+    local debugFlag = false
+    if self.systems and self.systems.gameState and self.systems.gameState.debugMode then
+        debugFlag = true
+    end
+    
+    self.officeMap:draw(self.player, deptNodes, { 
+        debug = debugFlag, 
+        roomData = currentRoom,
+        exits = exits 
+    })
     love.graphics.pop()
     -- If UI is in compact mode, don't draw the large terminal UI here so the office remains the main view
     local showFull = false

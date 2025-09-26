@@ -86,6 +86,23 @@ function OfficeMap:drawDepartment(dept)
 end
 
 -- Draw player sprite at player.x, player.y
+-- Draw exit/door sprite
+function OfficeMap:drawExit(exit)
+    -- Draw exit as a door-like shape
+    love.graphics.setColor(0.3, 0.2, 0.1, 1) -- Door frame
+    love.graphics.circle("fill", exit.x, exit.y, exit.radius)
+    
+    love.graphics.setColor(0.6, 0.4, 0.2, 1) -- Door
+    love.graphics.circle("fill", exit.x, exit.y, exit.radius - 3)
+    
+    love.graphics.setColor(0.8, 0.6, 0.4, 1) -- Door handle
+    love.graphics.circle("fill", exit.x + exit.radius/3, exit.y, 2)
+    
+    -- Label
+    love.graphics.setColor(1, 1, 1, 0.9)
+    love.graphics.printf(exit.name or "Exit", exit.x - exit.radius - 10, exit.y + exit.radius + 6, exit.radius*2 + 20, "center")
+end
+
 function OfficeMap:drawPlayer(player)
     if self.playerSprite then
         local s = self.playerSpriteSize
@@ -106,9 +123,16 @@ function OfficeMap:drawPlayer(player)
     love.graphics.printf("You", player.x - 20, player.y - player.size - 16, 40, "center")
 end
 
-function OfficeMap:draw(player, departments)
+function OfficeMap:draw(player, departments, opts)
+    -- Extract room data and exits from opts if provided
+    local roomData = opts and opts.roomData
+    local exits = opts and opts.exits or {}
+    
+    -- Use room background color if available
+    local bgColor = (roomData and roomData.backgroundColor) or self.bgColor
+    
     -- Draw background panel
-    love.graphics.setColor(self.bgColor)
+    love.graphics.setColor(bgColor)
     love.graphics.rectangle("fill", 0, 0, self.width, self.height, 6, 6)
 
     -- Draw subtle grid
@@ -165,6 +189,13 @@ function OfficeMap:draw(player, departments)
         end
         for _, dept in ipairs(departments) do
             self:drawDepartment(dept)
+        end
+    end
+    
+    -- Draw exits/doors
+    if exits and #exits > 0 then
+        for _, exit in ipairs(exits) do
+            self:drawExit(exit)
         end
     end
 
