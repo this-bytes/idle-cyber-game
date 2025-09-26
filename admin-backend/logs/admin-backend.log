@@ -1,0 +1,40 @@
+2025-09-26 12:32:02,587 - __main__ - INFO - Starting Cyber Empire Command Admin Backend
+2025-09-26 12:32:02,587 - __main__ - INFO - Dashboard will be available at: http://127.0.0.1:5000
+2025-09-26 12:32:02,602 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-09-26 12:32:02,603 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-09-26 12:32:02,603 - werkzeug - INFO -  * Restarting with watchdog (inotify)
+2025-09-26 12:32:02,810 - __main__ - INFO - Starting Cyber Empire Command Admin Backend
+2025-09-26 12:32:02,810 - __main__ - INFO - Dashboard will be available at: http://127.0.0.1:5000
+2025-09-26 12:32:02,812 - werkzeug - WARNING -  * Debugger is active!
+2025-09-26 12:32:02,814 - werkzeug - INFO -  * Debugger PIN: 744-856-579
+2025-09-26 12:33:19,481 - __main__ - INFO - Starting Cyber Empire Command Admin Backend
+2025-09-26 12:33:19,483 - __main__ - INFO - Dashboard will be available at: http://127.0.0.1:5001
+2025-09-26 12:33:19,502 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5001
+2025-09-26 12:33:19,504 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-09-26 12:33:19,506 - werkzeug - INFO -  * Restarting with watchdog (inotify)
+2025-09-26 12:33:19,735 - __main__ - INFO - Starting Cyber Empire Command Admin Backend
+2025-09-26 12:33:19,737 - __main__ - INFO - Dashboard will be available at: http://127.0.0.1:5001
+2025-09-26 12:33:19,741 - werkzeug - WARNING -  * Debugger is active!
+2025-09-26 12:33:19,744 - werkzeug - INFO -  * Debugger PIN: 744-856-579
+2025-09-26 12:33:22,208 - werkzeug - INFO - 127.0.0.1 - - [26/Sep/2025 12:33:22] "GET / HTTP/1.1" 200 -
+2025-09-26 12:33:22,494 - werkzeug - INFO - 127.0.0.1 - - [26/Sep/2025 12:33:22] "GET /socket.io/?EIO=4&transport=polling&t=Pc3tZSt HTTP/1.1" 200 -
+2025-09-26 12:33:22,534 - engineio.server - ERROR - http://127.0.0.1:5001 is not an accepted origin. (further occurrences of this error will be logged with level INFO)
+2025-09-26 12:33:22,536 - werkzeug - INFO - 127.0.0.1 - - [26/Sep/2025 12:33:22] "[31m[1mPOST /socket.io/?EIO=4&transport=polling&t=Pc3tZTX&sid=9ymw2IAEqZeyFWJKAAAA HTTP/1.1[0m" 400 -
+2025-09-26 12:33:22,542 - werkzeug - INFO - 127.0.0.1 - - [26/Sep/2025 12:33:22] "[31m[1mGET /socket.io/?EIO=4&transport=websocket&sid=9ymw2IAEqZeyFWJKAAAA HTTP/1.1[0m" 400 -
+2025-09-26 12:33:22,827 - werkzeug - INFO - 127.0.0.1 - - [26/Sep/2025 12:33:22] "[31m[1mPOST /socket.io/?EIO=4&transport=polling&t=Pc3tZY7&sid=9ymw2IAEqZeyFWJKAAAA HTTP/1.1[0m" 400 -
+2025-09-26 12:33:22,851 - werkzeug - INFO - 127.0.0.1 - - [26/Sep/2025 12:33:22] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-09-26 12:33:23,864 - werkzeug - INFO - 127.0.0.1 - - [26/Sep/2025 12:33:23] "GET / HTTP/1.1" 200 -
+2025-09-26 12:33:24,194 - werkzeug - INFO - 127.0.0.1 - - [26/Sep/2025 12:33:24] "GET /socket.io/?EIO=4&transport=polling&t=Pc3tZtS HTTP/1.1" 200 -
+2025-09-26 12:33:24,204 - werkzeug - INFO - 127.0.0.1 - - [26/Sep/2025 12:33:24] "[31m[1mPOST /socket.io/?EIO=4&transport=polling&t=Pc3tZtc&sid=BCfb2dl6G1SotbBKAAAB HTTP/1.1[0m" 400 -
+2025-09-26 12:33:24,206 - werkzeug - INFO - 127.0.0.1 - - [26/Sep/2025 12:33:24] "[31m[1mGET /socket.io/?EIO=4&transport=websocket&sid=BCfb2dl6G1SotbBKAAAB HTTP/1.1[0m" 400 -
+2025-09-26 12:33:24,216 - werkzeug - INFO - 127.0.0.1 - - [26/Sep/2025 12:33:24] "[31m[1mPOST /socket.io/?EIO=4&transport=polling&t=Pc3tZto&sid=BCfb2dl6G1SotbBKAAAB HTTP/1.1[0m" 400 -
+2025-09-26 12:33:25,576 - werkzeug - INFO - 127.0.0.1 - - [26/Sep/2025 12:33:25] "GET /socket.io/?EIO=4&transport=polling&t=Pc3taD3 HTTP/1.1" 200 -
+2025-09-26 12:33:25,589 - werkzeug - INFO - 127.0.0.1 - - [26/Sep/2025 12:33:25] "[31m[1mPOST /socket.io/?EIO=4&transport=polling&t=Pc3taDD&sid=1skyBZvKUjrgePqMAAAC HTTP/1.1[0m" 400 -
+2025-09-26 12:33:25,590 - werkzeug - INFO - 127.0.0.1 - - [26/Sep/2025 12:33:25] "[31m[1mGET /socket.io/?EIO=4&transport=websocket&sid=1skyBZvKUjrgePqMAAAC HTTP/1.1[0m" 400 -
+2025-09-26 12:33:25,602 - werkzeug - INFO - 127.0.0.1 - - [26/Sep/2025 12:33:25] "[31m[1mPOST /socket.io/?EIO=4&transport=polling&t=Pc3taDS&sid=1skyBZvKUjrgePqMAAAC HTTP/1.1[0m" 400 -
+2025-09-26 12:33:26,695 - werkzeug - INFO - 127.0.0.1 - - [26/Sep/2025 12:33:26] "GET /socket.io/?EIO=4&transport=polling&t=Pc3taUW HTTP/1.1" 200 -
+2025-09-26 12:33:26,703 - werkzeug - INFO - 127.0.0.1 - - [26/Sep/2025 12:33:26] "[31m[1mPOST /socket.io/?EIO=4&transport=polling&t=Pc3taUf&sid=FSldzsfuCs9l_DrlAAAD HTTP/1.1[0m" 400 -
+2025-09-26 12:33:26,705 - werkzeug - INFO - 127.0.0.1 - - [26/Sep/2025 12:33:26] "[31m[1mGET /socket.io/?EIO=4&transport=websocket&sid=FSldzsfuCs9l_DrlAAAD HTTP/1.1[0m" 400 -
+2025-09-26 12:33:26,715 - werkzeug - INFO - 127.0.0.1 - - [26/Sep/2025 12:33:26] "[31m[1mPOST /socket.io/?EIO=4&transport=polling&t=Pc3taUp&sid=FSldzsfuCs9l_DrlAAAD HTTP/1.1[0m" 400 -
