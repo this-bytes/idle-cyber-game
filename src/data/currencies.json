@@ -1,0 +1,262 @@
+{
+  "currencies": {
+    "money": {
+      "id": "money",
+      "name": "Money",
+      "symbol": "$",
+      "description": "Primary currency for purchasing upgrades and unlocking locations",
+      "startingAmount": 1000,
+      "maxAmount": 999999999,
+      "displayFormat": "currency",
+      "color": [0.2, 0.8, 0.2, 1],
+      "sources": ["contracts", "passive_income", "location_bonuses"],
+      "uses": ["unlock_buildings", "upgrade_equipment", "hire_specialists"]
+    },
+    "reputation": {
+      "id": "reputation",
+      "name": "Reputation",
+      "symbol": "★",
+      "description": "Professional standing that unlocks better contracts and locations",
+      "startingAmount": 10,
+      "maxAmount": 999999,
+      "displayFormat": "integer",
+      "color": [0.9, 0.7, 0.2, 1],
+      "sources": ["completed_contracts", "location_bonuses", "achievements"],
+      "uses": ["unlock_buildings", "unlock_contract_types", "attract_specialists"]
+    },
+    "experience": {
+      "id": "experience",
+      "name": "Experience",
+      "symbol": "XP",
+      "description": "Knowledge gained from completing tasks and training",
+      "startingAmount": 0,
+      "maxAmount": 999999999,
+      "displayFormat": "integer",
+      "color": [0.2, 0.6, 0.9, 1],
+      "sources": ["completed_contracts", "training", "location_bonuses"],
+      "uses": ["unlock_skills", "improve_efficiency", "location_bonuses"]
+    },
+    "energy": {
+      "id": "energy",
+      "name": "Energy",
+      "symbol": "⚡",
+      "description": "Current energy level affecting work efficiency",
+      "startingAmount": 100,
+      "maxAmount": 100,
+      "displayFormat": "percentage",
+      "color": [1.0, 0.5, 0.2, 1],
+      "sources": ["rest", "location_bonuses", "consumables"],
+      "uses": ["work_efficiency", "focus_bonus", "interaction_quality"],
+      "regeneration": {
+        "baseRate": 10,
+        "locationMultipliers": {
+          "kitchen": 1.5,
+          "break_room": 1.8,
+          "home_office": 1.2
+        }
+      }
+    },
+    "focus": {
+      "id": "focus",
+      "name": "Focus",
+      "symbol": "🎯",
+      "description": "Mental clarity that improves work quality and efficiency",
+      "startingAmount": 100,
+      "maxAmount": 200,
+      "displayFormat": "percentage",
+      "color": [0.6, 0.2, 0.9, 1],
+      "sources": ["location_bonuses", "training", "equipment"],
+      "uses": ["work_quality", "contract_success", "research_speed"],
+      "decay": {
+        "baseRate": 5,
+        "workMultiplier": 1.5,
+        "locationReduction": {
+          "my_office": 0.8,
+          "training_room": 0.6
+        }
+      }
+    },
+    "influence": {
+      "id": "influence",
+      "name": "Influence",
+      "symbol": "⭐",
+      "description": "Network connections and industry influence for advanced opportunities",
+      "startingAmount": 0,
+      "maxAmount": 10000,
+      "displayFormat": "integer",
+      "color": [0.8, 0.3, 0.8, 1],
+      "sources": ["high_tier_contracts", "specialist_network", "location_prestige"],
+      "uses": ["unlock_elite_locations", "exclusive_contracts", "industry_events"],
+      "unlockRequirements": {
+        "reputation": 100,
+        "completed_contracts": 25
+      }
+    }
+  },
+  "progression": {
+    "tiers": {
+      "novice": {
+        "id": "novice",
+        "name": "Novice Consultant",
+        "description": "Starting your cybersecurity journey",
+        "requirements": {},
+        "rewards": {
+          "money": 500,
+          "reputation": 5
+        },
+        "unlocks": ["home_office"],
+        "maxContracts": 2,
+        "contractTypes": ["startup"]
+      },
+      "professional": {
+        "id": "professional", 
+        "name": "Professional Consultant",
+        "description": "Established professional with growing reputation",
+        "requirements": {
+          "money": 5000,
+          "reputation": 25,
+          "experience": 500,
+          "completed_contracts": 5
+        },
+        "rewards": {
+          "money": 2000,
+          "reputation": 15,
+          "influence": 5
+        },
+        "unlocks": ["corporate_office"],
+        "maxContracts": 5,
+        "contractTypes": ["startup", "smallBusiness"]
+      },
+      "expert": {
+        "id": "expert",
+        "name": "Cybersecurity Expert",
+        "description": "Recognized expert handling complex security challenges",
+        "requirements": {
+          "money": 25000,
+          "reputation": 100,
+          "experience": 2000,
+          "influence": 20,
+          "completed_contracts": 20
+        },
+        "rewards": {
+          "money": 10000,
+          "reputation": 50,
+          "influence": 25
+        },
+        "unlocks": ["enterprise_complex"],
+        "maxContracts": 8,
+        "contractTypes": ["startup", "smallBusiness", "enterprise", "government"]
+      },
+      "authority": {
+        "id": "authority",
+        "name": "Industry Authority",
+        "description": "Leading figure in cybersecurity with major influence",
+        "requirements": {
+          "money": 100000,
+          "reputation": 500,
+          "experience": 10000,
+          "influence": 100,
+          "completed_contracts": 50
+        },
+        "rewards": {
+          "money": 50000,
+          "reputation": 200,
+          "influence": 100
+        },
+        "unlocks": ["research_institute", "cyber_command_center"],
+        "maxContracts": 12,
+        "contractTypes": ["all"]
+      }
+    },
+    "achievements": {
+      "first_move": {
+        "id": "first_move",
+        "name": "First Steps",
+        "description": "Move to a different room for the first time",
+        "rewards": {
+          "experience": 10,
+          "reputation": 1
+        },
+        "trigger": "room_change"
+      },
+      "building_owner": {
+        "id": "building_owner",
+        "name": "Building Owner",
+        "description": "Unlock your first corporate office building",
+        "rewards": {
+          "money": 1000,
+          "reputation": 10,
+          "influence": 5
+        },
+        "trigger": "building_unlock"
+      },
+      "location_master": {
+        "id": "location_master",
+        "name": "Location Master",
+        "description": "Visit every room in a building",
+        "rewards": {
+          "experience": 100,
+          "influence": 10
+        },
+        "trigger": "all_rooms_visited"
+      },
+      "efficiency_expert": {
+        "id": "efficiency_expert", 
+        "name": "Efficiency Expert",
+        "description": "Maintain maximum focus for 5 minutes straight",
+        "rewards": {
+          "experience": 50,
+          "reputation": 5
+        },
+        "trigger": "sustained_focus"
+      }
+    }
+  },
+  "generation": {
+    "passive_income": {
+      "base_rate": 10,
+      "location_multipliers": {
+        "corporate_office": 1.5,
+        "enterprise_complex": 2.0,
+        "research_institute": 2.5
+      },
+      "tier_multipliers": {
+        "professional": 1.2,
+        "expert": 1.5,
+        "authority": 2.0
+      }
+    },
+    "reputation_decay": {
+      "enabled": false,
+      "rate": 0.1,
+      "minimum": 10
+    },
+    "location_bonuses": {
+      "stack_multiplicatively": true,
+      "maximum_stack": 5.0,
+      "room_base_bonus": 1.0,
+      "floor_bonus": 0.1,
+      "building_bonus": 0.2
+    }
+  },
+  "display": {
+    "currency_precision": {
+      "money": 0,
+      "reputation": 0,
+      "experience": 0,
+      "energy": 0,
+      "focus": 0,
+      "influence": 0
+    },
+    "abbreviations": {
+      "thousand": "K",
+      "million": "M",
+      "billion": "B"
+    },
+    "colors": {
+      "positive": [0.2, 0.8, 0.2, 1],
+      "negative": [0.8, 0.2, 0.2, 1],
+      "neutral": [0.7, 0.7, 0.7, 1]
+    }
+  }
+}

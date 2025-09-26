@@ -8,6 +8,8 @@ local ResourceSystem = require("src.systems.resource_system")
 local UpgradeSystem = require("src.systems.upgrade_system")
 local ThreatSystem = require("src.systems.threat_system")
 local ZoneSystem = require("src.systems.zone_system")
+local LocationSystem = require("src.systems.location_system")  -- NEW: Hierarchical location system
+local ProgressionSystem = require("src.systems.progression_system")  -- NEW: Progression and currencies
 local FactionSystem = require("src.systems.faction_system")
 local AchievementSystem = require("src.systems.achievement_system")
 local ContractSystem = require("src.systems.contract_system")  -- NEW: Core business system
@@ -73,6 +75,8 @@ function Game.init()
     gameState.systems.upgrades = UpgradeSystem.new(gameState.systems.eventBus)
     gameState.systems.threats = ThreatSystem.new(gameState.systems.eventBus)
     gameState.systems.zones = ZoneSystem.new(gameState.systems.eventBus)
+    gameState.systems.locations = LocationSystem.new(gameState.systems.eventBus)  -- NEW: Location system
+    gameState.systems.progression = ProgressionSystem.new(gameState.systems.eventBus, gameState.systems.resources)  -- NEW: Progression system
     gameState.systems.factions = FactionSystem.new(gameState.systems.eventBus)
     gameState.systems.achievements = AchievementSystem.new(gameState.systems.eventBus)
     gameState.systems.save = NetworkSaveSystem.new()
@@ -390,6 +394,8 @@ function Game.save()
         upgrades = gameState.systems.upgrades:getState(),
         threats = gameState.systems.threats:getState(),
         zones = gameState.systems.zones:getState(),
+        locations = gameState.systems.locations:getState(),  -- NEW: Save location state
+        progression = gameState.systems.progression:getState(),  -- NEW: Save progression state
         factions = gameState.systems.factions:getState(),
         achievements = gameState.systems.achievements:getState(),
         -- Include player state if initialized
