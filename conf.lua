@@ -4,7 +4,7 @@ function love.conf(t)
     t.version = "11.3"
     t.console = false
     
-    t.window.title = "Cyberspace Tycoon - Idle Cybersecurity Game"
+    t.window.title = "Cyber Empire Command - Cybersecurity Consultancy Simulator"
     t.window.icon = nil
     t.window.width = 1024
     t.window.height = 768

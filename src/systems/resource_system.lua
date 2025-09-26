@@ -1,5 +1,5 @@
--- Resource Management System
--- Handles all resource tracking, generation, and calculations
+-- Resource Management System - Cyber Empire Command
+-- Handles resources for cybersecurity consultancy business
 
 local ResourceSystem = {}
 ResourceSystem.__index = ResourceSystem
@@ -9,42 +9,49 @@ function ResourceSystem.new(eventBus)
     local self = setmetatable({}, ResourceSystem)
     self.eventBus = eventBus
     
-    -- Core resources as defined in instructions
+    -- Core resources as defined in Cyber Empire Command instructions
     self.resources = {
-        -- Phase 1 Resources
-        dataBits = 0,           -- Primary currency
-        processingPower = 0,    -- Computational power
-        securityRating = 0,     -- Defensive strength
+        -- Primary Resources (Core Mechanics)
+        money = 1000,           -- Currency for hiring, equipment, facilities
+        reputation = 0,         -- Unlocks higher-tier contracts and factions
+        xp = 0,                 -- General experience for company growth
+        missionTokens = 0,      -- Rare resource from Crisis Mode for elite upgrades
         
-        -- Phase 2 Resources (unlocked later)
-        reputationPoints = 0,   -- Underground standing
-        researchData = 0,       -- Tech development
+        -- Secondary Resources (Business Operations)
+        contracts = 0,          -- Active contracts providing income
+        specialists = 1,        -- Team members (start with player)
+        facilities = 1,         -- Office space and equipment capacity
         
-        -- Phase 3 Resources (late game)
-        neuralNetworkFragments = 0,  -- AI components
-        quantumEntanglementTokens = 0 -- Ultra-rare resources
+        -- Legacy resources (TODO: Remove after refactoring complete)  
+        dataBits = 0,           -- DEPRECATED - will be removed
+        processingPower = 0,    -- DEPRECATED - will be removed
+        securityRating = 0,     -- DEPRECATED - will be removed
     }
     
-    -- Generation rates (per second)
+    -- Generation rates (per second) - mainly from active contracts
     self.generation = {
+        money = 0,              -- From contracts and crisis resolutions
+        reputation = 0,         -- From successful contracts
+        xp = 0,                 -- From all activities
+        missionTokens = 0,      -- Only from Crisis Mode successes
+        
+        -- Legacy
         dataBits = 0,
         processingPower = 0,
         securityRating = 0,
-        reputationPoints = 0,
-        researchData = 0,
-        neuralNetworkFragments = 0,
-        quantumEntanglementTokens = 0
     }
     
-    -- Resource multipliers
+    -- Resource multipliers from facilities and upgrades
     self.multipliers = {
+        money = 1.0,
+        reputation = 1.0,
+        xp = 1.0,
+        missionTokens = 1.0,
+        
+        -- Legacy
         dataBits = 1.0,
         processingPower = 1.0,
         securityRating = 1.0,
-        reputationPoints = 1.0,
-        researchData = 1.0,
-        neuralNetworkFragments = 1.0,
-        quantumEntanglementTokens = 1.0
     }
     
     -- Click mechanics
@@ -64,7 +71,7 @@ function ResourceSystem.new(eventBus)
         quantumEntanglementTokens = 1   -- Extremely limited
     }
     
-    self.lastUpdateTime = love.timer.getTime()
+    self.lastUpdateTime = (love and love.timer and love.timer.getTime()) or os.clock()
     
     -- Subscribe to events
     self:subscribeToEvents()
@@ -134,9 +141,8 @@ end
 
 -- Update resource generation
 function ResourceSystem:update(dt)
-    local currentTime = love.timer.getTime()
-    local deltaTime = currentTime - self.lastUpdateTime
-    self.lastUpdateTime = currentTime
+    -- Use provided dt directly for deterministic testing
+    local deltaTime = dt
     
     -- Generate resources based on rates
     for resourceName, rate in pairs(self.generation) do
@@ -147,9 +153,14 @@ function ResourceSystem:update(dt)
     end
     
     -- Update click combo decay
-    local timeSinceLastClick = currentTime - self.lastClickTime
+    local timeSinceLastClick = (love and love.timer and love.timer.getTime() or os.clock()) - self.lastClickTime
     if timeSinceLastClick > self.comboDecayTime then
         self.clickCombo = math.max(1.0, self.clickCombo - (dt * 2.0))
+    end
+    
+    -- Update last update time if in Love2D environment
+    if love and love.timer then
+        self.lastUpdateTime = love.timer.getTime()
     end
     
     -- Publish resource update event
