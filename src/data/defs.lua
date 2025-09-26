@@ -1,0 +1,29 @@
+-- Core definitions and enums for the game (centralized)
+local defs = {}
+
+-- Resource types (enum-like)
+defs.Resources = {
+    MONEY = "money",
+    REPUTATION = "reputation",
+    XP = "xp",
+    MISSION_TOKENS = "missionTokens"
+}
+
+-- Departments: canonical list and default positions/sizes
+defs.Departments = {
+    { id = "desk", name = "My Desk", x = 160, y = 120, radius = 18 },
+    { id = "contracts", name = "Contracts", x = 80, y = 60, radius = 28 },
+    { id = "research", name = "Research", x = 300, y = 60, radius = 28 },
+    { id = "ops", name = "Operations", x = 520, y = 60, radius = 28 },
+    { id = "hr", name = "HR", x = 80, y = 260, radius = 28 },
+    { id = "training", name = "Training", x = 300, y = 260, radius = 28 },
+    { id = "security", name = "Security", x = 520, y = 260, radius = 28 },
+}
+
+-- Game enums
+defs.GameModes = {
+    IDLE = "idle",
+    ADMIN = "admin",
+}
+
+return defs

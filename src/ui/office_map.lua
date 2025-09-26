@@ -33,6 +33,16 @@ local function tryLoadImage(path)
     return nil
 end
 
+-- Fallback to embedded placeholders
+local PlaceholderAssets = nil
+local function getPlaceholders()
+    if not PlaceholderAssets then
+        local ok, mod = pcall(require, "src.ui.asset_placeholders")
+        if ok and mod then PlaceholderAssets = mod end
+    end
+    return PlaceholderAssets
+end
+
 -- Helper to create a simple circular sprite on a Canvas
 local function makeCircleSprite(radius, fillColor, innerColor)
     local size = math.ceil(radius * 2)
@@ -130,10 +140,27 @@ function OfficeMap:draw(player, departments)
                 self.playerSpriteSize = math.max(playerImg:getWidth(), playerImg:getHeight())
             else
                 -- Fallback to procedural canvases
-                local fillColor = {0.15, 0.15, 0.18, 1}
-                local innerColor = {0.9, 0.9, 0.95, 1}
-                self.deptSprite, self.deptSpriteSize = makeCircleSprite(28, fillColor, innerColor)
-                self.playerSprite, self.playerSpriteSize = makeCircleSprite(14, {0.1,0.6,1,1}, {0.8,0.95,1,1})
+                -- Try to load embedded placeholders first
+                local placeholders = getPlaceholders()
+                if placeholders then
+                    local pPlayer, pDept = placeholders.getImages()
+                    if pDept and pPlayer then
+                        self.deptSprite = pDept
+                        self.deptSpriteSize = math.max(pDept:getWidth(), pDept:getHeight())
+                        self.playerSprite = pPlayer
+                        self.playerSpriteSize = math.max(pPlayer:getWidth(), pPlayer:getHeight())
+                    else
+                        local fillColor = {0.15, 0.15, 0.18, 1}
+                        local innerColor = {0.9, 0.9, 0.95, 1}
+                        self.deptSprite, self.deptSpriteSize = makeCircleSprite(28, fillColor, innerColor)
+                        self.playerSprite, self.playerSpriteSize = makeCircleSprite(14, {0.1,0.6,1,1}, {0.8,0.95,1,1})
+                    end
+                else
+                    local fillColor = {0.15, 0.15, 0.18, 1}
+                    local innerColor = {0.9, 0.9, 0.95, 1}
+                    self.deptSprite, self.deptSpriteSize = makeCircleSprite(28, fillColor, innerColor)
+                    self.playerSprite, self.playerSpriteSize = makeCircleSprite(14, {0.1,0.6,1,1}, {0.8,0.95,1,1})
+                end
             end
         end
         for _, dept in ipairs(departments) do

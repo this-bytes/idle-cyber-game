@@ -163,21 +163,21 @@ function IdleMode:draw()
     love.graphics.setColor(1,1,1,1)
     self.officeMap:draw(self.player, deptNodes)
     love.graphics.pop()
-
-    -- Draw terminal header and panels on top of the office map if UI requests it
-    local contentY = 0
-    local y = 0
+    -- If UI is in compact mode, don't draw the large terminal UI here so the office remains the main view
     local showFull = false
     if self.systems and self.systems.ui and self.systems.ui.showFullTerminal then
         showFull = self.systems.ui.showFullTerminal
     end
-    if showFull then
-        contentY = theme:drawHeader("CYBER EMPIRE COMMAND v2.1.7", "Security Consultancy Management Terminal")
-        y = contentY + 20
-    else
-        -- Compact mode: reserve space at the top for a small status hint
-        y = 60
+    if not showFull then
+        -- Nothing more to draw here; UIManager will draw the HUD overlay on top
+        return
     end
+
+    -- Draw terminal header and panels on top of the office map (only when showFull is true)
+    local contentY = 0
+    local y = 0
+    contentY = theme:drawHeader("CYBER EMPIRE COMMAND v2.1.7", "Security Consultancy Management Terminal")
+    y = contentY + 20
     local leftPanelX = 20
     local rightPanelX = 520
     local panelWidth = 480
@@ -561,7 +561,7 @@ function IdleMode:keypressed(key)
         end
         return
     end
-    
+
     -- If not handled above, let UI handle the key (e.g., modal close)
     if self.systems and self.systems.ui and self.systems.ui.keypressed then
         self.systems.ui:keypressed(key)
@@ -576,142 +576,5 @@ function IdleMode:getSelectedContractData()
     return availableContracts[self.selectedContract]
 end
 
-function IdleMode:keypressed(key)
-    -- Handle idle mode specific keys
-    if key == "space" then
-        -- Accept selected contract
-        if self.selectedContract then
-            local success = self.systems.contracts:acceptContract(self.selectedContract)
-            if success then
-                local contract = self:getSelectedContractData()
-                if contract then
-                    print("📝 Accepted contract: " .. contract.clientName .. 
-                          " - Budget: $" .. contract.totalBudget .. 
-                          " | Duration: " .. math.floor(contract.duration) .. "s")
-                    self.selectedContract = nil -- Clear selection
-                end
-            else
-                print("❌ Failed to accept contract. Check requirements.")
-            end
-        else
-            print("💼 No contract selected. Click on a contract first.")
-        end
-    elseif key == "enter" then
-        -- Show detailed information about selected contract
-        if self.selectedContract then
-            local contract = self:getSelectedContractData()
-            if contract then
-                print("📋 CONTRACT DETAILS:")
-                print("   Client: " .. contract.clientName)
-                print("   Description: " .. contract.description)
-                print("   Budget: $" .. format.number(contract.totalBudget, 0))
-                print("   Duration: " .. math.floor(contract.duration) .. "s")
-                print("   Reputation Reward: +" .. contract.reputationReward)
-                print("   Risk Level: " .. (contract.riskLevel or "LOW"))
-            end
-        else
-            print("💼 No contract selected. Click on a contract to view details.")
-        end
-    elseif key == "i" then
-        -- Show information about current business status
-        print("💼 BUSINESS INFORMATION:")
-        local resources = self.systems.resources:getAllResources()
-        print("   Current Funds: $" .. format.number(resources.money or 0, 0))
-        print("   Reputation Level: " .. format.number(resources.reputation or 0, 0))
-        print("   Experience Points: " .. format.number(resources.xp or 0, 0))
-        print("   Mission Tokens: " .. format.number(resources.missionTokens or 0, 0))
-        
-        local contractStats = self.systems.contracts:getStats()
-        print("   Active Contracts: " .. contractStats.activeContracts)
-        print("   Revenue Rate: $" .. format.number(contractStats.totalIncomeRate, 2) .. "/sec")
-        
-        -- Network status information
-        if self.systems.save and self.systems.save.getConnectionStatus then
-            local status = self.systems.save:getConnectionStatus()
-            print("🌐 NETWORK STATUS:")
-            print("   Server Connection: " .. (status.isOnline and "ONLINE" or "OFFLINE"))
-            print("   Save Mode: " .. string.upper(status.saveMode))
-            print("   Player ID: " .. status.username)
-            if status.offlineMode then
-                print("   Mode: OFFLINE (Network disabled)")
-            end
-        end
-    elseif key == "z" then
-        print("🗺️ Zone System:")
-        local zones = self.systems.zones:getUnlockedZones()
-        local currentZoneId = self.systems.zones:getCurrentZoneId()
-        for zoneId, zone in pairs(zones) do
-            local current = zoneId == currentZoneId and " (CURRENT)" or ""
-            print("   " .. zone.name .. current .. " - " .. zone.description)
-        end
-    elseif key == "h" then
-        print("🏆 Achievements:")
-        local achievements = self.systems.achievements:getAllAchievements()
-        local progress = self.systems.achievements:getProgress()
-        
-        print("   📊 Progress:")
-        print("      Total Clicks: " .. progress.totalClicks)
-        print("      Upgrades Purchased: " .. progress.totalUpgradesPurchased)
-        print("      Max Combo: " .. format.number(progress.maxClickCombo, 1) .. "x")
-        print("      Critical Hits: " .. progress.criticalHits)
-        print("")
-        
-        local unlockedCount = 0
-        local totalCount = 0
-        for achievementId, achievement in pairs(achievements) do
-            totalCount = totalCount + 1
-            local status = achievement.unlocked and "✅" or "❌"
-            local reqText = ""
-            
-            if achievement.requirement.type == "clicks" then
-                reqText = " (" .. progress.totalClicks .. "/" .. achievement.requirement.value .. " clicks)"
-            elseif achievement.requirement.type == "maxCombo" then
-                reqText = " (" .. format.number(progress.maxClickCombo, 1) .. "/" .. achievement.requirement.value .. "x combo)"
-            elseif achievement.requirement.type == "upgrades" then
-                reqText = " (" .. progress.totalUpgradesPurchased .. "/" .. achievement.requirement.value .. " upgrades)"
-            elseif achievement.requirement.type == "totalEarned" then
-                reqText = " (Achievement system needs update)"
-            end
-            
-            print("   " .. status .. " " .. achievement.name .. reqText)
-            print("      " .. achievement.description)
-            
-            if achievement.unlocked then
-                unlockedCount = unlockedCount + 1
-            end
-        end
-        
-        print("")
-        print("   🎯 Progress: " .. unlockedCount .. "/" .. totalCount .. " achievements unlocked")
-    elseif key >= "1" and key <= "9" then
-        -- Purchase upgrade by number
-        local upgradeIndex = tonumber(key)
-        local upgrades = self.systems.upgrades:getUnlockedUpgrades()
-        local upgradeIds = {}
-        for upgradeId, upgrade in pairs(upgrades) do
-            table.insert(upgradeIds, upgradeId)
-        end
-        
-        if upgradeIndex <= #upgradeIds then
-            local upgradeId = upgradeIds[upgradeIndex]
-            local success = self.systems.upgrades:purchaseUpgrade(upgradeId)
-            if not success then
-                local upgrade = self.systems.upgrades:getUpgrade(upgradeId)
-                local cost = self.systems.upgrades:getUpgradeCost(upgradeId)
-                local owned = self.systems.upgrades:getUpgradeCount(upgradeId)
-                
-                if owned >= upgrade.maxCount then
-                    print("❌ Cannot purchase: Already at maximum count (" .. upgrade.maxCount .. ")")
-                else
-                    local costText = ""
-                    for resource, amount in pairs(cost) do
-                        costText = costText .. format.number(amount, 0) .. " " .. resource .. " "
-                    end
-                    print("❌ Cannot afford: Need " .. costText)
-                end
-            end
-        end
-    end
-end
 
 return IdleMode

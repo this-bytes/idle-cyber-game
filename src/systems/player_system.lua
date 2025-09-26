@@ -4,6 +4,8 @@
 local PlayerSystem = {}
 PlayerSystem.__index = PlayerSystem
 
+local defs = require("src.data.defs")
+
 -- Create new player system
 function PlayerSystem.new(eventBus)
     local self = setmetatable({}, PlayerSystem)
@@ -14,6 +16,11 @@ function PlayerSystem.new(eventBus)
     self.y = 120
     self.speed = 120 -- pixels per second
     self.size = 12
+    -- Movement smoothing
+    self.vx = 0
+    self.vy = 0
+    self.accel = 700 -- pixels/sec^2
+    self.friction = 450 -- pixels/sec^2 when no input (so we don't stop too abruptly)
 
     -- Player stats
     self.stats = {
@@ -22,16 +29,11 @@ function PlayerSystem.new(eventBus)
         energy = 100
     }
 
-    -- Office departments (simple positions)
-    self.departments = {
-        { id = "desk", name = "My Desk", x = 160, y = 120, radius = 18 },
-        { id = "contracts", name = "Contracts", x = 80, y = 60, radius = 28 },
-        { id = "research", name = "Research", x = 300, y = 60, radius = 28 },
-        { id = "ops", name = "Operations", x = 520, y = 60, radius = 28 },
-        { id = "hr", name = "HR", x = 80, y = 260, radius = 28 },
-        { id = "training", name = "Training", x = 300, y = 260, radius = 28 },
-        { id = "security", name = "Security", x = 520, y = 260, radius = 28 },
-    }
+    -- Office departments (centralized defaults)
+    self.departments = {}
+    for _, d in ipairs(defs.Departments) do
+        table.insert(self.departments, { id = d.id, name = d.name, x = d.x, y = d.y, radius = d.radius })
+    end
 
     -- Input state
     self.input = { up = false, down = false, left = false, right = false }
@@ -40,20 +42,59 @@ function PlayerSystem.new(eventBus)
 end
 
 function PlayerSystem:update(dt)
-    -- Basic movement using input state
-    local dx, dy = 0, 0
-    if self.input.up then dy = dy - 1 end
-    if self.input.down then dy = dy + 1 end
-    if self.input.left then dx = dx - 1 end
-    if self.input.right then dx = dx + 1 end
+    -- Smooth movement using acceleration and friction
+    -- Keep input table in sync with real-time keyboard state (handles missed events)
+    self.input.up = love.keyboard.isDown('up','w')
+    self.input.down = love.keyboard.isDown('down','s')
+    self.input.left = love.keyboard.isDown('left','a')
+    self.input.right = love.keyboard.isDown('right','d')
 
-    if dx ~= 0 or dy ~= 0 then
-        local len = math.sqrt(dx * dx + dy * dy)
-        dx = dx / len
-        dy = dy / len
-        self.x = self.x + dx * self.speed * dt
-        self.y = self.y + dy * self.speed * dt
+    local tx, ty = 0, 0
+    if self.input.up then ty = ty - 1 end
+    if self.input.down then ty = ty + 1 end
+    if self.input.left then tx = tx - 1 end
+    if self.input.right then tx = tx + 1 end
+
+    local targetVx, targetVy = 0, 0
+    if tx ~= 0 or ty ~= 0 then
+        local len = math.sqrt(tx * tx + ty * ty)
+        tx = tx / len
+        ty = ty / len
+        targetVx = tx * self.speed
+        targetVy = ty * self.speed
     end
+
+    -- Approach target velocity with acceleration
+    local function approach(curr, target, maxDelta)
+        if curr < target then
+            return math.min(curr + maxDelta, target)
+        elseif curr > target then
+            return math.max(curr - maxDelta, target)
+        end
+        return curr
+    end
+
+    local accelDelta = self.accel * dt
+    self.vx = approach(self.vx, targetVx, accelDelta)
+    self.vy = approach(self.vy, targetVy, accelDelta)
+
+    -- If no input, apply friction to slow down
+    if tx == 0 and ty == 0 then
+        local fricDelta = self.friction * dt
+        self.vx = approach(self.vx, 0, fricDelta)
+        self.vy = approach(self.vy, 0, fricDelta)
+    end
+
+    -- Update position
+    self.x = self.x + self.vx * dt
+    self.y = self.y + self.vy * dt
+
+    -- Clamp to reasonable bounds to avoid leaving the office area
+    local minX, minY, maxX, maxY = 0, 0, 2000, 2000
+    if self.x < minX then self.x = minX end
+    if self.y < minY then self.y = minY end
+    if self.x > maxX then self.x = maxX end
+    if self.y > maxY then self.y = maxY end
 end
 
 function PlayerSystem:draw(theme)

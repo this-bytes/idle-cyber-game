@@ -46,6 +46,11 @@ local gameState = {
 -- Initialize the game
 function Game.init()
     print("🚀 Initializing Cyberspace Tycoon...")
+    -- Ensure placeholder assets exist so OfficeMap can load them
+    local ok, placeholderWriter = pcall(require, "tools.write_placeholder_assets")
+    if ok and placeholderWriter and love and love.filesystem then
+        placeholderWriter.ensure()
+    end
     
     -- Initialize core systems in order
     gameState.systems.eventBus = EventBus.new()
@@ -108,7 +113,7 @@ function Game.init()
         print("   F - Faction relations")
         print("   S - Statistics")
         print("   P - Pause game")
-        print("   D - Debug mode")
+        print("   Z - Debug mode")
         print("   N - Network status")
         print("   ESC - Quit")
     end)
@@ -290,6 +295,20 @@ function Game.keypressed(key)
         
         -- Pass input to UI system
         gameState.systems.ui:keypressed(key)
+    end
+end
+
+-- Handle key releases (forward to mode and UI so input state is consistent)
+function Game.keyreleased(key)
+    -- Pass to current mode
+    local currentMode = gameState.modes[gameState.currentMode]
+    if currentMode and currentMode.keyreleased then
+        currentMode:keyreleased(key)
+    end
+
+    -- Pass to UI if it wants releases
+    if gameState.systems and gameState.systems.ui and gameState.systems.ui.keyreleased then
+        gameState.systems.ui:keyreleased(key)
     end
 end
 

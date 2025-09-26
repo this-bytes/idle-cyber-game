@@ -12,6 +12,9 @@ function love.load()
     
     -- Set window size
     love.window.setMode(1024, 768, {resizable=true, minwidth=800, minheight=600})
+
+    -- Scale to window size
+    -- TODO: Implement dynamic scaling based on window size
     
     -- Set up monospace font for terminal aesthetic (if available)
     local font = love.graphics.newFont(12)
@@ -34,6 +37,10 @@ function love.keypressed(key)
     Game.keypressed(key)
 end
 
+function love.keyreleased(key)
+    if Game.keyreleased then Game.keyreleased(key) end
+end
+
 function love.mousepressed(x, y, button)
     Game.mousepressed(x, y, button)
 end
@@ -44,4 +51,5 @@ end
 
 function love.quit()
     Game.save()
+    print("Shutting down. Thanks for playing Cyber Empire Command!")
 end

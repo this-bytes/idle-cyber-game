@@ -96,6 +96,29 @@ function UIManager:draw()
         love.graphics.setColor(1,1,1,0.9)
         love.graphics.printf("Press any key to continue", mx + 20, my + mh - 40, mw - 40, "center")
     end
+
+    -- Debug HUD: show player coordinates/velocity/input when game debug mode is on
+    if self.systems and self.systems.gameState and self.systems.gameState.debugMode then
+        local gs = self.systems.gameState
+        local player = nil
+        if gs and gs.modes and gs.modes.idle and gs.modes.idle.player then
+            player = gs.modes.idle.player
+        elseif self.systems and self.systems.player then
+            player = self.systems.player
+        end
+
+        if player then
+            local dx = player.vx or 0
+            local dy = player.vy or 0
+            local infoX, infoY = 10, love.graphics.getHeight() - 80
+            self.theme:drawPanel(infoX, infoY, 300, 70, "DEBUG: PLAYER")
+            self.theme:drawText(string.format("Pos: (%.1f, %.1f)", player.x, player.y), infoX + 12, infoY + 18, self.theme:getColor("primary"))
+            self.theme:drawText(string.format("Vel: (%.1f, %.1f)", dx, dy), infoX + 12, infoY + 34, self.theme:getColor("warning"))
+            local inputState = player.input or {}
+            local inputText = string.format("Input: L:%s R:%s U:%s D:%s", tostring(inputState.left), tostring(inputState.right), tostring(inputState.up), tostring(inputState.down))
+            self.theme:drawText(inputText, infoX + 12, infoY + 50, self.theme:getColor("accent"))
+        end
+    end
 end
 
 function UIManager:mousepressed(x, y, button)
