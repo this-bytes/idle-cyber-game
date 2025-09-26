@@ -7,6 +7,7 @@ IdleMode.__index = IdleMode
 local format = require("src.utils.format")
 local PlayerSystem = require("src.systems.player_system")
 local OfficeMap = require("src.ui.office_map")
+local EnhancedOfficeMap = require("src.ui.enhanced_office_map")  -- NEW: Enhanced room rendering
 
 -- Create new idle mode
 function IdleMode.new(systems)
@@ -16,6 +17,10 @@ function IdleMode.new(systems)
     -- UI state for contract selection
     self.contractAreas = {}  -- Store clickable areas for contracts
     self.selectedContract = nil
+    
+    -- Enhanced room rendering
+    self.enhancedMap = EnhancedOfficeMap.new()
+    self.useEnhancedMap = true
     
     return self
 end
@@ -124,6 +129,21 @@ function IdleMode:update(dt)
     -- Handle idle mode specific updates
     if not self.player then self:enter() end
     if self.player then self.player:update(dt) end
+    
+    -- Update enhanced map animations
+    if self.enhancedMap then
+        self.enhancedMap:update(dt)
+    end
+    
+    -- Update room system
+    if self.systems.rooms then
+        self.systems.rooms:update(dt)
+    end
+    
+    -- Update room events
+    if self.systems.roomEvents then
+        self.systems.roomEvents:update(dt)
+    end
 end
 
 function IdleMode:keyreleased(key)
@@ -155,25 +175,44 @@ function IdleMode:draw()
     end
 
     -- Draw office map as the background/main screen. Terminal UI will be drawn on top as an overlay.
-    if not self.officeMap then
-        self.officeMap = OfficeMap.new(640, 200)
-    end
-    -- Make office map size adapt to the window so it feels like the main scene
-    local winW, winH = love.graphics.getDimensions()
-    -- Reserve some space for top UI; draw the office underneath the terminal panels
-    self.officeMap.width = math.max(480, winW - 80)
-    self.officeMap.height = math.max(200, winH - 340)
-
-    love.graphics.push()
-    -- Position the office map slightly below the header/panels so overlays read comfortably
-    love.graphics.translate(40, 140)
-    love.graphics.setColor(1,1,1,1)
+    -- Check debug flag
     local debugFlag = false
     if self.systems and self.systems.gameState and self.systems.gameState.debugMode then
         debugFlag = true
     end
-    self.officeMap:draw(self.player, deptNodes, { debug = debugFlag })
-    love.graphics.pop()
+    
+    -- Use enhanced room rendering if available and enabled
+    if self.useEnhancedMap and self.systems.rooms and self.enhancedMap then
+        -- Enhanced room-based rendering
+        love.graphics.push()
+        love.graphics.translate(40, 140)
+        love.graphics.setColor(1, 1, 1, 1)
+        
+        self.enhancedMap:draw(self.systems.rooms, self.player, { 
+            offsetX = 0, 
+            offsetY = 0,
+            debug = debugFlag 
+        })
+        
+        love.graphics.pop()
+    else
+        -- Fallback to traditional office map
+        if not self.officeMap then
+            self.officeMap = OfficeMap.new(640, 200)
+        end
+        -- Make office map size adapt to the window so it feels like the main scene
+        local winW, winH = love.graphics.getDimensions()
+        -- Reserve some space for top UI; draw the office underneath the terminal panels
+        self.officeMap.width = math.max(480, winW - 80)
+        self.officeMap.height = math.max(200, winH - 340)
+
+        love.graphics.push()
+        -- Position the office map slightly below the header/panels so overlays read comfortably
+        love.graphics.translate(40, 140)
+        love.graphics.setColor(1,1,1,1)
+        self.officeMap:draw(self.player, deptNodes, { debug = debugFlag })
+        love.graphics.pop()
+    end
     -- If UI is in compact mode, don't draw the large terminal UI here so the office remains the main view
     local showFull = false
     if self.systems and self.systems.ui and self.systems.ui.showFullTerminal then
@@ -237,6 +276,18 @@ function IdleMode:draw()
         theme:drawText("TEAM STATUS:", rightPanelX + 10, opsY, theme:getColor("secondary"))
         theme:drawText(specialistStats.available .. "/" .. specialistStats.total .. " ready", rightPanelX + 200, opsY, theme:getColor("primary"))
         opsY = opsY + 20
+        
+        -- Room status
+        if self.systems.rooms then
+            theme:drawText("CURRENT ROOM:", rightPanelX + 10, opsY, theme:getColor("secondary"))
+            local currentRoom = self.systems.rooms:getCurrentRoom()
+            if currentRoom then
+                theme:drawText(currentRoom.name:gsub("🏠 ", ""):gsub("🏢 ", ""):gsub("👤 ", ""):gsub("🍽️ ", ""):gsub("💾 ", ""):gsub("🤝 ", ""):gsub("🚨 ", ""), rightPanelX + 200, opsY, theme:getColor("accent"))
+            else
+                theme:drawText("NONE", rightPanelX + 200, opsY, theme:getColor("muted"))
+            end
+            opsY = opsY + 20
+        end
 
         -- Network status
         if self.systems.save and self.systems.save.getConnectionStatus then
@@ -503,7 +554,35 @@ function IdleMode:keypressed(key)
         -- Interaction
         if key == "e" then
             local interacted, dept = self.player:interact()
-            if not interacted then print("🔍 No department nearby to interact with. Move closer and press E.") end
+            if interacted then
+                -- Traditional department interaction
+                return
+            else
+                -- Try room area interaction
+                if self.systems.rooms then
+                    local currentRoom = self.systems.rooms:getCurrentRoom()
+                    if currentRoom and self.enhancedMap then
+                        local area = self.enhancedMap:getAreaAtPosition(currentRoom, self.player.x, self.player.y, 0, 0)
+                        if area then
+                            self.systems.rooms:handleAreaInteraction(area.id, "player")
+                            return
+                        end
+                    end
+                end
+                print("🔍 No department or area nearby to interact with. Move closer and press E.")
+            end
+            return
+        end
+        
+        -- Room help (H key when in room)
+        if key == "h" and not self.roomMenuActive then
+            self:showRoomHelp()
+            return
+        end
+        
+        -- Room navigation (R key)
+        if key == "r" then
+            self:showRoomMenu()
             return
         end
     end
@@ -527,6 +606,29 @@ function IdleMode:keypressed(key)
         else
             print("💼 No contract selected. Click on a contract first.")
             return
+        end
+    end
+
+    -- Room menu number selection and event choices
+    if self.roomMenuActive then
+        local num = tonumber(key)
+        if num and num >= 1 and num <= 9 then
+            if self:selectRoom(num) then
+                return
+            end
+        elseif key == "escape" then
+            self.roomMenuActive = false
+            self.availableRooms = nil
+            print("🚪 Room menu cancelled")
+            return
+        end
+    else
+        -- Handle room event choices when not in room menu
+        local num = tonumber(key)
+        if num and num >= 1 and num <= 9 then
+            if self:handleEventChoice(num) then
+                return
+            end
         end
     end
 
@@ -575,6 +677,22 @@ function IdleMode:keypressed(key)
         for zoneId, zone in pairs(zones) do
             local current = zoneId == currentZoneId and " (CURRENT)" or ""
             print("   " .. zone.name .. current .. " - " .. zone.description)
+        end
+        print("")
+        print("🏢 Room System:")
+        if self.systems.rooms then
+            local rooms = self.systems.rooms:getAvailableRooms()
+            local currentRoom = self.systems.rooms:getCurrentRoom()
+            print("   Current: " .. (currentRoom and currentRoom.name or "None"))
+            print("   Available Rooms:")
+            for _, room in ipairs(rooms) do
+                local indicator = room.current and " (HERE)" or ""
+                print("     • " .. room.name .. indicator)
+                print("       " .. room.description)
+            end
+            print("   Press R to open room navigation menu")
+        else
+            print("   Room system not available")
         end
         return
     elseif key == "h" then
@@ -746,6 +864,258 @@ function IdleMode:getSelectedContractData()
     
     local availableContracts = self.systems.contracts:getAvailableContracts()
     return availableContracts[self.selectedContract]
+end
+
+-- Show room navigation menu
+function IdleMode:showRoomMenu()
+    if not self.systems.rooms then 
+        print("🏢 Room system not available")
+        return 
+    end
+    
+    local availableRooms = self.systems.rooms:getAvailableRooms()
+    if #availableRooms == 0 then
+        print("🔒 No rooms available")
+        return
+    end
+    
+    print("🚪 Available Rooms:")
+    for i, room in ipairs(availableRooms) do
+        local status = room.current and " [CURRENT]" or ""
+        print("   " .. i .. ". " .. room.name .. status)
+        print("      " .. room.description)
+    end
+    print("Enter room number (1-" .. #availableRooms .. ") or ESC to cancel:")
+    
+    -- Set room menu state for number key handling
+    self.roomMenuActive = true
+    self.availableRooms = availableRooms
+end
+
+-- Show room-specific help and interaction guide
+function IdleMode:showRoomHelp()
+    if not self.systems.rooms then 
+        print("🏢 Room system not available")
+        return 
+    end
+    
+    local currentRoom = self.systems.rooms:getCurrentRoom()
+    if not currentRoom then
+        print("❓ No active room")
+        return
+    end
+    
+    print("❓ " .. currentRoom.name .. " - Help & Interactions")
+    print("📋 " .. currentRoom.description)
+    print("")
+    
+    if currentRoom.areas and #currentRoom.areas > 0 then
+        print("🎯 Available Interactions:")
+        for _, area in ipairs(currentRoom.areas) do
+            print("   " .. (area.icon or "●") .. " " .. area.name)
+            print("      Action: " .. (area.action or "interact"):gsub("_", " "))
+        end
+        print("")
+        print("💡 Move close to an area and press E to interact")
+    else
+        print("   No interactive areas in this room")
+    end
+    
+    if currentRoom.bonuses then
+        print("⚡ Room Bonuses:")
+        for bonusName, multiplier in pairs(currentRoom.bonuses) do
+            if type(multiplier) == "number" and multiplier > 1 then
+                local bonus = math.floor((multiplier - 1) * 100)
+                print("   • " .. bonusName:gsub("Multiplier", ""):gsub("Bonus", "") .. ": +" .. bonus .. "%")
+            end
+        end
+    end
+    
+    if currentRoom.atmosphere then
+        print("")
+        print("🌟 Atmosphere: " .. currentRoom.atmosphere)
+    end
+    
+    -- Show active events if any
+    if self.systems.roomEvents then
+        local activeEvents = self.systems.roomEvents:getActiveEvents()
+        if #activeEvents > 0 then
+            print("")
+            print("🎭 Active Events in This Room:")
+            for _, event in ipairs(activeEvents) do
+                if event.roomId == currentRoom.id then
+                    local urgency = event.critical and "🔥 CRITICAL" or event.urgent and "⚡ URGENT" or "📢"
+                    print("   " .. urgency .. " " .. event.title)
+                    if event.duration then
+                        print("      ⏱️ " .. math.floor(event.duration) .. " seconds remaining")
+                    end
+                end
+            end
+        end
+    end
+    
+    print("")
+    print("🎮 Controls:")
+    print("   WASD/Arrows - Move around")
+    print("   E - Interact with nearby areas")
+    print("   R - Room navigation menu")
+    print("   H - This help (room-specific)")
+    print("   1-9 - Make event choices")
+end
+
+-- Handle room selection
+function IdleMode:selectRoom(roomIndex)
+    if not self.roomMenuActive or not self.availableRooms then return false end
+    
+    local room = self.availableRooms[roomIndex]
+    if not room then
+        print("❌ Invalid room selection")
+        return false
+    end
+    
+    if room.current then
+        print("📍 Already in " .. room.name)
+    else
+        self.systems.rooms:changeRoom(room.id, "menu_selection")
+        -- Update player position to room center
+        if self.player and self.systems.rooms then
+            local newRoom = self.systems.rooms:getCurrentRoom()
+            if newRoom then
+                self.player.x = (newRoom.width or 640) / 2
+                self.player.y = (newRoom.height or 400) / 2
+            end
+        end
+    end
+    
+    -- Clear room menu state
+    self.roomMenuActive = false
+    self.availableRooms = nil
+    return true
+end
+
+-- Get room index for area under cursor (for mouse interaction)
+function IdleMode:getAreaUnderCursor(x, y)
+    if not self.systems.rooms or not self.enhancedMap then return nil end
+    
+    local currentRoom = self.systems.rooms:getCurrentRoom()
+    if not currentRoom then return nil end
+    
+    -- Adjust coordinates based on office map position
+    local adjustedX = x - 40
+    local adjustedY = y - 140
+    
+    return self.enhancedMap:getAreaAtPosition(currentRoom, adjustedX, adjustedY, 0, 0)
+end
+
+-- Handle mouse interaction with room areas
+function IdleMode:mousepressed(x, y, button)
+    if button == 1 then -- Left click
+        local area = self:getAreaUnderCursor(x, y)
+        if area then
+            self.systems.rooms:handleAreaInteraction(area.id, "player")
+            return true
+        end
+    end
+    return false
+end
+
+-- Handle room event choices
+function IdleMode:handleEventChoice(choiceNum)
+    if not self.systems.roomEvents then return false end
+    
+    local activeEvents = self.systems.roomEvents:getActiveEvents()
+    if #activeEvents == 0 then return false end
+    
+    -- Use the most recent event (first in list)
+    local event = activeEvents[1]
+    if event.choices and choiceNum <= #event.choices then
+        local success = self.systems.roomEvents:makeEventChoice(event.id, choiceNum)
+        if success then
+            print("📝 Choice selected: " .. event.choices[choiceNum].text)
+            return true
+        end
+    end
+    
+    return false
+end
+
+-- Get current room status for display
+function IdleMode:getRoomStatus()
+    if not self.systems.rooms then return "Room system unavailable" end
+    
+    local currentRoom = self.systems.rooms:getCurrentRoom()
+    if not currentRoom then return "No active room" end
+    
+    local status = "📍 " .. currentRoom.name
+    
+    -- Add room bonuses info
+    if currentRoom.bonuses then
+        local bonusCount = 0
+        for _ in pairs(currentRoom.bonuses) do bonusCount = bonusCount + 1 end
+        if bonusCount > 0 then
+            status = status .. " (" .. bonusCount .. " active bonuses)"
+        end
+    end
+    
+    -- Add occupancy if applicable
+    if currentRoom.maxOccupancy then
+        local occupancy = currentRoom.currentOccupancy or 1
+        status = status .. " [" .. occupancy .. "/" .. currentRoom.maxOccupancy .. "]"
+    end
+    
+    return status
+end
+
+-- Display room events in UI
+function IdleMode:drawRoomEvents(theme, x, y, width)
+    if not self.systems.roomEvents then return y end
+    
+    local activeEvents = self.systems.roomEvents:getActiveEvents()
+    if #activeEvents == 0 then return y end
+    
+    y = y + 10
+    theme:drawText("🎭 ACTIVE EVENTS", x, y, theme:getColor("warning"))
+    y = y + 20
+    
+    for i, event in ipairs(activeEvents) do
+        if i > 2 then break end -- Show max 2 events to save space
+        
+        -- Event title with urgency indicator
+        local titleColor = event.critical and theme:getColor("danger") or 
+                          event.urgent and theme:getColor("warning") or 
+                          theme:getColor("accent")
+        local prefix = event.critical and "🔥 " or event.urgent and "⚡ " or "📢 "
+        
+        theme:drawText(prefix .. event.title, x + 5, y, titleColor)
+        y = y + 15
+        
+        -- Description
+        theme:drawText("  " .. event.description, x + 5, y, theme:getColor("secondary"))
+        y = y + 12
+        
+        -- Time remaining
+        if event.duration then
+            local timeLeft = math.max(0, math.floor(event.duration))
+            theme:drawText("  ⏱️ " .. timeLeft .. "s remaining", x + 5, y, theme:getColor("muted"))
+            y = y + 12
+        end
+        
+        -- Choices
+        if event.choices then
+            theme:drawText("  💭 Press number key:", x + 5, y, theme:getColor("dimmed"))
+            y = y + 12
+            for j, choice in ipairs(event.choices) do
+                if j <= 3 then -- Show max 3 choices
+                    theme:drawText("    " .. j .. ". " .. choice.text, x + 5, y, theme:getColor("primary"))
+                    y = y + 12
+                end
+            end
+        end
+        
+        y = y + 5 -- Spacing between events
+    end
+    
+    return y
 end
 
 
