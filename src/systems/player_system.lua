@@ -128,6 +128,9 @@ function PlayerSystem:interact()
         if dist <= dept.radius + self.size + 4 then
             -- Emit event based on department
             self.eventBus:publish("player_interact", { department = dept.id, name = dept.name })
+            -- TODO: Implement department interaction feedback (e.g., flash, highlight, popup)
+            -- Reference: See UI feedback standards in 10-ui-design.instructions.md for consistency
+
             return true, dept
         end
     end

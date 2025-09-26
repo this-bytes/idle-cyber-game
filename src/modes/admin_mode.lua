@@ -195,6 +195,18 @@ function AdminMode:draw()
         "CRISIS ACTIVE | [1-3] Response Options | Press [A] to return to Idle Mode" or
         "MONITORING | [C] Simulate Crisis | [A] Return to Idle Mode"
     theme:drawStatusBar(statusText)
+
+    -- Admin editor quick-controls (visible in Admin Mode)
+    local w, h = love.graphics.getDimensions()
+    local x = w - 360
+    local y = 20
+    theme:drawPanel(x, y, 340, 140, "⚙️ ADMIN DATA EDITOR")
+    local innerY = y + 30
+    theme:drawText("[R] Reload data from JSON", x + 10, innerY, theme:getColor("accent"))
+    innerY = innerY + 18
+    theme:drawText("[S] Save current data to JSON", x + 10, innerY, theme:getColor("accent"))
+    innerY = innerY + 18
+    theme:drawText("Open /admin in browser to use UI", x + 10, innerY, theme:getColor("dimmed"))
 end
 
 function AdminMode:mousepressed(x, y, button)
@@ -214,6 +226,30 @@ function AdminMode:keypressed(key)
         -- No active crisis
         if key == "c" then
             self:startCrisis()
+        end
+        -- Admin quick keys
+        if key == "r" then
+            -- Reload JSON data modules
+            local ok1, err1 = pcall(function()
+                local defs = require("src.data.defs")
+                if defs and defs.reloadFromJSON then defs.reloadFromJSON() end
+            end)
+            local ok2, err2 = pcall(function()
+                local contracts = require("src.data.contracts")
+                if contracts and contracts.reloadFromJSON then contracts.reloadFromJSON() end
+            end)
+            table.insert(self.responseLog, "🔁 Reloaded data: defs=" .. tostring(ok1) .. ", contracts=" .. tostring(ok2))
+        elseif key == "s" then
+            -- Save current in-memory data to JSON
+            local ok1, err1 = pcall(function()
+                local defs = require("src.data.defs")
+                if defs and defs.saveToJSON then defs.saveToJSON() end
+            end)
+            local ok2, err2 = pcall(function()
+                local contracts = require("src.data.contracts")
+                if contracts and contracts.saveToJSON then contracts.saveToJSON() end
+            end)
+            table.insert(self.responseLog, "💾 Saved data: defs=" .. tostring(ok1) .. ", contracts=" .. tostring(ok2))
         end
     end
 end

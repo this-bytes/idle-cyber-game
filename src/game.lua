@@ -200,11 +200,26 @@ function Game.draw()
         love.graphics.push()
         love.graphics.origin()
         local w, h = love.graphics.getDimensions()
-        love.graphics.setColor(0, 0, 0, 0.9)
-        love.graphics.rectangle("fill", 0, 0, w, h)
-        love.graphics.setColor(0.1, 0.9, 0.9, 1)
-        love.graphics.printf("CYBER EMPIRE COMMAND", 0, h * 0.35, w, "center")
-        love.graphics.setColor(1, 1, 1, 0.9)
+        -- load splash image if available
+        -- TODO: load splash image asynchronously during init to avoid hitches
+        local splashImage = nil
+        if love.filesystem.getInfo("assets/splash.png") then
+            splashImage = love.graphics.newImage("assets/splash.jpeg")
+        end
+        if splashImage then
+            local imgW, imgH = splashImage:getDimensions()
+            local scale = math.min(w / imgW, h / imgH) * 0.8
+            love.graphics.draw(splashImage, (w - imgW * scale) / 2, (h - imgH * scale) / 2, 0, scale, scale)
+        else
+            love.graphics.setColor(0.2, 0.2, 0.2, 1)
+            love.graphics.rectangle("fill", 0, 0, w, h)
+            love.graphics.setColor(0, 0, 0, 0.9)
+            love.graphics.rectangle("fill", 0, 0, w, h)
+            love.graphics.setColor(0.1, 0.9, 0.9, 1)
+            love.graphics.printf("CYBER EMPIRE COMMAND", 0, h * 0.35, w, "center")
+            love.graphics.setColor(1, 1, 1, 0.9)
+
+        end
         love.graphics.printf("Press any key to continue...", 0, h * 0.6, w, "center")
         love.graphics.pop()
     else
@@ -274,6 +289,21 @@ function Game.keypressed(key)
         print(gameState.paused and "⏸️  Game paused" or "▶️  Game resumed")
     elseif key == "d" then
         gameState.debugMode = not gameState.debugMode
+    elseif key == "r" then
+        -- Reload data JSON files at runtime (useful for tuning from backend)
+        local defs = pcall(function() return require("src.data.defs") end)
+        local contracts = pcall(function() return require("src.data.contracts") end)
+        local ok1, r1 = false, nil
+        local ok2, r2 = false, nil
+        if defs then
+            local mod = require("src.data.defs")
+            ok1, r1 = pcall(function() return mod.reloadFromJSON() end)
+        end
+        if contracts then
+            local modc = require("src.data.contracts")
+            ok2, r2 = pcall(function() return modc.reloadFromJSON() end)
+        end
+        print("🔁 Data reload: defs=" .. tostring(ok1) .. ", contracts=" .. tostring(ok2))
     elseif key == "n" then
         -- Show network status
         local status = gameState.systems.save:getConnectionStatus()

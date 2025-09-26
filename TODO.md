@@ -124,3 +124,16 @@
 - Progressive complexity (garage to global enterprise)
 - Balanced idle progression with incident engagement
 - Player agency in business growth strategy
+
+---
+
+## Recent work & next tasks
+
+### Recent (completed)
+- [x] Centralized contract template registry (`src/data/contracts.lua`) — templates and instantiate API
+- [x] Wired contract registry into `ContractSystem` so contract generation uses templates
+
+### Next (short-term)
+- [ ] Use template `unlockRequirement` in `ContractSystem:generateRandomContract` to gate higher-tier templates by reputation/mission tokens
+- [ ] Add JSON/YAML loader to `src/data/contracts` so designers can add templates as data files (data/contracts/*.json)
+- [ ] Add unit tests for template instantiation, overrides, and registration

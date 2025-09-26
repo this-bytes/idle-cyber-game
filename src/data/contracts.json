@@ -1,0 +1,32 @@
+[
+  {
+    "id": "basic_small_business",
+    "clientName": "Small Business",
+    "description": "Provide basic security audit and recommendations.",
+    "baseBudget": 100,
+    "baseDuration": 30,
+    "reputationReward": 1,
+    "riskLevel": "LOW",
+    "requiredResources": []
+  },
+  {
+    "id": "tech_startup",
+    "clientName": "Tech Startup",
+    "description": "Implement a lightweight WAF and incident response plan.",
+    "baseBudget": 400,
+    "baseDuration": 60,
+    "reputationReward": 2,
+    "riskLevel": "MEDIUM",
+    "requiredResources": []
+  },
+  {
+    "id": "enterprise_contract",
+    "clientName": "Enterprise Corp",
+    "description": "Enterprise security overhaul with training and long-term monitoring.",
+    "baseBudget": 5000,
+    "baseDuration": 300,
+    "reputationReward": 20,
+    "riskLevel": "HIGH",
+    "requiredResources": []
+  }
+]

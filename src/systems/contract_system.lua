@@ -3,6 +3,7 @@
 
 local ContractSystem = {}
 ContractSystem.__index = ContractSystem
+local ContractTemplates = require("src.data.contracts")
 
 -- Create new contract system
 function ContractSystem.new(eventBus)
@@ -23,53 +24,16 @@ function ContractSystem.new(eventBus)
     self.contractGenerationTimer = 0
     self.contractGenerationInterval = 15 -- Generate new contract every 15 seconds (reduced from 30 for better idle flow)
     
-    -- Client types and their properties
-    self.clientTypes = {
-        startup = {
-            name = "Tech Startup",
-            budgetRange = {500, 2000},
-            durationRange = {60, 180}, -- seconds
-            reputationReward = {1, 5},
-            riskLevel = "low",
-            threatTypes = {"script_kiddies", "basic_malware"},
-            description = "Small tech company needing basic security"
-        },
-        
-        smallBusiness = {
-            name = "Small Business",
-            budgetRange = {1500, 5000},
-            durationRange = {120, 300},
-            reputationReward = {3, 10},
-            riskLevel = "medium",
-            threatTypes = {"phishing", "ransomware"},
-            description = "Growing business with moderate security needs"
-        },
-        
-        enterprise = {
-            name = "Enterprise Corp",
-            budgetRange = {10000, 50000},
-            durationRange = {300, 600},
-            reputationReward = {15, 50},
-            riskLevel = "high",
-            threatTypes = {"apt", "supply_chain", "zero_day"},
-            description = "Large corporation requiring comprehensive security",
-            unlockRequirement = {reputation = 50}
-        },
-        
-        government = {
-            name = "Government Agency",
-            budgetRange = {25000, 100000},
-            durationRange = {600, 1200},
-            reputationReward = {30, 100},
-            riskLevel = "critical",
-            threatTypes = {"nation_state", "advanced_persistent", "zero_day"},
-            description = "High-security government contract",
-            unlockRequirement = {reputation = 200, missionTokens = 5}
-        }
-    }
+    -- Previously clientTypes lived here; now we use ContractTemplates registry
     
-    -- Initialize with a basic contract
-    local initialContract = self:generateContract("startup")
+    -- Initialize with a basic contract (instantiate from templates)
+    local initialContract = nil
+    local firstTemplates = ContractTemplates.getTemplates()
+    if #firstTemplates > 0 then
+        -- instantiate first template as starter
+        local tmpl = firstTemplates[1]
+        initialContract = ContractTemplates.instantiate(tmpl.id, 1.0)
+    end
     if initialContract then
         self.availableContracts[initialContract.id] = initialContract
     end
@@ -110,36 +74,19 @@ function ContractSystem:update(dt)
 end
 
 -- Generate a contract of specific type
-function ContractSystem:generateContract(clientType)
-    local clientData = self.clientTypes[clientType]
-    if not clientData then return nil end
-    
-    local contract = {
-        id = self.nextContractId,
-        clientType = clientType,
-        clientName = clientData.name .. " #" .. self.nextContractId,
-        description = clientData.description,
-        
-        -- Financial details
-        totalBudget = math.random(clientData.budgetRange[1], clientData.budgetRange[2]),
-        duration = math.random(clientData.durationRange[1], clientData.durationRange[2]),
-        originalDuration = 0, -- Will be set when contract is accepted
-        remainingTime = 0, -- Will be set when contract is accepted
-        
-        -- Rewards
-        reputationReward = math.random(clientData.reputationReward[1], clientData.reputationReward[2]),
-        
-        -- Risk profile
-        riskLevel = clientData.riskLevel,
-        threatTypes = clientData.threatTypes,
-        
-        -- Status
-        status = "available", -- available, active, completed, failed
-        acceptedTime = 0
-    }
-    
-    self.nextContractId = self.nextContractId + 1
-    
+function ContractSystem:generateContract(templateId, scale)
+    -- Use contract templates registry to instantiate contracts
+    scale = scale or 1.0
+    local contract = ContractTemplates.instantiate(templateId, scale)
+    if contract then
+        -- Ensure unique id if registry didn't provide one
+        if not contract.id then
+            contract.id = "c_" .. tostring(self.nextContractId)
+            self.nextContractId = self.nextContractId + 1
+        end
+        -- Ensure status for available contracts
+        contract.status = contract.status or "available"
+    end
     return contract
 end
 
@@ -155,35 +102,16 @@ function ContractSystem:generateRandomContract()
         currentMissionTokens = self.resourceSystem:getResource("missionTokens") or 0
     end
     
-    local availableTypes = {}
-    for clientType, data in pairs(self.clientTypes) do
-        local canUnlock = true
-        if data.unlockRequirement then
-            -- Check unlock requirements against actual resources
-            if data.unlockRequirement.reputation and currentReputation < data.unlockRequirement.reputation then
-                canUnlock = false
-            end
-            if data.unlockRequirement.missionTokens and currentMissionTokens < data.unlockRequirement.missionTokens then
-                canUnlock = false
-            end
-        end
-        
-        if canUnlock then
-            table.insert(availableTypes, clientType)
-        end
-    end
-    
-    if #availableTypes > 0 then
-        local randomType = availableTypes[math.random(#availableTypes)]
-        local contract = self:generateContract(randomType)
-        
-        if contract then
-            self.availableContracts[contract.id] = contract
-            
-            self.eventBus:publish("contract_available", {
-                contract = contract
-            })
-        end
+    -- Use templates registry to pick a random template and instantiate
+    local allTemplates = ContractTemplates.getTemplates()
+    if #allTemplates == 0 then return end
+
+    local tmpl = allTemplates[math.random(#allTemplates)]
+    local scale = 0.8 + math.random() * 1.4 -- random scale between 0.8 and 2.2
+    local contract = self:generateContract(tmpl.id, scale)
+    if contract then
+        self.availableContracts[contract.id] = contract
+        self.eventBus:publish("contract_available", { contract = contract })
     end
 end
 
@@ -197,8 +125,15 @@ function ContractSystem:acceptContract(contractId)
     contract.acceptedTime = (love and love.timer and love.timer.getTime()) or os.clock()
     
     -- Critical fix: Properly initialize duration and remaining time
-    contract.originalDuration = contract.duration
-    contract.remainingTime = contract.duration
+    -- If the template already provided originalDuration/remainingTime, keep them.
+    -- Otherwise fall back to 'duration' or remainingTime fields.
+    local dur = contract.originalDuration or contract.duration or contract.remainingTime
+    if not dur then
+        -- As a last resort, set a sensible default (30s)
+        dur = 30
+    end
+    contract.originalDuration = contract.originalDuration or dur
+    contract.remainingTime = contract.remainingTime or dur
     
     self.activeContracts[contractId] = contract
     self.availableContracts[contractId] = nil
