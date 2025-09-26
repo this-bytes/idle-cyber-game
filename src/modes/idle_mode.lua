@@ -19,90 +19,97 @@ function IdleMode:update(dt)
 end
 
 function IdleMode:draw()
-    -- Draw Cyber Empire Command UI
-    love.graphics.setColor(0.1, 0.8, 0.1) -- Cyberpunk green theme
-    love.graphics.print("🔐 CYBER EMPIRE COMMAND - Security Consultancy HQ", 20, 20)
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.print("Build your cybersecurity empire through strategic contracts", 20, 40)
+    -- Get terminal theme from UI manager
+    local theme = self.systems.ui.theme
     
-    local y = 80
+    -- Draw terminal header
+    local contentY = theme:drawHeader("CYBER EMPIRE COMMAND v2.1.7", "Security Consultancy Management Terminal")
     
-    -- Show core business resources
+    local y = contentY + 20
+    local leftPanelX = 20
+    local rightPanelX = 520
+    local panelWidth = 480
+    
+    -- Left panel: Business Resources
+    theme:drawPanel(leftPanelX, y, panelWidth, 200, "BUSINESS RESOURCES")
+    local resourceY = y + 25
+    
     local resources = self.systems.resources:getAllResources()
-    love.graphics.print("💼 BUSINESS RESOURCES:", 20, y)
-    y = y + 25
+    theme:drawText("BUDGET:", leftPanelX + 10, resourceY, theme:getColor("secondary"))
+    theme:drawText("$" .. format.number(resources.money or 0, 0), leftPanelX + 200, resourceY, theme:getColor("success"))
+    resourceY = resourceY + 20
     
-    -- Primary resources
-    love.graphics.print("   💰 Money: $" .. format.number(resources.money or 0, 0), 30, y)
-    y = y + 20
-    love.graphics.print("   ⭐ Reputation: " .. format.number(resources.reputation or 0, 0), 30, y)
-    y = y + 20
-    love.graphics.print("   📈 XP: " .. format.number(resources.xp or 0, 0), 30, y)
-    y = y + 20
-    love.graphics.print("   🎖️ Mission Tokens: " .. format.number(resources.missionTokens or 0, 0), 30, y)
-    y = y + 30
+    theme:drawText("REPUTATION:", leftPanelX + 10, resourceY, theme:getColor("secondary"))
+    theme:drawText(format.number(resources.reputation or 0, 0) .. " pts", leftPanelX + 200, resourceY, theme:getColor("accent"))
+    resourceY = resourceY + 20
     
-    -- Contract information
+    theme:drawText("EXPERIENCE:", leftPanelX + 10, resourceY, theme:getColor("secondary"))
+    theme:drawText(format.number(resources.xp or 0, 0) .. " XP", leftPanelX + 200, resourceY, theme:getColor("primary"))
+    resourceY = resourceY + 20
+    
+    theme:drawText("MISSION TOKENS:", leftPanelX + 10, resourceY, theme:getColor("secondary"))
+    theme:drawText(format.number(resources.missionTokens or 0, 0), leftPanelX + 200, resourceY, theme:getColor("warning"))
+    
+    -- Right panel: Operations Status
+    theme:drawPanel(rightPanelX, y, panelWidth, 200, "OPERATIONS STATUS")
+    local opsY = y + 25
+    
     local contractStats = self.systems.contracts:getStats()
     local specialistStats = self.systems.specialists:getStats()
-    love.graphics.print("📋 OPERATIONS STATUS:", 20, y)
-    y = y + 25
-    love.graphics.print("   Active Contracts: " .. contractStats.activeContracts, 30, y)
-    y = y + 20
-    love.graphics.print("   Available Contracts: " .. contractStats.availableContracts, 30, y)
-    y = y + 20
-    love.graphics.print("   Income Rate: $" .. format.number(contractStats.totalIncomeRate, 2) .. "/sec", 30, y)
-    y = y + 20
-    love.graphics.print("   Team: " .. specialistStats.available .. "/" .. specialistStats.total .. " specialists available", 30, y)
-    y = y + 30
     
-    -- Available contracts list
+    theme:drawText("ACTIVE CONTRACTS:", rightPanelX + 10, opsY, theme:getColor("secondary"))
+    theme:drawText(tostring(contractStats.activeContracts or 0), rightPanelX + 200, opsY, theme:getColor("warning"))
+    opsY = opsY + 20
+    
+    theme:drawText("AVAILABLE CONTRACTS:", rightPanelX + 10, opsY, theme:getColor("secondary"))
+    theme:drawText(tostring(contractStats.availableContracts or 0), rightPanelX + 200, opsY, theme:getColor("accent"))
+    opsY = opsY + 20
+    
+    theme:drawText("REVENUE/SEC:", rightPanelX + 10, opsY, theme:getColor("secondary"))
+    theme:drawText("$" .. format.number(contractStats.totalIncomeRate or 0, 2), rightPanelX + 200, opsY, theme:getColor("success"))
+    opsY = opsY + 20
+    
+    theme:drawText("TEAM STATUS:", rightPanelX + 10, opsY, theme:getColor("secondary"))
+    theme:drawText(specialistStats.available .. "/" .. specialistStats.total .. " ready", rightPanelX + 200, opsY, theme:getColor("primary"))
+    
+    -- Available contracts panel
+    y = y + 220
+    theme:drawPanel(leftPanelX, y, panelWidth * 2 + 20, 180, "AVAILABLE CONTRACTS - [CLICK TO ACCEPT]")
+    local contractY = y + 25
+    
     local availableContracts = self.systems.contracts:getAvailableContracts()
-    local hasAvailable = false
-    for _ in pairs(availableContracts) do
-        hasAvailable = true
-        break
-    end
-    
-    if hasAvailable then
-        love.graphics.print("📝 AVAILABLE CONTRACTS:", 20, y)
-        y = y + 25
+    local count = 0
+    for contractId, contract in pairs(availableContracts) do
+        if count >= 3 then break end -- Show max 3 contracts
         
-        local count = 0
-        for contractId, contract in pairs(availableContracts) do
-            if count >= 3 then break end -- Show max 3 contracts
-            
-            love.graphics.print("   " .. contract.clientName, 30, y)
-            y = y + 15
-            love.graphics.print("      Budget: $" .. format.number(contract.totalBudget, 0) .. 
-                              " | Duration: " .. math.floor(contract.duration) .. "s" ..
-                              " | Rep: +" .. contract.reputationReward, 30, y)
-            y = y + 15
-            love.graphics.print("      \"" .. contract.description .. "\"", 30, y)
-            y = y + 25
-            count = count + 1
-        end
+        theme:drawText("►", leftPanelX + 10, contractY, theme:getColor("accent"))
+        theme:drawText(contract.clientName, leftPanelX + 30, contractY, theme:getColor("primary"))
+        contractY = contractY + 15
+        
+        theme:drawText("  BUDGET: $" .. format.number(contract.totalBudget, 0) .. 
+                      " | DURATION: " .. math.floor(contract.duration) .. "s" ..
+                      " | REP: +" .. contract.reputationReward, leftPanelX + 30, contractY, theme:getColor("dimmed"))
+        contractY = contractY + 15
+        
+        theme:drawText("  \"" .. contract.description .. "\"", leftPanelX + 30, contractY, theme:getColor("secondary"))
+        contractY = contractY + 25
+        count = count + 1
     end
     
-    -- Legacy resources (TODO: Remove after full refactor)
+    if count == 0 then
+        theme:drawText("[ NO CONTRACTS AVAILABLE - BUILDING REPUTATION... ]", leftPanelX + 30, contractY, theme:getColor("muted"))
+    end
+    
+    -- Legacy systems notice (if any exist)
     if resources.dataBits and resources.dataBits > 0 then
-        y = y + 20
-        love.graphics.setColor(0.7, 0.7, 0.7) -- Dimmed for legacy
-        love.graphics.print("🔧 LEGACY SYSTEMS (Migration in progress):", 20, y)
-        y = y + 20
-        love.graphics.print("   Data Bits: " .. format.number(resources.dataBits, 0), 30, y)
-        love.graphics.setColor(1, 1, 1)
+        y = y + 200
+        theme:drawPanel(leftPanelX, y, panelWidth, 60, "LEGACY SYSTEMS")
+        theme:drawText("Data Bits: " .. format.number(resources.dataBits, 0), leftPanelX + 10, y + 25, theme:getColor("muted"))
+        theme:drawText("(Migration in progress...)", leftPanelX + 10, y + 40, theme:getColor("muted"))
     end
     
-    -- Instructions  
-    y = love.graphics.getHeight() - 100
-    love.graphics.print("Controls:", 20, y)
-    y = y + 20
-    love.graphics.print("• Click to accept first available contract", 20, y)
-    y = y + 15
-    love.graphics.print("• Press 'A' to enter Admin Mode (Crisis Response)", 20, y)
-    y = y + 15
-    love.graphics.print("• Press 'C' to view all contracts • Press 'U' for upgrades", 20, y)
+    -- Status bar with controls
+    theme:drawStatusBar("READY | [CLICK] Accept Contract | [A] Crisis Mode | [U] Upgrades | [ESC] Quit")
 end
 
 function IdleMode:mousepressed(x, y, button)

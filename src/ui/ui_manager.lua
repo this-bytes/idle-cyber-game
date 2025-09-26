@@ -4,6 +4,8 @@
 local UIManager = {}
 UIManager.__index = UIManager
 
+local TerminalTheme = require("src.ui.terminal_theme")
+
 -- Create new UI manager
 function UIManager.new(eventBus)
     local self = setmetatable({}, UIManager)
@@ -13,18 +15,26 @@ function UIManager.new(eventBus)
     self.activeScreens = {}
     self.showFPS = false
     
+    -- Initialize terminal theme
+    self.theme = TerminalTheme.new()
+    
     return self
 end
 
 function UIManager:update(dt)
+    -- Update terminal theme effects
+    self.theme:update(dt)
+    
     -- Update active UI screens
 end
 
 function UIManager:draw()
+    -- Draw terminal background first
+    self.theme:drawBackground()
+    
     -- Draw UI elements
     if self.showFPS then
-        love.graphics.setColor(1, 1, 1, 0.8)
-        love.graphics.print("FPS: " .. love.timer.getFPS(), 10, 10)
+        self.theme:drawText("FPS: " .. love.timer.getFPS(), 10, 10, self.theme:getColor("warning"))
     end
 end
 

@@ -61,113 +61,140 @@ function AdminMode:update(dt)
 end
 
 function AdminMode:draw()
-    -- Crisis Mode terminal-style UI
-    love.graphics.setColor(0, 1, 0) -- Bright green for terminal feel
-    love.graphics.print("🚨 CRISIS RESPONSE MODE - \"The Admin's Watch\"", 20, 20)
-    love.graphics.setColor(1, 1, 1)
+    -- Get terminal theme from UI manager
+    local theme = self.systems.ui.theme
     
-    local y = 60
+    -- Draw crisis mode header with special styling
+    local contentY = theme:drawHeader("⚠️ THE ADMIN'S WATCH - CRISIS RESPONSE TERMINAL ⚠️", "Real-time Incident Management System")
+    
+    local y = contentY + 20
     
     -- Show current crisis or status
     if self.currentCrisis then
-        -- Active crisis display
-        love.graphics.setColor(1, 0.3, 0.3) -- Red for urgent
-        love.graphics.print("🔥 ACTIVE INCIDENT: " .. self.currentCrisis.title, 20, y)
-        love.graphics.setColor(1, 1, 1)
-        y = y + 25
+        -- Active crisis display with high alert styling
+        theme:drawPanel(20, y, 980, 300, "🚨 ACTIVE INCIDENT - CODE RED")
+        local crisisY = y + 25
         
-        love.graphics.print("Severity: " .. self.currentCrisis.severity, 30, y)
-        y = y + 20
-        love.graphics.print("Description: " .. self.currentCrisis.description, 30, y)
-        y = y + 20
+        theme:drawText("INCIDENT:", 30, crisisY, theme:getColor("danger"))
+        theme:drawText(self.currentCrisis.title, 150, crisisY, theme:getColor("warning"))
+        crisisY = crisisY + 20
         
-        -- Time remaining
+        theme:drawText("SEVERITY:", 30, crisisY, theme:getColor("danger"))
+        theme:drawText(self.currentCrisis.severity, 150, crisisY, theme:getColor("danger"))
+        crisisY = crisisY + 20
+        
+        theme:drawText("DETAILS:", 30, crisisY, theme:getColor("secondary"))
+        theme:drawText(self.currentCrisis.description, 150, crisisY, theme:getColor("primary"))
+        crisisY = crisisY + 30
+        
+        -- Time remaining with urgent styling
         local timeRemaining = math.max(0, self.currentCrisis.timeLimit - self.crisisTimer)
         local minutes = math.floor(timeRemaining / 60)
         local seconds = math.floor(timeRemaining % 60)
-        love.graphics.setColor(timeRemaining < 60 and {1, 0.3, 0.3} or {1, 1, 1})
-        love.graphics.print("Time Remaining: " .. minutes .. ":" .. string.format("%02d", seconds), 30, y)
-        love.graphics.setColor(1, 1, 1)
-        y = y + 30
+        local timeColor = timeRemaining < 60 and theme:getColor("danger") or theme:getColor("warning")
+        
+        theme:drawText("TIME REMAINING:", 30, crisisY, theme:getColor("secondary"))
+        theme:drawText(minutes .. ":" .. string.format("%02d", seconds), 200, crisisY, timeColor)
         
         -- Show crisis stages
-        love.graphics.print("📊 INCIDENT STAGES:", 20, y)
-        y = y + 25
+        y = y + 320
+        theme:drawPanel(20, y, 980, 200, "INCIDENT RESPONSE PROTOCOL")
+        local stageY = y + 25
         
         for i, stage in ipairs(self.currentCrisis.stages) do
-            local status = stage.complete and "✅" or "🔄"
-            love.graphics.print("   " .. status .. " " .. stage.name, 30, y)
-            y = y + 15
-            love.graphics.print("      " .. stage.description, 30, y)
-            y = y + 20
+            local statusIcon = stage.complete and "[✓]" or "[○]"
+            local statusColor = stage.complete and theme:getColor("success") or theme:getColor("warning")
+            
+            theme:drawText(statusIcon, 30, stageY, statusColor)
+            theme:drawText(stage.name, 60, stageY, theme:getColor("secondary"))
+            stageY = stageY + 15
+            theme:drawText(stage.description, 60, stageY, theme:getColor("dimmed"))
+            stageY = stageY + 20
             
             -- Show options for current stage
             if not stage.complete and stage.options then
-                love.graphics.print("      Response Options:", 30, y)
-                y = y + 15
+                theme:drawText("RESPONSE OPTIONS:", 60, stageY, theme:getColor("accent"))
+                stageY = stageY + 15
                 for _, option in ipairs(stage.options) do
-                    love.graphics.print("        [" .. option.key .. "] " .. option.action .. " (Cost: " .. option.cost .. ")", 30, y)
-                    y = y + 15
+                    theme:drawText("[" .. option.key .. "]", 70, stageY, theme:getColor("warning"))
+                    theme:drawText(option.action .. " (Cost: " .. option.cost .. ")", 110, stageY, theme:getColor("primary"))
+                    stageY = stageY + 15
                 end
-                y = y + 10
                 break -- Only show options for first incomplete stage
             end
         end
         
     else
-        -- No active crisis - monitoring mode
-        love.graphics.print("🔍 MONITORING MODE - All systems operational", 20, y)
-        y = y + 25
+        -- Monitoring mode display
+        theme:drawPanel(20, y, 480, 250, "🔍 MONITORING STATUS")
+        local monitorY = y + 25
+        
+        theme:drawText("SYSTEM STATUS:", 30, monitorY, theme:getColor("secondary"))
+        theme:drawText("ALL SYSTEMS OPERATIONAL", 200, monitorY, theme:getColor("success"))
+        monitorY = monitorY + 30
         
         -- Show team readiness
         local specialistStats = self.systems.specialists:getStats()
         local teamBonuses = self.systems.specialists:getTeamBonuses()
         
-        love.graphics.print("👥 TEAM READINESS:", 20, y)
-        y = y + 25
-        love.graphics.print("   Available Specialists: " .. specialistStats.available .. "/" .. specialistStats.total, 30, y)
-        y = y + 20
-        love.graphics.print("   Team Efficiency: " .. string.format("%.1fx", teamBonuses.efficiency), 30, y)
-        y = y + 20
-        love.graphics.print("   Response Speed: " .. string.format("%.1fx", teamBonuses.speed), 30, y)
-        y = y + 20
-        love.graphics.print("   Defense Rating: " .. string.format("%.1fx", teamBonuses.defense), 30, y)
-        y = y + 30
+        theme:drawText("TEAM READINESS:", 30, monitorY, theme:getColor("secondary"))
+        monitorY = monitorY + 20
+        theme:drawText("SPECIALISTS:", 40, monitorY, theme:getColor("dimmed"))
+        theme:drawText(specialistStats.available .. "/" .. specialistStats.total .. " ready", 200, monitorY, theme:getColor("primary"))
+        monitorY = monitorY + 15
+        theme:drawText("EFFICIENCY:", 40, monitorY, theme:getColor("dimmed"))
+        theme:drawText(string.format("%.1fx", teamBonuses.efficiency), 200, monitorY, theme:getColor("accent"))
+        monitorY = monitorY + 15
+        theme:drawText("RESPONSE SPEED:", 40, monitorY, theme:getColor("dimmed"))
+        theme:drawText(string.format("%.1fx", teamBonuses.speed), 200, monitorY, theme:getColor("accent"))
+        monitorY = monitorY + 15
+        theme:drawText("DEFENSE RATING:", 40, monitorY, theme:getColor("dimmed"))
+        theme:drawText(string.format("%.1fx", teamBonuses.defense), 200, monitorY, theme:getColor("accent"))
         
-        -- Active contracts (potential crisis sources)
+        -- Risk assessment panel
+        theme:drawPanel(520, y, 480, 250, "⚠️ THREAT ASSESSMENT")
+        local riskY = y + 25
+        
         local contractStats = self.systems.contracts:getStats()
-        love.graphics.print("⚠️ POTENTIAL RISK SOURCES:", 20, y)
-        y = y + 25
-        love.graphics.print("   Active Client Contracts: " .. contractStats.activeContracts, 30, y)
-        y = y + 20
-        love.graphics.print("   Threat Exposure Level: Medium", 30, y) -- TODO: Calculate from actual threats
-        y = y + 30
+        theme:drawText("RISK SOURCES:", 530, riskY, theme:getColor("secondary"))
+        riskY = riskY + 20
+        theme:drawText("ACTIVE CONTRACTS:", 540, riskY, theme:getColor("dimmed"))
+        theme:drawText(tostring(contractStats.activeContracts or 0), 720, riskY, theme:getColor("warning"))
+        riskY = riskY + 15
+        theme:drawText("EXPOSURE LEVEL:", 540, riskY, theme:getColor("dimmed"))
+        theme:drawText("MEDIUM", 720, riskY, theme:getColor("warning"))
+        riskY = riskY + 30
         
-        love.graphics.print("Press 'C' to simulate crisis scenario", 30, y)
-        y = y + 20
+        theme:drawText("SIMULATION:", 530, riskY, theme:getColor("accent"))
+        riskY = riskY + 20
+        theme:drawText("Press [C] to simulate crisis scenario", 540, riskY, theme:getColor("primary"))
+        
+        y = y + 270
     end
     
-    -- Response log
+    -- Response log panel
     if #self.responseLog > 0 then
-        y = y + 10
-        love.graphics.print("📝 RESPONSE LOG:", 20, y)
-        y = y + 20
+        theme:drawPanel(20, y, 980, 120, "📝 RESPONSE LOG")
+        local logY = y + 25
         
-        for i = math.max(1, #self.responseLog - 3), #self.responseLog do
-            love.graphics.print("   " .. self.responseLog[i], 30, y)
-            y = y + 15
+        for i = math.max(1, #self.responseLog - 4), #self.responseLog do
+            local logColor = theme:getColor("dimmed")
+            if string.find(self.responseLog[i], "ERROR") then
+                logColor = theme:getColor("danger")
+            elseif string.find(self.responseLog[i], "SUCCESS") then
+                logColor = theme:getColor("success")
+            end
+            
+            theme:drawText("> " .. self.responseLog[i], 30, logY, logColor)
+            logY = logY + 15
         end
     end
     
-    -- Instructions
-    y = love.graphics.getHeight() - 100
-    love.graphics.print("CRISIS MODE CONTROLS:", 20, y)
-    y = y + 20
-    love.graphics.print("• Number keys (1-3) - Select response options during crisis", 20, y)
-    y = y + 15
-    love.graphics.print("• 'C' - Simulate crisis (when not in crisis)", 20, y)
-    y = y + 15
-    love.graphics.print("• 'A' - Return to Idle Mode", 20, y)
+    -- Status bar with crisis mode controls
+    local statusText = self.currentCrisis and 
+        "CRISIS ACTIVE | [1-3] Response Options | Press [A] to return to Idle Mode" or
+        "MONITORING | [C] Simulate Crisis | [A] Return to Idle Mode"
+    theme:drawStatusBar(statusText)
 end
 
 function AdminMode:mousepressed(x, y, button)

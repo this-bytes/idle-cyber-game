@@ -166,14 +166,14 @@ function Game.draw()
     
     local startTime = love.timer.getTime()
     
+    -- Draw UI background first (terminal theme)
+    gameState.systems.ui:draw()
+    
     -- Render current game mode
     local currentMode = gameState.modes[gameState.currentMode]
     if currentMode then
         currentMode:draw()
     end
-    
-    -- Render UI
-    gameState.systems.ui:draw()
     
     -- Debug information
     if gameState.debugMode then

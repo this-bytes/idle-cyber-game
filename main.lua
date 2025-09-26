@@ -13,6 +13,10 @@ function love.load()
     -- Set window size
     love.window.setMode(1024, 768, {resizable=true, minwidth=800, minheight=600})
     
+    -- Set up monospace font for terminal aesthetic (if available)
+    local font = love.graphics.newFont(12)
+    love.graphics.setFont(font)
+    
     -- Initialize the game
     Game.init()
 end
