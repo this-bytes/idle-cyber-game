@@ -134,3 +134,45 @@ TestRunner.test("SkillSystem: Save and load state", function()
     TestRunner.assertEqual(1, loadedSkills["basic_analysis"].level, "Loaded skill level should match")
     TestRunner.assertEqual(50, loadedSkills["basic_analysis"].xp, "Loaded XP should match")
 end)
+
+-- Test: Data-driven skill system
+TestRunner.test("SkillSystem: Data-driven skill definitions", function()
+    local eventBus = EventBus.new()
+    local skillSystem = SkillSystem.new(eventBus)
+    
+    -- Test skill categories
+    local categories = skillSystem:getSkillCategories()
+    TestRunner.assertNotNil(categories, "Should have skill categories")
+    TestRunner.assertNotNil(categories["analysis"], "Should have analysis category")
+    TestRunner.assertNotNil(categories["network"], "Should have network category")
+    TestRunner.assertNotNil(categories["leadership"], "Should have leadership category")
+    
+    -- Test skills by category
+    local analysisSkills = skillSystem:getSkillsByCategory("analysis")
+    TestRunner.assertNotNil(analysisSkills, "Should have analysis skills")
+    TestRunner.assertNotNil(analysisSkills["basic_analysis"], "Should have basic analysis in analysis category")
+    
+    -- Test prerequisite chain
+    local prerequisites = skillSystem:getPrerequisiteChain("threat_hunting")
+    TestRunner.assert(#prerequisites >= 2, "Threat hunting should have prerequisite chain")
+end)
+
+-- Test: Extended skill effects
+TestRunner.test("SkillSystem: Extended skill effects", function()
+    local eventBus = EventBus.new()
+    local skillSystem = SkillSystem.new(eventBus)
+    
+    skillSystem:initializeEntity(0, "ceo")
+    
+    -- Get initial effects
+    local initialEffects = skillSystem:getSkillEffects(0)
+    TestRunner.assertEqual(0, initialEffects.crisisSuccessRate, "Initial crisis success rate should be 0")
+    TestRunner.assertEqual(0, initialEffects.contractGenerationRate, "Initial contract generation rate should be 0")
+    
+    -- Level up a skill with advanced effects (if we had one unlocked)
+    skillSystem:awardXp(0, "team_coordination", 200) -- Level 1
+    
+    local effectsAfterLevelUp = skillSystem:getSkillEffects(0)
+    TestRunner.assertEqual(0.02, effectsAfterLevelUp.teamEfficiencyBonus, "Should have team efficiency bonus")
+    TestRunner.assertEqual(0.1, effectsAfterLevelUp.contractCapacity, "Should have contract capacity bonus")
+end)

@@ -4,6 +4,9 @@
 local SkillSystem = {}
 SkillSystem.__index = SkillSystem
 
+-- Import skill data
+local SkillData = require("src.data.skills")
+
 -- Create new skill system
 function SkillSystem.new(eventBus)
     local self = setmetatable({}, SkillSystem)
@@ -13,176 +16,17 @@ function SkillSystem.new(eventBus)
     -- Format: [entityId][skillId] = {level, xp, unlocked}
     self.skillProgress = {}
     
-    -- Skill definitions - expandable system
-    self.skills = {
-        -- Core Security Skills
-        ["basic_analysis"] = {
-            id = "basic_analysis",
-            name = "Basic Analysis",
-            description = "Fundamental security analysis techniques",
-            category = "analysis",
-            maxLevel = 10,
-            baseXpCost = 100,
-            xpGrowth = 1.2,
-            prerequisites = {},
-            effects = {
-                -- Effects per level
-                efficiency = 0.05, -- +5% efficiency per level
-                trace = 0.02       -- +2% trace ability per level
-            },
-            unlockRequirements = {} -- Always available
-        },
-        
-        ["advanced_scanning"] = {
-            id = "advanced_scanning",
-            name = "Advanced Scanning",
-            description = "Sophisticated network and system scanning",
-            category = "analysis",
-            maxLevel = 8,
-            baseXpCost = 200,
-            xpGrowth = 1.3,
-            prerequisites = {"basic_analysis"},
-            effects = {
-                efficiency = 0.08,
-                speed = 0.03,
-                trace = 0.05
-            },
-            unlockRequirements = {
-                skills = {basic_analysis = 3} -- Requires Basic Analysis level 3
-            }
-        },
-        
-        ["threat_hunting"] = {
-            id = "threat_hunting",
-            name = "Threat Hunting",
-            description = "Proactive threat detection and analysis",
-            category = "analysis",
-            maxLevel = 12,
-            baseXpCost = 500,
-            xpGrowth = 1.4,
-            prerequisites = {"advanced_scanning"},
-            effects = {
-                efficiency = 0.12,
-                trace = 0.1,
-                defense = 0.03
-            },
-            unlockRequirements = {
-                skills = {advanced_scanning = 5},
-                reputation = 50
-            }
-        },
-        
-        -- Network Security Skills
-        ["network_fundamentals"] = {
-            id = "network_fundamentals",
-            name = "Network Fundamentals",
-            description = "Basic network security principles",
-            category = "network",
-            maxLevel = 10,
-            baseXpCost = 120,
-            xpGrowth = 1.15,
-            prerequisites = {},
-            effects = {
-                speed = 0.04,
-                defense = 0.06
-            },
-            unlockRequirements = {}
-        },
-        
-        ["firewall_management"] = {
-            id = "firewall_management",
-            name = "Firewall Management",
-            description = "Advanced firewall configuration and monitoring",
-            category = "network",
-            maxLevel = 8,
-            baseXpCost = 250,
-            xpGrowth = 1.25,
-            prerequisites = {"network_fundamentals"},
-            effects = {
-                defense = 0.1,
-                efficiency = 0.03
-            },
-            unlockRequirements = {
-                skills = {network_fundamentals = 4}
-            }
-        },
-        
-        -- Incident Response Skills
-        ["basic_response"] = {
-            id = "basic_response",
-            name = "Basic Incident Response",
-            description = "Fundamental incident response procedures",
-            category = "incident",
-            maxLevel = 10,
-            baseXpCost = 150,
-            xpGrowth = 1.2,
-            prerequisites = {},
-            effects = {
-                speed = 0.06,
-                trace = 0.04
-            },
-            unlockRequirements = {}
-        },
-        
-        ["crisis_management"] = {
-            id = "crisis_management",
-            name = "Crisis Management",
-            description = "Advanced crisis handling and coordination",
-            category = "incident",
-            maxLevel = 8,
-            baseXpCost = 400,
-            xpGrowth = 1.35,
-            prerequisites = {"basic_response"},
-            effects = {
-                efficiency = 0.1,
-                speed = 0.08,
-                defense = 0.05
-            },
-            unlockRequirements = {
-                skills = {basic_response = 6},
-                missionTokens = 2
-            }
-        },
-        
-        -- Leadership Skills (CEO specific)
-        ["team_coordination"] = {
-            id = "team_coordination",
-            name = "Team Coordination",
-            description = "Effective team management and coordination",
-            category = "leadership",
-            maxLevel = 15,
-            baseXpCost = 200,
-            xpGrowth = 1.1,
-            prerequisites = {},
-            effects = {
-                teamEfficiencyBonus = 0.02, -- +2% team-wide efficiency per level
-                contractCapacity = 0.1      -- +10% contract capacity per level
-            },
-            unlockRequirements = {
-                specialistType = "ceo" -- Only CEO can learn this
-            }
-        },
-        
-        ["strategic_planning"] = {
-            id = "strategic_planning",
-            name = "Strategic Planning",
-            description = "Long-term strategic business planning",
-            category = "leadership",
-            maxLevel = 10,
-            baseXpCost = 500,
-            xpGrowth = 1.2,
-            prerequisites = {"team_coordination"},
-            effects = {
-                reputationMultiplier = 0.05, -- +5% reputation gain per level
-                contractValueBonus = 0.03    -- +3% contract value per level
-            },
-            unlockRequirements = {
-                specialistType = "ceo",
-                skills = {team_coordination = 8},
-                reputation = 100
-            }
-        }
-    }
+    -- Load skill definitions from data file
+    self.skills = SkillData.getAllSkills()
+    
+    -- Validate skill system integrity
+    local errors = SkillData.validateSkills()
+    if #errors > 0 then
+        print("⚠️  Skill system validation errors:")
+        for _, error in ipairs(errors) do
+            print("   " .. error)
+        end
+    end
     
     -- Subscribe to events
     self:subscribeToEvents()
@@ -414,14 +258,33 @@ end
 -- Get skill effects for an entity (used by other systems)
 function SkillSystem:getSkillEffects(entityId)
     local effects = {
+        -- Core stats
         efficiency = 0,
         speed = 0,
         trace = 0,
         defense = 0,
+        
+        -- Leadership effects
         teamEfficiencyBonus = 0,
         contractCapacity = 0,
         reputationMultiplier = 0,
-        contractValueBonus = 0
+        contractValueBonus = 0,
+        
+        -- Advanced effects
+        crisisSuccessRate = 0,
+        automaticThreatDetection = 0,
+        evidenceQuality = 0,
+        containmentSpeed = 0,
+        crisisLeadershipBonus = 0,
+        recoveryBonus = 0,
+        reputationProtection = 0,
+        contractGenerationRate = 0,
+        clientSatisfactionBonus = 0,
+        higherTierUnlockRate = 0,
+        systemReliability = 0,
+        scalabilityBonus = 0,
+        malwareSignatureCreation = 0,
+        vulnerabilityDiscovery = 0
     }
     
     if not self.skillProgress[entityId] then
@@ -447,6 +310,21 @@ end
 -- Get available skills (for UI)
 function SkillSystem:getAvailableSkills()
     return self.skills
+end
+
+-- Get skills by category (for UI organization)
+function SkillSystem:getSkillsByCategory(category)
+    return SkillData.getSkillsByCategory(category)
+end
+
+-- Get all skill categories
+function SkillSystem:getSkillCategories()
+    return SkillData.getCategories()
+end
+
+-- Get prerequisite chain for a skill
+function SkillSystem:getPrerequisiteChain(skillId)
+    return SkillData.getPrerequisiteChain(skillId)
 end
 
 -- Get state for saving
