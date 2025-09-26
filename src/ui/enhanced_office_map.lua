@@ -4,6 +4,8 @@
 local EnhancedOfficeMap = {}
 EnhancedOfficeMap.__index = EnhancedOfficeMap
 
+local RoomAmbiance = require("src.ui.room_ambiance")
+
 function EnhancedOfficeMap.new()
     local self = setmetatable({}, EnhancedOfficeMap)
     
@@ -376,6 +378,11 @@ function EnhancedOfficeMap:drawRoomUI(room, width, height, offsetX, offsetY)
         
         love.graphics.setColor(0.8, 0.8, 0.8, 0.7)
         love.graphics.printf(room.description, 10, 35, width - 20, "left")
+        
+        -- Add atmospheric description
+        local ambiance = RoomAmbiance.getDescription(room.id)
+        love.graphics.setColor(0.6, 0.8, 1.0, 0.6)
+        love.graphics.printf("🌟 " .. ambiance, 10, 55, width - 20, "left")
     end
     
     -- Room capacity indicator
@@ -390,19 +397,35 @@ function EnhancedOfficeMap:drawRoomUI(room, width, height, offsetX, offsetY)
     -- Room bonuses display
     if room.bonuses then
         love.graphics.setColor(0.8, 1, 0.8, 0.7)
-        local y = height - 80
+        local y = height - 100
         if love.graphics.printf then
             love.graphics.printf("Active Bonuses:", 10, y, 200, "left")
             y = y + 15
             
             local count = 0
             for bonusName, value in pairs(room.bonuses) do
-                if count < 3 then -- Show max 3 bonuses to avoid clutter
-                    local bonusText = bonusName .. ": +" .. math.floor((value - 1) * 100) .. "%"
+                if count < 3 and type(value) == "number" and value > 1 then -- Show max 3 bonuses to avoid clutter
+                    local bonusText = bonusName:gsub("Multiplier", ""):gsub("Bonus", "") .. ": +" .. math.floor((value - 1) * 100) .. "%"
                     love.graphics.printf("• " .. bonusText, 10, y, 300, "left")
                     y = y + 12
                     count = count + 1
                 end
+            end
+        end
+    end
+    
+    -- Environmental details (from ambiance system)
+    local details = RoomAmbiance.getEnvironmentalDetails(room.id)
+    if details and #details > 0 then
+        love.graphics.setColor(0.7, 0.9, 1.0, 0.5)
+        local detailY = height - 150
+        if love.graphics.printf then
+            love.graphics.printf("Environment:", width - 200, detailY, 190, "left")
+            detailY = detailY + 12
+            
+            for i = 1, math.min(2, #details) do -- Show max 2 details
+                love.graphics.printf("• " .. details[i], width - 200, detailY, 190, "left")
+                detailY = detailY + 10
             end
         end
     end

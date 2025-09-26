@@ -319,14 +319,39 @@ function RoomSystem:changeRoom(newRoomId, reason)
     self.isTransitioning = true
     self.transitionTime = 0.5 -- Half second transition
     
+    -- Track room usage for achievements
+    if not newRoom.visitCount then
+        newRoom.visitCount = 0
+        newRoom.firstVisit = os.time()
+    end
+    newRoom.visitCount = newRoom.visitCount + 1
+    newRoom.lastVisit = os.time()
+    
     -- Emit room change event
     self.eventBus:publish("room_changed", {
         from = self.previousRoom,
         to = self.currentRoom,
-        reason = reason or "player_action"
+        reason = reason or "player_action",
+        visitCount = newRoom.visitCount
     })
     
+    -- Achievement check
+    if newRoom.visitCount == 1 then
+        self.eventBus:publish("achievement_progress", { 
+            id = "room_explorer", 
+            progress = 1,
+            data = { roomId = newRoomId, roomName = newRoom.name }
+        })
+    end
+    
     print("🚪 Moved to " .. newRoom.name .. " - " .. newRoom.description)
+    
+    -- Give small XP bonus for exploring new rooms
+    if newRoom.visitCount == 1 then
+        self.eventBus:publish("add_resource", { resource = "xp", amount = 5 })
+        print("✨ +5 XP for exploring a new room!")
+    end
+    
     return true
 end
 

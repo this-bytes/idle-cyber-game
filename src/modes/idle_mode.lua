@@ -139,6 +139,11 @@ function IdleMode:update(dt)
     if self.systems.rooms then
         self.systems.rooms:update(dt)
     end
+    
+    -- Update room events
+    if self.systems.roomEvents then
+        self.systems.roomEvents:update(dt)
+    end
 end
 
 function IdleMode:keyreleased(key)
@@ -271,6 +276,18 @@ function IdleMode:draw()
         theme:drawText("TEAM STATUS:", rightPanelX + 10, opsY, theme:getColor("secondary"))
         theme:drawText(specialistStats.available .. "/" .. specialistStats.total .. " ready", rightPanelX + 200, opsY, theme:getColor("primary"))
         opsY = opsY + 20
+        
+        -- Room status
+        if self.systems.rooms then
+            theme:drawText("CURRENT ROOM:", rightPanelX + 10, opsY, theme:getColor("secondary"))
+            local currentRoom = self.systems.rooms:getCurrentRoom()
+            if currentRoom then
+                theme:drawText(currentRoom.name:gsub("🏠 ", ""):gsub("🏢 ", ""):gsub("👤 ", ""):gsub("🍽️ ", ""):gsub("💾 ", ""):gsub("🤝 ", ""):gsub("🚨 ", ""), rightPanelX + 200, opsY, theme:getColor("accent"))
+            else
+                theme:drawText("NONE", rightPanelX + 200, opsY, theme:getColor("muted"))
+            end
+            opsY = opsY + 20
+        end
 
         -- Network status
         if self.systems.save and self.systems.save.getConnectionStatus then
@@ -498,6 +515,12 @@ function IdleMode:keypressed(key)
             return
         end
         
+        -- Room help (H key when in room)
+        if key == "h" and not self.roomMenuActive then
+            self:showRoomHelp()
+            return
+        end
+        
         -- Room navigation (R key)
         if key == "r" then
             self:showRoomMenu()
@@ -527,7 +550,7 @@ function IdleMode:keypressed(key)
         end
     end
 
-    -- Room menu number selection
+    -- Room menu number selection and event choices
     if self.roomMenuActive then
         local num = tonumber(key)
         if num and num >= 1 and num <= 9 then
@@ -539,6 +562,14 @@ function IdleMode:keypressed(key)
             self.availableRooms = nil
             print("🚪 Room menu cancelled")
             return
+        end
+    else
+        -- Handle room event choices when not in room menu
+        local num = tonumber(key)
+        if num and num >= 1 and num <= 9 then
+            if self:handleEventChoice(num) then
+                return
+            end
         end
     end
 
@@ -587,6 +618,22 @@ function IdleMode:keypressed(key)
         for zoneId, zone in pairs(zones) do
             local current = zoneId == currentZoneId and " (CURRENT)" or ""
             print("   " .. zone.name .. current .. " - " .. zone.description)
+        end
+        print("")
+        print("🏢 Room System:")
+        if self.systems.rooms then
+            local rooms = self.systems.rooms:getAvailableRooms()
+            local currentRoom = self.systems.rooms:getCurrentRoom()
+            print("   Current: " .. (currentRoom and currentRoom.name or "None"))
+            print("   Available Rooms:")
+            for _, room in ipairs(rooms) do
+                local indicator = room.current and " (HERE)" or ""
+                print("     • " .. room.name .. indicator)
+                print("       " .. room.description)
+            end
+            print("   Press R to open room navigation menu")
+        else
+            print("   Room system not available")
         end
         return
     elseif key == "h" then
@@ -684,6 +731,77 @@ function IdleMode:showRoomMenu()
     self.availableRooms = availableRooms
 end
 
+-- Show room-specific help and interaction guide
+function IdleMode:showRoomHelp()
+    if not self.systems.rooms then 
+        print("🏢 Room system not available")
+        return 
+    end
+    
+    local currentRoom = self.systems.rooms:getCurrentRoom()
+    if not currentRoom then
+        print("❓ No active room")
+        return
+    end
+    
+    print("❓ " .. currentRoom.name .. " - Help & Interactions")
+    print("📋 " .. currentRoom.description)
+    print("")
+    
+    if currentRoom.areas and #currentRoom.areas > 0 then
+        print("🎯 Available Interactions:")
+        for _, area in ipairs(currentRoom.areas) do
+            print("   " .. (area.icon or "●") .. " " .. area.name)
+            print("      Action: " .. (area.action or "interact"):gsub("_", " "))
+        end
+        print("")
+        print("💡 Move close to an area and press E to interact")
+    else
+        print("   No interactive areas in this room")
+    end
+    
+    if currentRoom.bonuses then
+        print("⚡ Room Bonuses:")
+        for bonusName, multiplier in pairs(currentRoom.bonuses) do
+            if type(multiplier) == "number" and multiplier > 1 then
+                local bonus = math.floor((multiplier - 1) * 100)
+                print("   • " .. bonusName:gsub("Multiplier", ""):gsub("Bonus", "") .. ": +" .. bonus .. "%")
+            end
+        end
+    end
+    
+    if currentRoom.atmosphere then
+        print("")
+        print("🌟 Atmosphere: " .. currentRoom.atmosphere)
+    end
+    
+    -- Show active events if any
+    if self.systems.roomEvents then
+        local activeEvents = self.systems.roomEvents:getActiveEvents()
+        if #activeEvents > 0 then
+            print("")
+            print("🎭 Active Events in This Room:")
+            for _, event in ipairs(activeEvents) do
+                if event.roomId == currentRoom.id then
+                    local urgency = event.critical and "🔥 CRITICAL" or event.urgent and "⚡ URGENT" or "📢"
+                    print("   " .. urgency .. " " .. event.title)
+                    if event.duration then
+                        print("      ⏱️ " .. math.floor(event.duration) .. " seconds remaining")
+                    end
+                end
+            end
+        end
+    end
+    
+    print("")
+    print("🎮 Controls:")
+    print("   WASD/Arrows - Move around")
+    print("   E - Interact with nearby areas")
+    print("   R - Room navigation menu")
+    print("   H - This help (room-specific)")
+    print("   1-9 - Make event choices")
+end
+
 -- Handle room selection
 function IdleMode:selectRoom(roomIndex)
     if not self.roomMenuActive or not self.availableRooms then return false end
@@ -738,6 +856,105 @@ function IdleMode:mousepressed(x, y, button)
         end
     end
     return false
+end
+
+-- Handle room event choices
+function IdleMode:handleEventChoice(choiceNum)
+    if not self.systems.roomEvents then return false end
+    
+    local activeEvents = self.systems.roomEvents:getActiveEvents()
+    if #activeEvents == 0 then return false end
+    
+    -- Use the most recent event (first in list)
+    local event = activeEvents[1]
+    if event.choices and choiceNum <= #event.choices then
+        local success = self.systems.roomEvents:makeEventChoice(event.id, choiceNum)
+        if success then
+            print("📝 Choice selected: " .. event.choices[choiceNum].text)
+            return true
+        end
+    end
+    
+    return false
+end
+
+-- Get current room status for display
+function IdleMode:getRoomStatus()
+    if not self.systems.rooms then return "Room system unavailable" end
+    
+    local currentRoom = self.systems.rooms:getCurrentRoom()
+    if not currentRoom then return "No active room" end
+    
+    local status = "📍 " .. currentRoom.name
+    
+    -- Add room bonuses info
+    if currentRoom.bonuses then
+        local bonusCount = 0
+        for _ in pairs(currentRoom.bonuses) do bonusCount = bonusCount + 1 end
+        if bonusCount > 0 then
+            status = status .. " (" .. bonusCount .. " active bonuses)"
+        end
+    end
+    
+    -- Add occupancy if applicable
+    if currentRoom.maxOccupancy then
+        local occupancy = currentRoom.currentOccupancy or 1
+        status = status .. " [" .. occupancy .. "/" .. currentRoom.maxOccupancy .. "]"
+    end
+    
+    return status
+end
+
+-- Display room events in UI
+function IdleMode:drawRoomEvents(theme, x, y, width)
+    if not self.systems.roomEvents then return y end
+    
+    local activeEvents = self.systems.roomEvents:getActiveEvents()
+    if #activeEvents == 0 then return y end
+    
+    y = y + 10
+    theme:drawText("🎭 ACTIVE EVENTS", x, y, theme:getColor("warning"))
+    y = y + 20
+    
+    for i, event in ipairs(activeEvents) do
+        if i > 2 then break end -- Show max 2 events to save space
+        
+        -- Event title with urgency indicator
+        local titleColor = event.critical and theme:getColor("danger") or 
+                          event.urgent and theme:getColor("warning") or 
+                          theme:getColor("accent")
+        local prefix = event.critical and "🔥 " or event.urgent and "⚡ " or "📢 "
+        
+        theme:drawText(prefix .. event.title, x + 5, y, titleColor)
+        y = y + 15
+        
+        -- Description
+        theme:drawText("  " .. event.description, x + 5, y, theme:getColor("secondary"))
+        y = y + 12
+        
+        -- Time remaining
+        if event.duration then
+            local timeLeft = math.max(0, math.floor(event.duration))
+            theme:drawText("  ⏱️ " .. timeLeft .. "s remaining", x + 5, y, theme:getColor("muted"))
+            y = y + 12
+        end
+        
+        -- Choices
+        if event.choices then
+            theme:drawText("  💭 Press number key:", x + 5, y, theme:getColor("dimmed"))
+            y = y + 12
+            for j, choice in ipairs(event.choices) do
+                if j <= 3 then -- Show max 3 choices
+                    theme:drawText("    " .. j .. ". " .. choice.text, x + 5, y, theme:getColor("primary"))
+                    y = y + 12
+                end
+            end
+        end
+        
+        y = y + 5 -- Spacing between events
+    end
+    
+    return y
 end
 
 
