@@ -182,64 +182,67 @@ function IdleMode:draw()
     local rightPanelX = 520
     local panelWidth = 480
     
-    -- Left panel: Business Resources
-    theme:drawPanel(leftPanelX, y, panelWidth, 200, "BUSINESS RESOURCES")
-    local resourceY = y + 25
-    
-    local resources = self.systems.resources:getAllResources()
-    theme:drawText("BUDGET:", leftPanelX + 10, resourceY, theme:getColor("secondary"))
-    theme:drawText("$" .. format.number(resources.money or 0, 0), leftPanelX + 200, resourceY, theme:getColor("success"))
-    resourceY = resourceY + 20
-    
-    theme:drawText("REPUTATION:", leftPanelX + 10, resourceY, theme:getColor("secondary"))
-    theme:drawText(format.number(resources.reputation or 0, 0) .. " pts", leftPanelX + 200, resourceY, theme:getColor("accent"))
-    resourceY = resourceY + 20
-    
-    theme:drawText("EXPERIENCE:", leftPanelX + 10, resourceY, theme:getColor("secondary"))
-    theme:drawText(format.number(resources.xp or 0, 0) .. " XP", leftPanelX + 200, resourceY, theme:getColor("primary"))
-    resourceY = resourceY + 20
-    
-    theme:drawText("MISSION TOKENS:", leftPanelX + 10, resourceY, theme:getColor("secondary"))
-    theme:drawText(format.number(resources.missionTokens or 0, 0), leftPanelX + 200, resourceY, theme:getColor("warning"))
-    
-    -- Right panel: Operations Status
-    theme:drawPanel(rightPanelX, y, panelWidth, 200, "OPERATIONS STATUS")
-    local opsY = y + 25
-    
-    local contractStats = self.systems.contracts:getStats()
-    local specialistStats = self.systems.specialists:getStats()
-    
-    theme:drawText("ACTIVE CONTRACTS:", rightPanelX + 10, opsY, theme:getColor("secondary"))
-    theme:drawText(tostring(contractStats.activeContracts or 0), rightPanelX + 200, opsY, theme:getColor("warning"))
-    opsY = opsY + 20
-    
-    theme:drawText("AVAILABLE CONTRACTS:", rightPanelX + 10, opsY, theme:getColor("secondary"))
-    theme:drawText(tostring(contractStats.availableContracts or 0), rightPanelX + 200, opsY, theme:getColor("accent"))
-    opsY = opsY + 20
-    
-    theme:drawText("REVENUE/SEC:", rightPanelX + 10, opsY, theme:getColor("secondary"))
-    theme:drawText("$" .. format.number(contractStats.totalIncomeRate or 0, 2), rightPanelX + 200, opsY, theme:getColor("success"))
-    opsY = opsY + 20
-    
-    theme:drawText("TEAM STATUS:", rightPanelX + 10, opsY, theme:getColor("secondary"))
-    theme:drawText(specialistStats.available .. "/" .. specialistStats.total .. " ready", rightPanelX + 200, opsY, theme:getColor("primary"))
-    opsY = opsY + 20
-    
-    -- Network status
-    if self.systems.save and self.systems.save.getConnectionStatus then
-        local status = self.systems.save:getConnectionStatus()
-        theme:drawText("NETWORK:", rightPanelX + 10, opsY, theme:getColor("secondary"))
-        local networkColor = status.isOnline and theme:getColor("success") or theme:getColor("error")
-        local networkText = status.isOnline and "ONLINE" or "OFFLINE"
-        if status.offlineMode then
-            networkText = "DISABLED"
-            networkColor = theme:getColor("muted")
-        end
-        theme:drawText(networkText, rightPanelX + 200, opsY, networkColor)
+    -- Large terminal panels only render when showFull is true. Otherwise rely on compact HUD from UIManager.
+    if showFull then
+        -- Left panel: Business Resources
+        theme:drawPanel(leftPanelX, y, panelWidth, 200, "BUSINESS RESOURCES")
+        local resourceY = y + 25
+
+        local resources = self.systems.resources:getAllResources()
+        theme:drawText("BUDGET:", leftPanelX + 10, resourceY, theme:getColor("secondary"))
+        theme:drawText("$" .. format.number(resources.money or 0, 0), leftPanelX + 200, resourceY, theme:getColor("success"))
+        resourceY = resourceY + 20
+
+        theme:drawText("REPUTATION:", leftPanelX + 10, resourceY, theme:getColor("secondary"))
+        theme:drawText(format.number(resources.reputation or 0, 0) .. " pts", leftPanelX + 200, resourceY, theme:getColor("accent"))
+        resourceY = resourceY + 20
+
+        theme:drawText("EXPERIENCE:", leftPanelX + 10, resourceY, theme:getColor("secondary"))
+        theme:drawText(format.number(resources.xp or 0, 0) .. " XP", leftPanelX + 200, resourceY, theme:getColor("primary"))
+        resourceY = resourceY + 20
+
+        theme:drawText("MISSION TOKENS:", leftPanelX + 10, resourceY, theme:getColor("secondary"))
+        theme:drawText(format.number(resources.missionTokens or 0, 0), leftPanelX + 200, resourceY, theme:getColor("warning"))
+
+        -- Right panel: Operations Status
+        theme:drawPanel(rightPanelX, y, panelWidth, 200, "OPERATIONS STATUS")
+        local opsY = y + 25
+
+        local contractStats = self.systems.contracts:getStats()
+        local specialistStats = self.systems.specialists:getStats()
+
+        theme:drawText("ACTIVE CONTRACTS:", rightPanelX + 10, opsY, theme:getColor("secondary"))
+        theme:drawText(tostring(contractStats.activeContracts or 0), rightPanelX + 200, opsY, theme:getColor("warning"))
         opsY = opsY + 20
-        
-        theme:drawText("SAVE MODE:", rightPanelX + 10, opsY, theme:getColor("secondary"))
-        theme:drawText(string.upper(status.saveMode), rightPanelX + 200, opsY, theme:getColor("accent"))
+
+        theme:drawText("AVAILABLE CONTRACTS:", rightPanelX + 10, opsY, theme:getColor("secondary"))
+        theme:drawText(tostring(contractStats.availableContracts or 0), rightPanelX + 200, opsY, theme:getColor("accent"))
+        opsY = opsY + 20
+
+        theme:drawText("REVENUE/SEC:", rightPanelX + 10, opsY, theme:getColor("secondary"))
+        theme:drawText("$" .. format.number(contractStats.totalIncomeRate or 0, 2), rightPanelX + 200, opsY, theme:getColor("success"))
+        opsY = opsY + 20
+
+        theme:drawText("TEAM STATUS:", rightPanelX + 10, opsY, theme:getColor("secondary"))
+        theme:drawText(specialistStats.available .. "/" .. specialistStats.total .. " ready", rightPanelX + 200, opsY, theme:getColor("primary"))
+        opsY = opsY + 20
+
+        -- Network status
+        if self.systems.save and self.systems.save.getConnectionStatus then
+            local status = self.systems.save:getConnectionStatus()
+            theme:drawText("NETWORK:", rightPanelX + 10, opsY, theme:getColor("secondary"))
+            local networkColor = status.isOnline and theme:getColor("success") or theme:getColor("error")
+            local networkText = status.isOnline and "ONLINE" or "OFFLINE"
+            if status.offlineMode then
+                networkText = "DISABLED"
+                networkColor = theme:getColor("muted")
+            end
+            theme:drawText(networkText, rightPanelX + 200, opsY, networkColor)
+            opsY = opsY + 20
+
+            theme:drawText("SAVE MODE:", rightPanelX + 10, opsY, theme:getColor("secondary"))
+            theme:drawText(string.upper(status.saveMode), rightPanelX + 200, opsY, theme:getColor("accent"))
+        end
     end
     
     -- Available contracts panel with improved selection
