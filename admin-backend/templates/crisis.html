@@ -1,0 +1,410 @@
+{% extends "base.html" %}
+
+{% block title %}Crisis Management - Cyber Empire Command Admin{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Active Crisis Panel -->
+    <div class="col-md-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-exclamation-triangle text-danger"></i> Active Crisis Monitor</h5>
+            </div>
+            <div class="card-body">
+                <div id="active-crisis">
+                    <div class="text-center text-muted">
+                        <i class="fas fa-shield-alt fa-3x mb-2" style="color: #00ff00;"></i>
+                        <div>No active crisis - All systems secure</div>
+                        <small>System monitoring normal operations</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Crisis Controls -->
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-cogs"></i> Crisis Controls</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="crisis-password" class="form-label">Admin Password:</label>
+                    <input type="password" class="form-control bg-dark text-light" id="crisis-password" placeholder="Enter admin password">
+                </div>
+                
+                <div class="mb-3">
+                    <label for="crisis-type" class="form-label">Crisis Type:</label>
+                    <select class="form-select bg-dark text-light" id="crisis-type">
+                        <option value="phishing_campaign">Phishing Campaign</option>
+                        <option value="ransomware_attack">Ransomware Attack</option>
+                        <option value="data_breach">Data Breach</option>
+                        <option value="ddos_attack">DDoS Attack</option>
+                        <option value="insider_threat">Insider Threat</option>
+                    </select>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-danger" onclick="triggerCrisis()">
+                        <i class="fas fa-exclamation-triangle"></i> Trigger Crisis
+                    </button>
+                    <button class="btn btn-outline-warning" onclick="simulateResolution()">
+                        <i class="fas fa-check-circle"></i> Simulate Resolution
+                    </button>
+                    <button class="btn btn-outline-info" onclick="resetCrisisState()">
+                        <i class="fas fa-sync"></i> Reset Crisis State
+                    </button>
+                </div>
+                
+                <div class="mt-3">
+                    <div class="terminal-text" style="height: 150px; overflow-y: auto;" id="crisis-log">
+                        <div>[CRISIS] System initialized</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Crisis History -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-history"></i> Crisis History</h5>
+            </div>
+            <div class="card-body">
+                <div id="crisis-history" style="max-height: 400px; overflow-y: auto;">
+                    <div class="text-center text-muted">
+                        <i class="fas fa-file-alt fa-2x mb-2"></i>
+                        <div>No crisis history available</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Response Statistics -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-bar"></i> Response Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="text-center">
+                            <i class="fas fa-bullseye fa-2x text-success"></i>
+                            <div class="metric-value" id="success-rate">0%</div>
+                            <small>Success Rate</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="text-center">
+                            <i class="fas fa-clock fa-2x text-info"></i>
+                            <div class="metric-value" id="avg-response-time">0s</div>
+                            <small>Avg Response Time</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="text-center">
+                            <i class="fas fa-fire fa-2x text-warning"></i>
+                            <div class="metric-value" id="total-crises">0</div>
+                            <small>Total Crises</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="text-center">
+                            <i class="fas fa-medal fa-2x text-warning"></i>
+                            <div class="metric-value" id="tokens-earned">0</div>
+                            <small>Tokens Earned</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Crisis Scenarios Configuration -->
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-wrench"></i> Crisis Scenarios</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-dark table-striped">
+                        <thead>
+                            <tr>
+                                <th>Scenario</th>
+                                <th>Severity</th>
+                                <th>Time Limit</th>
+                                <th>Reward Tokens</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <strong>Phishing Campaign</strong><br>
+                                    <small class="text-muted">Targeted phishing emails detected</small>
+                                </td>
+                                <td><span class="badge bg-warning">HIGH</span></td>
+                                <td>5 minutes</td>
+                                <td>1</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="triggerSpecificCrisis('phishing_campaign')">
+                                        <i class="fas fa-play"></i> Trigger
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <strong>Ransomware Attack</strong><br>
+                                    <small class="text-muted">Encrypted files detected on network</small>
+                                </td>
+                                <td><span class="badge bg-danger">CRITICAL</span></td>
+                                <td>3 minutes</td>
+                                <td>3</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="triggerSpecificCrisis('ransomware_attack')">
+                                        <i class="fas fa-play"></i> Trigger
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <strong>Data Breach</strong><br>
+                                    <small class="text-muted">Unauthorized access to sensitive data</small>
+                                </td>
+                                <td><span class="badge bg-danger">CRITICAL</span></td>
+                                <td>10 minutes</td>
+                                <td>2</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="triggerSpecificCrisis('data_breach')">
+                                        <i class="fas fa-play"></i> Trigger
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Crisis management functions
+    function triggerCrisis() {
+        const password = document.getElementById('crisis-password').value;
+        const crisisType = document.getElementById('crisis-type').value;
+        
+        if (!password) {
+            addCrisisLog('[ERROR] Admin password required');
+            return;
+        }
+        
+        fetch('/api/crisis/trigger', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                admin_password: password,
+                crisis_type: crisisType
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                addCrisisLog('[SUCCESS] Crisis triggered: ' + data.crisis.type);
+                updateActiveCrisis(data.crisis);
+            } else {
+                addCrisisLog('[ERROR] ' + data.message);
+            }
+        })
+        .catch(error => {
+            addCrisisLog('[ERROR] Failed to trigger crisis: ' + error);
+        });
+    }
+    
+    function triggerSpecificCrisis(crisisType) {
+        const password = document.getElementById('crisis-password').value;
+        
+        if (!password) {
+            addCrisisLog('[ERROR] Admin password required');
+            return;
+        }
+        
+        fetch('/api/crisis/trigger', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                admin_password: password,
+                crisis_type: crisisType
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                addCrisisLog('[SUCCESS] ' + crisisType + ' triggered');
+                updateActiveCrisis(data.crisis);
+            } else {
+                addCrisisLog('[ERROR] ' + data.message);
+            }
+        })
+        .catch(error => {
+            addCrisisLog('[ERROR] Failed to trigger ' + crisisType + ': ' + error);
+        });
+    }
+    
+    function simulateResolution() {
+        addCrisisLog('[SIMULATION] Crisis resolution simulated');
+        // This would typically resolve an active crisis
+        resetActiveCrisDisplay();
+    }
+    
+    function resetCrisisState() {
+        addCrisisLog('[ADMIN] Crisis state reset');
+        resetActiveCrisDisplay();
+    }
+    
+    function updateActiveCrisis(crisis) {
+        const activeCrisisDiv = document.getElementById('active-crisis');
+        activeCrisisDiv.innerHTML = `
+            <div class="alert alert-danger">
+                <h6><i class="fas fa-exclamation-triangle"></i> ${crisis.type.toUpperCase()}</h6>
+                <p class="mb-1"><strong>Status:</strong> ${crisis.status}</p>
+                <p class="mb-1"><strong>Triggered:</strong> ${new Date(crisis.timestamp).toLocaleString()}</p>
+                <p class="mb-0"><strong>Severity:</strong> <span class="badge bg-danger">HIGH</span></p>
+                <div class="mt-2">
+                    <div class="progress">
+                        <div class="progress-bar bg-danger progress-bar-striped progress-bar-animated" 
+                             role="progressbar" style="width: 100%"></div>
+                    </div>
+                    <small>Crisis active - Awaiting response</small>
+                </div>
+            </div>
+        `;
+    }
+    
+    function resetActiveCrisDisplay() {
+        const activeCrisisDiv = document.getElementById('active-crisis');
+        activeCrisisDiv.innerHTML = `
+            <div class="text-center text-muted">
+                <i class="fas fa-shield-alt fa-3x mb-2" style="color: #00ff00;"></i>
+                <div>No active crisis - All systems secure</div>
+                <small>System monitoring normal operations</small>
+            </div>
+        `;
+    }
+    
+    function addCrisisLog(message) {
+        const log = document.getElementById('crisis-log');
+        const timestamp = new Date().toLocaleTimeString();
+        const logEntry = document.createElement('div');
+        logEntry.textContent = `[${timestamp}] ${message}`;
+        log.appendChild(logEntry);
+        log.scrollTop = log.scrollHeight;
+    }
+    
+    function updateCrisisHistory(history) {
+        const historyDiv = document.getElementById('crisis-history');
+        
+        if (!history || history.length === 0) {
+            historyDiv.innerHTML = `
+                <div class="text-center text-muted">
+                    <i class="fas fa-file-alt fa-2x mb-2"></i>
+                    <div>No crisis history available</div>
+                </div>
+            `;
+            return;
+        }
+        
+        historyDiv.innerHTML = '';
+        
+        // Show last 10 crises
+        const recent = history.slice(-10).reverse();
+        recent.forEach(crisis => {
+            const card = document.createElement('div');
+            card.className = 'card mb-2 bg-dark border-secondary';
+            card.innerHTML = `
+                <div class="card-body py-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${crisis.type}</strong><br>
+                            <small class="text-muted">${new Date(crisis.timestamp).toLocaleString()}</small>
+                        </div>
+                        <div>
+                            <span class="badge ${crisis.status === 'resolved' ? 'bg-success' : 'bg-warning'}">
+                                ${crisis.status.toUpperCase()}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            historyDiv.appendChild(card);
+        });
+    }
+    
+    function updateCrisisStats(history) {
+        if (!history || history.length === 0) {
+            return;
+        }
+        
+        const resolved = history.filter(c => c.status === 'resolved').length;
+        const total = history.length;
+        const successRate = total > 0 ? (resolved / total * 100).toFixed(1) : 0;
+        
+        document.getElementById('success-rate').textContent = successRate + '%';
+        document.getElementById('total-crises').textContent = total;
+        
+        // Calculate average response time (would need more data)
+        document.getElementById('avg-response-time').textContent = '45s';
+        
+        // Calculate tokens earned (would need more data)
+        document.getElementById('tokens-earned').textContent = resolved;
+    }
+    
+    // Enhanced update function for crisis page
+    function updateGameState(gameState) {
+        // Call parent function if it exists
+        if (window.updateGameStateBase) {
+            window.updateGameStateBase(gameState);
+        }
+        
+        // Update crisis-specific displays
+        // (Crisis-specific updates would go here)
+    }
+    
+    // Load analytics for crisis stats
+    function loadCrisisAnalytics() {
+        fetch('/api/analytics')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success' && data.analytics.crisis_history) {
+                    updateCrisisHistory(data.analytics.crisis_history);
+                    updateCrisisStats(data.analytics.crisis_history);
+                }
+            })
+            .catch(error => {
+                console.error('Failed to load crisis analytics:', error);
+            });
+    }
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadCrisisAnalytics();
+        // Refresh crisis data every 5 seconds
+        setInterval(loadCrisisAnalytics, 5000);
+    });
+</script>
+{% endblock %}

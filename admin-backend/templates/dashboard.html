@@ -1,0 +1,328 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Cyber Empire Command Admin{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- System Status -->
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-server"></i> System Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>Connection:</strong> <span id="connection-status"><i class="fas fa-circle status-offline"></i> Connecting...</span>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Game Mode:</strong> <span id="game-mode" class="badge bg-secondary">Unknown</span>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Last Update:</strong> <span id="last-update">Never</span>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Uptime:</strong> <span id="uptime">Calculating...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Resources Panel -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-coins"></i> Resources</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="text-center">
+                            <i class="fas fa-dollar-sign fa-2x text-success"></i>
+                            <div class="metric-value" id="resource-money">$0</div>
+                            <small>Money</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="text-center">
+                            <i class="fas fa-star fa-2x" style="color: gold;"></i>
+                            <div class="metric-value" id="resource-reputation">0</div>
+                            <small>Reputation</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="text-center">
+                            <i class="fas fa-graduation-cap fa-2x text-info"></i>
+                            <div class="metric-value" id="resource-xp">0</div>
+                            <small>Experience</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="text-center">
+                            <i class="fas fa-medal fa-2x text-warning"></i>
+                            <div class="metric-value" id="resource-missionTokens">0</div>
+                            <small>Mission Tokens</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contracts Panel -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-handshake"></i> Contracts</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="text-center">
+                            <i class="fas fa-play fa-2x text-success"></i>
+                            <div class="metric-value" id="active-contracts">0</div>
+                            <small>Active Contracts</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="text-center">
+                            <i class="fas fa-list fa-2x text-info"></i>
+                            <div class="metric-value" id="available-contracts">0</div>
+                            <small>Available Contracts</small>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="terminal-text" style="height: 100px; overflow-y: auto;" id="contract-log">
+                            <div>Waiting for contract data...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Specialists Panel -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-users"></i> Team & Specialists</h5>
+            </div>
+            <div class="card-body">
+                <div id="specialists-list">
+                    <div class="text-center text-muted">
+                        <i class="fas fa-user-plus fa-3x mb-2"></i>
+                        <div>No specialists data available</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Controls -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-cogs"></i> Admin Controls</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="admin-password" class="form-label">Admin Password:</label>
+                    <input type="password" class="form-control bg-dark text-light" id="admin-password" placeholder="Enter admin password">
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <button class="btn btn-outline-success w-100" onclick="triggerCrisis()">
+                            <i class="fas fa-exclamation-triangle"></i> Trigger Crisis
+                        </button>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <button class="btn btn-outline-success w-100" onclick="createBackup()">
+                            <i class="fas fa-save"></i> Create Backup
+                        </button>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <button class="btn btn-outline-success w-100" onclick="modifyResources()">
+                            <i class="fas fa-edit"></i> Modify Resources
+                        </button>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <button class="btn btn-outline-success w-100" onclick="refreshData()">
+                            <i class="fas fa-sync"></i> Refresh Data
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <div class="terminal-text" style="height: 120px; overflow-y: auto;" id="admin-log">
+                        <div>[ADMIN] Dashboard initialized</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Admin control functions
+    function triggerCrisis() {
+        const password = document.getElementById('admin-password').value;
+        if (!password) {
+            addAdminLog('[ERROR] Admin password required');
+            return;
+        }
+        
+        fetch('/api/crisis/trigger', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                admin_password: password,
+                crisis_type: 'phishing_campaign'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                addAdminLog('[SUCCESS] Crisis triggered: ' + data.crisis.type);
+            } else {
+                addAdminLog('[ERROR] ' + data.message);
+            }
+        })
+        .catch(error => {
+            addAdminLog('[ERROR] Failed to trigger crisis: ' + error);
+        });
+    }
+    
+    function createBackup() {
+        fetch('/api/save/backup', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                addAdminLog('[SUCCESS] Backup created');
+            } else {
+                addAdminLog('[ERROR] ' + data.message);
+            }
+        })
+        .catch(error => {
+            addAdminLog('[ERROR] Failed to create backup: ' + error);
+        });
+    }
+    
+    function modifyResources() {
+        const password = document.getElementById('admin-password').value;
+        if (!password) {
+            addAdminLog('[ERROR] Admin password required');
+            return;
+        }
+        
+        const money = prompt('New money amount:', '10000');
+        const reputation = prompt('New reputation amount:', '50');
+        
+        if (money !== null && reputation !== null) {
+            fetch('/api/resources', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    admin_password: password,
+                    resources: {
+                        money: parseInt(money) || 0,
+                        reputation: parseInt(reputation) || 0
+                    }
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    addAdminLog('[SUCCESS] Resources modified');
+                } else {
+                    addAdminLog('[ERROR] ' + data.message);
+                }
+            })
+            .catch(error => {
+                addAdminLog('[ERROR] Failed to modify resources: ' + error);
+            });
+        }
+    }
+    
+    function refreshData() {
+        socket.emit('request_game_state');
+        addAdminLog('[INFO] Data refresh requested');
+    }
+    
+    function addAdminLog(message) {
+        const log = document.getElementById('admin-log');
+        const timestamp = new Date().toLocaleTimeString();
+        const logEntry = document.createElement('div');
+        logEntry.textContent = `[${timestamp}] ${message}`;
+        log.appendChild(logEntry);
+        log.scrollTop = log.scrollHeight;
+    }
+    
+    // Enhanced game state update function
+    function updateGameState(gameState) {
+        // Call parent function
+        if (window.updateGameStateBase) {
+            window.updateGameStateBase(gameState);
+        }
+        
+        // Update contract counts
+        if (gameState.contracts) {
+            document.getElementById('active-contracts').textContent = gameState.contracts.active ? gameState.contracts.active.length : 0;
+            document.getElementById('available-contracts').textContent = gameState.contracts.available ? gameState.contracts.available.length : 0;
+            
+            // Update contract log
+            const contractLog = document.getElementById('contract-log');
+            contractLog.innerHTML = '';
+            
+            if (gameState.contracts.active && gameState.contracts.active.length > 0) {
+                gameState.contracts.active.forEach(contract => {
+                    const entry = document.createElement('div');
+                    entry.textContent = `[ACTIVE] ${contract.clientName || 'Unknown'} - $${formatNumber(contract.totalBudget || 0)}`;
+                    contractLog.appendChild(entry);
+                });
+            } else {
+                const entry = document.createElement('div');
+                entry.textContent = 'No active contracts';
+                entry.className = 'text-muted';
+                contractLog.appendChild(entry);
+            }
+        }
+        
+        // Update specialists
+        if (gameState.specialists && gameState.specialists.length > 0) {
+            const specialistsList = document.getElementById('specialists-list');
+            specialistsList.innerHTML = '';
+            
+            gameState.specialists.forEach(specialist => {
+                const card = document.createElement('div');
+                card.className = 'mb-2 p-2 border rounded';
+                card.innerHTML = `
+                    <strong>${specialist.name || 'Unknown Specialist'}</strong><br>
+                    <small>Role: ${specialist.role || 'Unknown'}</small><br>
+                    <small>Level: ${specialist.level || 1}</small>
+                `;
+                specialistsList.appendChild(card);
+            });
+        }
+    }
+    
+    // Store original function
+    window.updateGameStateBase = window.updateGameState;
+    
+    // Override with enhanced version
+    window.updateGameState = updateGameState;
+</script>
+{% endblock %}

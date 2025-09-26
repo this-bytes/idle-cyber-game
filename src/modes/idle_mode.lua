@@ -1,10 +1,12 @@
--- Idle Mode
+-- Idle Mode - Cyber Empire Command
 -- Main game mode for empire building progression
+-- Updated for bootstrap architecture
 
 local IdleMode = {}
 IdleMode.__index = IdleMode
 
 local format = require("src.utils.format")
+local GameConfig = require("src.config.game_config")
 
 -- Create new idle mode
 function IdleMode.new(systems)
@@ -19,28 +21,31 @@ function IdleMode:update(dt)
 end
 
 function IdleMode:draw()
-    -- Draw Cyber Empire Command UI
-    love.graphics.setColor(0.1, 0.8, 0.1) -- Cyberpunk green theme
-    love.graphics.print("🔐 CYBER EMPIRE COMMAND - Security Consultancy HQ", 20, 20)
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.print("Build your cybersecurity empire through strategic contracts", 20, 40)
+    -- Draw Cyber Empire Command UI with cyberpunk theme  
+    love.graphics.setColor(0, 1, 0) -- Bright terminal green
+    love.graphics.print("🔐 " .. GameConfig.GAME_TITLE .. " - HQ Dashboard", 20, 20)
+    love.graphics.setColor(0.8, 0.8, 0.8)
+    love.graphics.print(GameConfig.GAME_SUBTITLE, 20, 40)
     
     local y = 80
     
-    -- Show core business resources
+    -- Show core business resources from config
     local resources = self.systems.resources:getAllResources()
+    love.graphics.setColor(0, 1, 0) -- Terminal green
     love.graphics.print("💼 BUSINESS RESOURCES:", 20, y)
     y = y + 25
     
-    -- Primary resources
-    love.graphics.print("   💰 Money: $" .. format.number(resources.money or 0, 0), 30, y)
-    y = y + 20
-    love.graphics.print("   ⭐ Reputation: " .. format.number(resources.reputation or 0, 0), 30, y)
-    y = y + 20
-    love.graphics.print("   📈 XP: " .. format.number(resources.xp or 0, 0), 30, y)
-    y = y + 20
-    love.graphics.print("   🎖️ Mission Tokens: " .. format.number(resources.missionTokens or 0, 0), 30, y)
-    y = y + 30
+    -- Display resources dynamically from config
+    love.graphics.setColor(0, 0.8, 1) -- Cyan for values
+    for resourceName, resourceConfig in pairs(GameConfig.RESOURCES) do
+        local value = resources[resourceName] or 0
+        love.graphics.print(string.format("   %s %s: %s", 
+            resourceConfig.symbol, 
+            resourceConfig.name, 
+            format.number(value, 0)), 30, y)
+        y = y + 20
+    end
+    y = y + 10
     
     -- Contract information
     local contractStats = self.systems.contracts:getStats()
