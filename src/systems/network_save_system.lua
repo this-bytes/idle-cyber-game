@@ -41,7 +41,7 @@ end
 
 -- Set save mode: "local", "server", or "hybrid"
 function NetworkSaveSystem:setSaveMode(mode)
-    local validModes = {local = true, server = true, hybrid = true}
+    local validModes = { ["local"] = true, server = true, hybrid = true }
     if validModes[mode] then
         self.saveMode = mode
         print("💾 Save mode set to: " .. mode)

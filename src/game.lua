@@ -27,6 +27,7 @@ local gameState = {
     initialized = false,
     paused = false,
     currentMode = "idle", -- "idle" or "admin"
+    flowState = "splash", -- "splash" -> show splash screen, then switch to idle
     debugMode = false,
     
     -- Core systems
@@ -48,6 +49,8 @@ function Game.init()
     
     -- Initialize core systems in order
     gameState.systems.eventBus = EventBus.new()
+    -- Make gameState accessible to systems/modes for cross-cutting data (e.g., loaded player state)
+    gameState.systems.gameState = gameState
     gameState.systems.resources = ResourceSystem.new(gameState.systems.eventBus)
     gameState.systems.contracts = ContractSystem.new(gameState.systems.eventBus)  -- NEW: Contract system
     gameState.systems.contracts:setResourceSystem(gameState.systems.resources)  -- NEW: Connect systems
@@ -61,16 +64,19 @@ function Game.init()
     
     -- Configure network save system
     gameState.systems.save:setUsername("player_" .. love.system.getOS() .. "_" .. os.time())
-    gameState.systems.save:setSaveMode("hybrid") -- Default to hybrid mode
+    gameState.systems.save:setSaveMode("local") -- Default to hybrid mode
     
-    -- Initialize UI
-    gameState.systems.ui = UIManager.new(gameState.systems.eventBus)
+    -- Initialize UI (pass systems so UI can trigger saves / inspect game flags)
+    gameState.systems.ui = UIManager.new(gameState.systems)
     
     -- Initialize game modes
     gameState.modes = {
         idle = IdleMode.new(gameState.systems),
         admin = AdminMode.new(gameState.systems)
     }
+
+    -- Start with splash screen state; idle mode will initialize player when entered
+    gameState.flowState = "splash"
     
     -- Try to load saved game
     gameState.systems.save:load(function(success, savedData)
@@ -121,6 +127,8 @@ function Game.initializeDefaultState()
     
     -- Give player basic achievements progress
     gameState.systems.achievements:initializeProgress()
+    -- Tutorial flag for first-run onboarding
+    gameState.tutorialSeen = false
 end
 
 -- Load game state from saved data
@@ -133,6 +141,12 @@ function Game.loadGameState(data)
     gameState.systems.zones:loadState(data.zones or {})
     gameState.systems.factions:loadState(data.factions or {})
     gameState.systems.achievements:loadState(data.achievements or {})
+    -- Store loaded player state for the IdleMode to apply when it initializes
+    if data.playerState then
+        gameState.loadedPlayerState = data.playerState
+    end
+    -- Restore tutorial seen flag
+    gameState.tutorialSeen = data.tutorialSeen or false
 end
 
 -- Update game systems
@@ -176,14 +190,29 @@ function Game.draw()
     end
     
     local startTime = love.timer.getTime()
-    
-    -- Draw UI background first (terminal theme)
-    gameState.systems.ui:draw()
-    
-    -- Render current game mode
-    local currentMode = gameState.modes[gameState.currentMode]
-    if currentMode then
-        currentMode:draw()
+    -- Render current game mode first (so UI overlays like HUD/modals are on top)
+    if gameState.flowState == "splash" then
+        love.graphics.push()
+        love.graphics.origin()
+        local w, h = love.graphics.getDimensions()
+        love.graphics.setColor(0, 0, 0, 0.9)
+        love.graphics.rectangle("fill", 0, 0, w, h)
+        love.graphics.setColor(0.1, 0.9, 0.9, 1)
+        love.graphics.printf("CYBER EMPIRE COMMAND", 0, h * 0.35, w, "center")
+        love.graphics.setColor(1, 1, 1, 0.9)
+        love.graphics.printf("Press any key to continue...", 0, h * 0.6, w, "center")
+        love.graphics.pop()
+    else
+        -- Render current game mode
+        local currentMode = gameState.modes[gameState.currentMode]
+        if currentMode then
+            currentMode:draw()
+        end
+    end
+
+    -- Draw UI overlay (HUD, modals) on top of the mode
+    if gameState.systems and gameState.systems.ui then
+        gameState.systems.ui:draw()
     end
     
     -- Debug information
@@ -221,6 +250,18 @@ end
 
 -- Handle input
 function Game.keypressed(key)
+    -- If in splash, any key advances to idle
+    if gameState.flowState == "splash" then
+        gameState.flowState = "idle"
+        -- Ensure idle mode is initialized and player positioned
+        gameState.currentMode = "idle"
+        if gameState.modes and gameState.modes.idle and gameState.modes.idle.enter then
+            gameState.modes.idle:enter()
+        end
+        print("🎬 Entering game: My Desk")
+        return
+    end
+
     if key == "escape" then
         love.event.quit()
     elseif key == "p" then
@@ -285,6 +326,10 @@ function Game.save()
         zones = gameState.systems.zones:getState(),
         factions = gameState.systems.factions:getState(),
         achievements = gameState.systems.achievements:getState(),
+        -- Include player state if initialized
+        playerState = (gameState.modes and gameState.modes.idle and gameState.modes.idle.player) and gameState.modes.idle.player:getState() or nil,
+        -- Tutorial state
+        tutorialSeen = gameState.tutorialSeen or false,
         version = "1.0.0",
         timestamp = os.time()
     }

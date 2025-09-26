@@ -46,19 +46,6 @@ This project uses a comprehensive modular approach to copilot instructions. Each
 
 ---
 
-## Current Development Phase
-
-**Phase 1 - Foundation (Weeks 1-2):**
-Currently building the basic game mechanics and core systems. Focus on:
-- Basic resource generation and clicking mechanics
-- Simple upgrade system
-- Basic threat system
-- Core UI framework
-
-See `12-development-roadmap.instructions.md` for detailed phase breakdown and feature branches.
-
----
-
 ## Benefits of This Modular Approach
 
 - **Focused Instructions:** Each file targets specific development aspects

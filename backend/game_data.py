@@ -5,6 +5,8 @@ Handles player data and global game state persistence.
 
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+import time
+from sqlalchemy.exc import OperationalError
 
 # Initialize SQLAlchemy
 db = SQLAlchemy()
@@ -85,19 +87,41 @@ def init_db(app):
     db.init_app(app)
     
     with app.app_context():
-        # Create all tables
-        db.create_all()
-        
+        # Create all tables with retry logic to handle brief SQLITE locks
+        max_retries = 5
+        backoff = 0.5
+        for attempt in range(1, max_retries + 1):
+            try:
+                db.create_all()
+                break
+            except OperationalError as e:
+                # sqlite 'database is locked' can occur if another process/thread
+                # briefly holds the file lock. Retry a few times with backoff.
+                if 'database is locked' in str(e).lower() and attempt < max_retries:
+                    print(f"⚠️  Database locked, retrying init (attempt {attempt}/{max_retries})...")
+                    time.sleep(backoff)
+                    backoff *= 2
+                    continue
+                else:
+                    raise
+
         # Create default global game state if it doesn't exist
-        global_state = GlobalGameState.query.get(1)
-        if not global_state:
-            global_state = GlobalGameState(
-                id=1,
-                base_production_rate=1.0,
-                global_multiplier=1.0,
-                max_players=1000,
-                maintenance_mode=False
-            )
-            db.session.add(global_state)
-            db.session.commit()
-            print("🌍 Created default global game state")
+        try:
+            global_state = GlobalGameState.query.get(1)
+            if not global_state:
+                global_state = GlobalGameState(
+                    id=1,
+                    base_production_rate=1.0,
+                    global_multiplier=1.0,
+                    max_players=1000,
+                    maintenance_mode=False
+                )
+                db.session.add(global_state)
+                db.session.commit()
+                print("🌍 Created default global game state")
+        finally:
+            # Ensure the session is removed to free connections
+            try:
+                db.session.close()
+            except Exception:
+                pass

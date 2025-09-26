@@ -5,6 +5,8 @@ local IdleMode = {}
 IdleMode.__index = IdleMode
 
 local format = require("src.utils.format")
+local PlayerSystem = require("src.systems.player_system")
+local OfficeMap = require("src.ui.office_map")
 
 -- Create new idle mode
 function IdleMode.new(systems)
@@ -18,18 +20,164 @@ function IdleMode.new(systems)
     return self
 end
 
+-- Initialize player system when entering idle mode
+function IdleMode:enter()
+    if not self.player then
+        self.player = PlayerSystem.new(self.systems.eventBus)
+        -- Subscribe to player interactions
+        self.systems.eventBus:subscribe("player_interact", function(data)
+            print("🤝 Interacted with department: " .. data.name .. " (" .. data.department .. ")")
+            -- Dispatch department-specific events so respective systems can handle them
+            if data.department == "training" then
+                -- Give player/company XP via ResourceSystem and also signal SpecialistSystem
+                self.systems.eventBus:publish("add_resource", { resource = "xp", amount = 10 })
+                -- Let specialist system know about training (could be listened to by SpecialistSystem)
+                self.systems.eventBus:publish("specialist_training", { amount = 10 })
+                print("⭐ Training complete: +10 XP")
+            elseif data.department == "contracts" then
+                -- Unlock a new contract generation tick and give a reputation bump
+                if self.systems.contracts then
+                    self.systems.contracts:generateRandomContract()
+                end
+                self.systems.eventBus:publish("add_resource", { resource = "reputation", amount = 1 })
+                print("📈 Negotiated new opportunities: +1 Reputation and new contract generated")
+            elseif data.department == "security" then
+                -- Decrease threat level slightly via ThreatSystem if present
+                if self.systems.threats and self.systems.threats.threatReduction ~= nil then
+                    self.systems.threats.threatReduction = math.min((self.systems.threats.threatReduction or 0) + 0.05, 0.9)
+                    print("🛡️ Security briefing completed: Threat reduction increased")
+                    self.systems.eventBus:publish("threats_updated", { reduction = self.systems.threats.threatReduction })
+                else
+                    print("🛡️ Security briefing completed: Defense increased (simulated)")
+                end
+            else
+                -- Generic interaction: publish to event bus
+                self.systems.eventBus:publish("player_department_interact", data)
+            end
+        end)
+    end
+    -- Position player at My Desk as default entry point
+    if self.player then
+        -- If the game loaded a saved player state earlier, apply it now
+        if self.systems and self.systems.eventBus and self.systems.eventBus and self.systems and self.systems.eventBus then
+            -- Check for loaded player state on global game state via Game (injected via systems table)
+        end
+        if self.systems and self.systems.gameState and self.systems.gameState.loadedPlayerState then
+            self.player:loadState(self.systems.gameState.loadedPlayerState)
+            -- Clear loaded state after applying
+            self.systems.gameState.loadedPlayerState = nil
+        else
+            -- Only set default position if player hasn't been restored from save
+            if not self.player.x or not self.player.y or (self.player.x == 0 and self.player.y == 0) then
+                self.player.x = 160
+                self.player.y = 120
+            end
+        end
+    end
+    -- Create office map overlay
+    if not self.officeMap then
+        self.officeMap = OfficeMap.new(640, 200)
+    end
+
+    -- Show tutorial modal on first run (if not seen). Guard to avoid duplicate displays per session.
+    if not self._tutorialDisplayed and self.systems and self.systems.gameState and not self.systems.gameState.tutorialSeen then
+        if self.systems.ui and self.systems.ui.showTutorial then
+            print("📘 Showing tutorial modal (first run)")
+            local title = "Welcome to Cyber Empire Command"
+            local body = "Walk around the office with WASD or arrow keys. Press E to interact with departments. Accept contracts to earn money and reputation. Press A for Crisis Mode."
+            local function onTutorialClose()
+                -- Mark tutorial as seen and persist a save immediately
+                self.systems.gameState.tutorialSeen = true
+
+                -- Build save snapshot similar to Game.save
+                local saveData = {
+                    resources = self.systems.resources:getState(),
+                    contracts = self.systems.contracts:getState(),
+                    specialists = self.systems.specialists:getState(),
+                    upgrades = self.systems.upgrades:getState(),
+                    threats = self.systems.threats:getState(),
+                    zones = self.systems.zones:getState(),
+                    factions = self.systems.factions:getState(),
+                    achievements = self.systems.achievements:getState(),
+                    playerState = self.player and self.player:getState() or nil,
+                    tutorialSeen = true,
+                    version = "1.0.0",
+                    timestamp = os.time()
+                }
+                if self.systems.save and self.systems.save.save then
+                    self.systems.save:save(saveData, function(success, result)
+                        if success then
+                            print("💾 Tutorial state saved")
+                        else
+                            print("❌ Failed to save tutorial state: " .. tostring(result))
+                        end
+                    end)
+                end
+            end
+            self.systems.ui:showTutorial(title, body, onTutorialClose)
+            self._tutorialDisplayed = true
+        end
+    end
+end
+
 function IdleMode:update(dt)
     -- Handle idle mode specific updates
+    if not self.player then self:enter() end
+    if self.player then self.player:update(dt) end
+end
+
+function IdleMode:keyreleased(key)
+    if self.player then
+        if key == "up" or key == "w" then self.player:setInput("up", false) end
+        if key == "down" or key == "s" then self.player:setInput("down", false) end
+        if key == "left" or key == "a" then self.player:setInput("left", false) end
+        if key == "right" or key == "d" then self.player:setInput("right", false) end
+    end
 end
 
 function IdleMode:draw()
     -- Get terminal theme from UI manager
     local theme = self.systems.ui.theme
-    
-    -- Draw terminal header
-    local contentY = theme:drawHeader("CYBER EMPIRE COMMAND v2.1.7", "Security Consultancy Management Terminal")
-    
-    local y = contentY + 20
+
+    -- Prepare department nodes for office rendering
+    local deptNodes = {}
+    if self.player and self.player.departments then
+        for _, d in ipairs(self.player.departments) do
+            table.insert(deptNodes, { x = d.x, y = d.y - 16, radius = d.radius, name = d.name, label = d.name })
+        end
+    end
+
+    -- Draw office map as the background/main screen. Terminal UI will be drawn on top as an overlay.
+    if not self.officeMap then
+        self.officeMap = OfficeMap.new(640, 200)
+    end
+    -- Make office map size adapt to the window so it feels like the main scene
+    local winW, winH = love.graphics.getDimensions()
+    -- Reserve some space for top UI; draw the office underneath the terminal panels
+    self.officeMap.width = math.max(480, winW - 80)
+    self.officeMap.height = math.max(200, winH - 340)
+
+    love.graphics.push()
+    -- Position the office map slightly below the header/panels so overlays read comfortably
+    love.graphics.translate(40, 140)
+    love.graphics.setColor(1,1,1,1)
+    self.officeMap:draw(self.player, deptNodes)
+    love.graphics.pop()
+
+    -- Draw terminal header and panels on top of the office map if UI requests it
+    local contentY = 0
+    local y = 0
+    local showFull = false
+    if self.systems and self.systems.ui and self.systems.ui.showFullTerminal then
+        showFull = self.systems.ui.showFullTerminal
+    end
+    if showFull then
+        contentY = theme:drawHeader("CYBER EMPIRE COMMAND v2.1.7", "Security Consultancy Management Terminal")
+        y = contentY + 20
+    else
+        -- Compact mode: reserve space at the top for a small status hint
+        y = 60
+    end
     local leftPanelX = 20
     local rightPanelX = 520
     local panelWidth = 480
@@ -96,7 +244,12 @@ function IdleMode:draw()
     
     -- Available contracts panel with improved selection
     y = y + 220
-    theme:drawPanel(leftPanelX, y, panelWidth * 2 + 20, 180, "AVAILABLE CONTRACTS")
+    if showFull then
+        theme:drawPanel(leftPanelX, y, panelWidth * 2 + 20, 180, "AVAILABLE CONTRACTS")
+    else
+        -- In compact mode, draw a smaller contracts hint panel
+        theme:drawPanel(leftPanelX, y, panelWidth * 2 + 20, 60, "CONTRACTS (TAB to open)")
+    end
     local contractY = y + 25
     
     -- Clear previous contract areas and rebuild them
@@ -149,8 +302,13 @@ function IdleMode:draw()
     end
     
     -- Active contracts panel (NEW: Show running contracts for better idle feedback)
-    y = y + 200
-    theme:drawPanel(leftPanelX, y, panelWidth * 2 + 20, 160, "ACTIVE CONTRACTS")
+    if showFull then
+        y = y + 200
+        theme:drawPanel(leftPanelX, y, panelWidth * 2 + 20, 160, "ACTIVE CONTRACTS")
+    else
+        -- In compact mode, compress active contracts into the status hint
+        y = y + 80
+    end
     local activeY = y + 25
     
     local activeContracts = self.systems.contracts:getActiveContracts()
@@ -194,8 +352,14 @@ function IdleMode:draw()
         theme:drawText("[ NO ACTIVE CONTRACTS - ACCEPT CONTRACTS TO START EARNING ]", leftPanelX + 30, activeY, theme:getColor("muted"))
     end
     
-    -- Status bar with controls  
-    theme:drawStatusBar("READY | [CLICK] Select Contract | [SPACE] Accept Selected | [A] Crisis Mode | [ESC] Quit")
+    -- Status bar with controls
+    if showFull then
+        theme:drawStatusBar("READY | [CLICK] Select Contract | [SPACE] Accept Selected | [A] Crisis Mode | [ESC] Quit")
+    else
+        theme:drawStatusBar("READY | [TAB] Toggle Terminal | [A] Crisis Mode | [ESC] Quit")
+    end
+
+    -- (Office map drawn earlier as the main background)
 end
 
 -- Helper function to get selected contract index for display
@@ -251,6 +415,154 @@ function IdleMode:mousepressed(x, y, button)
         end
     end
     return false
+end
+
+-- Input handling for player movement and interactions
+-- Consolidated input handling for player movement and interactions
+function IdleMode:keypressed(key)
+    -- Movement keys: set input state
+    if self.player then
+        if key == "up" or key == "w" then self.player:setInput("up", true) end
+        if key == "down" or key == "s" then self.player:setInput("down", true) end
+        if key == "left" or key == "a" then self.player:setInput("left", true) end
+        if key == "right" or key == "d" then self.player:setInput("right", true) end
+
+        -- Interaction
+        if key == "e" then
+            local interacted, dept = self.player:interact()
+            if not interacted then print("🔍 No department nearby to interact with. Move closer and press E.") end
+            return
+        end
+    end
+
+    -- Contract acceptance (SPACE)
+    if key == "space" then
+        if self.selectedContract then
+            local success = self.systems.contracts:acceptContract(self.selectedContract)
+            if success then
+                local contract = self:getSelectedContractData()
+                if contract then
+                    print("📝 Accepted contract: " .. contract.clientName .. 
+                          " - Budget: $" .. contract.totalBudget .. 
+                          " | Duration: " .. math.floor(contract.duration) .. "s")
+                    self.selectedContract = nil
+                end
+            else
+                print("❌ Failed to accept contract. Check requirements.")
+            end
+            return
+        else
+            print("💼 No contract selected. Click on a contract first.")
+            return
+        end
+    end
+
+    -- Other mode keys: show details, info, zones, achievements, upgrades
+    if key == "enter" then
+        if self.selectedContract then
+            local contract = self:getSelectedContractData()
+            if contract then
+                print("📋 CONTRACT DETAILS:")
+                print("   Client: " .. contract.clientName)
+                print("   Description: " .. contract.description)
+                print("   Budget: $" .. format.number(contract.totalBudget, 0))
+                print("   Duration: " .. math.floor(contract.duration) .. "s")
+                print("   Reputation Reward: +" .. contract.reputationReward)
+                print("   Risk Level: " .. (contract.riskLevel or "LOW"))
+            end
+        else
+            print("💼 No contract selected. Click on a contract to view details.")
+        end
+        return
+    elseif key == "i" then
+        print("💼 BUSINESS INFORMATION:")
+        local resources = self.systems.resources:getAllResources()
+        print("   Current Funds: $" .. format.number(resources.money or 0, 0))
+        print("   Reputation Level: " .. format.number(resources.reputation or 0, 0))
+        print("   Experience Points: " .. format.number(resources.xp or 0, 0))
+        print("   Mission Tokens: " .. format.number(resources.missionTokens or 0, 0))
+        local contractStats = self.systems.contracts:getStats()
+        print("   Active Contracts: " .. contractStats.activeContracts)
+        print("   Revenue Rate: $" .. format.number(contractStats.totalIncomeRate, 2) .. "/sec")
+        if self.systems.save and self.systems.save.getConnectionStatus then
+            local status = self.systems.save:getConnectionStatus()
+            print("🌐 NETWORK STATUS:")
+            print("   Server Connection: " .. (status.isOnline and "ONLINE" or "OFFLINE"))
+            print("   Save Mode: " .. string.upper(status.saveMode))
+            print("   Player ID: " .. status.username)
+            if status.offlineMode then
+                print("   Mode: OFFLINE (Network disabled)")
+            end
+        end
+        return
+    elseif key == "z" then
+        print("🗺️ Zone System:")
+        local zones = self.systems.zones:getUnlockedZones()
+        local currentZoneId = self.systems.zones:getCurrentZoneId()
+        for zoneId, zone in pairs(zones) do
+            local current = zoneId == currentZoneId and " (CURRENT)" or ""
+            print("   " .. zone.name .. current .. " - " .. zone.description)
+        end
+        return
+    elseif key == "h" then
+        print("🏆 Achievements:")
+        local achievements = self.systems.achievements:getAllAchievements()
+        local progress = self.systems.achievements:getProgress()
+        print("   📊 Progress:")
+        print("      Total Clicks: " .. progress.totalClicks)
+        print("      Upgrades Purchased: " .. progress.totalUpgradesPurchased)
+        print("      Max Combo: " .. format.number(progress.maxClickCombo, 1) .. "x")
+        print("      Critical Hits: " .. progress.criticalHits)
+        local unlockedCount = 0
+        local totalCount = 0
+        for achievementId, achievement in pairs(achievements) do
+            totalCount = totalCount + 1
+            local status = achievement.unlocked and "✅" or "❌"
+            local reqText = ""
+            if achievement.requirement.type == "clicks" then
+                reqText = " (" .. progress.totalClicks .. "/" .. achievement.requirement.value .. " clicks)"
+            elseif achievement.requirement.type == "maxCombo" then
+                reqText = " (" .. format.number(progress.maxClickCombo, 1) .. "/" .. achievement.requirement.value .. "x combo)"
+            elseif achievement.requirement.type == "upgrades" then
+                reqText = " (" .. progress.totalUpgradesPurchased .. "/" .. achievement.requirement.value .. " upgrades)"
+            end
+            print("   " .. status .. " " .. achievement.name .. reqText)
+            print("      " .. achievement.description)
+            if achievement.unlocked then unlockedCount = unlockedCount + 1 end
+        end
+        print("")
+        print("   🎯 Progress: " .. unlockedCount .. "/" .. totalCount .. " achievements unlocked")
+        return
+    elseif key >= "1" and key <= "9" then
+        local upgradeIndex = tonumber(key)
+        local upgrades = self.systems.upgrades:getUnlockedUpgrades()
+        local upgradeIds = {}
+        for upgradeId, upgrade in pairs(upgrades) do table.insert(upgradeIds, upgradeId) end
+        if upgradeIndex <= #upgradeIds then
+            local upgradeId = upgradeIds[upgradeIndex]
+            local success = self.systems.upgrades:purchaseUpgrade(upgradeId)
+            if not success then
+                local upgrade = self.systems.upgrades:getUpgrade(upgradeId)
+                local cost = self.systems.upgrades:getUpgradeCost(upgradeId)
+                local owned = self.systems.upgrades:getUpgradeCount(upgradeId)
+                if owned >= upgrade.maxCount then
+                    print("❌ Cannot purchase: Already at maximum count (" .. upgrade.maxCount .. ")")
+                else
+                    local costText = ""
+                    for resource, amount in pairs(cost) do
+                        costText = costText .. format.number(amount, 0) .. " " .. resource .. " "
+                    end
+                    print("❌ Cannot afford: Need " .. costText)
+                end
+            end
+        end
+        return
+    end
+    
+    -- If not handled above, let UI handle the key (e.g., modal close)
+    if self.systems and self.systems.ui and self.systems.ui.keypressed then
+        self.systems.ui:keypressed(key)
+    end
 end
 
 -- Helper function to get selected contract data

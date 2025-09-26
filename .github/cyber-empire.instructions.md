@@ -39,14 +39,14 @@ You are the lead security principal of a growing cybersecurity consultancy. Most
 5. Spend tokens to hire/level specialists, buy upgrades, or expand operations.
 6. Repeat, unlocking better contracts with higher stakes.
 
-## Crisis Mode (detailed)
+<!-- ## Crisis Mode (detailed)
 - Presentation: full-screen neon overlay, scanlines, pulsing borders, terminal panels with logs.
 - Inputs: keyboard or UI buttons to choose actions (Deploy / Quarantine / Trace / Patch / Divert).
 - Time pressure: countdown timer visible; some choices are instant, others take time and specialist busy-duration.
 - Specialist interactions: each specialist provides unique abilities (e.g., Threat Hunter = increases trace speed; PenTester = disables backdoors; SOC = stabilizes generation).
 - Multi-stage threats: initial detection → escalation → full breach possibility if not handled.
 - Rewards: mission tokens (rare), reputation boost, client-specific bonuses.
-- Failure states: monetary loss, reputation hit, potential temporary reduction in passive generation.
+- Failure states: monetary loss, reputation hit, potential temporary reduction in passive generation. -->
 
 ## Specialists (roles & stats)
 Each specialist has:

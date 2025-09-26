@@ -14,8 +14,18 @@ app = Flask(__name__)
 
 # Configure SQLite database
 basedir = os.path.abspath(os.path.dirname(__file__))
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(basedir, "database.db")}'
+home_dir = os.path.expanduser("~")
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(home_dir, "database.db")}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# Engine options: increase timeout and allow multithreaded access when using sqlite file
+# - timeout: wait up to 30 seconds for locks to clear
+# - check_same_thread: False allows connections from different threads (Flask dev server)
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'connect_args': {
+        'timeout': 30,
+        'check_same_thread': False
+    }
+}
 
 # Initialize database
 init_db(app)
@@ -318,7 +328,7 @@ def internal_error(error):
 if __name__ == '__main__':
     print("🚀 Starting Cyberspace Tycoon API server...")
     print("📊 Database: SQLite")
-    print("🌐 Server: http://localhost:5000")
+    print("🌐 Server: http://localhost:5001")
     print("📋 API endpoints available:")
     print("   Game Client:")
     print("     POST /api/player/create")
@@ -331,4 +341,4 @@ if __name__ == '__main__':
     print("     PUT  /admin/global")
     print("   Health: GET /health")
     
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5001)

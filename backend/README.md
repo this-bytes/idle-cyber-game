@@ -9,6 +9,35 @@ Python/Flask REST API backend for the Cyberspace Tycoon idle cybersecurity game.
 - **Admin Panel**: Administrative endpoints for managing players and global settings
 - **Game Integration**: RESTful API designed for LÖVE 2D Lua client integration
 - **Auto-initialization**: Database and default global state created automatically
+- SQLite3 (local file database)
+
+Troubleshooting
+--------------
+
+If you encounter sqlite "database is locked" errors during startup or when running tests, try the following steps:
+
+1. Make sure no other process is holding the database file open. On Linux you can run:
+
+    lsof backend/database.db
+
+2. If the database file appears to be zero bytes or corrupted and you don't need the data, back it up and recreate it:
+
+    cp backend/database.db backups/database.db.bak.$(date +%s)
+    rm backend/database.db
+
+    # Recreate with the default schema (from SQLAlchemy) by starting the Flask app after installing requirements
+
+3. Ensure Python dependencies are installed (use a virtualenv):
+
+    python3 -m venv .venv
+    source .venv/bin/activate
+    pip install -r backend/requirements.txt
+
+4. Start the API (this will trigger database initialization and create tables):
+
+    python3 backend/app.py
+
+The code includes retry logic and increased SQLite timeout to reduce intermittent lock errors, but persistent locking usually indicates another process or filesystem-level issue.
 
 ## Quick Start
 
