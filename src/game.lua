@@ -5,16 +5,19 @@ local Game = {}
 
 -- Import game systems
 local ResourceSystem = require("src.systems.resource_system")
+local ProgressionSystem = require("src.systems.progression_system")  -- NEW: Comprehensive progression
 local UpgradeSystem = require("src.systems.upgrade_system")
 local ThreatSystem = require("src.systems.threat_system")
 local ZoneSystem = require("src.systems.zone_system")
 local LocationSystem = require("src.systems.location_system")  -- NEW: Hierarchical location system
-local ProgressionSystem = require("src.systems.progression_system")  -- NEW: Progression and currencies
+local RoomSystem = require("src.systems.room_system")  -- NEW: Enhanced room/environment system
+local RoomEventSystem = require("src.systems.room_event_system")  -- NEW: Dynamic room events
 local FactionSystem = require("src.systems.faction_system")
 local AchievementSystem = require("src.systems.achievement_system")
 local ContractSystem = require("src.systems.contract_system")  -- NEW: Core business system
 local SpecialistSystem = require("src.systems.specialist_system")  -- NEW: Team management
 local NetworkSaveSystem = require("src.systems.network_save_system")  -- NEW: Network-aware save system
+local IdleSystem = require("src.systems.idle_system")  -- NEW: Comprehensive idle mechanics
 local EventBus = require("src.utils.event_bus")
 
 -- Import UI systems
@@ -69,14 +72,23 @@ function Game.init()
     -- Make gameState accessible to systems/modes for cross-cutting data (e.g., loaded player state)
     gameState.systems.gameState = gameState
     gameState.systems.resources = ResourceSystem.new(gameState.systems.eventBus)
+    gameState.systems.progression = ProgressionSystem.new(gameState.systems.eventBus, gameState.systems.resources)  -- NEW: Progression system (need resources)
     gameState.systems.contracts = ContractSystem.new(gameState.systems.eventBus)  -- NEW: Contract system
     gameState.systems.contracts:setResourceSystem(gameState.systems.resources)  -- NEW: Connect systems
     gameState.systems.specialists = SpecialistSystem.new(gameState.systems.eventBus)  -- NEW: Specialist system
     gameState.systems.upgrades = UpgradeSystem.new(gameState.systems.eventBus)
     gameState.systems.threats = ThreatSystem.new(gameState.systems.eventBus)
+    -- Initialize idle system after core systems (needs resources, threats, upgrades)
+    gameState.systems.idle = IdleSystem.new(gameState.systems.eventBus, gameState.systems.resources, gameState.systems.threats, gameState.systems.upgrades)
     gameState.systems.zones = ZoneSystem.new(gameState.systems.eventBus)
     gameState.systems.locations = LocationSystem.new(gameState.systems.eventBus)  -- NEW: Location system
-    gameState.systems.progression = ProgressionSystem.new(gameState.systems.eventBus, gameState.systems.resources)  -- NEW: Progression system
+    -- Initialize room systems if they exist in main branch (check if files exist)
+    local roomSystemExists = pcall(require, "src.systems.room_system")
+    if roomSystemExists then
+        gameState.systems.rooms = RoomSystem.new(gameState.systems.eventBus)  -- NEW: Enhanced room system
+        gameState.systems.rooms:connectResourceSystem(gameState.systems.resources)  -- Connect for unlocking
+        gameState.systems.roomEvents = RoomEventSystem.new(gameState.systems.eventBus, gameState.systems.rooms)  -- NEW: Room events
+    end
     gameState.systems.factions = FactionSystem.new(gameState.systems.eventBus)
     gameState.systems.achievements = AchievementSystem.new(gameState.systems.eventBus)
     gameState.systems.save = NetworkSaveSystem.new()
@@ -389,13 +401,16 @@ function Game.save()
     
     local saveData = {
         resources = gameState.systems.resources:getState(),
+        progression = gameState.systems.progression:getState(),  -- NEW: Save progression state
         contracts = gameState.systems.contracts:getState(),  -- NEW: Save contract state
         specialists = gameState.systems.specialists:getState(),  -- NEW: Save specialist state
         upgrades = gameState.systems.upgrades:getState(),
         threats = gameState.systems.threats:getState(),
+        idle = gameState.systems.idle and gameState.systems.idle:getState() or nil,  -- NEW: Save idle system state
         zones = gameState.systems.zones:getState(),
         locations = gameState.systems.locations:getState(),  -- NEW: Save location state
-        progression = gameState.systems.progression:getState(),  -- NEW: Save progression state
+        rooms = gameState.systems.rooms and gameState.systems.rooms:getState() or nil,  -- NEW: Save room state if exists
+        roomEvents = gameState.systems.roomEvents and gameState.systems.roomEvents:getState() or nil,  -- NEW: Save room events if exists
         factions = gameState.systems.factions:getState(),
         achievements = gameState.systems.achievements:getState(),
         -- Include player state if initialized

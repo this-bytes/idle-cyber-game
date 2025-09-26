@@ -222,6 +222,11 @@ function ResourceSystem:getAllResources()
     return self.resources
 end
 
+-- Alias for compatibility with idle system
+function ResourceSystem:getResources()
+    return self:getAllResources()
+end
+
 -- Set generation rate
 function ResourceSystem:setGeneration(resourceName, rate)
     if self.generation[resourceName] ~= nil then
