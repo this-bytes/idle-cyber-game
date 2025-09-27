@@ -19,10 +19,14 @@ local ContractSystem = require("src.systems.contract_system")  -- NEW: Core busi
 local SpecialistSystem = require("src.systems.specialist_system")  -- NEW: Team management
 local NetworkSaveSystem = require("src.systems.network_save_system")  -- NEW: Network-aware save system
 local IdleSystem = require("src.systems.idle_system")  -- NEW: Comprehensive idle mechanics
+local SoundSystem = require("src.systems.sound_system")  -- NEW: Advanced audio system
+local CrisisGameSystem = require("src.systems.crisis_game_system")  -- NEW: Interactive crisis mini-games
+local AdvancedAchievementSystem = require("src.systems.advanced_achievement_system")  -- NEW: Rich achievement system
 local EventBus = require("src.utils.event_bus")
 
 -- Import UI systems
 local UIManager = require("src.ui.ui_manager")
+local ContractModal = require("src.ui.contract_modal")  -- NEW: Contract detail modal
 
 -- Import game modes
 local IdleMode = require("src.modes.idle_mode")
@@ -75,10 +79,14 @@ function Game.init()
     gameState.systems.resources = ResourceSystem.new(gameState.systems.eventBus)
     gameState.systems.skills = SkillSystem.new(gameState.systems.eventBus)  -- NEW: Skill system
     gameState.systems.progression = ProgressionSystem.new(gameState.systems.eventBus)  -- NEW: Progression system
-    gameState.systems.progression = ProgressionSystem.new(gameState.systems.eventBus, gameState.systems.resources)  -- NEW: Progression system (need resources)
     gameState.systems.contracts = ContractSystem.new(gameState.systems.eventBus)  -- NEW: Contract system
     gameState.systems.contracts:setResourceSystem(gameState.systems.resources)  -- NEW: Connect systems
     gameState.systems.specialists = SpecialistSystem.new(gameState.systems.eventBus)  -- NEW: Specialist system
+    
+    -- NEW: Initialize advanced systems
+    gameState.systems.sound = SoundSystem.new(gameState.systems.eventBus)  -- Advanced audio system
+    gameState.systems.crisisGame = CrisisGameSystem.new(gameState.systems.eventBus)  -- Interactive crisis games
+    gameState.systems.advancedAchievements = AdvancedAchievementSystem.new(gameState.systems.eventBus)  -- Rich achievements
     gameState.systems.specialists:setSkillSystem(gameState.systems.skills)  -- NEW: Connect skill system
     gameState.systems.upgrades = UpgradeSystem.new(gameState.systems.eventBus)
     gameState.systems.threats = ThreatSystem.new(gameState.systems.eventBus)
@@ -106,6 +114,9 @@ function Game.init()
     
     -- Initialize UI (pass systems so UI can trigger saves / inspect game flags)
     gameState.systems.ui = UIManager.new(gameState.systems)
+    
+    -- NEW: Initialize advanced UI components
+    gameState.systems.contractModal = ContractModal.new(gameState.systems.eventBus)  -- Contract detail modal
     
     -- Subscribe to offline progress events
     gameState.systems.eventBus:subscribe("offline_progress_calculated", function(progress)
@@ -152,6 +163,9 @@ function Game.init()
         print("   E - Interact with departments/areas")
         print("   R - Room navigation menu")
         print("   A - Crisis Response Mode (Real-time incident handling)")
+        print("   C - Contract Detail Modal (NEW!)")
+        print("   X - Start Crisis Mini-Game (NEW!)")
+        print("   M - Toggle Sound System (NEW!)")
         print("   U - Upgrades shop")
         print("   H - Achievements & Progress")
         print("   Z - Zone management")
@@ -161,6 +175,13 @@ function Game.init()
         print("   Z - Debug mode")
         print("   N - Network status")
         print("   ESC - Quit")
+        print("")
+        print("🎮 NEW FEATURES:")
+        print("   🔊 Advanced Sound System with Reactive Audio")
+        print("   📋 Interactive Contract Details with Client Backgrounds")
+        print("   🚨 Crisis Mini-Games: Packet Filter, Malware Hunt, Social Engineering Defense")
+        print("   🏆 Rich Achievement System with Hidden Unlocks")
+        print("   ✨ Animated UI with Sound Effects")
     end)
 end
 
@@ -194,6 +215,15 @@ function Game.loadGameState(data)
     gameState.systems.zones:loadState(data.zones or {})
     gameState.systems.factions:loadState(data.factions or {})
     gameState.systems.achievements:loadState(data.achievements or {})
+    
+    -- NEW: Load advanced system states
+    if gameState.systems.sound and data.sound then
+        gameState.systems.sound:loadState(data.sound)
+    end
+    if gameState.systems.advancedAchievements and data.advancedAchievements then
+        gameState.systems.advancedAchievements:loadState(data.advancedAchievements)
+    end
+    
     -- Store loaded player state for the IdleMode to apply when it initializes
     if data.playerState then
         gameState.loadedPlayerState = data.playerState
@@ -290,6 +320,16 @@ function Game.draw()
         gameState.systems.ui:draw()
     end
     
+    -- Draw contract modal (on top of everything)
+    if gameState.systems and gameState.systems.contractModal then
+        gameState.systems.contractModal:draw()
+    end
+    
+    -- Draw crisis game overlay if active
+    if gameState.systems and gameState.systems.crisisGame and gameState.systems.crisisGame:isActive() then
+        Game.drawCrisisGameOverlay()
+    end
+    
     -- Debug information
     if gameState.debugMode then
         Game.drawDebugInfo()
@@ -372,6 +412,48 @@ function Game.keypressed(key)
         gameState.currentMode = gameState.currentMode == "idle" and "admin" or "idle"
         print("🔄 Switched to " .. gameState.currentMode .. " mode")
     else
+        -- Handle new system shortcuts first
+        if key == "c" and gameState.systems.contractModal then
+            -- Toggle contract modal with a sample contract (for testing)
+            if not gameState.systems.contractModal:isVisible() then
+                local sampleContract = {
+                    clientName = "TechCorp Industries",
+                    description = "Comprehensive security audit and penetration testing for our e-commerce platform",
+                    totalBudget = 15000,
+                    duration = 240,
+                    reputationReward = 8
+                }
+                gameState.systems.contractModal:show(sampleContract)
+                return
+            end
+        elseif key == "x" and gameState.systems.crisisGame then
+            -- Start a random crisis game (for testing)
+            if not gameState.systems.crisisGame:isActive() then
+                gameState.systems.crisisGame:startCrisis("ddos_attack")
+                return
+            end
+        elseif key == "m" and gameState.systems.sound then
+            -- Toggle sound system
+            local soundEnabled = gameState.systems.sound:toggle()
+            if gameState.systems.eventBus then
+                gameState.systems.eventBus:publish("ui.log", {
+                    text = "Sound " .. (soundEnabled and "enabled" or "disabled"),
+                    severity = "info"
+                })
+            end
+            return
+        end
+        
+        -- Check if contract modal handles the input
+        if gameState.systems.contractModal and gameState.systems.contractModal:keypressed(key) then
+            return -- Input was consumed by modal
+        end
+        
+        -- Check if crisis game handles the input
+        if gameState.systems.crisisGame and gameState.systems.crisisGame:keypressed(key) then
+            return -- Input was consumed by crisis game
+        end
+        
         -- Pass input to current mode
         local currentMode = gameState.modes[gameState.currentMode]
         if currentMode and currentMode.keypressed then
@@ -403,7 +485,16 @@ function Game.mousepressed(x, y, button)
         return
     end
     
-    -- Pass to UI first
+    -- Check new system modals first (highest priority)
+    if gameState.systems.contractModal and gameState.systems.contractModal:mousepressed(x, y, button) then
+        return -- Input consumed by contract modal
+    end
+    
+    if gameState.systems.crisisGame and gameState.systems.crisisGame:mousepressed(x, y, button) then
+        return -- Input consumed by crisis game
+    end
+    
+    -- Pass to UI system
     if gameState.systems.ui:mousepressed(x, y, button) then
         return
     end
@@ -436,6 +527,9 @@ function Game.save()
         roomEvents = gameState.systems.roomEvents and gameState.systems.roomEvents:getState() or nil,  -- NEW: Save room events if exists
         factions = gameState.systems.factions:getState(),
         achievements = gameState.systems.achievements:getState(),
+        -- NEW: Advanced system states
+        sound = gameState.systems.sound and gameState.systems.sound:getState() or nil,
+        advancedAchievements = gameState.systems.advancedAchievements and gameState.systems.advancedAchievements:getState() or nil,
         -- Include player state if initialized
         playerState = (gameState.modes and gameState.modes.idle and gameState.modes.idle.player) and gameState.modes.idle.player:getState() or nil,
         -- Tutorial state
@@ -476,6 +570,111 @@ end
 function Game.resize(w, h)
     if gameState.systems and gameState.systems.ui then
         gameState.systems.ui:resize(w, h)
+    end
+end
+
+-- Draw crisis game overlay
+function Game.drawCrisisGameOverlay()
+    if not gameState.systems.crisisGame:isActive() then return end
+    
+    local crisis = gameState.systems.crisisGame:getCurrentCrisis()
+    local gameStateInfo = gameState.systems.crisisGame:getGameState()
+    
+    if not crisis or not gameStateInfo then return end
+    
+    local w, h = love.graphics.getDimensions()
+    
+    -- Crisis overlay background
+    love.graphics.setColor(0.1, 0.05, 0.05, 0.9)
+    love.graphics.rectangle("fill", 0, 0, w, h)
+    
+    -- Crisis title and info
+    love.graphics.setColor(1, 0.2, 0.2, 1)
+    love.graphics.printf(crisis.title, 20, 20, w - 40, "center")
+    
+    love.graphics.setColor(0.9, 0.9, 0.9, 1)
+    love.graphics.printf(crisis.description, 20, 60, w - 40, "center")
+    
+    -- Time remaining
+    local timeText = "Time Remaining: " .. math.ceil(gameStateInfo.timeRemaining) .. "s"
+    love.graphics.printf(timeText, 20, 100, w - 40, "center")
+    
+    -- Score
+    local scoreText = "Score: " .. gameStateInfo.score
+    love.graphics.printf(scoreText, 20, 130, w - 40, "center")
+    
+    -- Game mode specific rendering
+    if gameStateInfo.mode == "packet_filter" then
+        Game.drawPacketFilterGame(gameStateInfo)
+    elseif gameStateInfo.mode == "malware_hunt" then
+        Game.drawMalwareHuntGame(gameStateInfo)
+    elseif gameStateInfo.mode == "social_eng_defense" then
+        Game.drawSocialEngDefenseGame(gameStateInfo)
+    elseif gameStateInfo.mode == "incident_response" then
+        Game.drawIncidentResponseGame(gameStateInfo)
+    end
+    
+    -- Instructions
+    love.graphics.setColor(0.7, 0.7, 0.7, 1)
+    love.graphics.printf("ESC to abort crisis", 20, h - 40, w - 40, "center")
+end
+
+-- Draw packet filter mini-game
+function Game.drawPacketFilterGame(gameStateInfo)
+    if not gameStateInfo.state or not gameStateInfo.state.packets then return end
+    
+    local w, h = love.graphics.getDimensions()
+    local gameY = 200
+    local gameH = h - 300
+    
+    -- Draw game area
+    love.graphics.setColor(0.1, 0.1, 0.2, 0.8)
+    love.graphics.rectangle("fill", 50, gameY, w - 100, gameH)
+    
+    -- Draw packets
+    for _, packet in ipairs(gameStateInfo.state.packets) do
+        local color = packet.malicious and {1, 0.3, 0.3} or {0.3, 1, 0.3}
+        love.graphics.setColor(color[1], color[2], color[3], 0.8)
+        love.graphics.rectangle("fill", packet.x, packet.y, 40, 30, 3, 3)
+        
+        -- Draw packet info
+        love.graphics.setColor(1, 1, 1, 0.9)
+        love.graphics.print(packet.packetType or "PKT", packet.x + 2, packet.y + 2)
+    end
+    
+    -- Draw stats
+    local stats = gameStateInfo.state
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.print("Blocked: " .. (stats.blockedCount or 0), 60, gameY + gameH + 20)
+    love.graphics.print("Wrong: " .. (stats.wrongBlocks or 0), 200, gameY + gameH + 20)
+    love.graphics.print("SPACE or CLICK to block malicious packets", 60, gameY + gameH + 40)
+end
+
+-- Placeholder drawing methods for other mini-games
+function Game.drawMalwareHuntGame(gameStateInfo)
+    local w, h = love.graphics.getDimensions()
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.printf("MALWARE HUNT - Scan Progress: " .. math.floor((gameStateInfo.state.scanProgress or 0)) .. "%", 20, 200, w - 40, "center")
+    love.graphics.printf("Threats Found: " .. (gameStateInfo.state.threatsFound or 0), 20, 230, w - 40, "center")
+end
+
+function Game.drawSocialEngDefenseGame(gameStateInfo)
+    local w, h = love.graphics.getDimensions()
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.printf("SOCIAL ENGINEERING DEFENSE", 20, 200, w - 40, "center")
+    love.graphics.printf("Correct: " .. (gameStateInfo.state.correctIdentifications or 0) .. " | False Alarms: " .. (gameStateInfo.state.falseAlarms or 0), 20, 230, w - 40, "center")
+    love.graphics.printf("Y = Phishing | N = Legitimate", 20, 260, w - 40, "center")
+end
+
+function Game.drawIncidentResponseGame(gameStateInfo)
+    local w, h = love.graphics.getDimensions()
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.printf("INCIDENT RESPONSE COORDINATION", 20, 200, w - 40, "center")
+    if gameStateInfo.state.containmentProgress then
+        love.graphics.printf("Containment: " .. math.floor(gameStateInfo.state.containmentProgress) .. "%", 20, 230, w - 40, "center")
+    end
+    if gameStateInfo.state.stakeholderSatisfaction then
+        love.graphics.printf("Stakeholder Satisfaction: " .. math.floor(gameStateInfo.state.stakeholderSatisfaction) .. "%", 20, 260, w - 40, "center")
     end
 end
 
