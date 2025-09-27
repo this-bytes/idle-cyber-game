@@ -142,6 +142,18 @@ function ContractSystem:acceptContract(contractId)
         contract = contract
     })
     
+    -- Show UI notification for contract acceptance
+    self.eventBus:publish("ui.toast", {
+        text = "Contract accepted: " .. contract.clientName,
+        type = "info",
+        duration = 2.5
+    })
+    
+    self.eventBus:publish("ui.log", {
+        text = "Contract accepted: " .. contract.clientName .. " - Budget: $" .. contract.totalBudget .. ", Duration: " .. math.floor(dur) .. "s",
+        severity = "info"
+    })
+    
     return true
 end
 
@@ -170,6 +182,18 @@ function ContractSystem:completeContract(contractId)
     
     self.eventBus:publish("contract_completed", {
         contract = contract
+    })
+    
+    -- Show UI notification for contract completion
+    self.eventBus:publish("ui.toast", {
+        text = "Contract completed: " .. contract.clientName,
+        type = "success",
+        duration = 3.0
+    })
+    
+    self.eventBus:publish("ui.log", {
+        text = "Contract completed: " .. contract.clientName .. " - Earned $" .. contract.totalBudget .. " and " .. contract.reputationReward .. " reputation",
+        severity = "success"
     })
     
     print("📋 Contract completed: " .. contract.clientName .. " - Earned " .. contract.reputationReward .. " reputation")
