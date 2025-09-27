@@ -51,7 +51,12 @@ local gameState = {
 
 -- Initialize the game
 function Game.init()
-    print("🚀 Initializing Cyberspace Tycoon...")
+    if gameState and gameState.systems and gameState.systems.eventBus then
+        gameState.systems = gameState.systems or {}
+        gameState.systems.eventBus:publish("ui.log", { text = "🚀 Initializing Cyberspace Tycoon...", severity = "info" })
+    else
+        print("🚀 Initializing Cyberspace Tycoon...")
+    end
     -- Ensure placeholder assets exist so OfficeMap can load them
     local ok, placeholderWriter = pcall(require, "tools.write_placeholder_assets")
     if ok and placeholderWriter and love and love.filesystem then
@@ -61,10 +66,18 @@ function Game.init()
     -- Diagnostic: print whether common asset files are visible to love.filesystem
     if love and love.filesystem and love.filesystem.getInfo then
         local assets_to_check = { "assets/player.png", "assets/department.png", "assets/splash.jpeg", "assets/splash.png", "assets/office.png" }
-        print("🔎 Asset visibility check:")
-        for _, p in ipairs(assets_to_check) do
-            local info = love.filesystem.getInfo(p)
-            print("   ", p, "->", info ~= nil and "FOUND" or "MISSING")
+        if gameState and gameState.systems and gameState.systems.eventBus then
+            gameState.systems.eventBus:publish("ui.log", { text = "🔎 Asset visibility check:" , severity = "info" })
+            for _, p in ipairs(assets_to_check) do
+                local info = love.filesystem.getInfo(p)
+                gameState.systems.eventBus:publish("ui.log", { text = string.format("   %s -> %s", p, (info ~= nil and "FOUND" or "MISSING")), severity = "info" })
+            end
+        else
+            print("🔎 Asset visibility check:")
+            for _, p in ipairs(assets_to_check) do
+                local info = love.filesystem.getInfo(p)
+                print("   ", p, "->", info ~= nil and "FOUND" or "MISSING")
+            end
         end
     end
     
@@ -98,7 +111,7 @@ function Game.init()
     gameState.systems.roomEvents = RoomEventSystem.new(gameState.systems.eventBus, gameState.systems.rooms)  -- NEW: Room events
     gameState.systems.factions = FactionSystem.new(gameState.systems.eventBus)
     gameState.systems.achievements = AchievementSystem.new(gameState.systems.eventBus)
-    gameState.systems.save = NetworkSaveSystem.new()
+    gameState.systems.save = NetworkSaveSystem.new(gameState.systems.eventBus)
     
     -- Configure network save system
     gameState.systems.save:setUsername("player_" .. love.system.getOS() .. "_" .. os.time())
@@ -111,7 +124,11 @@ function Game.init()
     gameState.systems.eventBus:subscribe("offline_progress_calculated", function(progress)
         -- Show offline progress summary to player
         gameState.systems.ui:showOfflineProgress(progress, function()
-            print("📊 Offline progress summary dismissed")
+            if gameState.systems and gameState.systems.eventBus then
+                gameState.systems.eventBus:publish("ui.log", { text = "📊 Offline progress summary dismissed", severity = "info" })
+            else
+                print("📊 Offline progress summary dismissed")
+            end
         end)
     end)
     
@@ -133,34 +150,55 @@ function Game.init()
             if savedData.idleTimeSeconds and savedData.idleTimeSeconds > 0 then
                 local offlineProgress = gameState.systems.idle:calculateOfflineProgress(savedData.idleTimeSeconds)
                 gameState.systems.idle:applyOfflineProgress(offlineProgress)
-                print("⏰ Processed " .. math.floor(savedData.idleTimeSeconds/60) .. " minutes of offline time")
+                if gameState.systems and gameState.systems.eventBus then
+                    gameState.systems.eventBus:publish("ui.log", { text = "⏰ Processed " .. math.floor(savedData.idleTimeSeconds/60) .. " minutes of offline time", severity = "info" })
+                else
+                    print("⏰ Processed " .. math.floor(savedData.idleTimeSeconds/60) .. " minutes of offline time")
+                end
             end
-            
-            print("📁 Loaded saved game")
+            if gameState.systems and gameState.systems.eventBus then
+                gameState.systems.eventBus:publish("ui.log", { text = "📁 Loaded saved game", severity = "info" })
+            else
+                print("📁 Loaded saved game")
+            end
         else
             -- Initialize with default values
             Game.initializeDefaultState()
-            print("✨ Starting new game")
+            if gameState.systems and gameState.systems.eventBus then
+                gameState.systems.eventBus:publish("ui.log", { text = "✨ Starting new game", severity = "info" })
+            else
+                print("✨ Starting new game")
+            end
         end
         
         gameState.initialized = true
         
-        print("=== Cyberspace Tycoon ===")
-        print("🔥 Welcome to the cybersecurity empire!")
-        print("⌨️  Controls:")
-        print("   WASD/Arrows - Move character")
-        print("   E - Interact with departments/areas")
-        print("   R - Room navigation menu")
-        print("   A - Crisis Response Mode (Real-time incident handling)")
-        print("   U - Upgrades shop")
-        print("   H - Achievements & Progress")
-        print("   Z - Zone management")
-        print("   F - Faction relations")
-        print("   S - Statistics")
-        print("   P - Pause game")
-        print("   Z - Debug mode")
-        print("   N - Network status")
-        print("   ESC - Quit")
+        if gameState.systems and gameState.systems.eventBus then
+            gameState.systems.eventBus:publish("ui.log", { text = "=== Cyberspace Tycoon ===", severity = "info" })
+            gameState.systems.eventBus:publish("ui.log", { text = "🔥 Welcome to the cybersecurity empire!", severity = "info" })
+            -- Show controls as a tutorial modal if first-run
+            if not gameState.tutorialSeen then
+                local controls = "WASD/Arrows - Move character\nE - Interact with departments/areas\nR - Room navigation menu\nA - Crisis Response Mode\nU - Upgrades shop\nH - Achievements & Progress\nZ - Zone management\nF - Faction relations\nS - Statistics\nP - Pause game\nN - Network status\nESC - Quit"
+                gameState.systems.ui:showTutorial("Welcome to Cyber Empire Command", controls, function() gameState.tutorialSeen = true end)
+            end
+        else
+            print("=== Cyberspace Tycoon ===")
+            print("🔥 Welcome to the cybersecurity empire!")
+            print("⌨️  Controls:")
+            print("   WASD/Arrows - Move character")
+            print("   E - Interact with departments/areas")
+            print("   R - Room navigation menu")
+            print("   A - Crisis Response Mode (Real-time incident handling)")
+            print("   U - Upgrades shop")
+            print("   H - Achievements & Progress")
+            print("   Z - Zone management")
+            print("   F - Faction relations")
+            print("   S - Statistics")
+            print("   P - Pause game")
+            print("   Z - Debug mode")
+            print("   N - Network status")
+            print("   ESC - Quit")
+        end
     end)
 end
 
@@ -333,7 +371,11 @@ function Game.keypressed(key)
         if gameState.modes and gameState.modes.idle and gameState.modes.idle.enter then
             gameState.modes.idle:enter()
         end
-        print("🎬 Entering game: My Desk")
+            if gameState.systems and gameState.systems.eventBus then
+                gameState.systems.eventBus:publish("ui.log", { text = "🎬 Entering game: My Desk", severity = "info" })
+            else
+                print("🎬 Entering game: My Desk")
+            end
         return
     end
 
@@ -341,7 +383,13 @@ function Game.keypressed(key)
         love.event.quit()
     elseif key == "p" then
         gameState.paused = not gameState.paused
-        print(gameState.paused and "⏸️  Game paused" or "▶️  Game resumed")
+        local msg = gameState.paused and "⏸️  Game paused" or "▶️  Game resumed"
+        if gameState.systems and gameState.systems.eventBus then
+            gameState.systems.eventBus:publish("ui.log", { text = msg, severity = "info" })
+            gameState.systems.eventBus:publish("ui.toast", { text = msg, type = "info", duration = 2.0 })
+        else
+            print(msg)
+        end
     elseif key == "d" then
         gameState.debugMode = not gameState.debugMode
     elseif key == "r" then
@@ -358,19 +406,37 @@ function Game.keypressed(key)
             local modc = require("src.data.contracts")
             ok2, r2 = pcall(function() return modc.reloadFromJSON() end)
         end
-        print("🔁 Data reload: defs=" .. tostring(ok1) .. ", contracts=" .. tostring(ok2))
+        local reloadMsg = "🔁 Data reload: defs=" .. tostring(ok1) .. ", contracts=" .. tostring(ok2)
+        if gameState.systems and gameState.systems.eventBus then
+            gameState.systems.eventBus:publish("ui.log", { text = reloadMsg, severity = "info" })
+            gameState.systems.eventBus:publish("ui.toast", { text = "Data reload complete", type = "success", duration = 2.5 })
+        else
+            print(reloadMsg)
+        end
     elseif key == "n" then
         -- Show network status
         local status = gameState.systems.save:getConnectionStatus()
-        print("🌐 Network Status:")
-        print("   Online: " .. (status.isOnline and "YES" or "NO"))
-        print("   Save Mode: " .. status.saveMode)
-        print("   Username: " .. status.username)
-        print("   Offline Mode: " .. (status.offlineMode and "YES" or "NO"))
+        local statusMsg = string.format("🌐 Network Status: Online=%s, SaveMode=%s, Username=%s, Offline=%s", tostring(status.isOnline), tostring(status.saveMode), tostring(status.username), tostring(status.offlineMode))
+        if gameState.systems and gameState.systems.eventBus then
+            gameState.systems.eventBus:publish("ui.log", { text = statusMsg, severity = "info" })
+            gameState.systems.eventBus:publish("ui.toast", { text = "Network status", type = "info", duration = 2.0 })
+        else
+            print("🌐 Network Status:")
+            print("   Online: " .. (status.isOnline and "YES" or "NO"))
+            print("   Save Mode: " .. status.saveMode)
+            print("   Username: " .. status.username)
+            print("   Offline Mode: " .. (status.offlineMode and "YES" or "NO"))
+        end
     elseif key == "a" then
         -- Toggle between idle and admin modes
         gameState.currentMode = gameState.currentMode == "idle" and "admin" or "idle"
-        print("🔄 Switched to " .. gameState.currentMode .. " mode")
+        local switchMsg = "🔄 Switched to " .. gameState.currentMode .. " mode"
+        if gameState.systems and gameState.systems.eventBus then
+            gameState.systems.eventBus:publish("ui.log", { text = switchMsg, severity = "info" })
+            gameState.systems.eventBus:publish("ui.toast", { text = switchMsg, type = "info", duration = 2.0 })
+        else
+            print(switchMsg)
+        end
     else
         -- Pass input to current mode
         local currentMode = gameState.modes[gameState.currentMode]
@@ -379,7 +445,9 @@ function Game.keypressed(key)
         end
         
         -- Pass input to UI system
-        gameState.systems.ui:keypressed(key)
+        if gameState.systems and gameState.systems.ui and gameState.systems.ui.keypressed then
+            gameState.systems.ui:keypressed(key)
+        end
     end
 end
 
@@ -403,41 +471,96 @@ function Game.mousepressed(x, y, button)
         return
     end
     
-    -- Pass to UI first
+    local msg = gameState.paused and "⏸️  Game paused" or "▶️  Game resumed"
+    if gameState.systems and gameState.systems.eventBus then
+        gameState.systems.eventBus:publish("ui.log", { text = msg, severity = "info" })
+        gameState.systems.eventBus:publish("ui.toast", { text = msg, type = "info", duration = 2.5 })
+    else
+        print(msg)
+    end
     if gameState.systems.ui:mousepressed(x, y, button) then
         return
     end
-    
+    local reloadMsg = "🔁 Data reload: defs=" .. tostring(ok1) .. ", contracts=" .. tostring(ok2)
+    if gameState.systems and gameState.systems.eventBus then
+        gameState.systems.eventBus:publish("ui.log", { text = reloadMsg, severity = "info" })
+        gameState.systems.eventBus:publish("ui.toast", { text = "Data reload complete", type = "success", duration = 2.5 })
+    else
+        print(reloadMsg)
+    end
     -- Pass to current mode
     local currentMode = gameState.modes[gameState.currentMode]
     if currentMode and currentMode.mousepressed then
         currentMode:mousepressed(x, y, button)
     end
 end
-
--- Save game state
 function Game.save()
     if not gameState.initialized then
         return
     end
-    
+    -- Safely get network/save connection status
+    local status = { isOnline = false, saveMode = "local", username = "unknown", offlineMode = false }
+    if gameState.systems and gameState.systems.save and type(gameState.systems.save.getConnectionStatus) == "function" then
+        local ok, s = pcall(function() return gameState.systems.save:getConnectionStatus() end)
+        if ok and type(s) == "table" then
+            status = s
+        end
+    end
+
+    local statusMsg = string.format("🌐 Network Status: Online=%s, SaveMode=%s, Username=%s, Offline=%s", tostring(status.isOnline), tostring(status.saveMode), tostring(status.username), tostring(status.offlineMode))
+    if gameState.systems and gameState.systems.eventBus then
+        gameState.systems.eventBus:publish("ui.log", { text = statusMsg, severity = "info" })
+    else
+        print("🌐 Network Status:")
+        print("   Online: " .. (status.isOnline and "YES" or "NO"))
+        print("   Save Mode: " .. tostring(status.saveMode))
+        print("   Username: " .. tostring(status.username))
+        print("   Offline Mode: " .. (status.offlineMode and "YES" or "NO"))
+    end
+
+    local switchMsg = "🔄 Switched to " .. gameState.currentMode .. " mode"
+    if gameState.systems and gameState.systems.eventBus then
+        gameState.systems.eventBus:publish("ui.log", { text = switchMsg, severity = "info" })
+        gameState.systems.eventBus:publish("ui.toast", { text = switchMsg, type = "info", duration = 2.0 })
+    else
+        print(switchMsg)
+    end
+
+    -- Safely get state from each system, handling potential errors
+    local function safeState(system)
+        if not system then return nil end
+        if type(system.getState) ~= "function" then return nil end
+        local ok, res = pcall(system.getState, system)
+        if ok then return res end
+        return nil
+    end
+
+    local function safePlayerState()
+        if not (gameState.modes and gameState.modes.idle and gameState.modes.idle.player) then return nil end
+        local p = gameState.modes.idle.player
+        if type(p.getState) ~= "function" then return nil end
+        local ok, res = pcall(p.getState, p)
+        if ok then return res end
+        return nil
+    end
+
     local saveData = {
-        resources = gameState.systems.resources:getState(),
-        skills = gameState.systems.skills:getState(),  -- NEW: Save skill state
-        progression = gameState.systems.progression:getState(),  -- NEW: Save progression state
-        contracts = gameState.systems.contracts:getState(),  -- NEW: Save contract state
-        specialists = gameState.systems.specialists:getState(),  -- NEW: Save specialist state
-        upgrades = gameState.systems.upgrades:getState(),
-        threats = gameState.systems.threats:getState(),
-        idle = gameState.systems.idle and gameState.systems.idle:getState() or nil,  -- NEW: Save idle system state
-        zones = gameState.systems.zones:getState(),
-        locations = gameState.systems.locations:getState(),  -- NEW: Save location state
-        rooms = gameState.systems.rooms and gameState.systems.rooms:getState() or nil,  -- NEW: Save room state if exists
-        roomEvents = gameState.systems.roomEvents and gameState.systems.roomEvents:getState() or nil,  -- NEW: Save room events if exists
-        factions = gameState.systems.factions:getState(),
-        achievements = gameState.systems.achievements:getState(),
+        resources = safeState(gameState.systems.resources),
+        skills = safeState(gameState.systems.skills),
+        progression = safeState(gameState.systems.progression),
+        contracts = safeState(gameState.systems.contracts),
+        specialists = safeState(gameState.systems.specialists),
+        upgrades = safeState(gameState.systems.upgrades),
+        threats = safeState(gameState.systems.threats),
+        idle = safeState(gameState.systems.idle),
+        zones = safeState(gameState.systems.zones),
+        locations = safeState(gameState.systems.locations),
+        rooms = safeState(gameState.systems.rooms),
+        roomEvents = safeState(gameState.systems.roomEvents),
+        factions = safeState(gameState.systems.factions),
+        achievements = safeState(gameState.systems.achievements),
         -- Include player state if initialized
-        playerState = (gameState.modes and gameState.modes.idle and gameState.modes.idle.player) and gameState.modes.idle.player:getState() or nil,
+        playerState = safePlayerState(),
         -- Tutorial state
         tutorialSeen = gameState.tutorialSeen or false,
         version = "1.0.0",
@@ -447,10 +570,20 @@ function Game.save()
     gameState.systems.save:save(saveData, function(success, result)
         if success then
             -- Update idle system save timestamp
-            gameState.systems.idle:updateSaveTime()
-            print("💾 Game saved: " .. result)
+            gameState.systems.idle:updateSaveTime()   
+            if gameState.systems and gameState.systems.eventBus then
+                gameState.systems.eventBus:publish("ui.log", { text = "💾 Game saved: " .. tostring(result), severity = "success" })
+                gameState.systems.eventBus:publish("ui.toast", { text = "Game saved", type = "success", duration = 2.5 })
+            else
+                print("💾 Game saved: " .. result)
+            end
         else
-            print("❌ Save failed: " .. result)
+            if gameState.systems and gameState.systems.eventBus then
+                gameState.systems.eventBus:publish("ui.log", { text = "❌ Save failed: " .. tostring(result), severity = "error" })
+                gameState.systems.eventBus:publish("ui.toast", { text = "Save failed", type = "error", duration = 3.0 })
+            else
+                print("❌ Save failed: " .. result)
+            end
         end
     end)
 end
@@ -473,10 +606,31 @@ function Game.getState()
 end
 
 -- Handle window resize
-function Game.resize(w, h)
-    if gameState.systems and gameState.systems.ui then
-        gameState.systems.ui:resize(w, h)
+function Game.mousepressed(x, y, button)
+    if not gameState.initialized then
+        return
+    end
+
+    -- Announce click (parity with key-based pause/resume announcements)
+    local clickMsg = gameState.paused and "⏸️  Game paused" or "▶️  Game resumed"
+    if gameState.systems and gameState.systems.eventBus then
+        gameState.systems.eventBus:publish("ui.log", { text = clickMsg, severity = "info" })
+    else
+        print(clickMsg)
+    end
+
+    -- Let UI consume the mouse event first (buttons, panels)
+    if gameState.systems and gameState.systems.ui and gameState.systems.ui.mousepressed then
+        local consumed = gameState.systems.ui:mousepressed(x, y, button)
+        if consumed then return end
+    end
+
+    -- Forward to current mode
+    local currentMode = gameState.modes and gameState.modes[gameState.currentMode]
+    if currentMode and currentMode.mousepressed then
+        currentMode:mousepressed(x, y, button)
     end
 end
 
+-- Return module table
 return Game

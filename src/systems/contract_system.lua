@@ -171,8 +171,12 @@ function ContractSystem:completeContract(contractId)
     self.eventBus:publish("contract_completed", {
         contract = contract
     })
-    
-    print("📋 Contract completed: " .. contract.clientName .. " - Earned " .. contract.reputationReward .. " reputation")
+    local msg = "📋 Contract completed: " .. contract.clientName .. " - Earned " .. contract.reputationReward .. " reputation"
+    if self.eventBus then
+        self.eventBus:publish("ui.log", { text = msg, severity = "success" })
+    else
+        print(msg)
+    end
     
     return true
 end

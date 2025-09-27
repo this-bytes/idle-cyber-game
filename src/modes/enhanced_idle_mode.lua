@@ -35,21 +35,36 @@ function EnhancedIdleMode:enter()
         end)
         
         -- Subscribe to location changes
-        self.systems.eventBus:subscribe("location_changed", function(data)
-            print("🏠 Location changed: " .. data.newBuilding .. "/" .. data.newFloor .. "/" .. data.newRoom)
-        end)
+            self.systems.eventBus:subscribe("location_changed", function(data)
+                if self.systems and self.systems.eventBus then
+                    self.systems.eventBus:publish("ui.log", { text = "🏠 Location changed: " .. data.newBuilding .. "/" .. data.newFloor .. "/" .. data.newRoom, severity = "info" })
+                    self.systems.eventBus:publish("ui.toast", { text = "Location: " .. data.newRoom, type = "info", duration = 2.5 })
+                else
+                    print("🏠 Location changed: " .. data.newBuilding .. "/" .. data.newFloor .. "/" .. data.newRoom)
+                end
+            end)
         
         -- Subscribe to tier promotions
         if self.systems.progression then
             self.systems.eventBus:subscribe("tier_promoted", function(data)
-                print("🎉 Congratulations! Promoted to " .. data.tierData.name)
+                    if self.systems and self.systems.eventBus then
+                        self.systems.eventBus:publish("ui.log", { text = "🎉 Congratulations! Promoted to " .. data.tierData.name, severity = "success" })
+                        self.systems.eventBus:publish("ui.toast", { text = "Promoted to " .. data.tierData.name, type = "success", duration = 4.0 })
+                    else
+                        print("🎉 Congratulations! Promoted to " .. data.tierData.name)
+                    end
             end)
         end
         
         -- Subscribe to achievement unlocks
         if self.systems.progression then
             self.systems.eventBus:subscribe("achievement_unlocked", function(data)
-                print("🏆 Achievement: " .. data.achievement.name)
+                    if self.systems and self.systems.eventBus then
+                        self.systems.eventBus:publish("ui.log", { text = "🏆 Achievement: " .. data.achievement.name, severity = "success" })
+                        self.systems.eventBus:publish("ui.toast", { text = "Achievement: " .. data.achievement.name, type = "success", duration = 4.0 })
+                    else
+                        print("🏆 Achievement: " .. data.achievement.name)
+                    end
             end)
         end
     end
@@ -63,7 +78,11 @@ end
 -- Handle player interactions with departments and locations
 function EnhancedIdleMode:handlePlayerInteraction(data)
     if data.type == "department" then
-        print("🤝 Interacted with " .. data.name)
+        if self.systems and self.systems.eventBus then
+            self.systems.eventBus:publish("ui.log", { text = "🤝 Interacted with " .. data.name, severity = "info" })
+        else
+            print("🤝 Interacted with " .. data.name)
+        end
         
         -- Department-specific interactions
         if data.department == "training" then
@@ -89,8 +108,12 @@ function EnhancedIdleMode:handleTrainingInteraction(data)
     
     self.systems.resources:addResource("experience", experience)
     self.systems.resources:addResource("focus", 20)
-    
-    print("📚 Training completed! +" .. experience .. " XP, +20 Focus")
+    if self.systems and self.systems.eventBus then
+        self.systems.eventBus:publish("ui.log", { text = "📚 Training completed! +" .. experience .. " XP, +20 Focus", severity = "success" })
+        self.systems.eventBus:publish("ui.toast", { text = "+" .. experience .. " XP", type = "success", duration = 2.5 })
+    else
+        print("📚 Training completed! +" .. experience .. " XP, +20 Focus")
+    end
 end
 
 function EnhancedIdleMode:handleResearchInteraction(data)
@@ -100,7 +123,12 @@ function EnhancedIdleMode:handleResearchInteraction(data)
     local reputation = math.floor(baseRep * researchBonus)
     
     self.systems.resources:addResource("reputation", reputation)
-    print("🔬 Research completed! +" .. reputation .. " Reputation")
+    if self.systems and self.systems.eventBus then
+        self.systems.eventBus:publish("ui.log", { text = "🔬 Research completed! +" .. reputation .. " Reputation", severity = "success" })
+        self.systems.eventBus:publish("ui.toast", { text = "+" .. reputation .. " Rep", type = "success", duration = 2.5 })
+    else
+        print("🔬 Research completed! +" .. reputation .. " Reputation")
+    end
 end
 
 function EnhancedIdleMode:handleHRInteraction(data)
@@ -108,7 +136,12 @@ function EnhancedIdleMode:handleHRInteraction(data)
     if self.systems.specialists then
         self.systems.specialists:improveTeamMorale(10)
     end
-    print("👥 HR interaction: Team morale improved!")
+    if self.systems and self.systems.eventBus then
+        self.systems.eventBus:publish("ui.log", { text = "👥 HR interaction: Team morale improved!", severity = "info" })
+        self.systems.eventBus:publish("ui.toast", { text = "Team morale improved", type = "info", duration = 2.5 })
+    else
+        print("👥 HR interaction: Team morale improved!")
+    end
 end
 
 function EnhancedIdleMode:handleContractsInteraction(data)
@@ -116,11 +149,21 @@ function EnhancedIdleMode:handleContractsInteraction(data)
     local contracts = self.systems.contracts:getAvailableContracts()
     local locationBonuses = self.player:getState().locationBonuses
     
-    print("📋 Available contracts: " .. #contracts .. " (Location bonuses active)")
+    local header = "📋 Available contracts: " .. #contracts .. " (Location bonuses active)"
+    if self.systems and self.systems.eventBus then
+        self.systems.eventBus:publish("ui.log", { text = header, severity = "info" })
+    else
+        print(header)
+    end
     for i, contract in ipairs(contracts) do
         if i <= 3 then -- Show first 3
             local bonus = locationBonuses.contract_success or 1.0
-            print("  " .. contract.title .. " (Success +" .. string.format("%.0f%%", (bonus-1)*100) .. ")")
+            local line = "  " .. contract.title .. " (Success +" .. string.format("%.0f%%", (bonus-1)*100) .. ")"
+            if self.systems and self.systems.eventBus then
+                self.systems.eventBus:publish("ui.log", { text = line, severity = "info" })
+            else
+                print(line)
+            end
         end
     end
 end
@@ -132,8 +175,12 @@ function EnhancedIdleMode:handleDeskInteraction(data)
     
     self.systems.resources:addResource("money", moneyGain)
     self.systems.resources:addResource("energy", -10)
-    
-    print("💼 Work session completed! +" .. moneyGain .. " Money, -10 Energy")
+    if self.systems and self.systems.eventBus then
+        self.systems.eventBus:publish("ui.log", { text = "💼 Work session completed! +" .. moneyGain .. " Money, -10 Energy", severity = "success" })
+        self.systems.eventBus:publish("ui.toast", { text = "+$" .. moneyGain, type = "success", duration = 2.5 })
+    else
+        print("💼 Work session completed! +" .. moneyGain .. " Money, -10 Energy")
+    end
 end
 
 -- Update game state
@@ -154,9 +201,17 @@ function EnhancedIdleMode:keypressed(key)
         if self.player then
             local success, obj = self.player:interact()
             if success then
-                print("✅ Interaction with: " .. obj.name)
+                    if self.systems and self.systems.eventBus then
+                        self.systems.eventBus:publish("ui.log", { text = "✅ Interaction with: " .. obj.name, severity = "info" })
+                    else
+                        print("✅ Interaction with: " .. obj.name)
+                    end
             else
-                print("❌ No interaction available")
+                    if self.systems and self.systems.eventBus then
+                        self.systems.eventBus:publish("ui.log", { text = "❌ No interaction available", severity = "warn" })
+                    else
+                        print("❌ No interaction available")
+                    end
             end
         end
     elseif key == "tab" then
@@ -182,7 +237,12 @@ function EnhancedIdleMode:quickTravel(building, floor, room)
             room = room
         })
     else
-        print("❌ Invalid location: " .. building .. "/" .. floor .. "/" .. room)
+        if self.systems and self.systems.eventBus then
+            self.systems.eventBus:publish("ui.log", { text = "❌ Invalid location: " .. building .. "/" .. floor .. "/" .. room, severity = "error" })
+            self.systems.eventBus:publish("ui.toast", { text = "Invalid location", type = "error", duration = 2.5 })
+        else
+            print("❌ Invalid location: " .. building .. "/" .. floor .. "/" .. room)
+        end
     end
 end
 

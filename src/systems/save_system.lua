@@ -10,6 +10,8 @@ local json = require("dkjson") -- Use robust dkjson bundled in repo
 function SaveSystem.new()
     local self = setmetatable({}, SaveSystem)
     self.saveFilePath = "cyberspace_tycoon_save.json"
+    -- Optional logger: object with .log(text) method or function
+    self.logger = nil
     return self
 end
 
@@ -27,7 +29,12 @@ function SaveSystem:save(gameData)
     end)
     
     if not success then
-        print("❌ Save failed: " .. tostring(err))
+        local msg = "❌ Save failed: " .. tostring(err)
+        if self.logger and self.logger.log then
+            self.logger:log(msg)
+        else
+            print(msg)
+        end
         return false
     end
     
@@ -47,7 +54,12 @@ function SaveSystem:load()
     end)
     
     if not success then
-        print("❌ Load failed: " .. tostring(result))
+        local msg = "❌ Load failed: " .. tostring(result)
+        if self.logger and self.logger.log then
+            self.logger:log(msg)
+        else
+            print(msg)
+        end
         return nil
     end
     

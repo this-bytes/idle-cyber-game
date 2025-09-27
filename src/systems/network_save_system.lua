@@ -9,11 +9,30 @@ local api = require("api")
 local SaveSystem = require("src.systems.save_system")
 
 -- Create new network save system
-function NetworkSaveSystem.new()
+function NetworkSaveSystem.new(eventBus)
     local self = setmetatable({}, NetworkSaveSystem)
+    self.eventBus = eventBus
     
     -- Local save system for fallback
     self.localSave = SaveSystem.new()
+    -- If we have an event bus, provide a logger interface to the local save system
+    if self.eventBus then
+        local logger = {}
+        function logger:log(msg)
+            self.eventBus:publish("ui.log", { text = msg, severity = "info" })
+        end
+        -- bind eventBus to logger's upvalue
+        logger.eventBus = self.eventBus
+        -- ensure logger uses the bound eventBus
+        function logger:log(msg)
+            if self.eventBus then
+                self.eventBus:publish("ui.log", { text = msg, severity = "info" })
+            else
+                print(msg)
+            end
+        end
+        self.localSave.logger = logger
+    end
     
     -- Network state
     self.isOnline = false
@@ -36,7 +55,11 @@ end
 -- Set player username for server saves
 function NetworkSaveSystem:setUsername(username)
     self.username = username or "default_player"
-    print("🌐 Player username set to: " .. self.username)
+    if self.eventBus then
+        self.eventBus:publish("ui.log", { text = "🌐 Player username set to: " .. self.username, severity = "info" })
+    else
+        print("🌐 Player username set to: " .. self.username)
+    end
 end
 
 -- Set save mode: "local", "server", or "hybrid"
@@ -44,9 +67,17 @@ function NetworkSaveSystem:setSaveMode(mode)
     local validModes = { ["local"] = true, server = true, hybrid = true }
     if validModes[mode] then
         self.saveMode = mode
-        print("💾 Save mode set to: " .. mode)
+        if self.eventBus then
+            self.eventBus:publish("ui.log", { text = "💾 Save mode set to: " .. mode, severity = "info" })
+        else
+            print("💾 Save mode set to: " .. mode)
+        end
     else
-        print("❌ Invalid save mode: " .. mode)
+        if self.eventBus then
+            self.eventBus:publish("ui.log", { text = "❌ Invalid save mode: " .. mode, severity = "error" })
+        else
+            print("❌ Invalid save mode: " .. mode)
+        end
     end
 end
 
@@ -55,9 +86,9 @@ function NetworkSaveSystem:testConnection(callback)
     api.testConnection(function(success, result)
         self.isOnline = success
         if success then
-            print("🌐 Server connection: OK")
+            if self.eventBus then self.eventBus:publish("ui.log", { text = "🌐 Server connection: OK", severity = "info" }) else print("🌐 Server connection: OK") end
         else
-            print("❌ Server connection: FAILED - " .. tostring(result))
+            if self.eventBus then self.eventBus:publish("ui.log", { text = "❌ Server connection: FAILED - " .. tostring(result), severity = "error" }) else print("❌ Server connection: FAILED - " .. tostring(result)) end
         end
         if callback then callback(success, result) end
     end)
@@ -86,9 +117,9 @@ function NetworkSaveSystem:save(gameData, callback)
     if self.saveMode ~= "server" then
         local localSuccess = self.localSave:save(gameData)
         if localSuccess then
-            print("💾 Local save: SUCCESS")
+            if self.eventBus then self.eventBus:publish("ui.log", { text = "💾 Local save: SUCCESS", severity = "success" }) else print("💾 Local save: SUCCESS") end
         else
-            print("❌ Local save: FAILED")
+            if self.eventBus then self.eventBus:publish("ui.log", { text = "❌ Local save: FAILED", severity = "error" }) else print("❌ Local save: FAILED") end
         end
     end
     
@@ -96,15 +127,15 @@ function NetworkSaveSystem:save(gameData, callback)
     if self.saveMode ~= "local" and not self.offlineMode then
         self:saveToServer(gameData, function(success, result)
             if success then
-                print("🌐 Server save: SUCCESS")
+                if self.eventBus then self.eventBus:publish("ui.log", { text = "🌐 Server save: SUCCESS", severity = "success" }) else print("🌐 Server save: SUCCESS") end
                 callback(true, "saved to server")
             else
-                print("❌ Server save: FAILED - " .. tostring(result))
+                if self.eventBus then self.eventBus:publish("ui.log", { text = "❌ Server save: FAILED - " .. tostring(result), severity = "error" }) else print("❌ Server save: FAILED - " .. tostring(result)) end
                 if self.saveMode == "server" then
                     -- If server-only mode failed, try local save as emergency backup
                     local emergencySuccess = self.localSave:save(gameData)
                     if emergencySuccess then
-                        print("💾 Emergency local save: SUCCESS")
+                        if self.eventBus then self.eventBus:publish("ui.log", { text = "💾 Emergency local save: SUCCESS", severity = "success" }) else print("💾 Emergency local save: SUCCESS") end
                         callback(true, "saved locally (emergency)")
                     else
                         callback(false, "both server and local saves failed")
@@ -163,26 +194,26 @@ function NetworkSaveSystem:load(callback)
     if self.saveMode ~= "local" and not self.offlineMode then
         self:loadFromServer(function(success, serverData)
             if success and serverData then
-                print("🌐 Server load: SUCCESS")
+                if self.eventBus then self.eventBus:publish("ui.log", { text = "🌐 Server load: SUCCESS", severity = "success" }) else print("🌐 Server load: SUCCESS") end
                 -- Also load local data for comparison/merging if in hybrid mode
                 if self.saveMode == "hybrid" then
                     local localData = self.localSave:load()
                     if localData then
                         -- TODO: Implement data merging logic
                         -- For now, prioritize server data
-                        print("📊 Hybrid mode: Using server data")
+                        if self.eventBus then self.eventBus:publish("ui.log", { text = "📊 Hybrid mode: Using server data", severity = "info" }) else print("📊 Hybrid mode: Using server data") end
                     end
                 end
                 callback(success, self:convertServerDataToGameData(serverData))
             else
-                print("❌ Server load: FAILED - " .. tostring(serverData))
+                if self.eventBus then self.eventBus:publish("ui.log", { text = "❌ Server load: FAILED - " .. tostring(serverData), severity = "error" }) else print("❌ Server load: FAILED - " .. tostring(serverData)) end
                 -- Fall back to local save
                 local localData = self.localSave:load()
                 if localData then
-                    print("💾 Local load: SUCCESS (fallback)")
+                    if self.eventBus then self.eventBus:publish("ui.log", { text = "💾 Local load: SUCCESS (fallback)", severity = "success" }) else print("💾 Local load: SUCCESS (fallback)") end
                     callback(true, localData)
                 else
-                    print("❌ Local load: FAILED")
+                    if self.eventBus then self.eventBus:publish("ui.log", { text = "❌ Local load: FAILED", severity = "error" }) else print("❌ Local load: FAILED") end
                     callback(false, "no save data available")
                 end
             end
@@ -191,10 +222,10 @@ function NetworkSaveSystem:load(callback)
         -- Local-only mode
         local localData = self.localSave:load()
         if localData then
-            print("💾 Local load: SUCCESS")
+            if self.eventBus then self.eventBus:publish("ui.log", { text = "💾 Local load: SUCCESS", severity = "success" }) else print("💾 Local load: SUCCESS") end
             callback(true, localData)
         else
-            print("❌ Local load: FAILED")
+            if self.eventBus then self.eventBus:publish("ui.log", { text = "❌ Local load: FAILED", severity = "error" }) else print("❌ Local load: FAILED") end
             callback(false, "no local save data")
         end
     end
@@ -208,7 +239,7 @@ function NetworkSaveSystem:loadFromServer(callback)
         else
             -- Try creating new player if not found
             if result and type(result) == "string" and result:find("not found") then
-                print("🆕 Player not found, creating new player...")
+                if self.eventBus then self.eventBus:publish("ui.log", { text = "🆕 Player not found, creating new player...", severity = "info" }) else print("🆕 Player not found, creating new player...") end
                 api.createPlayer(self.username, function(createSuccess, createResult)
                     if createSuccess and createResult then
                         callback(true, createResult)
@@ -240,7 +271,7 @@ function NetworkSaveSystem:convertServerDataToGameData(serverData)
     -- Add idle time for offline earnings calculation
     if serverData.idle_time_seconds then
         gameData.idleTimeSeconds = serverData.idle_time_seconds
-        print("⏰ Offline time: " .. math.floor(serverData.idle_time_seconds) .. " seconds")
+        if self.eventBus then self.eventBus:publish("ui.log", { text = "⏰ Offline time: " .. math.floor(serverData.idle_time_seconds) .. " seconds", severity = "info" }) else print("⏰ Offline time: " .. math.floor(serverData.idle_time_seconds) .. " seconds") end
     end
     
     -- Restore complex system data if available
@@ -274,7 +305,7 @@ function NetworkSaveSystem:applyOfflineEarnings(gameData, idleTimeSeconds)
     
     if offlineEarnings > 0 then
         gameData.resources.money = (gameData.resources.money or 0) + offlineEarnings
-        print("💰 Offline earnings: $" .. offlineEarnings .. " (" .. math.floor(idleTimeSeconds/60) .. " minutes)")
+        if self.eventBus then self.eventBus:publish("ui.log", { text = "💰 Offline earnings: $" .. offlineEarnings .. " (" .. math.floor(idleTimeSeconds/60) .. " minutes)", severity = "success" }) else print("💰 Offline earnings: $" .. offlineEarnings .. " (" .. math.floor(idleTimeSeconds/60) .. " minutes)") end
     end
     
     return gameData
@@ -288,7 +319,12 @@ end
 -- Delete save files
 function NetworkSaveSystem:deleteSave()
     local localDeleted = self.localSave:deleteSave()
-    print("🗑️  Local save deleted: " .. (localDeleted and "SUCCESS" or "FAILED"))
+    local msg = "🗑️  Local save deleted: " .. (localDeleted and "SUCCESS" or "FAILED")
+    if self.eventBus then
+        self.eventBus:publish("ui.log", { text = msg, severity = localDeleted and "success" or "error" })
+    else
+        print(msg)
+    end
     
     -- TODO: Implement server save deletion if needed
     -- This would require a new API endpoint
@@ -309,7 +345,13 @@ end
 -- Enable/disable offline mode
 function NetworkSaveSystem:setOfflineMode(enabled)
     self.offlineMode = enabled
-    print("📡 Offline mode: " .. (enabled and "ENABLED" or "DISABLED"))
+    local msg = "📡 Offline mode: " .. (enabled and "ENABLED" or "DISABLED")
+    if self.eventBus then
+        self.eventBus:publish("ui.log", { text = msg, severity = "info" })
+    else
+        -- fallback for environments without UI
+        print(msg)
+    end
 end
 
 -- Sync local and server saves (for hybrid mode)

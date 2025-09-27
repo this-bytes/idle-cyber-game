@@ -274,8 +274,10 @@ function AdminMode:startCrisis()
     
     self.crisisTimer = 0
     table.insert(self.responseLog, "🚨 CRISIS INITIATED: " .. self.currentCrisis.title)
-    
-    print("🚨 Crisis started: " .. self.currentCrisis.title)
+    if self.systems and self.systems.eventBus then
+        self.systems.eventBus:publish("ui.log", { text = "🚨 Crisis started: " .. self.currentCrisis.title, severity = "warn" })
+        self.systems.eventBus:publish("ui.toast", { text = "Crisis: " .. self.currentCrisis.title, type = "warn", duration = 4.0 })
+    end
 end
 
 -- Handle crisis response
@@ -375,8 +377,11 @@ function AdminMode:resolveCrisis(outcome)
             amount = tokenGain
         })
         
-        print(string.format("✅ Crisis resolved! +$%d, +%d reputation, +%d tokens (%.0f%% efficiency)", 
-              moneyGain, reputationGain, tokenGain, timeBonus * 100))
+      if self.systems and self.systems.eventBus then
+        self.systems.eventBus:publish("ui.log", { text = string.format("✅ Crisis resolved! +$%d, +%d reputation, +%d tokens (%.0f%% efficiency)", 
+            moneyGain, reputationGain, tokenGain, timeBonus * 100), severity = "success" })
+        self.systems.eventBus:publish("ui.toast", { text = "Crisis resolved! Rewards received", type = "success", duration = 4.0 })
+      end
         
     elseif outcome == "timeout" then
         table.insert(self.responseLog, "❌ CRISIS TIMED OUT - REPUTATION DAMAGE")
@@ -388,7 +393,10 @@ function AdminMode:resolveCrisis(outcome)
             amount = -5
         })
         
-        print("❌ Crisis timed out! -5 reputation")
+        if self.systems and self.systems.eventBus then
+            self.systems.eventBus:publish("ui.log", { text = "❌ Crisis timed out! -5 reputation", severity = "error" })
+            self.systems.eventBus:publish("ui.toast", { text = "Crisis failed: Reputation -5", type = "error", duration = 4.0 })
+        end
     end
     
     self.currentCrisis = nil
