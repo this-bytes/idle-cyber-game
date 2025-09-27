@@ -146,45 +146,29 @@ function Game.init()
             if savedData.idleTimeSeconds and savedData.idleTimeSeconds > 0 then
                 local offlineProgress = gameState.systems.idle:calculateOfflineProgress(savedData.idleTimeSeconds)
                 gameState.systems.idle:applyOfflineProgress(offlineProgress)
-                print("⏰ Processed " .. math.floor(savedData.idleTimeSeconds/60) .. " minutes of offline time")
+                if gameState.systems.ui then
+                    gameState.systems.ui:logDebug("Processed " .. math.floor(savedData.idleTimeSeconds/60) .. " minutes of offline time")
+                end
             end
             
-            print("📁 Loaded saved game")
+            if gameState.systems.ui then
+                gameState.systems.ui:logDebug("Loaded saved game")
+            end
         else
             -- Initialize with default values
             Game.initializeDefaultState()
-            print("✨ Starting new game")
+            if gameState.systems.ui then
+                gameState.systems.ui:logDebug("Starting new game")
+            end
         end
         
         gameState.initialized = true
         
-        print("=== Cyberspace Tycoon ===")
-        print("🔥 Welcome to the cybersecurity empire!")
-        print("⌨️  Controls:")
-        print("   WASD/Arrows - Move character")
-        print("   E - Interact with departments/areas")
-        print("   R - Room navigation menu")
-        print("   A - Crisis Response Mode (Real-time incident handling)")
-        print("   C - Contract Detail Modal (NEW!)")
-        print("   X - Start Crisis Mini-Game (NEW!)")
-        print("   M - Toggle Sound System (NEW!)")
-        print("   V - Particle Effects Demo (NEW!)")
-        print("   U - Upgrades shop")
-        print("   H - Achievements & Progress")
-        print("   Z - Zone management")
-        print("   F - Faction relations")
-        print("   S - Statistics")
-        print("   P - Pause game")
-        print("   Z - Debug mode")
-        print("   N - Network status")
-        print("   ESC - Quit")
-        print("")
-        print("🎮 NEW FEATURES:")
-        print("   🔊 Advanced Sound System with Reactive Audio")
-        print("   📋 Interactive Contract Details with Client Backgrounds")
-        print("   🚨 Crisis Mini-Games: Packet Filter, Malware Hunt, Social Engineering Defense")
-        print("   🏆 Rich Achievement System with Hidden Unlocks")
-        print("   ✨ Animated UI with Sound Effects and Particle Systems")
+        -- Show welcome message in UI instead of console
+        if gameState.systems.ui then
+            gameState.systems.ui:showNotification("🔥 Welcome to Cyberspace Tycoon!", 4.0)
+            gameState.systems.ui:showNotification("💡 Press ESC for controls and menu", 6.0)
+        end
     end)
 end
 
@@ -389,6 +373,12 @@ function Game.keypressed(key)
     end
 
     if key == "escape" then
+        -- Toggle navigation modal instead of quitting
+        if gameState.systems and gameState.systems.ui then
+            gameState.systems.ui:toggleNavigationModal()
+        end
+    elseif key == "q" and (love.keyboard.isDown("lctrl") or love.keyboard.isDown("rctrl")) then
+        -- Ctrl+Q to quit
         love.event.quit()
     elseif key == "p" then
         gameState.paused = not gameState.paused
