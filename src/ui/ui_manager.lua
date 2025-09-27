@@ -5,6 +5,7 @@ local UIManager = {}
 UIManager.__index = UIManager
 
 local TerminalTheme = require("src.ui.terminal_theme")
+local DebugLogger = require("src.utils.debug_logger")
 
 -- Create new UI manager
 -- Accepts either an eventBus (legacy) or the full systems table
@@ -53,6 +54,9 @@ function UIManager.new(systemsOrEventBus)
     
     -- Initialize terminal theme
     self.theme = TerminalTheme.new()
+    
+    -- Initialize debug logger
+    self.debugLogger = DebugLogger.new()
     
     -- Subscribe to events
     self:subscribeToEvents()
@@ -131,7 +135,10 @@ function UIManager:showToast(message, type, duration)
         table.remove(self.toasts, 1)
     end
     
-    print("📱 TOAST: " .. message .. " (" .. type .. ")")
+    -- Log to debug system instead of printing to console
+    if self.debugLogger then
+        self.debugLogger:log("Toast shown: " .. message .. " (" .. type .. ")", "info", "ui")
+    end
 end
 
 -- Add a log message
@@ -175,10 +182,10 @@ function UIManager:toggleControlsHUD()
 end
 
 -- Log debug information to file (separate from user-facing messages)
-function UIManager:logDebug(message, severity)
-    -- For now, just add to internal log system
-    -- In a full implementation, this would write to debug.log file
-    self:addLogMessage("[DEBUG] " .. message, severity or "info")
+function UIManager:logDebug(message, severity, category)
+    if self.debugLogger then
+        self.debugLogger:log(message, severity or "info", category or "game")
+    end
 end
 
 -- Add floating delta for HUD animations
