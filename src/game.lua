@@ -256,6 +256,9 @@ function Game.update(dt)
         end
     end
     
+    -- Handle autosave
+    Game.handleAutoSave(dt)
+    
     -- Update performance tracking
     gameState.performance.updateTime = love.timer.getTime() - startTime
     gameState.performance.frameCount = gameState.performance.frameCount + 1
