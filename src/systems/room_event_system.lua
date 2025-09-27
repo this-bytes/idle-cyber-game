@@ -458,4 +458,28 @@ function RoomEventSystem:getEventHistory(limit)
     return history
 end
 
+-- Get current state for saving
+function RoomEventSystem:getState()
+    return {
+        activeEvents = self.activeEvents,
+        eventHistory = self.eventHistory,
+        nextEventTime = self.nextEventTime,
+        eventCounter = self.eventCounter,
+        minEventInterval = self.minEventInterval,
+        maxEventInterval = self.maxEventInterval
+    }
+end
+
+-- Load state from save data
+function RoomEventSystem:loadState(state)
+    if not state then return end
+    
+    self.activeEvents = state.activeEvents or {}
+    self.eventHistory = state.eventHistory or {}
+    self.nextEventTime = state.nextEventTime or math.random(self.minEventInterval, self.maxEventInterval)
+    self.eventCounter = state.eventCounter or 0
+    self.minEventInterval = state.minEventInterval or self.minEventInterval
+    self.maxEventInterval = state.maxEventInterval or self.maxEventInterval
+end
+
 return RoomEventSystem

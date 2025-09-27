@@ -31,29 +31,39 @@ function IdleMode:enter()
         self.player = PlayerSystem.new(self.systems.eventBus)
         -- Subscribe to player interactions
         self.systems.eventBus:subscribe("player_interact", function(data)
-            print("🤝 Interacted with department: " .. data.name .. " (" .. data.department .. ")")
+            if self.systems.ui then
+                self.systems.ui:showNotification("🤝 Interacted with " .. data.name .. " (" .. data.department .. ")")
+            end
             -- Dispatch department-specific events so respective systems can handle them
             if data.department == "training" then
                 -- Give player/company XP via ResourceSystem and also signal SpecialistSystem
                 self.systems.eventBus:publish("add_resource", { resource = "xp", amount = 10 })
                 -- Let specialist system know about training (could be listened to by SpecialistSystem)
                 self.systems.eventBus:publish("specialist_training", { amount = 10 })
-                print("⭐ Training complete: +10 XP")
+                if self.systems.ui then
+                    self.systems.ui:showNotification("⭐ Training complete: +10 XP")
+                end
             elseif data.department == "contracts" then
                 -- Unlock a new contract generation tick and give a reputation bump
                 if self.systems.contracts then
                     self.systems.contracts:generateRandomContract()
                 end
                 self.systems.eventBus:publish("add_resource", { resource = "reputation", amount = 1 })
-                print("📈 Negotiated new opportunities: +1 Reputation and new contract generated")
+                if self.systems.ui then
+                    self.systems.ui:showNotification("📈 New opportunities: +1 Rep, new contract generated")
+                end
             elseif data.department == "security" then
                 -- Decrease threat level slightly via ThreatSystem if present
                 if self.systems.threats and self.systems.threats.threatReduction ~= nil then
                     self.systems.threats.threatReduction = math.min((self.systems.threats.threatReduction or 0) + 0.05, 0.9)
-                    print("🛡️ Security briefing completed: Threat reduction increased")
+                    if self.systems.ui then
+                        self.systems.ui:showNotification("🛡️ Security briefing: Threat reduction increased")
+                    end
                     self.systems.eventBus:publish("threats_updated", { reduction = self.systems.threats.threatReduction })
                 else
-                    print("🛡️ Security briefing completed: Defense increased (simulated)")
+                    if self.systems.ui then
+                        self.systems.ui:showNotification("🛡️ Security briefing: Defense increased")
+                    end
                 end
             else
                 -- Generic interaction: publish to event bus
@@ -540,7 +550,9 @@ function IdleMode:keypressed(key)
     -- Handle escape key for conversion mode exit
     if key == "escape" and self.conversionMode then
         self.conversionMode = false
-        print("💱 Exited conversion mode.")
+        if self.systems.ui then
+            self.systems.ui:showNotification("💱 Exited conversion mode")
+        end
         return
     end
     
@@ -569,7 +581,9 @@ function IdleMode:keypressed(key)
                         end
                     end
                 end
-                print("🔍 No department or area nearby to interact with. Move closer and press E.")
+                if self.systems.ui then
+                    self.systems.ui:showNotification("🔍 No nearby interactions. Move closer and press E", 2.0)
+                end
             end
             return
         end
