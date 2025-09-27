@@ -145,6 +145,19 @@ function LocationSystem:moveToRoom(building, floor, room)
     
     print("🚶 Moved from " .. oldLocation .. " to " .. self:getCurrentLocationString())
     
+    -- Show UI notification for location change
+    local roomData = self.buildings[building].floors[floor].rooms[room]
+    self.eventBus:publish("ui.toast", {
+        text = "Moved to " .. roomData.name,
+        type = "info",
+        duration = 2.0
+    })
+    
+    self.eventBus:publish("ui.log", {
+        text = "Location changed: " .. oldLocation .. " → " .. self:getCurrentLocationString(),
+        severity = "info"
+    })
+    
     -- Emit location change event
     self.eventBus:publish("location_changed", {
         oldBuilding = self.currentBuilding,
