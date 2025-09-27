@@ -5,6 +5,7 @@ local UIManager = {}
 UIManager.__index = UIManager
 
 local TerminalTheme = require("src.ui.terminal_theme")
+local DebugLogger = require("src.utils.debug_logger")
 
 -- Create new UI manager
 -- Accepts either an eventBus (legacy) or the full systems table
@@ -28,6 +29,10 @@ function UIManager.new(systemsOrEventBus)
     self.showFPS = false
     self.modal = nil -- { title, body, timer, onClose }
     
+    -- Navigation modal state
+    self.showNavigationModal = false
+    self.showControlsHUD = true -- Show controls HUD by default
+    
     -- Toast system
     self.toasts = {}
     self.maxToasts = 5
@@ -49,6 +54,9 @@ function UIManager.new(systemsOrEventBus)
     
     -- Initialize terminal theme
     self.theme = TerminalTheme.new()
+    
+    -- Initialize debug logger
+    self.debugLogger = DebugLogger.new()
     
     -- Subscribe to events
     self:subscribeToEvents()
@@ -99,6 +107,13 @@ function UIManager:subscribeToEvents()
             self.hudAnimations.xp.target = data.newAmount
         end
     end)
+    
+    -- Handle room changes for immediate visual feedback
+    self.eventBus:subscribe("room_changed", function(data)
+        if data.newRoom and data.newRoom.name then
+            self:showNotification("🚪 Entered " .. data.newRoom.name:gsub("📋 ", ""):gsub("🏢 ", ""):gsub("💼 ", ""), 2.0)
+        end
+    end)
 end
 
 -- Show a toast notification
@@ -120,7 +135,10 @@ function UIManager:showToast(message, type, duration)
         table.remove(self.toasts, 1)
     end
     
-    print("📱 TOAST: " .. message .. " (" .. type .. ")")
+    -- Log to debug system instead of printing to console
+    if self.debugLogger then
+        self.debugLogger:log("Toast shown: " .. message .. " (" .. type .. ")", "info", "ui")
+    end
 end
 
 -- Add a log message
@@ -138,7 +156,36 @@ function UIManager:addLogMessage(message, severity)
         table.remove(self.logs, 1)
     end
     
-    print("📝 LOG [" .. severity:upper() .. "]: " .. message)
+    -- Don't print debug logs to console, only add to internal log system
+end
+
+-- Show notification to player (replaces console prints)
+function UIManager:showNotification(text, duration)
+    self:showToast(text, "info", duration or 3.0)
+end
+
+-- Show controls modal/HUD
+function UIManager:showControlsModal()
+    self.showNavigationModal = true
+end
+
+-- Toggle navigation modal (replaces ESC quit behavior)
+function UIManager:toggleNavigationModal()
+    self.showNavigationModal = not self.showNavigationModal
+    return self.showNavigationModal
+end
+
+-- Toggle controls HUD visibility
+function UIManager:toggleControlsHUD()
+    self.showControlsHUD = not self.showControlsHUD
+    return self.showControlsHUD
+end
+
+-- Log debug information to file (separate from user-facing messages)
+function UIManager:logDebug(message, severity, category)
+    if self.debugLogger then
+        self.debugLogger:log(message, severity or "info", category or "game")
+    end
 end
 
 -- Add floating delta for HUD animations
@@ -319,6 +366,16 @@ function UIManager:draw()
         love.graphics.printf("Press any key to continue", mx + 20, my + mh - 40, mw - 40, "center")
     end
 
+    -- Draw controls HUD if enabled
+    if self.showControlsHUD then
+        self:drawControlsHUD()
+    end
+
+    -- Draw navigation modal if active
+    if self.showNavigationModal then
+        self:drawNavigationModal()
+    end
+
     -- Reset color
     love.graphics.setColor(1, 1, 1, 1)
 end
@@ -421,10 +478,27 @@ function UIManager:keypressed(key)
         return true
     end
     
+    if key == "h" then
+        -- Toggle controls HUD
+        self:toggleControlsHUD()
+        self:showNotification("Controls HUD " .. (self.showControlsHUD and "shown" or "hidden"))
+        return true
+    end
+    
     if key == "tab" then
         -- Toggle the large terminal overlay
         self.showFullTerminal = not self.showFullTerminal
         self:addLogMessage("Terminal overlay " .. (self.showFullTerminal and "shown" or "hidden"), "info")
+        return true
+    end
+    
+    -- Handle navigation modal
+    if self.showNavigationModal then
+        if key == "escape" then
+            self.showNavigationModal = false
+            return true
+        end
+        -- Block other inputs when modal is open
         return true
     end
     
@@ -514,6 +588,65 @@ end
 
 function UIManager:resize(w, h)
     -- Handle window resize
+end
+
+-- Draw controls HUD (compact display of key controls)
+function UIManager:drawControlsHUD()
+    if not love or not love.graphics then return end
+    
+    local w, h = love.graphics.getDimensions()
+    local hudX, hudY = 10, h - 140
+    local hudW, hudH = 300, 120
+    
+    -- Background panel
+    self.theme:drawPanel(hudX, hudY, hudW, hudH, "Controls")
+    
+    -- Controls text
+    local y = hudY + 25
+    local lineHeight = 16
+    
+    self.theme:drawText("WASD/Arrows - Move", hudX + 10, y, self.theme:getColor("text")); y = y + lineHeight
+    self.theme:drawText("E - Interact", hudX + 10, y, self.theme:getColor("text")); y = y + lineHeight
+    self.theme:drawText("ESC - Menu", hudX + 10, y, self.theme:getColor("accent")); y = y + lineHeight
+    self.theme:drawText("TAB - Terminal", hudX + 10, y, self.theme:getColor("text")); y = y + lineHeight
+    self.theme:drawText("H - Toggle this HUD", hudX + 10, y, self.theme:getColor("secondary"))
+end
+
+-- Draw navigation modal (replaces ESC quit behavior)
+function UIManager:drawNavigationModal()
+    if not love or not love.graphics then return end
+    
+    local w, h = love.graphics.getDimensions()
+    
+    -- Dim background
+    love.graphics.setColor(0, 0, 0, 0.7)
+    love.graphics.rectangle("fill", 0, 0, w, h)
+    
+    -- Modal panel
+    local modalW, modalH = 400, 300
+    local modalX, modalY = (w - modalW) / 2, (h - modalH) / 2
+    
+    self.theme:drawPanel(modalX, modalY, modalW, modalH, "Navigation Menu")
+    
+    -- Menu items
+    local y = modalY + 40
+    local lineHeight = 25
+    
+    self.theme:drawText("📋 Game Controls:", modalX + 20, y, self.theme:getColor("primary")); y = y + lineHeight + 5
+    self.theme:drawText("   WASD/Arrows - Move character", modalX + 30, y, self.theme:getColor("text")); y = y + lineHeight
+    self.theme:drawText("   E - Interact with areas", modalX + 30, y, self.theme:getColor("text")); y = y + lineHeight
+    self.theme:drawText("   R - Room navigation", modalX + 30, y, self.theme:getColor("text")); y = y + lineHeight
+    self.theme:drawText("   A - Crisis Mode", modalX + 30, y, self.theme:getColor("text")); y = y + lineHeight
+    self.theme:drawText("   C - Contract Details", modalX + 30, y, self.theme:getColor("text")); y = y + lineHeight
+    
+    y = y + 10
+    self.theme:drawText("🎮 System Controls:", modalX + 20, y, self.theme:getColor("primary")); y = y + lineHeight + 5
+    self.theme:drawText("   TAB - Terminal overlay", modalX + 30, y, self.theme:getColor("text")); y = y + lineHeight
+    self.theme:drawText("   Ctrl+Q - Quit game", modalX + 30, y, self.theme:getColor("warning")); y = y + lineHeight
+    
+    -- Footer
+    love.graphics.setColor(0.6, 0.6, 0.6, 1)
+    love.graphics.printf("Press ESC to close • Ctrl+Q to quit", modalX + 20, modalY + modalH - 30, modalW - 40, "center")
 end
 
 return UIManager
