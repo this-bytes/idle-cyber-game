@@ -22,6 +22,7 @@ local IdleSystem = require("src.systems.idle_system")  -- NEW: Comprehensive idl
 local SoundSystem = require("src.systems.sound_system")  -- NEW: Advanced audio system
 local CrisisGameSystem = require("src.systems.crisis_game_system")  -- NEW: Interactive crisis mini-games
 local AdvancedAchievementSystem = require("src.systems.advanced_achievement_system")  -- NEW: Rich achievement system
+local ParticleSystem = require("src.systems.particle_system")  -- NEW: Visual effects system
 local EventBus = require("src.utils.event_bus")
 
 -- Import UI systems
@@ -87,6 +88,7 @@ function Game.init()
     gameState.systems.sound = SoundSystem.new(gameState.systems.eventBus)  -- Advanced audio system
     gameState.systems.crisisGame = CrisisGameSystem.new(gameState.systems.eventBus)  -- Interactive crisis games
     gameState.systems.advancedAchievements = AdvancedAchievementSystem.new(gameState.systems.eventBus)  -- Rich achievements
+    gameState.systems.particles = ParticleSystem.new(gameState.systems.eventBus)  -- Visual effects system
     gameState.systems.specialists:setSkillSystem(gameState.systems.skills)  -- NEW: Connect skill system
     gameState.systems.upgrades = UpgradeSystem.new(gameState.systems.eventBus)
     gameState.systems.threats = ThreatSystem.new(gameState.systems.eventBus)
@@ -166,6 +168,7 @@ function Game.init()
         print("   C - Contract Detail Modal (NEW!)")
         print("   X - Start Crisis Mini-Game (NEW!)")
         print("   M - Toggle Sound System (NEW!)")
+        print("   V - Particle Effects Demo (NEW!)")
         print("   U - Upgrades shop")
         print("   H - Achievements & Progress")
         print("   Z - Zone management")
@@ -181,7 +184,7 @@ function Game.init()
         print("   📋 Interactive Contract Details with Client Backgrounds")
         print("   🚨 Crisis Mini-Games: Packet Filter, Malware Hunt, Social Engineering Defense")
         print("   🏆 Rich Achievement System with Hidden Unlocks")
-        print("   ✨ Animated UI with Sound Effects")
+        print("   ✨ Animated UI with Sound Effects and Particle Systems")
     end)
 end
 
@@ -330,6 +333,11 @@ function Game.draw()
         Game.drawCrisisGameOverlay()
     end
     
+    -- Draw particle effects (on top of everything else)
+    if gameState.systems and gameState.systems.particles then
+        gameState.systems.particles:draw()
+    end
+    
     -- Debug information
     if gameState.debugMode then
         Game.drawDebugInfo()
@@ -439,6 +447,18 @@ function Game.keypressed(key)
                 gameState.systems.eventBus:publish("ui.log", {
                     text = "Sound " .. (soundEnabled and "enabled" or "disabled"),
                     severity = "info"
+                })
+            end
+            return
+        elseif key == "v" and gameState.systems.particles then
+            -- Trigger particle effect demo
+            local w, h = love.graphics.getDimensions()
+            gameState.systems.particles:emitBurst("achievement", w / 2, h / 2, 15)
+            gameState.systems.particles:emitMoneyRain(w / 2, h / 2 + 100, 5000)
+            if gameState.systems.eventBus then
+                gameState.systems.eventBus:publish("ui.log", {
+                    text = "Particle effects demo triggered!",
+                    severity = "success"
                 })
             end
             return
