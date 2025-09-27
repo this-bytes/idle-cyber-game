@@ -200,8 +200,17 @@ function Game.loadGameState(data)
     gameState.systems.threats:loadState(data.threats or {})
     gameState.systems.idle:loadState(data.idle or {})  -- NEW: Load idle system state
     gameState.systems.zones:loadState(data.zones or {})
+    gameState.systems.locations:loadState(data.locations or {})  -- NEW: Load location state
     gameState.systems.factions:loadState(data.factions or {})
     gameState.systems.achievements:loadState(data.achievements or {})
+    
+    -- NEW: Load room system states
+    if gameState.systems.rooms and data.rooms then
+        gameState.systems.rooms:loadState(data.rooms)
+    end
+    if gameState.systems.roomEvents and data.roomEvents then
+        gameState.systems.roomEvents:loadState(data.roomEvents)
+    end
     
     -- NEW: Load advanced system states
     if gameState.systems.sound and data.sound then

@@ -592,4 +592,43 @@ function RoomSystem:unlockRoom(roomId)
     return false
 end
 
+-- Get current state for saving
+function RoomSystem:getState()
+    -- Collect room unlock status
+    local roomUnlocks = {}
+    for roomId, room in pairs(self.rooms) do
+        if room.unlocked then
+            roomUnlocks[roomId] = true
+        end
+    end
+    
+    return {
+        currentRoom = self.currentRoom,
+        previousRoom = self.previousRoom,
+        transitionTime = self.transitionTime,
+        isTransitioning = self.isTransitioning,
+        -- Save unlock status for each room
+        roomUnlocks = roomUnlocks
+    }
+end
+
+-- Load state from save data
+function RoomSystem:loadState(state)
+    if not state then return end
+    
+    self.currentRoom = state.currentRoom or "personal_office"
+    self.previousRoom = state.previousRoom
+    self.transitionTime = state.transitionTime or 0
+    self.isTransitioning = state.isTransitioning or false
+    
+    -- Restore room unlock status
+    if state.roomUnlocks then
+        for roomId, unlocked in pairs(state.roomUnlocks) do
+            if self.rooms[roomId] and unlocked then
+                self.rooms[roomId].unlocked = true
+            end
+        end
+    end
+end
+
 return RoomSystem
