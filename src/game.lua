@@ -420,37 +420,74 @@ function Game.save()
     if not gameState.initialized then
         return
     end
-    
+    -- Helper to safely get state from a system (handles nil/missing getState)
+    local function safeState(system)
+        if not system or type(system.getState) ~= "function" then return nil end
+        local ok, res = pcall(function() return system:getState() end)
+        if ok then return res end
+        return nil
+    end
+
+    local function safePlayerState()
+        if not (gameState.modes and gameState.modes.idle and gameState.modes.idle.player) then return nil end
+        local p = gameState.modes.idle.player
+        if type(p.getState) ~= "function" then return nil end
+        local ok, res = pcall(function() return p:getState() end)
+        if ok then return res end
+        return nil
+    end
+
     local saveData = {
-        resources = gameState.systems.resources:getState(),
-        skills = gameState.systems.skills:getState(),  -- NEW: Save skill state
-        progression = gameState.systems.progression:getState(),  -- NEW: Save progression state
-        contracts = gameState.systems.contracts:getState(),  -- NEW: Save contract state
-        specialists = gameState.systems.specialists:getState(),  -- NEW: Save specialist state
-        upgrades = gameState.systems.upgrades:getState(),
-        threats = gameState.systems.threats:getState(),
-        idle = gameState.systems.idle and gameState.systems.idle:getState() or nil,  -- NEW: Save idle system state
-        zones = gameState.systems.zones:getState(),
-        locations = gameState.systems.locations:getState(),  -- NEW: Save location state
-        rooms = gameState.systems.rooms and gameState.systems.rooms:getState() or nil,  -- NEW: Save room state if exists
-        roomEvents = gameState.systems.roomEvents and gameState.systems.roomEvents:getState() or nil,  -- NEW: Save room events if exists
-        factions = gameState.systems.factions:getState(),
-        achievements = gameState.systems.achievements:getState(),
-        -- Include player state if initialized
-        playerState = (gameState.modes and gameState.modes.idle and gameState.modes.idle.player) and gameState.modes.idle.player:getState() or nil,
-        -- Tutorial state
+        resources = safeState(gameState.systems and gameState.systems.resources),
+        skills = safeState(gameState.systems and gameState.systems.skills),
+        progression = safeState(gameState.systems and gameState.systems.progression),
+        contracts = safeState(gameState.systems and gameState.systems.contracts),
+        specialists = safeState(gameState.systems and gameState.systems.specialists),
+        upgrades = safeState(gameState.systems and gameState.systems.upgrades),
+        threats = safeState(gameState.systems and gameState.systems.threats),
+        idle = safeState(gameState.systems and gameState.systems.idle),
+        zones = safeState(gameState.systems and gameState.systems.zones),
+        locations = safeState(gameState.systems and gameState.systems.locations),
+        rooms = safeState(gameState.systems and gameState.systems.rooms),
+        roomEvents = safeState(gameState.systems and gameState.systems.roomEvents),
+        factions = safeState(gameState.systems and gameState.systems.factions),
+        achievements = safeState(gameState.systems and gameState.systems.achievements),
+        sound = safeState(gameState.systems and gameState.systems.sound),
+        advancedAchievements = safeState(gameState.systems and gameState.systems.advancedAchievements),
+        playerState = safePlayerState(),
         tutorialSeen = gameState.tutorialSeen or false,
         version = "1.0.0",
         timestamp = os.time()
     }
-    
+
+    if not (gameState.systems and gameState.systems.save and type(gameState.systems.save.save) == "function") then
+        -- No save system available; log and return
+        if gameState.systems and gameState.systems.eventBus then
+            gameState.systems.eventBus:publish("ui.log", { text = "❌ Save system unavailable", severity = "error" })
+        else
+            print("❌ Save system unavailable")
+        end
+        return
+    end
+
     gameState.systems.save:save(saveData, function(success, result)
         if success then
-            -- Update idle system save timestamp
-            gameState.systems.idle:updateSaveTime()
-            print("💾 Game saved: " .. result)
+            if gameState.systems and gameState.systems.idle and type(gameState.systems.idle.updateSaveTime) == "function" then
+                pcall(function() gameState.systems.idle:updateSaveTime() end)
+            end
+            if gameState.systems and gameState.systems.eventBus then
+                gameState.systems.eventBus:publish("ui.log", { text = "💾 Game saved: " .. tostring(result), severity = "success" })
+                gameState.systems.eventBus:publish("ui.toast", { text = "Game saved", type = "success", duration = 2.5 })
+            else
+                print("💾 Game saved: " .. tostring(result))
+            end
         else
-            print("❌ Save failed: " .. result)
+            if gameState.systems and gameState.systems.eventBus then
+                gameState.systems.eventBus:publish("ui.log", { text = "❌ Save failed: " .. tostring(result), severity = "error" })
+                gameState.systems.eventBus:publish("ui.toast", { text = "Save failed", type = "error", duration = 3.0 })
+            else
+                print("❌ Save failed: " .. tostring(result))
+            end
         end
     end)
 end
