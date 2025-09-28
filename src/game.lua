@@ -23,17 +23,24 @@ local SoundSystem = require("src.systems.sound_system")  -- NEW: Advanced audio 
 local CrisisGameSystem = require("src.systems.crisis_game_system")  -- NEW: Interactive crisis mini-games
 local AdvancedAchievementSystem = require("src.systems.advanced_achievement_system")  -- NEW: Rich achievement system
 local ParticleSystem = require("src.systems.particle_system")  -- NEW: Visual effects system
-local EventBus = require("src.utils.event_bus")
+-- Import fortress core components for SOC integration
+local GameLoop = require("src.core.game_loop")
+local ResourceManager = require("src.core.resource_manager") 
+local SecurityUpgrades = require("src.core.security_upgrades")
+local ThreatSimulation = require("src.core.threat_simulation")
+local UIManager = require("src.core.ui_manager")  -- Fortress UI Manager
 
--- Import UI systems
-local UIManager = require("src.ui.ui_manager")
+-- Import UI systems (FORTRESS REFACTOR: Use fortress UIManager instead of legacy)
+-- REMOVED: local UIManager = require("src.ui.ui_manager") -- Legacy UI system causing conflicts
+-- USE FORTRESS INSTEAD: Import will happen through fortress integration
+local FortressUIAdapter = require("src.utils.fortress_ui_adapter")  -- SOC REFACTOR: Bridge to fortress UI
 local ContractModal = require("src.ui.contract_modal")  -- NEW: Contract detail modal
+
+local EventBus = require("src.utils.event_bus")
 
 -- Import game modes
 local IdleMode = require("src.modes.idle_mode")
 local AdminMode = require("src.modes.admin_mode")
-
--- Game state
 local gameState = {
     initialized = false,
     paused = false,
@@ -77,6 +84,19 @@ function Game.init()
     gameState.systems.eventBus = EventBus.new()
     -- Make gameState accessible to systems/modes for cross-cutting data (e.g., loaded player state)
     gameState.systems.gameState = gameState
+    
+    -- SOC REFACTOR: Initialize fortress core systems first for unified resource management
+    print("🏰 Initializing SOC Fortress Core...")
+    gameState.systems.resourceManager = ResourceManager.new(gameState.systems.eventBus)
+    gameState.systems.securityUpgrades = SecurityUpgrades.new(gameState.systems.eventBus, gameState.systems.resourceManager)  
+    gameState.systems.threatSimulation = ThreatSimulation.new(gameState.systems.eventBus, gameState.systems.resourceManager, gameState.systems.securityUpgrades)
+    
+    -- Initialize fortress core systems
+    gameState.systems.resourceManager:initialize()
+    gameState.systems.securityUpgrades:initialize()  
+    gameState.systems.threatSimulation:initialize()
+    
+    -- Legacy systems (now use fortress resource management)
     gameState.systems.resources = ResourceSystem.new(gameState.systems.eventBus)
     gameState.systems.skills = SkillSystem.new(gameState.systems.eventBus)  -- NEW: Skill system
     gameState.systems.progression = ProgressionSystem.new(gameState.systems.eventBus)  -- NEW: Progression system
@@ -114,18 +134,26 @@ function Game.init()
     gameState.systems.save:setUsername("player_" .. love.system.getOS() .. "_" .. os.time())
     gameState.systems.save:setSaveMode("local") -- Default to hybrid mode
     
-    -- Initialize UI (pass systems so UI can trigger saves / inspect game flags)
-    gameState.systems.ui = UIManager.new(gameState.systems)
+    -- SOC REFACTOR: UI system will be handled by fortress architecture
+    -- Create fortress UI manager and compatibility adapter
+    local fortressUIManager = UIManager.new(gameState.systems.eventBus, gameState.systems.resourceManager, 
+                                          gameState.systems.securityUpgrades, gameState.systems.threatSimulation, nil)
+    fortressUIManager:initialize()
+    
+    -- Create compatibility adapter for legacy UI calls
+    gameState.systems.ui = FortressUIAdapter.new(fortressUIManager)
+    gameState.systems.uiManager = fortressUIManager  -- Direct fortress access
+    
+    print("🏰 SOC Fortress UI System initialized")
     
     -- NEW: Initialize advanced UI components
     gameState.systems.contractModal = ContractModal.new(gameState.systems.eventBus)  -- Contract detail modal
     
     -- Subscribe to offline progress events
     gameState.systems.eventBus:subscribe("offline_progress_calculated", function(progress)
-        -- Show offline progress summary to player
-        gameState.systems.ui:showOfflineProgress(progress, function()
-            print("📊 Offline progress summary dismissed")
-        end)
+        -- SOC REFACTOR: Offline progress will be handled by fortress UI system
+        -- When fortress UI is available, it will display offline progress
+        print("📊 Offline progress: " .. (progress.netGain or 0) .. " money, " .. (progress.totalTime or 0) .. "s")
     end)
     
     -- Initialize game modes
