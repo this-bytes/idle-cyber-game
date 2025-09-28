@@ -253,6 +253,11 @@ function ResourceManager:getAllResources()
     return self.resources
 end
 
+-- Legacy compatibility - alias for getAllResources
+function ResourceManager:getResources()
+    return self.resources
+end
+
 -- Get resources by category
 function ResourceManager:getResourcesByCategory(category)
     local filtered = {}
@@ -388,7 +393,12 @@ end
 
 -- Initialize method for GameLoop integration
 function ResourceManager:initialize()
-    self.lastUpdateTime = love.timer and love.timer.getTime() or os.clock()
+    -- Use love.timer if available (in LÖVE environment), otherwise use os.clock
+    if love and love.timer then
+        self.lastUpdateTime = love.timer.getTime()
+    else
+        self.lastUpdateTime = os.clock()
+    end
     print("💰 ResourceManager: Fortress architecture integration complete")
 end
 
