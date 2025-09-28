@@ -77,7 +77,8 @@ if arg and arg[0] and arg[0]:match("test_runner%.lua$") then
     "tests/systems/test_fortress_architecture.lua",
     "tests/systems/test_stats_system.lua",
     "tests/systems/test_operations_upgrades.lua",
-    "tests/systems/test_idle_director.lua"
+    "tests/systems/test_idle_director.lua",
+    "tests/systems/test_ascii_art_system.lua"    -- NEW: ASCII art system tests
 
     }
     

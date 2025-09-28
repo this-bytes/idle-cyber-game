@@ -1,0 +1,286 @@
+{
+  "room_schemas": {
+    "personal_office": {
+      "title": "CEO's Strategic Command Center",
+      "elements": [
+        {
+          "id": "desk",
+          "type": "interactive_box",
+          "x": 0.05,
+          "y": 0.15,
+          "width": 15,
+          "height": 5,
+          "title": "📋 DESK",
+          "content": ["Executive workspace", "Strategic planning"],
+          "icon": "💼",
+          "action": "EXEC"
+        },
+        {
+          "id": "bookshelf",
+          "type": "interactive_box",
+          "x": 0.65,
+          "y": 0.15,
+          "width": 12,
+          "height": 4,
+          "title": "📚 LIBRARY",
+          "content": ["Technical resources", "Research materials"],
+          "icon": "📚",
+          "action": "RESEARCH"
+        },
+        {
+          "id": "phone",
+          "type": "interactive_box",
+          "x": 0.05,
+          "y": 0.65,
+          "width": 10,
+          "height": 3,
+          "title": "📞 COMMS",
+          "content": ["Client contact", "Secure channels"],
+          "icon": "📞",
+          "action": "CLIENTS"
+        },
+        {
+          "id": "monitor_wall",
+          "type": "interactive_box",
+          "x": 0.35,
+          "y": 0.05,
+          "width": 18,
+          "height": 6,
+          "title": "🖥️  THREAT INTEL",
+          "content": ["Live threat feeds", "Security monitoring"],
+          "icon": "🖥️",
+          "action": "THREAT_INTEL"
+        }
+      ]
+    },
+    "main_office_floor": {
+      "title": "Main Operations Floor",
+      "elements": [
+        {
+          "id": "analyst_station",
+          "type": "interactive_box",
+          "x": 0.1,
+          "y": 0.2,
+          "width": 14,
+          "height": 4,
+          "title": "🔍 ANALYST",
+          "content": ["Security analysis", "Incident response"],
+          "icon": "🔍",
+          "action": "ANALYZE"
+        },
+        {
+          "id": "server_cluster",
+          "type": "interactive_box",
+          "x": 0.45,
+          "y": 0.15,
+          "width": 16,
+          "height": 5,
+          "title": "🖥️  SERVERS",
+          "content": ["Processing power", "Data storage"],
+          "icon": "🖥️",
+          "action": "COMPUTE"
+        },
+        {
+          "id": "network_ops",
+          "type": "interactive_box",
+          "x": 0.75,
+          "y": 0.2,
+          "width": 13,
+          "height": 4,
+          "title": "🌐 NETOPS",
+          "content": ["Network monitoring", "Infrastructure"],
+          "icon": "🌐",
+          "action": "NETWORK"
+        },
+        {
+          "id": "meeting_area",
+          "type": "interactive_box",
+          "x": 0.2,
+          "y": 0.7,
+          "width": 20,
+          "height": 4,
+          "title": "🤝 COLLABORATION",
+          "content": ["Team meetings", "Strategy sessions"],
+          "icon": "🤝",
+          "action": "COLLABORATE"
+        }
+      ]
+    },
+    "hr_office": {
+      "title": "Human Resources Department",
+      "elements": [
+        {
+          "id": "hr_desk",
+          "type": "interactive_box",
+          "x": 0.1,
+          "y": 0.3,
+          "width": 12,
+          "height": 4,
+          "title": "👥 HR DESK",
+          "content": ["Staff management", "Recruitment"],
+          "icon": "👥",
+          "action": "HIRE"
+        },
+        {
+          "id": "interview_room",
+          "type": "interactive_box",
+          "x": 0.6,
+          "y": 0.2,
+          "width": 14,
+          "height": 5,
+          "title": "🎯 INTERVIEWS",
+          "content": ["Candidate screening", "Skill assessment"],
+          "icon": "🎯",
+          "action": "INTERVIEW"
+        },
+        {
+          "id": "training_corner",
+          "type": "interactive_box",
+          "x": 0.3,
+          "y": 0.65,
+          "width": 16,
+          "height": 4,
+          "title": "📖 TRAINING",
+          "content": ["Staff development", "Certification"],
+          "icon": "📖",
+          "action": "TRAIN"
+        }
+      ]
+    },
+    "kitchen_break_room": {
+      "title": "Kitchen & Break Room",
+      "elements": [
+        {
+          "id": "coffee_station",
+          "type": "interactive_box",
+          "x": 0.05,
+          "y": 0.2,
+          "width": 10,
+          "height": 4,
+          "title": "☕ COFFEE",
+          "content": ["Energy boost", "Team morale"],
+          "icon": "☕",
+          "action": "ENERGIZE"
+        },
+        {
+          "id": "lunch_table",
+          "type": "interactive_box",
+          "x": 0.4,
+          "y": 0.3,
+          "width": 18,
+          "height": 6,
+          "title": "🍽️  DINING",
+          "content": ["Team bonding", "Relaxation"],
+          "icon": "🍽️",
+          "action": "SOCIALIZE"
+        },
+        {
+          "id": "game_corner",
+          "type": "interactive_box",
+          "x": 0.7,
+          "y": 0.15,
+          "width": 12,
+          "height": 4,
+          "title": "🎮 GAMES",
+          "content": ["Stress relief", "Team building"],
+          "icon": "🎮",
+          "action": "RELAX"
+        }
+      ]
+    },
+    "server_room": {
+      "title": "Critical Infrastructure Center",
+      "elements": [
+        {
+          "id": "server_rack_a",
+          "type": "interactive_box",
+          "x": 0.1,
+          "y": 0.2,
+          "width": 8,
+          "height": 8,
+          "title": "🔥 RACK-A",
+          "content": ["Primary servers", "Core services"],
+          "icon": "🔥",
+          "action": "MAINTAIN"
+        },
+        {
+          "id": "server_rack_b",
+          "type": "interactive_box",
+          "x": 0.4,
+          "y": 0.2,
+          "width": 8,
+          "height": 8,
+          "title": "⚡ RACK-B",
+          "content": ["Backup systems", "Redundancy"],
+          "icon": "⚡",
+          "action": "BACKUP"
+        },
+        {
+          "id": "monitoring_station",
+          "type": "interactive_box",
+          "x": 0.7,
+          "y": 0.15,
+          "width": 14,
+          "height": 5,
+          "title": "📊 MONITORING",
+          "content": ["System health", "Performance"],
+          "icon": "📊",
+          "action": "MONITOR"
+        },
+        {
+          "id": "cooling_system",
+          "type": "interactive_box",
+          "x": 0.05,
+          "y": 0.75,
+          "width": 20,
+          "height": 3,
+          "title": "❄️  COOLING",
+          "content": ["Temperature control", "Climate systems"],
+          "icon": "❄️",
+          "action": "COOL"
+        }
+      ]
+    },
+    "conference_room": {
+      "title": "Executive Conference Center",
+      "elements": [
+        {
+          "id": "conference_table",
+          "type": "interactive_box",
+          "x": 0.2,
+          "y": 0.3,
+          "width": 24,
+          "height": 8,
+          "title": "🏛️  CONFERENCE TABLE",
+          "content": ["Executive meetings", "Strategic planning"],
+          "icon": "🏛️",
+          "action": "STRATEGIZE"
+        },
+        {
+          "id": "presentation_screen",
+          "type": "interactive_box",
+          "x": 0.1,
+          "y": 0.05,
+          "width": 30,
+          "height": 4,
+          "title": "📺 PRESENTATION",
+          "content": ["Client presentations", "Data visualization"],
+          "icon": "📺",
+          "action": "PRESENT"
+        },
+        {
+          "id": "video_conference",
+          "type": "interactive_box",
+          "x": 0.75,
+          "y": 0.15,
+          "width": 12,
+          "height": 4,
+          "title": "📹 VIDEO LINK",
+          "content": ["Remote meetings", "Global teams"],
+          "icon": "📹",
+          "action": "CONNECT"
+        }
+      ]
+    }
+  }
+}
