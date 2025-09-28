@@ -1,0 +1,506 @@
+/**
+ * JSON Form Editor Styles - Cybersecurity Theme
+ * Part of Cyberspace Tycoon Backend Admin Tools
+ */
+
+.json-form-editor.cyber {
+    background: linear-gradient(135deg, #0a0f1c 0%, #1a1f3a 100%);
+    color: #e6f3ff;
+    font-family: 'Segoe UI', 'Roboto', sans-serif;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    overflow: hidden;
+}
+
+/* Editor Header */
+.editor-header {
+    background: linear-gradient(90deg, #0d1421 0%, #1a2332 100%);
+    border-bottom: 2px solid #2c3e50;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.editor-title h3 {
+    margin: 0;
+    color: #3498db;
+    font-size: 1.4em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.editor-status {
+    font-size: 0.9em;
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-top: 5px;
+    background: rgba(52, 152, 219, 0.1);
+    border: 1px solid #3498db;
+}
+
+.editor-status.success {
+    background: rgba(46, 204, 113, 0.1);
+    border-color: #2ecc71;
+    color: #2ecc71;
+}
+
+.editor-status.error {
+    background: rgba(231, 76, 60, 0.1);
+    border-color: #e74c3c;
+    color: #e74c3c;
+}
+
+.editor-status.warning {
+    background: rgba(241, 196, 15, 0.1);
+    border-color: #f1c40f;
+    color: #f1c40f;
+}
+
+.editor-status.info {
+    background: rgba(52, 152, 219, 0.1);
+    border-color: #3498db;
+    color: #3498db;
+}
+
+.editor-controls {
+    display: flex;
+    gap: 10px;
+}
+
+/* Buttons */
+.btn {
+    background: linear-gradient(45deg, #3498db, #2980b9);
+    border: none;
+    border-radius: 6px;
+    color: white;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn:hover {
+    background: linear-gradient(45deg, #2980b9, #21618c);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+.btn-secondary {
+    background: linear-gradient(45deg, #95a5a6, #7f8c8d);
+}
+
+.btn-secondary:hover {
+    background: linear-gradient(45deg, #7f8c8d, #6c7b7d);
+}
+
+.btn-success {
+    background: linear-gradient(45deg, #2ecc71, #27ae60);
+}
+
+.btn-success:hover {
+    background: linear-gradient(45deg, #27ae60, #229954);
+}
+
+.btn-sm {
+    padding: 4px 8px;
+    font-size: 0.8em;
+}
+
+.btn-icon {
+    background: transparent;
+    border: 1px solid #34495e;
+    border-radius: 4px;
+    color: #8fbcdb;
+    padding: 4px 6px;
+    cursor: pointer;
+    font-size: 0.8em;
+    transition: all 0.2s ease;
+}
+
+.btn-icon:hover {
+    background: rgba(52, 152, 219, 0.1);
+    border-color: #3498db;
+    color: #3498db;
+}
+
+/* Editor Body */
+.editor-body {
+    min-height: 500px;
+    position: relative;
+}
+
+.form-panel, .raw-json-panel {
+    padding: 20px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    color: #8fbcdb;
+}
+
+/* Cyber Loader Animation */
+.cyber-loader {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(52, 152, 219, 0.1);
+    border-top: 3px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 15px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Form Fields */
+.form-group {
+    margin-bottom: 20px;
+    border: 1px solid rgba(52, 73, 94, 0.3);
+    border-radius: 8px;
+    padding: 15px;
+    background: rgba(26, 31, 58, 0.5);
+    transition: all 0.3s ease;
+}
+
+.form-group:hover {
+    border-color: rgba(52, 152, 219, 0.5);
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.1);
+}
+
+.field-label {
+    display: block;
+    font-weight: 600;
+    color: #3498db;
+    margin-bottom: 12px;
+    font-size: 1.1em;
+}
+
+.form-field {
+    margin-bottom: 15px;
+    padding: 10px;
+    border: 1px solid rgba(52, 73, 94, 0.2);
+    border-radius: 6px;
+    background: rgba(34, 49, 63, 0.3);
+}
+
+.field-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.field-name {
+    font-weight: 500;
+    color: #8fbcdb;
+    font-size: 0.95em;
+}
+
+.field-controls {
+    display: flex;
+    gap: 4px;
+}
+
+/* Object Fields */
+.object-container {
+    margin-left: 15px;
+    border-left: 2px solid rgba(52, 152, 219, 0.3);
+    padding-left: 15px;
+}
+
+/* Array Fields */
+.array-container {
+    margin-left: 15px;
+}
+
+.array-item {
+    background: rgba(44, 62, 80, 0.3);
+    border: 1px solid rgba(52, 152, 219, 0.2);
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 10px;
+    position: relative;
+}
+
+.item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(52, 152, 219, 0.2);
+}
+
+.item-index {
+    background: linear-gradient(45deg, #34495e, #2c3e50);
+    color: #ecf0f1;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    font-weight: 600;
+}
+
+.item-controls {
+    display: flex;
+    gap: 4px;
+}
+
+/* Input Fields */
+.form-input, .form-select, .form-textarea {
+    width: 100%;
+    background: rgba(26, 31, 58, 0.8);
+    border: 1px solid #34495e;
+    border-radius: 4px;
+    color: #e6f3ff;
+    padding: 8px 12px;
+    font-size: 0.9em;
+    transition: all 0.3s ease;
+}
+
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 8px rgba(52, 152, 219, 0.3);
+    background: rgba(26, 31, 58, 1);
+}
+
+.number-input {
+    width: auto;
+    min-width: 100px;
+}
+
+.text-input {
+    font-family: monospace;
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 60px;
+    font-family: 'Courier New', monospace;
+}
+
+/* Checkbox */
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.form-checkbox {
+    width: auto !important;
+    accent-color: #3498db;
+}
+
+.checkbox-label {
+    font-size: 0.9em;
+    color: #8fbcdb;
+}
+
+/* Add Field/Item Buttons */
+.add-field-container, .add-item-container {
+    margin-top: 15px;
+    text-align: center;
+    border-top: 1px dashed rgba(52, 152, 219, 0.3);
+    padding-top: 15px;
+}
+
+.add-field-btn, .add-item-btn {
+    background: rgba(52, 152, 219, 0.1);
+    border: 1px dashed #3498db;
+    color: #3498db;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.add-field-btn:hover, .add-item-btn:hover {
+    background: rgba(52, 152, 219, 0.2);
+    transform: translateY(-1px);
+}
+
+/* Raw JSON Panel */
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(52, 152, 219, 0.3);
+}
+
+.panel-header h4 {
+    margin: 0;
+    color: #3498db;
+}
+
+.json-textarea {
+    width: 100%;
+    height: 400px;
+    background: rgba(26, 31, 58, 0.8);
+    border: 1px solid #34495e;
+    border-radius: 6px;
+    color: #e6f3ff;
+    padding: 15px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    resize: vertical;
+    line-height: 1.4;
+}
+
+.json-textarea:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 12px rgba(52, 152, 219, 0.3);
+}
+
+.json-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    justify-content: center;
+}
+
+/* Editor Footer */
+.editor-footer {
+    background: rgba(26, 31, 58, 0.3);
+    border-top: 1px solid rgba(52, 152, 219, 0.3);
+    padding: 15px 20px;
+}
+
+/* Validation Panel */
+.validation-panel {
+    min-height: 40px;
+}
+
+.validation-success {
+    background: rgba(46, 204, 113, 0.1);
+    border: 1px solid #2ecc71;
+    color: #2ecc71;
+    padding: 10px 15px;
+    border-radius: 6px;
+    text-align: center;
+}
+
+.validation-errors {
+    background: rgba(231, 76, 60, 0.1);
+    border: 1px solid #e74c3c;
+    color: #e74c3c;
+    padding: 15px;
+    border-radius: 6px;
+}
+
+.validation-errors h4 {
+    margin: 0 0 10px 0;
+    color: #e74c3c;
+}
+
+.validation-errors ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.validation-errors li {
+    margin-bottom: 5px;
+    font-size: 0.9em;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .editor-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: stretch;
+    }
+    
+    .editor-controls {
+        justify-content: center;
+    }
+    
+    .form-panel, .raw-json-panel {
+        padding: 15px;
+    }
+    
+    .object-container {
+        margin-left: 10px;
+        padding-left: 10px;
+    }
+    
+    .array-container {
+        margin-left: 10px;
+    }
+    
+    .field-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .json-actions {
+        flex-direction: column;
+    }
+}
+
+/* Animation Enhancements */
+.form-group {
+    animation: slideInUp 0.3s ease-out;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Syntax Highlighting for JSON (basic) */
+.json-textarea {
+    /* This would be enhanced with a proper syntax highlighter */
+    font-feature-settings: "liga" 0;
+    tab-size: 2;
+}
+
+/* Custom Scrollbar */
+.form-panel::-webkit-scrollbar,
+.raw-json-panel::-webkit-scrollbar,
+.json-textarea::-webkit-scrollbar {
+    width: 8px;
+}
+
+.form-panel::-webkit-scrollbar-track,
+.raw-json-panel::-webkit-scrollbar-track,
+.json-textarea::-webkit-scrollbar-track {
+    background: rgba(26, 31, 58, 0.3);
+    border-radius: 4px;
+}
+
+.form-panel::-webkit-scrollbar-thumb,
+.raw-json-panel::-webkit-scrollbar-thumb,
+.json-textarea::-webkit-scrollbar-thumb {
+    background: rgba(52, 152, 219, 0.5);
+    border-radius: 4px;
+}
+
+.form-panel::-webkit-scrollbar-thumb:hover,
+.raw-json-panel::-webkit-scrollbar-thumb:hover,
+.json-textarea::-webkit-scrollbar-thumb:hover {
+    background: rgba(52, 152, 219, 0.8);
+}
