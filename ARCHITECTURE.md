@@ -1,5 +1,45 @@
 # Technical Architecture Documentation
 
+## ECS Architecture Overview
+
+**Cyber Empire Command** now implements a comprehensive Entity-Component-System (ECS) architecture as the foundation for scalable, modular game development. The ECS framework provides clean separation of data and logic while maintaining full backward compatibility with existing fortress and legacy systems.
+
+### ECS Core Framework (`src/ecs/`)
+
+**Entity Manager** (`entity.lua`): Lightweight entity ID allocation with efficient recycling
+**Component Registry** (`component.lua`): Pure data storage with powerful query system  
+**System Base Class** (`system.lua`): Standard lifecycle for all game logic processors
+**World Coordinator** (`world.lua`): Central ECS management with system orchestration
+
+### Key ECS Benefits
+- **Modularity**: Systems operate independently with event-driven communication
+- **Performance**: Efficient iteration and low overhead, ready for concurrency
+- **Flexibility**: Dynamic entity composition during runtime
+- **Testability**: Clean separation enables comprehensive unit testing (64 tests passing)
+
+### ECS Integration Examples
+```lua
+-- Create ECS world with systems
+local world = World.new(eventBus)
+world:registerComponent("position")
+world:registerComponent("threat")
+world:registerSystem(ThreatSystem.new(world, eventBus), 1)
+
+-- Create threat entity with components  
+local threatEntity = world:createEntity()
+world:addComponent(threatEntity, "position", {x = 100, y = 50})
+world:addComponent(threatEntity, "threat", {type = "malware", severity = 3})
+```
+
+### Rules Engine Interfaces (`src/rules/`)
+- **CostCalculator**: Configurable cost calculation with scaling and modifiers
+- **EligibilityChecker**: Purchase/unlock validation with complex requirements  
+- **EffectApplicator**: Immediate and persistent effect application system
+
+**See** `docs/ECS_ARCHITECTURE.md` for comprehensive ECS documentation and `examples/ecs_demo.lua` for working demonstrations.
+
+---
+
 ## Fortress Architecture Overview
 
 This document describes the comprehensive technical architecture of **Cyber Empire Command**, featuring the modern fortress architecture alongside the legacy location system with JSON-driven mechanics.
