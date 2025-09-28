@@ -62,13 +62,13 @@ end
 -- Set up global love table for testing
 function testEnv.setup()
     if not love then
-        _G.love = {
-            timer = mockTimer,
-            graphics = mockGraphics,
-            keyboard = mockKeyboard,
-            filesystem = mockFilesystem
-        }
+        _G.love = {}
     end
+
+    love.timer = love.timer or mockTimer
+    love.graphics = love.graphics or mockGraphics
+    love.keyboard = love.keyboard or mockKeyboard
+    love.filesystem = love.filesystem or mockFilesystem
 end
 
 -- Clean up test environment

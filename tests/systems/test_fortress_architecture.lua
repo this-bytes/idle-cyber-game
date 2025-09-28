@@ -12,7 +12,11 @@ local function runFortressTests()
     local GameLoop = require("src.core.game_loop")
     local ResourceManager = require("src.core.resource_manager")
     local SecurityUpgrades = require("src.core.security_upgrades")
+    local StatsSystem = require("src.core.stats_system")
+    local OperationsUpgrades = require("src.core.operations_upgrades")
     local ThreatSimulation = require("src.core.threat_simulation")
+    local IdleDirector = require("src.core.idle_director")
+    local TelemetryHub = require("src.core.telemetry_hub")
     local UIManager = require("src.core.ui_manager")
     local EventBus = require("src.utils.event_bus")
     
@@ -118,9 +122,10 @@ local function runFortressTests()
     runTest("SecurityUpgrades: Purchase system and effects", function()
         local eventBus = EventBus.new()
         local resourceManager = ResourceManager.new(eventBus)
-        local securityUpgrades = SecurityUpgrades.new(eventBus, resourceManager)
-        
+        local statsSystem = StatsSystem.new(eventBus)
         resourceManager:initialize()
+        statsSystem:initialize()
+        local securityUpgrades = SecurityUpgrades.new(eventBus, resourceManager, statsSystem)
         securityUpgrades:initialize()
         
         -- Ensure we have enough money
@@ -150,11 +155,13 @@ local function runFortressTests()
     runTest("ThreatSimulation: Threat generation and mitigation", function()
         local eventBus = EventBus.new()
         local resourceManager = ResourceManager.new(eventBus)
-        local securityUpgrades = SecurityUpgrades.new(eventBus, resourceManager)
-        local threatSim = ThreatSimulation.new(eventBus, resourceManager, securityUpgrades)
-        
+        local statsSystem = StatsSystem.new(eventBus)
         resourceManager:initialize()
+        statsSystem:initialize()
+        local securityUpgrades = SecurityUpgrades.new(eventBus, resourceManager, statsSystem)
         securityUpgrades:initialize()
+        local threatSim = ThreatSimulation.new(eventBus, resourceManager, securityUpgrades, statsSystem)
+        
         threatSim:initialize()
         
         -- Force generate a threat for testing
@@ -175,11 +182,17 @@ local function runFortressTests()
     -- Test 5: UIManager state management and notifications
     runTest("UIManager: State management and notifications", function()
         local eventBus = EventBus.new()
-        local resourceManager = ResourceManager.new(eventBus)
-        local securityUpgrades = SecurityUpgrades.new(eventBus, resourceManager)
-        local threatSim = ThreatSimulation.new(eventBus, resourceManager, securityUpgrades)
+    local resourceManager = ResourceManager.new(eventBus)
+    local statsSystem = StatsSystem.new(eventBus)
+    resourceManager:initialize()
+    statsSystem:initialize()
+    local securityUpgrades = SecurityUpgrades.new(eventBus, resourceManager, statsSystem)
+    securityUpgrades:initialize()
+    local threatSim = ThreatSimulation.new(eventBus, resourceManager, securityUpgrades, statsSystem)
         local gameLoop = GameLoop.new(eventBus)
-        local uiManager = UIManager.new(eventBus, resourceManager, securityUpgrades, threatSim, gameLoop)
+    local operationsUpgrades = OperationsUpgrades.new(eventBus, resourceManager, statsSystem)
+    operationsUpgrades:initialize()
+    local uiManager = UIManager.new(eventBus, resourceManager, securityUpgrades, threatSim, gameLoop, statsSystem, operationsUpgrades)
         
         uiManager:initialize()
         
@@ -193,8 +206,9 @@ local function runFortressTests()
         assert(#uiManager.notifications == 1, "Should have 1 notification")
         
         -- Test panel toggling
-        uiManager:togglePanel("stats")  -- Use lowercase to match panelVisibility keys
-        assert(uiManager.panelVisibility.stats == true, "Stats panel should be visible")
+    local initialVisibility = uiManager.panelVisibility.stats
+    uiManager:togglePanel("stats")  -- Use lowercase to match panelVisibility keys
+    assert(uiManager.panelVisibility.stats == (not initialVisibility), "Stats panel toggle should invert visibility")
         
         -- Test update (should not crash)
         uiManager:update(0.016)
@@ -207,15 +221,29 @@ local function runFortressTests()
         
         -- Create all systems
         local resourceManager = ResourceManager.new(eventBus)
-        local securityUpgrades = SecurityUpgrades.new(eventBus, resourceManager)
-        local threatSim = ThreatSimulation.new(eventBus, resourceManager, securityUpgrades)
-        local uiManager = UIManager.new(eventBus, resourceManager, securityUpgrades, threatSim, gameLoop)
+    local statsSystem = StatsSystem.new(eventBus)
+    statsSystem:initialize()
+    local securityUpgrades = SecurityUpgrades.new(eventBus, resourceManager, statsSystem)
+    securityUpgrades:initialize()
+    local operationsUpgrades = OperationsUpgrades.new(eventBus, resourceManager, statsSystem)
+    operationsUpgrades:initialize()
+    local idleDirector = IdleDirector.new(eventBus, resourceManager, statsSystem)
+    idleDirector:initialize()
+    local threatSim = ThreatSimulation.new(eventBus, resourceManager, securityUpgrades, statsSystem)
+    threatSim:initialize()
+    local telemetryHub = TelemetryHub.new(eventBus, gameLoop)
+    telemetryHub:initialize()
+    local uiManager = UIManager.new(eventBus, resourceManager, securityUpgrades, threatSim, gameLoop, statsSystem, operationsUpgrades)
         
         -- Register systems with proper priority order
-        gameLoop:registerSystem("resourceManager", resourceManager, 10)
-        gameLoop:registerSystem("securityUpgrades", securityUpgrades, 20)
-        gameLoop:registerSystem("threatSimulation", threatSim, 30)
-        gameLoop:registerSystem("uiManager", uiManager, 90)
+    gameLoop:registerSystem("resourceManager", resourceManager, 10)
+    gameLoop:registerSystem("statsSystem", statsSystem, 15)
+    gameLoop:registerSystem("securityUpgrades", securityUpgrades, 20)
+    gameLoop:registerSystem("operationsUpgrades", operationsUpgrades, 25)
+    gameLoop:registerSystem("threatSimulation", threatSim, 30)
+    gameLoop:registerSystem("idleDirector", idleDirector, 40)
+    gameLoop:registerSystem("telemetryHub", telemetryHub, 85)
+    gameLoop:registerSystem("uiManager", uiManager, 90)
         
         -- Initialize everything
         gameLoop:initialize()
@@ -225,9 +253,13 @@ local function runFortressTests()
         
         -- Verify systems are accessible
         assert(gameLoop:getSystem("resourceManager") == resourceManager, "ResourceManager should be accessible")
-        assert(gameLoop:getSystem("securityUpgrades") == securityUpgrades, "SecurityUpgrades should be accessible")
-        assert(gameLoop:getSystem("threatSimulation") == threatSim, "ThreatSimulation should be accessible")
-        assert(gameLoop:getSystem("uiManager") == uiManager, "UIManager should be accessible")
+    assert(gameLoop:getSystem("statsSystem") == statsSystem, "StatsSystem should be accessible")
+    assert(gameLoop:getSystem("securityUpgrades") == securityUpgrades, "SecurityUpgrades should be accessible")
+    assert(gameLoop:getSystem("operationsUpgrades") == operationsUpgrades, "OperationsUpgrades should be accessible")
+    assert(gameLoop:getSystem("threatSimulation") == threatSim, "ThreatSimulation should be accessible")
+    assert(gameLoop:getSystem("idleDirector") == idleDirector, "IdleDirector should be accessible")
+    assert(gameLoop:getSystem("telemetryHub") == telemetryHub, "TelemetryHub should be accessible")
+    assert(gameLoop:getSystem("uiManager") == uiManager, "UIManager should be accessible")
         
         -- Test performance metrics
         local metrics = gameLoop:getPerformanceMetrics()
@@ -254,7 +286,7 @@ local function runFortressTests()
     -- Clean up test environment  
     testEnv.cleanup()
     
-    return tests, passed, failed
+    return passed, failed, tests
 end
 
 return runFortressTests

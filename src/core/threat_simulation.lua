@@ -26,13 +26,14 @@ local THREAT_SEVERITY = {
 }
 
 -- Create new threat simulation system
-function ThreatSimulation.new(eventBus, resourceManager, securityUpgrades)
+function ThreatSimulation.new(eventBus, resourceManager, securityUpgrades, statsSystem)
     local self = setmetatable({}, ThreatSimulation)
     
     -- Core dependencies
     self.eventBus = eventBus
     self.resourceManager = resourceManager
     self.securityUpgrades = securityUpgrades
+    self.statsSystem = statsSystem
     
     -- Threat tracking
     self.activeThreats = {}
@@ -162,7 +163,13 @@ function ThreatSimulation:update(dt)
     
     -- Check for new threats based on frequency
     local timeSinceLastThreat = currentTime - self.lastThreatTime
-    local avgThreatInterval = 60 / self.threatFrequency -- Convert per-minute to seconds
+    local detectionBoost = 1
+    if self.statsSystem then
+        local derived = self.statsSystem:getDerived()
+        detectionBoost = 1 + (derived.detectionEfficiency or 0)
+    end
+    local adjustedFrequency = self.threatFrequency * detectionBoost
+    local avgThreatInterval = 60 / adjustedFrequency -- Convert per-minute to seconds
     
     if timeSinceLastThreat >= avgThreatInterval then
         -- Random chance to spawn threat (makes timing less predictable)
@@ -286,6 +293,10 @@ end
 -- Calculate defense effectiveness against a threat
 function ThreatSimulation:calculateDefenseEffectiveness(threat)
     local baseDefense = 0.1 -- 10% base defense
+    if self.statsSystem then
+        local derived = self.statsSystem:getDerived()
+        baseDefense = baseDefense + (derived.defenseEfficiency or 0) * 0.4
+    end
     local upgradeDefense = 0
     
     -- Check security upgrades
@@ -303,7 +314,12 @@ function ThreatSimulation:calculateDefenseEffectiveness(threat)
     end
     
     -- Calculate final effectiveness (diminishing returns)
-    local totalDefense = baseDefense + upgradeDefense
+    local offenseAssist = 0
+    if self.statsSystem then
+        local derived = self.statsSystem:getDerived()
+        offenseAssist = (derived.offenseEfficiency or 0) * 0.2
+    end
+    local totalDefense = baseDefense + upgradeDefense + offenseAssist
     local effectiveness = 1 - math.exp(-totalDefense * 2) -- Exponential curve for diminishing returns
     
     return math.min(effectiveness, 0.98) -- Cap at 98% (never perfect defense)

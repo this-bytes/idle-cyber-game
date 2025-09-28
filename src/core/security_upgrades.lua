@@ -15,12 +15,13 @@ local UPGRADE_CATEGORIES = {
 }
 
 -- Create new security upgrades system
-function SecurityUpgrades.new(eventBus, resourceManager)
+function SecurityUpgrades.new(eventBus, resourceManager, statsSystem)
     local self = setmetatable({}, SecurityUpgrades)
     
     -- Core dependencies
     self.eventBus = eventBus
     self.resourceManager = resourceManager
+    self.statsSystem = statsSystem
     
     -- Upgrade tracking
     self.owned = {}
@@ -44,7 +45,11 @@ function SecurityUpgrades:initializeUpgrades()
         baseCost = {money = 500},
         effects = {
             threatReduction = 0.1,
-            moneyGeneration = 2 -- Clients pay more for better security
+            moneyGeneration = 2,
+            stats = {
+                defense = { flat = 5 },
+                detection = { multiplier = 0.02 }
+            }
         },
         unlockRequirements = {}
     })
@@ -58,7 +63,12 @@ function SecurityUpgrades:initializeUpgrades()
         baseCost = {money = 2500, reputation = 10},
         effects = {
             threatReduction = 0.25,
-            moneyGeneration = 5
+            moneyGeneration = 5,
+            stats = {
+                defense = { flat = 10, multiplier = 0.05 },
+                detection = { multiplier = 0.05 }
+            },
+            caps = { defense = 600 }
         },
         unlockRequirements = {
             upgrades = {"basicFirewall"}
@@ -74,7 +84,11 @@ function SecurityUpgrades:initializeUpgrades()
         baseCost = {money = 1500, xp = 50},
         effects = {
             threatReduction = 0.15,
-            reputationGeneration = 1
+            reputationGeneration = 1,
+            stats = {
+                detection = { flat = 6, multiplier = 0.04 },
+                analysis = { multiplier = 0.03 }
+            }
         },
         unlockRequirements = {
             upgrades = {"basicFirewall"}
@@ -91,7 +105,10 @@ function SecurityUpgrades:initializeUpgrades()
         baseCost = {money = 800},
         effects = {
             contractEfficiency = 0.2,
-            xpGeneration = 1
+            xpGeneration = 1,
+            stats = {
+                analysis = { flat = 4 }
+            }
         },
         unlockRequirements = {}
     })
@@ -106,7 +123,11 @@ function SecurityUpgrades:initializeUpgrades()
         effects = {
             threatReduction = 0.3,
             contractEfficiency = 0.4,
-            moneyGeneration = 8
+            moneyGeneration = 8,
+            stats = {
+                detection = { flat = 12, multiplier = 0.06 },
+                analysis = { multiplier = 0.05 }
+            }
         },
         unlockRequirements = {
             upgrades = {"vulnerabilityScanner", "intrusionDetection"}
@@ -123,7 +144,12 @@ function SecurityUpgrades:initializeUpgrades()
         effects = {
             threatReduction = 0.5,
             contractEfficiency = 0.6,
-            moneyGeneration = 15
+            moneyGeneration = 15,
+            stats = {
+                detection = { multiplier = 0.1 },
+                analysis = { multiplier = 0.08 }
+            },
+            caps = { detection = 650, analysis = 650 }
         },
         unlockRequirements = {
             upgrades = {"siem"}
@@ -141,7 +167,11 @@ function SecurityUpgrades:initializeUpgrades()
         costGrowth = 1.5,
         effects = {
             threatReduction = 0.05,
-            xpGeneration = 0.5
+            xpGeneration = 0.5,
+            stats = {
+                analysis = { flat = 2 },
+                defense = { multiplier = 0.01 }
+            }
         },
         unlockRequirements = {}
     })
@@ -157,7 +187,11 @@ function SecurityUpgrades:initializeUpgrades()
         effects = {
             contractEfficiency = 0.3,
             moneyGeneration = 4,
-            threatReduction = 0.1
+            threatReduction = 0.1,
+            stats = {
+                offense = { flat = 5 },
+                analysis = { multiplier = 0.03 }
+            }
         },
         unlockRequirements = {
             upgrades = {"securityTraining"}
@@ -175,7 +209,12 @@ function SecurityUpgrades:initializeUpgrades()
         effects = {
             threatReduction = 0.35,
             reputationGeneration = 2,
-            contractEfficiency = 0.25
+            contractEfficiency = 0.25,
+            stats = {
+                detection = { flat = 10 },
+                analysis = { multiplier = 0.07 }
+            },
+            caps = { analysis = 600 }
         },
         unlockRequirements = {
             upgrades = {"seniorAnalyst"}
@@ -196,7 +235,11 @@ function SecurityUpgrades:initializeUpgrades()
                 specialists = 5
             },
             moneyGeneration = 10,
-            threatReduction = 0.2
+            threatReduction = 0.2,
+            stats = {
+                defense = { flat = 8, multiplier = 0.05 }
+            },
+            caps = { defense = 700, offense = 550 }
         },
         unlockRequirements = {
             upgrades = {"threatIntelligence"}
@@ -335,6 +378,17 @@ function SecurityUpgrades:applyUpgradeEffects(upgradeId, effects)
                     value = {[resource] = amount}
                 })
             end
+        elseif effectType == "stats" then
+            if self.statsSystem then
+                self.eventBus:publish("apply_stat_modifier", {
+                    sourceId = "security_upgrade:" .. upgradeId .. ":" .. self.owned[upgradeId],
+                    payload = value
+                })
+            end
+        elseif effectType == "caps" then
+            for stat, cap in pairs(value) do
+                self.eventBus:publish("set_stat_cap", { stat = stat, cap = cap })
+            end
         end
     end
 end
@@ -410,20 +464,8 @@ function SecurityUpgrades:loadState(state)
     
     if state.owned then
         self.owned = state.owned
-        
-        -- Re-apply all upgrade effects
-        for upgradeId, count in pairs(self.owned) do
-            if count > 0 then
-                local upgrade = self.upgradeDefinitions[upgradeId]
-                if upgrade and upgrade.effects then
-                    for i = 1, count do
-                        self:applyUpgradeEffects(upgradeId, upgrade.effects)
-                    end
-                end
-            end
-        end
     end
-    
+
     print("🛡️ SecurityUpgrades: State loaded successfully")
 end
 

@@ -8,8 +8,12 @@ FortressGame.__index = FortressGame
 -- Import fortress core components
 local GameLoop = require("src.core.game_loop")
 local ResourceManager = require("src.core.resource_manager")
+local StatsSystem = require("src.core.stats_system")
 local SecurityUpgrades = require("src.core.security_upgrades")
+local OperationsUpgrades = require("src.core.operations_upgrades")
 local ThreatSimulation = require("src.core.threat_simulation")
+local IdleDirector = require("src.core.idle_director")
+local TelemetryHub = require("src.core.telemetry_hub")
 local UIManager = require("src.core.ui_manager")
 local EventBus = require("src.utils.event_bus")
 
@@ -90,14 +94,30 @@ function FortressGame:initializeFortressSystems()
     
     -- Create fortress systems
     self.systems.resourceManager = ResourceManager.new(self.eventBus)
-    self.systems.securityUpgrades = SecurityUpgrades.new(self.eventBus, self.systems.resourceManager)
-    self.systems.threatSimulation = ThreatSimulation.new(self.eventBus, self.systems.resourceManager, self.systems.securityUpgrades)
-    self.systems.uiManager = UIManager.new(self.eventBus, self.systems.resourceManager, self.systems.securityUpgrades, self.systems.threatSimulation, self.gameLoop)
+    self.systems.statsSystem = StatsSystem.new(self.eventBus)
+    self.systems.securityUpgrades = SecurityUpgrades.new(self.eventBus, self.systems.resourceManager, self.systems.statsSystem)
+    self.systems.operationsUpgrades = OperationsUpgrades.new(self.eventBus, self.systems.resourceManager, self.systems.statsSystem)
+    self.systems.threatSimulation = ThreatSimulation.new(self.eventBus, self.systems.resourceManager, self.systems.securityUpgrades, self.systems.statsSystem)
+    self.systems.idleDirector = IdleDirector.new(self.eventBus, self.systems.resourceManager, self.systems.statsSystem)
+    self.systems.telemetryHub = TelemetryHub.new(self.eventBus, self.gameLoop)
+    self.systems.uiManager = UIManager.new(
+        self.eventBus,
+        self.systems.resourceManager,
+        self.systems.securityUpgrades,
+        self.systems.threatSimulation,
+        self.gameLoop,
+        self.systems.statsSystem,
+        self.systems.operationsUpgrades
+    )
     
     -- Register with game loop in priority order
     self.gameLoop:registerSystem("resourceManager", self.systems.resourceManager, 10)
+    self.gameLoop:registerSystem("statsSystem", self.systems.statsSystem, 15)
     self.gameLoop:registerSystem("securityUpgrades", self.systems.securityUpgrades, 20)
+    self.gameLoop:registerSystem("operationsUpgrades", self.systems.operationsUpgrades, 25)
     self.gameLoop:registerSystem("threatSimulation", self.systems.threatSimulation, 30)
+    self.gameLoop:registerSystem("idleDirector", self.systems.idleDirector, 40)
+    self.gameLoop:registerSystem("telemetryHub", self.systems.telemetryHub, 85)
     self.gameLoop:registerSystem("uiManager", self.systems.uiManager, 90)
     
     print("🔧 Fortress Core Systems registered with GameLoop")
@@ -120,14 +140,14 @@ function FortressGame:initializeLegacySystems()
     self.systems.idle = IdleSystem.new(self.eventBus, self.systems.resourceManager, self.systems.threatSimulation, self.systems.securityUpgrades)
     
     -- Register legacy systems with game loop
-    self.gameLoop:registerSystem("skills", self.systems.skills, 40)
-    self.gameLoop:registerSystem("progression", self.systems.progression, 45)
-    self.gameLoop:registerSystem("locations", self.systems.locations, 50)
-    self.gameLoop:registerSystem("contracts", self.systems.contracts, 55)
-    self.gameLoop:registerSystem("specialists", self.systems.specialists, 60)
-    self.gameLoop:registerSystem("idle", self.systems.idle, 65)
-    self.gameLoop:registerSystem("factions", self.systems.factions, 70)
-    self.gameLoop:registerSystem("achievements", self.systems.achievements, 75)
+    self.gameLoop:registerSystem("skills", self.systems.skills, 50)
+    self.gameLoop:registerSystem("progression", self.systems.progression, 55)
+    self.gameLoop:registerSystem("locations", self.systems.locations, 60)
+    self.gameLoop:registerSystem("contracts", self.systems.contracts, 65)
+    self.gameLoop:registerSystem("specialists", self.systems.specialists, 70)
+    self.gameLoop:registerSystem("idle", self.systems.idle, 75)
+    self.gameLoop:registerSystem("factions", self.systems.factions, 80)
+    self.gameLoop:registerSystem("achievements", self.systems.achievements, 82)
     
     print("🔗 Legacy Systems integrated with Fortress Architecture")
 end
@@ -154,7 +174,7 @@ function FortressGame:setupSystemIntegrations()
     
     -- Contract system integration with fortress ResourceManager
     self.eventBus:subscribe("contract_completed", function(data)
-        -- This will be handled by ResourceManager automatically via the event
+        -- ResourceManager handles rewards
         print("💼 Contract completed through fortress integration")
     end)
     
@@ -171,6 +191,18 @@ function FortressGame:setupSystemIntegrations()
     -- Achievement integration
     self.eventBus:subscribe("achievement_unlocked", function(data)
         self.systems.uiManager:showNotification("🏆 Achievement: " .. (data.name or "Unknown"), "success")
+    end)
+
+    self.eventBus:subscribe("offline_progress_complete", function(data)
+        if data and self.systems.uiManager then
+            local hours = (data.secondsSimulated or 0) / 3600
+            local income = data.income or 0
+            self.systems.uiManager:showNotification(
+                string.format("🕒 Offline returns: %.1fh | $%.0f", hours, income),
+                "success",
+                5
+            )
+        end
     end)
     
     print("🔄 System integrations complete")
@@ -359,10 +391,37 @@ function FortressGame:load(saveData)
     end
     
     -- Load system states
+    local function loadSystem(name)
+        if not saveData.systems then return end
+        local system = self.systems[name]
+        local systemData = saveData.systems[name]
+        if system and system.loadState and systemData then
+            system:loadState(systemData)
+        end
+    end
+
+    loadSystem("resourceManager")
+    loadSystem("statsSystem")
+    loadSystem("securityUpgrades")
+    loadSystem("operationsUpgrades")
+    loadSystem("threatSimulation")
+    loadSystem("idleDirector")
+    loadSystem("telemetryHub")
+    loadSystem("uiManager")
+
     if saveData.systems then
         for name, systemData in pairs(saveData.systems) do
             local system = self.systems[name]
-            if system and system.loadState then
+            if system and system.loadState and not (
+                name == "resourceManager" or
+                name == "statsSystem" or
+                name == "securityUpgrades" or
+                name == "operationsUpgrades" or
+                name == "threatSimulation" or
+                name == "idleDirector" or
+                name == "telemetryHub" or
+                name == "uiManager"
+            ) then
                 system:loadState(systemData)
             end
         end

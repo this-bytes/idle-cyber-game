@@ -82,18 +82,6 @@ love .
 ./dev.sh
 ```
 
-### Project Structure
-```
-src/            # Main game source code
-  systems/      # Core game systems (resources, contracts, etc.)
-  modes/        # Game modes (idle, admin watch)
-  ui/           # User interface components
-  data/         # Game data files (JSON)
-tests/          # Test suite
-  systems/      # System-specific tests
-assets/         # Game assets (art, audio, etc.)
-tools/          # Development and utility scripts
-```
 
 ### Best Practices for Development
 - **Always run tests** before committing changes: `lua tests/test_runner.lua`

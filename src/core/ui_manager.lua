@@ -25,7 +25,7 @@ local UI_PANELS = {
 }
 
 -- Create new UI manager
-function UIManager.new(eventBus, resourceManager, securityUpgrades, threatSimulation, gameLoop)
+function UIManager.new(eventBus, resourceManager, securityUpgrades, threatSimulation, gameLoop, statsSystem, operationsUpgrades)
     local self = setmetatable({}, UIManager)
     
     -- Core dependencies
@@ -34,6 +34,8 @@ function UIManager.new(eventBus, resourceManager, securityUpgrades, threatSimula
     self.securityUpgrades = securityUpgrades
     self.threatSimulation = threatSimulation
     self.gameLoop = gameLoop
+    self.statsSystem = statsSystem
+    self.operationsUpgrades = operationsUpgrades
     
     -- UI State
     self.currentState = UI_STATES.LOADING
@@ -80,7 +82,7 @@ function UIManager:initializePanels()
         [UI_PANELS.THREATS] = false, -- Hidden until threats appear
         [UI_PANELS.UPGRADES] = false, -- Hidden until upgrades available
         [UI_PANELS.CONTRACTS] = false, -- Hidden until contracts available  
-        [UI_PANELS.STATS] = false,   -- Hidden by default
+    [UI_PANELS.STATS] = true,
         [UI_PANELS.NOTIFICATIONS] = true
     }
     
@@ -107,7 +109,8 @@ function UIManager:initializePanels()
         },
         [UI_PANELS.STATS] = {
             performance = {},
-            statistics = {}
+            socStats = {},
+            derived = {}
         },
         [UI_PANELS.NOTIFICATIONS] = {
             messages = self.notifications
@@ -152,6 +155,17 @@ function UIManager:subscribeToEvents()
         end
         self.panelVisibility[UI_PANELS.UPGRADES] = true
     end)
+
+    self.eventBus:subscribe("operations_upgrade_purchased", function(data)
+        self:updateUpgradeDisplay()
+        if data and data.upgradeId and self.operationsUpgrades then
+            local def = self.operationsUpgrades.definitions[data.upgradeId]
+            if def then
+                self:showNotification("🏗️ Operations Upgrade: " .. def.name, "success")
+            end
+        end
+        self.panelVisibility[UI_PANELS.UPGRADES] = true
+    end)
     
     -- Contract events
     self.eventBus:subscribe("contract_accepted", function(data)
@@ -167,6 +181,10 @@ function UIManager:subscribeToEvents()
         else
             self.currentState = UI_STATES.GAME
         end
+    end)
+
+    self.eventBus:subscribe("stats_changed", function(data)
+        self:updateStatsDisplay(data)
     end)
 end
 
@@ -208,6 +226,10 @@ function UIManager:updateUpgradeDisplay()
         categories[category][upgradeId] = data
     end
     self.panelData[UI_PANELS.UPGRADES].categories = categories
+
+    if self.operationsUpgrades then
+        self.panelData[UI_PANELS.UPGRADES].operations = self.operationsUpgrades:getAvailable()
+    end
 end
 
 -- Update contract display
@@ -215,6 +237,22 @@ function UIManager:updateContractDisplay()
     -- Placeholder for contract system integration
     if not self.panelData[UI_PANELS.CONTRACTS] then
         self.panelData[UI_PANELS.CONTRACTS] = {availableContracts = {}, activeContracts = {}}
+    end
+end
+
+-- Update stats display
+function UIManager:updateStatsDisplay(data)
+    if not self.panelData[UI_PANELS.STATS] then
+        self.panelData[UI_PANELS.STATS] = {performance = {}, socStats = {}, derived = {}}
+    end
+
+    if data and data.stats then
+        self.panelData[UI_PANELS.STATS].socStats = data.stats
+        self.panelData[UI_PANELS.STATS].derived = data.derived or {}
+    elseif self.statsSystem then
+        local snapshot = self.statsSystem:getSnapshot()
+        self.panelData[UI_PANELS.STATS].socStats = snapshot.effective or {}
+        self.panelData[UI_PANELS.STATS].derived = snapshot.derived or {}
     end
 end
 
@@ -246,6 +284,10 @@ function UIManager:update(dt)
     -- Update performance stats
     if self.gameLoop then
         self.panelData[UI_PANELS.STATS].performance = self.gameLoop:getPerformanceMetrics()
+    end
+
+    if self.statsSystem then
+        self:updateStatsDisplay()
     end
     
     -- Update threat panel data if visible
@@ -486,12 +528,22 @@ function UIManager:drawUpgradePanel()
     
     -- Available upgrades count
     love.graphics.setColor(self.colors.text)
-    local availableCount = 0
+    local securityCount = 0
     for _ in pairs(self.panelData[UI_PANELS.UPGRADES].availableUpgrades) do
-        availableCount = availableCount + 1
+        securityCount = securityCount + 1
+    end
+
+    local operationsCount = 0
+    if self.panelData[UI_PANELS.UPGRADES].operations then
+        for _, info in pairs(self.panelData[UI_PANELS.UPGRADES].operations) do
+            if info.canPurchase then
+                operationsCount = operationsCount + 1
+            end
+        end
     end
     
-    love.graphics.print("Available: " .. availableCount, x + self.padding, y + self.padding + 25)
+    love.graphics.print("Security: " .. securityCount, x + self.padding, y + self.padding + 25)
+    love.graphics.print("Operations: " .. operationsCount, x + self.padding, y + self.padding + 45)
 end
 
 -- Draw statistics panel
@@ -510,16 +562,29 @@ function UIManager:drawStatsPanel()
     love.graphics.setColor(self.colors.accent)
     love.graphics.print("📊 Performance", x + self.padding, y + self.padding)
     
-    -- Performance metrics
     love.graphics.setColor(self.colors.text)
-    local perf = self.panelData[UI_PANELS.STATS].performance
-    if perf then
-        love.graphics.print("FPS: " .. (perf.fps or 0), x + self.padding, y + self.padding + 25)
-        love.graphics.print("Update: " .. string.format("%.2fms", (perf.updateTime or 0) * 1000), 
-                           x + self.padding, y + self.padding + 45)
-        love.graphics.print("Time Scale: " .. string.format("%.1fx", perf.timeScale or 1.0), 
-                           x + self.padding, y + self.padding + 65)
+    local statsPanel = self.panelData[UI_PANELS.STATS]
+    local perf = statsPanel.performance or {}
+    local socStats = statsPanel.socStats or {}
+    local derived = statsPanel.derived or {}
+
+    love.graphics.print("FPS: " .. (perf.fps or 0), x + self.padding, y + self.padding + 25)
+    love.graphics.print("Update: " .. string.format("%.2fms", (perf.updateTime or 0) * 1000),
+                       x + self.padding, y + self.padding + 45)
+    love.graphics.print("Time Scale: " .. string.format("%.1fx", perf.timeScale or 1.0),
+                       x + self.padding, y + self.padding + 65)
+
+    local statX = x + width / 2
+    local line = 0
+    for _, statName in ipairs({"offense", "defense", "detection", "analysis"}) do
+        local value = socStats[statName] or 0
+        local label = statName:gsub("^%l", string.upper)
+        love.graphics.print(label .. ": " .. string.format("%.0f", value), statX, y + self.padding + 25 + line * 18)
+        line = line + 1
     end
+
+    love.graphics.setColor(self.colors.accent)
+    love.graphics.print("SOC Rating: " .. string.format("%.0f", derived.socRating or 0), statX, y + self.padding + 25 + line * 18)
 end
 
 -- Draw notifications
@@ -624,8 +689,14 @@ end
 -- Initialize method for GameLoop integration  
 function UIManager:initialize()
     self.currentState = UI_STATES.SPLASH
-    self.screenWidth = love.graphics.getWidth()
-    self.screenHeight = love.graphics.getHeight()
+    if love and love.graphics and love.graphics.getWidth then
+        self.screenWidth = love.graphics.getWidth()
+        self.screenHeight = love.graphics.getHeight()
+    else
+        -- Fallback dimensions for headless testing environments
+        self.screenWidth = self.screenWidth or 1024
+        self.screenHeight = self.screenHeight or 768
+    end
     print("🖥️ UIManager: Fortress architecture integration complete")
 end
 

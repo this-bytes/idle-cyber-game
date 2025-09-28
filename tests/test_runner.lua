@@ -72,8 +72,12 @@ if arg and arg[0] and arg[0]:match("test_runner%.lua$") then
         "tests/systems/test_contract_system.lua", 
         "tests/systems/test_specialist_system.lua",
         "tests/systems/test_location_system.lua",     -- NEW: Location system tests
-        "tests/systems/test_progression_system.lua", -- NEW: Progression system tests
-        "tests/systems/test_idle_system.lua"         -- NEW: Idle system tests from main
+    "tests/systems/test_progression_system.lua", -- NEW: Progression system tests
+    "tests/systems/test_idle_system.lua",        -- NEW: Idle system tests from main
+    "tests/systems/test_fortress_architecture.lua",
+    "tests/systems/test_stats_system.lua",
+    "tests/systems/test_operations_upgrades.lua",
+    "tests/systems/test_idle_director.lua"
 
     }
     
@@ -86,15 +90,21 @@ if arg and arg[0] and arg[0]:match("test_runner%.lua$") then
             -- Load the test module
             local test_module = dofile(file)
             
-            -- Run tests if the module has a test runner function
-            if test_module and type(test_module) == "table" then
-                for func_name, func in pairs(test_module) do
-                    if type(func) == "function" and func_name:match("^run_.*_tests$") then
-                        print("\n🧪 Running " .. func_name:gsub("run_", ""):gsub("_tests", "") .. " tests...")
-                        local passed, failed = func()
-                        total_passed = total_passed + passed
-                        total_failed = total_failed + failed
+            if test_module then
+                if type(test_module) == "table" then
+                    for func_name, func in pairs(test_module) do
+                        if type(func) == "function" and func_name:match("^run_.*_tests$") then
+                            print("\n🧪 Running " .. func_name:gsub("run_", ""):gsub("_tests", "") .. " tests...")
+                            local passed, failed = func()
+                            total_passed = total_passed + passed
+                            total_failed = total_failed + failed
+                        end
                     end
+                elseif type(test_module) == "function" then
+                    print("\n🧪 Running fortress architecture tests...")
+                    local passed, failed = test_module()
+                    total_passed = total_passed + passed
+                    total_failed = total_failed + failed
                 end
             end
         else
