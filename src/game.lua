@@ -30,10 +30,12 @@ local SoundSystem = require("src.systems.sound_system")
 local CrisisGameSystem = require("src.systems.crisis_game_system")
 local AdvancedAchievementSystem = require("src.systems.advanced_achievement_system")
 local ParticleSystem = require("src.systems.particle_system")
+local BuffSystem = require("src.systems.buff_system")
 
 -- Fortress UI components
 local FortressUIAdapter = require("src.utils.fortress_ui_adapter")  -- SOC compatibility bridge
 local ContractModal = require("src.ui.contract_modal")
+local BuffDisplay = require("src.ui.buff_display")
 
 -- Import game modes
 local IdleMode = require("src.modes.idle_mode")
@@ -109,6 +111,7 @@ function Game.init()
     gameState.systems.crisisGame = CrisisGameSystem.new(gameState.systems.eventBus)
     gameState.systems.advancedAchievements = AdvancedAchievementSystem.new(gameState.systems.eventBus)
     gameState.systems.particles = ParticleSystem.new(gameState.systems.eventBus)
+    gameState.systems.buffs = BuffSystem.new(gameState.systems.eventBus, gameState.systems.resourceManager) -- NEW: Buff system
     gameState.systems.specialists:setSkillSystem(gameState.systems.skills)
     gameState.systems.zones = ZoneSystem.new(gameState.systems.eventBus)
     gameState.systems.locations = LocationSystem.new(gameState.systems.eventBus)
@@ -148,6 +151,7 @@ function Game.init()
     
     -- NEW: Initialize advanced UI components
     gameState.systems.contractModal = ContractModal.new(gameState.systems.eventBus)  -- Contract detail modal
+    gameState.systems.buffDisplay = BuffDisplay.new(gameState.systems.buffs)  -- NEW: Buff display UI
     
     -- Subscribe to offline progress events
     gameState.systems.eventBus:subscribe("offline_progress_calculated", function(progress)
@@ -257,6 +261,7 @@ function Game.loadGameState(data)
     -- NEW: Load advanced system states (safe)
     tryLoad("sound", gameState.systems.sound, data.sound or {})
     tryLoad("advancedAchievements", gameState.systems.advancedAchievements, data.advancedAchievements or {})
+    tryLoad("buffs", gameState.systems.buffs, data.buffs or {})  -- NEW: Load buff system state
     
     -- Store loaded player state for the IdleMode to apply when it initializes
     if data.playerState then
@@ -370,6 +375,11 @@ function Game.draw()
     -- Draw particle effects (on top of everything else)
     if gameState.systems and gameState.systems.particles then
         gameState.systems.particles:draw()
+    end
+    
+    -- Draw buff display (on top of everything else)
+    if gameState.systems and gameState.systems.buffDisplay then
+        gameState.systems.buffDisplay:draw()
     end
     
     -- Debug information
@@ -509,6 +519,11 @@ function Game.keypressed(key)
             return -- Input was consumed by modal
         end
         
+        -- Check if buff display handles the input
+        if gameState.systems.buffDisplay and gameState.systems.buffDisplay:keypressed(key) then
+            return -- Input was consumed by buff display
+        end
+        
         -- Check if crisis game handles the input
         if gameState.systems.crisisGame and gameState.systems.crisisGame:keypressed(key) then
             return -- Input was consumed by crisis game
@@ -548,6 +563,11 @@ function Game.mousepressed(x, y, button)
     -- Check new system modals first (highest priority)
     if gameState.systems.contractModal and gameState.systems.contractModal:mousepressed(x, y, button) then
         return -- Input consumed by contract modal
+    end
+    
+    -- Check if buff display handles the input
+    if gameState.systems.buffDisplay and gameState.systems.buffDisplay:mousepressed(x, y, button) then
+        return -- Input consumed by buff display
     end
     
     if gameState.systems.crisisGame and gameState.systems.crisisGame:mousepressed(x, y, button) then
@@ -605,6 +625,7 @@ function Game.save()
         achievements = safeState(gameState.systems and gameState.systems.achievements),
         sound = safeState(gameState.systems and gameState.systems.sound),
         advancedAchievements = safeState(gameState.systems and gameState.systems.advancedAchievements),
+        buffs = safeState(gameState.systems and gameState.systems.buffs),  -- NEW: Save buff system state
         -- Include player state if initialized
         playerState = (gameState.modes and gameState.modes.idle and gameState.modes.idle.player) and gameState.modes.idle.player:getState() or nil,
         -- Tutorial state
