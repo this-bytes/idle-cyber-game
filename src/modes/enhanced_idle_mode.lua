@@ -1,6 +1,8 @@
 -- Enhanced Idle Mode
 -- Main game mode with hierarchical location system integration
 
+local Notifier = require("src.utils.notifier")
+
 local EnhancedIdleMode = {}
 EnhancedIdleMode.__index = EnhancedIdleMode
 
@@ -36,20 +38,20 @@ function EnhancedIdleMode:enter()
         
         -- Subscribe to location changes
         self.systems.eventBus:subscribe("location_changed", function(data)
-            print("🏠 Location changed: " .. data.newBuilding .. "/" .. data.newFloor .. "/" .. data.newRoom)
+            Notifier.notify(self.systems.eventBus, self.systems.ui, "🏠 Location changed: " .. data.newBuilding .. "/" .. data.newFloor .. "/" .. data.newRoom, "info")
         end)
         
         -- Subscribe to tier promotions
         if self.systems.progression then
             self.systems.eventBus:subscribe("tier_promoted", function(data)
-                print("🎉 Congratulations! Promoted to " .. data.tierData.name)
+                Notifier.notify(self.systems.eventBus, self.systems.ui, "🎉 Congratulations! Promoted to " .. data.tierData.name, "success")
             end)
         end
         
         -- Subscribe to achievement unlocks
         if self.systems.progression then
             self.systems.eventBus:subscribe("achievement_unlocked", function(data)
-                print("🏆 Achievement: " .. data.achievement.name)
+                Notifier.notify(self.systems.eventBus, self.systems.ui, "🏆 Achievement: " .. data.achievement.name, "success")
             end)
         end
     end
@@ -63,7 +65,7 @@ end
 -- Handle player interactions with departments and locations
 function EnhancedIdleMode:handlePlayerInteraction(data)
     if data.type == "department" then
-        print("🤝 Interacted with " .. data.name)
+        Notifier.notify(self.systems.eventBus, self.systems.ui, "🤝 Interacted with " .. data.name, "info")
         
         -- Department-specific interactions
         if data.department == "training" then
@@ -91,7 +93,7 @@ function EnhancedIdleMode:handleTrainingInteraction(data)
     self.systems.resourceManager:addResource("xp", experience) -- Changed from experience to xp
     self.systems.resourceManager:addResource("focus", 20)
     
-    print("📚 Training completed! +" .. experience .. " XP, +20 Focus")
+    Notifier.notify(self.systems.eventBus, self.systems.ui, "📚 Training completed! +" .. experience .. " XP, +20 Focus", "success")
 end
 
 function EnhancedIdleMode:handleResearchInteraction(data)
@@ -102,7 +104,7 @@ function EnhancedIdleMode:handleResearchInteraction(data)
     
     -- SOC REFACTOR: Use fortress resource manager  
     self.systems.resourceManager:addResource("reputation", reputation)
-    print("🔬 Research completed! +" .. reputation .. " Reputation")
+    Notifier.notify(self.systems.eventBus, self.systems.ui, "🔬 Research completed! +" .. reputation .. " Reputation", "success")
 end
 
 function EnhancedIdleMode:handleHRInteraction(data)
@@ -110,7 +112,7 @@ function EnhancedIdleMode:handleHRInteraction(data)
     if self.systems.specialists then
         self.systems.specialists:improveTeamMorale(10)
     end
-    print("👥 HR interaction: Team morale improved!")
+    Notifier.notify(self.systems.eventBus, self.systems.ui, "👥 HR interaction: Team morale improved!", "success")
 end
 
 function EnhancedIdleMode:handleContractsInteraction(data)
@@ -118,11 +120,11 @@ function EnhancedIdleMode:handleContractsInteraction(data)
     local contracts = self.systems.contracts:getAvailableContracts()
     local locationBonuses = self.player:getState().locationBonuses
     
-    print("📋 Available contracts: " .. #contracts .. " (Location bonuses active)")
+    Notifier.notify(self.systems.eventBus, self.systems.ui, "📋 Available contracts: " .. #contracts .. " (Location bonuses active)", "info")
     for i, contract in ipairs(contracts) do
         if i <= 3 then -- Show first 3
             local bonus = locationBonuses.contract_success or 1.0
-            print("  " .. contract.title .. " (Success +" .. string.format("%.0f%%", (bonus-1)*100) .. ")")
+            Notifier.notify(self.systems.eventBus, self.systems.ui, "  " .. contract.title .. " (Success +" .. string.format("%.0f%%", (bonus-1)*100) .. ")", "info")
         end
     end
 end
@@ -135,7 +137,7 @@ function EnhancedIdleMode:handleDeskInteraction(data)
     self.systems.resources:addResource("money", moneyGain)
     self.systems.resources:addResource("energy", -10)
     
-    print("💼 Work session completed! +" .. moneyGain .. " Money, -10 Energy")
+    Notifier.notify(self.systems.eventBus, self.systems.ui, "💼 Work session completed! +" .. moneyGain .. " Money, -10 Energy", "success")
 end
 
 -- Update game state
@@ -156,9 +158,9 @@ function EnhancedIdleMode:keypressed(key)
         if self.player then
             local success, obj = self.player:interact()
             if success then
-                print("✅ Interaction with: " .. obj.name)
+                Notifier.notify(self.systems.eventBus, self.systems.ui, "✅ Interaction with: " .. obj.name, "success")
             else
-                print("❌ No interaction available")
+                Notifier.notify(self.systems.eventBus, self.systems.ui, "❌ No interaction available", "warning")
             end
         end
     elseif key == "tab" then
@@ -184,7 +186,7 @@ function EnhancedIdleMode:quickTravel(building, floor, room)
             room = room
         })
     else
-        print("❌ Invalid location: " .. building .. "/" .. floor .. "/" .. room)
+        Notifier.notify(self.systems.eventBus, self.systems.ui, "❌ Invalid location: " .. building .. "/" .. floor .. "/" .. room, "error")
     end
 end
 

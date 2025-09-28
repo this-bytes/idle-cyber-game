@@ -10,6 +10,7 @@ local UI_STATES = {
     LOADING = "loading",
     SPLASH = "splash", 
     GAME = "game",
+    DASHBOARD = "dashboard",
     PAUSED = "paused"
 }
 
@@ -61,6 +62,10 @@ function UIManager.new(eventBus, resourceManager, securityUpgrades, threatSimula
     -- Notification system
     self.notifications = {}
     self.nextNotificationId = 1
+
+    -- Selectable components registry
+    self.selectables = {}
+    self.focusIndex = 1
     
     -- Initialize panels
     self:initializePanels()
@@ -114,7 +119,11 @@ function UIManager:initializePanels()
         }
     }
     
-    print("🖥️ UIManager: Initialized cybersecurity-themed UI panels")
+    if self.eventBus and type(self.eventBus.publish) == "function" then
+        self.eventBus:publish("ui_initialized", {time = os.time()})
+    else
+        print("UIManager: Initialized cybersecurity-themed UI panels")
+    end
 end
 
 -- Subscribe to relevant events
@@ -167,6 +176,12 @@ function UIManager:subscribeToEvents()
         else
             self.currentState = UI_STATES.GAME
         end
+    end)
+    
+    -- Offline progress should show an away summary popout rather than printing
+    self.eventBus:subscribe("offline_progress_calculated", function(data)
+        -- data expected: {netGain = number, totalTime = seconds, details = {..}}
+        self:showAwaySummary(data)
     end)
 end
 
@@ -234,8 +249,54 @@ function UIManager:showNotification(message, type, duration)
     
     self.nextNotificationId = self.nextNotificationId + 1
     table.insert(self.notifications, notification)
-    
-    print("📢 UIManager: " .. message)
+
+    -- Publish notification event for other systems (e.g., sound)
+    if self.eventBus and type(self.eventBus.publish) == "function" then
+        self.eventBus:publish("ui_notification", notification)
+    end
+end
+
+-- Register a selectable component
+function UIManager:registerSelectable(selectable)
+    table.insert(self.selectables, selectable)
+    return #self.selectables
+end
+
+-- Clear selectables
+function UIManager:clearSelectables()
+    self.selectables = {}
+    self.focusIndex = 1
+end
+
+-- Focus management
+function UIManager:focusNext()
+    if #self.selectables == 0 then return end
+    self.selectables[self.focusIndex].focused = false
+    self.focusIndex = (self.focusIndex % #self.selectables) + 1
+    self.selectables[self.focusIndex].focused = true
+end
+
+function UIManager:focusPrevious()
+    if #self.selectables == 0 then return end
+    self.selectables[self.focusIndex].focused = false
+    self.focusIndex = ((self.focusIndex - 2) % #self.selectables) + 1
+    self.selectables[self.focusIndex].focused = true
+end
+
+function UIManager:activateFocused()
+    if #self.selectables == 0 then return end
+    local s = self.selectables[self.focusIndex]
+    if s and s.activate then s:activate() end
+end
+
+-- Away summary popout (shown when player returns)
+function UIManager:showAwaySummary(data)
+    self.panelData.awaySummary = data or {netGain = 0, totalTime = 0, details = {}}
+    -- Make sure dashboard is visible
+    self.panelVisibility[UI_PANELS.HUD] = true
+    -- Show a notification too
+    local minutes = math.floor((data and data.totalTime or 0) / 60)
+    self:showNotification("Welcome back! You earned " .. tostring(math.floor((data and data.netGain) or 0)) .. " while away (" .. minutes .. "m)", "success", 5.0)
 end
 
 -- Update UI system
@@ -286,10 +347,39 @@ function UIManager:draw()
         self:drawLoadingScreen()
     elseif self.currentState == UI_STATES.SPLASH then
         self:drawSplashScreen()
+    elseif self.currentState == UI_STATES.DASHBOARD then
+        self:drawDashboard()
     elseif self.currentState == UI_STATES.GAME or self.currentState == UI_STATES.PAUSED then
         self:drawGameUI()
         if self.currentState == UI_STATES.PAUSED then
             self:drawPauseOverlay()
+        end
+    end
+end
+
+-- Draw Dashboard (main screen) with away summary popout
+function UIManager:drawDashboard()
+    -- For now reuse drawGameUI layout but include an away summary if present
+    self:drawGameUI()
+    if self.panelData and self.panelData.awaySummary and self.panelData.awaySummary.totalTime and self.panelData.awaySummary.totalTime > 0 then
+        -- Draw a centered popout
+        local w, h = 480, 180
+        local x = (self.screenWidth - w) / 2
+        local y = (self.screenHeight - h) / 2
+        love.graphics.setColor(self.colors.panel)
+        love.graphics.rectangle("fill", x, y, w, h)
+        love.graphics.setColor(self.colors.border)
+        love.graphics.rectangle("line", x, y, w, h)
+        love.graphics.setColor(self.colors.accent)
+        love.graphics.print("Away Summary", x + self.padding, y + self.padding)
+        love.graphics.setColor(self.colors.text)
+        love.graphics.print("Time away: " .. tostring(math.floor(self.panelData.awaySummary.totalTime)) .. "s", x + self.padding, y + 40)
+        love.graphics.print("Net gain: " .. tostring(math.floor(self.panelData.awaySummary.netGain)), x + self.padding, y + 60)
+        local yOff = 90
+        for k, v in pairs(self.panelData.awaySummary.details or {}) do
+            love.graphics.print(k .. ": " .. tostring(v), x + self.padding, y + yOff)
+            yOff = yOff + 18
+            if yOff > h - 20 then break end
         end
     end
 end
@@ -569,7 +659,9 @@ end
 function UIManager:setState(state)
     if UI_STATES[state] then
         self.currentState = state
-        print("🖥️ UIManager: State changed to " .. state)
+        if self.eventBus and type(self.eventBus.publish) == "function" then
+            self.eventBus:publish("ui_state_changed", {state = state})
+        end
     end
 end
 
@@ -577,7 +669,9 @@ end
 function UIManager:togglePanel(panel)
     if self.panelVisibility[panel] ~= nil then
         self.panelVisibility[panel] = not self.panelVisibility[panel]
-        print("🖥️ UIManager: Toggled " .. panel .. " panel")
+        if self.eventBus and type(self.eventBus.publish) == "function" then
+            self.eventBus:publish("ui_panel_toggled", {panel = panel, visible = self.panelVisibility[panel]})
+        end
     end
 end
 
@@ -585,7 +679,9 @@ end
 function UIManager:resize(width, height)
     self.screenWidth = width
     self.screenHeight = height
-    print("🖥️ UIManager: Resized to " .. width .. "x" .. height)
+    if self.eventBus and type(self.eventBus.publish) == "function" then
+        self.eventBus:publish("ui_resized", {width = width, height = height})
+    end
 end
 
 -- Get comprehensive state
@@ -617,8 +713,9 @@ function UIManager:loadState(state)
     if state.nextNotificationId then
         self.nextNotificationId = state.nextNotificationId
     end
-    
-    print("🖥️ UIManager: State loaded successfully")
+    if self.eventBus and type(self.eventBus.publish) == "function" then
+        self.eventBus:publish("ui_state_loaded", {time = os.time()})
+    end
 end
 
 -- Initialize method for GameLoop integration  
@@ -626,12 +723,16 @@ function UIManager:initialize()
     self.currentState = UI_STATES.SPLASH
     self.screenWidth = love.graphics.getWidth()
     self.screenHeight = love.graphics.getHeight()
-    print("🖥️ UIManager: Fortress architecture integration complete")
+    if self.eventBus and type(self.eventBus.publish) == "function" then
+        self.eventBus:publish("ui_initialized_splash", {time = os.time()})
+    end
 end
 
 -- Shutdown method for GameLoop integration
 function UIManager:shutdown()
-    print("🖥️ UIManager: Shutdown complete")
+    if self.eventBus and type(self.eventBus.publish) == "function" then
+        self.eventBus:publish("ui_shutdown", {time = os.time()})
+    end
 end
 
 return UIManager

@@ -2,7 +2,45 @@
 -- Main entry point with proper modular architecture
 
 -- Import core game controller
-local Game = require("src.game")
+-- Prefer fortress_main (modern fortress architecture). Fall back to legacy src.game if not present.
+-- Prefer fortress core controller. Fall back to legacy src.game if not available.
+local Game
+local ok, FortressGame = pcall(require, "src.core.fortress_game")
+if ok and FortressGame then
+    -- Instantiate fortress controller and expose a Game-like API
+    local fortressInstance
+    Game = {}
+    function Game.init()
+        fortressInstance = FortressGame.new()
+        fortressInstance:initialize()
+    end
+    function Game.update(dt)
+        if fortressInstance then fortressInstance:update(dt) end
+    end
+    function Game.draw()
+        if fortressInstance then fortressInstance:draw() end
+    end
+    function Game.keypressed(key)
+        if fortressInstance then fortressInstance:keypressed(key) end
+    end
+    function Game.keyreleased(key)
+        if fortressInstance and fortressInstance.keyreleased then fortressInstance:keyreleased(key) end
+    end
+    function Game.mousepressed(x, y, button)
+        if fortressInstance then fortressInstance:mousepressed(x, y, button) end
+    end
+    function Game.resize(w, h)
+        if fortressInstance then fortressInstance:resize(w, h) end
+    end
+    function Game.save()
+        if fortressInstance then return fortressInstance:save() end
+    end
+    function Game.handleAutoSave(dt)
+        if fortressInstance and fortressInstance.handleAutoSave then fortressInstance:handleAutoSave(dt) end
+    end
+else
+    Game = require("src.game")
+end
 
 -- LÖVE 2D callback functions
 function love.load()

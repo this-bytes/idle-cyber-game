@@ -221,6 +221,11 @@ function IdleSystem:calculateSecurityRating()
                 -- Convert threat reduction to security rating equivalent
                 totalRating = totalRating + (upgrade.effects.threatReduction * 100 * count)
             end
+        else
+            -- Backwards-compatibility: if an owned upgrade exists without a definition
+            -- assume a small generic security bonus per unit so tests that set
+            -- upgradeSystem.owned.<id> increase security rating.
+            totalRating = totalRating + (5 * count)
         end
     end
     

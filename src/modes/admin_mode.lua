@@ -1,6 +1,8 @@
 -- Crisis Response Mode - Real-time Incident Management
 -- Real-time operations mode for handling security incidents
 
+local Notifier = require("src.utils.notifier")
+
 local AdminMode = {}
 AdminMode.__index = AdminMode
 
@@ -275,7 +277,7 @@ function AdminMode:startCrisis()
     self.crisisTimer = 0
     table.insert(self.responseLog, "🚨 CRISIS INITIATED: " .. self.currentCrisis.title)
     
-    print("🚨 Crisis started: " .. self.currentCrisis.title)
+    Notifier.notify(self.systems.eventBus, self.systems.ui, "🚨 Crisis started: " .. self.currentCrisis.title, "warning")
 end
 
 -- Handle crisis response
@@ -375,8 +377,8 @@ function AdminMode:resolveCrisis(outcome)
             amount = tokenGain
         })
         
-        print(string.format("✅ Crisis resolved! +$%d, +%d reputation, +%d tokens (%.0f%% efficiency)", 
-              moneyGain, reputationGain, tokenGain, timeBonus * 100))
+        Notifier.notify(self.systems.eventBus, self.systems.ui, string.format("✅ Crisis resolved! +$%d, +%d reputation, +%d tokens (%.0f%% efficiency)", 
+              moneyGain, reputationGain, tokenGain, timeBonus * 100), "success")
         
     elseif outcome == "timeout" then
         table.insert(self.responseLog, "❌ CRISIS TIMED OUT - REPUTATION DAMAGE")
@@ -388,7 +390,7 @@ function AdminMode:resolveCrisis(outcome)
             amount = -5
         })
         
-        print("❌ Crisis timed out! -5 reputation")
+        Notifier.notify(self.systems.eventBus, self.systems.ui, "❌ Crisis timed out! -5 reputation", "error")
     end
     
     self.currentCrisis = nil

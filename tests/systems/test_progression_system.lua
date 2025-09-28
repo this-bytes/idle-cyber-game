@@ -1,6 +1,6 @@
 -- Test Progression System
 local EventBus = require("src.utils.event_bus")
-local ResourceSystem = require("src.systems.resource_system")
+local ResourceSystem = require("src.core.resource_manager")
 local ProgressionSystem = require("src.systems.progression_system")
 
 local function test_progression_system_initialization()

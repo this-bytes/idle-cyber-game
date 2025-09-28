@@ -9,8 +9,8 @@ local GameLoop = require("src.core.game_loop")
 local ResourceManager = require("src.core.resource_manager") 
 local SecurityUpgrades = require("src.core.security_upgrades")
 local ThreatSimulation = require("src.core.threat_simulation")
-local UIManager = require("src.core.ui_manager")  -- Fortress UI Manager
-local SOCStats = require("src.core.soc_stats")  -- SOC Statistical backbone
+local UIManager = require("src.core.ui_manager")    -- Fortress UI Manager
+local SOCStats = require("src.core.soc_stats")      -- SOC Statistical backbone
 local EventBus = require("src.utils.event_bus")
 
 -- Essential legacy systems (not duplicated in fortress)
@@ -35,8 +35,13 @@ local ParticleSystem = require("src.systems.particle_system")
 local FortressUIAdapter = require("src.utils.fortress_ui_adapter")  -- SOC compatibility bridge
 local ContractModal = require("src.ui.contract_modal")
 
+-- Notification and logging utilities
+local Notifier = require("src.utils.notifier")
+local DebugLogger = require("src.utils.debug_logger")
+
 -- Import game modes
 local IdleMode = require("src.modes.idle_mode")
+local EnhancedIdleMode = require("src.modes.enhanced_idle_mode")
 local AdminMode = require("src.modes.admin_mode")
 local gameState = {
     initialized = false,
@@ -60,7 +65,7 @@ local gameState = {
 
 -- Initialize the game
 function Game.init()
-    print("🚀 Initializing Cyberspace Tycoon...")
+    DebugLogger.log("🚀 Initializing Cyberspace Tycoon...")
     -- Ensure placeholder assets exist so OfficeMap can load them
     local ok, placeholderWriter = pcall(require, "tools.write_placeholder_assets")
     if ok and placeholderWriter and love and love.filesystem then
@@ -70,10 +75,10 @@ function Game.init()
     -- Diagnostic: print whether common asset files are visible to love.filesystem
     if love and love.filesystem and love.filesystem.getInfo then
         local assets_to_check = { "assets/player.png", "assets/department.png", "assets/splash.jpeg", "assets/splash.png", "assets/office.png" }
-        print("🔎 Asset visibility check:")
+        DebugLogger.log("🔎 Asset visibility check:")
         for _, p in ipairs(assets_to_check) do
             local info = love.filesystem.getInfo(p)
-            print("   ", p, "->", info ~= nil and "FOUND" or "MISSING")
+            DebugLogger.log("   " .. p .. "->" .. (info ~= nil and "FOUND" or "MISSING"))
         end
     end
     
@@ -83,7 +88,7 @@ function Game.init()
     gameState.systems.gameState = gameState
     
     -- SOC REFACTOR: Initialize fortress core systems first for unified resource management
-    print("🏰 Initializing SOC Fortress Core...")
+    DebugLogger.log("🏰 Initializing SOC Fortress Core...")
     gameState.systems.resourceManager = ResourceManager.new(gameState.systems.eventBus)
     gameState.systems.securityUpgrades = SecurityUpgrades.new(gameState.systems.eventBus, gameState.systems.resourceManager)  
     gameState.systems.threatSimulation = ThreatSimulation.new(gameState.systems.eventBus, gameState.systems.resourceManager, gameState.systems.securityUpgrades)
@@ -131,7 +136,7 @@ function Game.init()
     
     -- Configure network save system
     gameState.systems.save:setUsername("player_" .. love.system.getOS() .. "_" .. os.time())
-    gameState.systems.save:setSaveMode("local") -- Default to hybrid mode
+    gameState.systems.save:setSaveMode("hybrid") -- Default to hybrid mode
     
     -- SOC REFACTOR: UI system will be handled by fortress architecture
     -- Create fortress UI manager and compatibility adapter
@@ -144,7 +149,7 @@ function Game.init()
     gameState.systems.uiManager = fortressUIManager  -- Direct fortress access
     gameState.systems.socStats = gameState.systems.socStats  -- Ensure SOC stats available
     
-    print("🏰 SOC Fortress UI System initialized")
+    DebugLogger.log("🏰 SOC Fortress UI System initialized")
     
     -- NEW: Initialize advanced UI components
     gameState.systems.contractModal = ContractModal.new(gameState.systems.eventBus)  -- Contract detail modal
@@ -153,7 +158,13 @@ function Game.init()
     gameState.systems.eventBus:subscribe("offline_progress_calculated", function(progress)
         -- SOC REFACTOR: Offline progress will be handled by fortress UI system
         -- When fortress UI is available, it will display offline progress
-        print("📊 Offline progress: " .. (progress.netGain or 0) .. " money, " .. (progress.totalTime or 0) .. "s")
+        if gameState.systems and gameState.systems.uiManager and gameState.systems.uiManager.showAwaySummary then
+            gameState.systems.uiManager:showAwaySummary(progress)
+        elseif gameState.systems and gameState.systems.eventBus and type(gameState.systems.eventBus.publish) == "function" then
+            gameState.systems.eventBus:publish("ui_notification", {message = "Offline progress: " .. (progress.netGain or 0), type = "info"})
+        else
+            Notifier.notify(gameState.systems.eventBus, gameState.systems.ui, "Offline progress: " .. (progress.netGain or 0) .. " money, " .. (progress.totalTime or 0) .. "s", "info")
+        end
     end)
     
     -- Initialize game modes
@@ -232,7 +243,7 @@ function Game.loadGameState(data)
             if gameState.systems and gameState.systems.ui and gameState.systems.ui.logDebug then
                 gameState.systems.ui:logDebug("⚠️  System '" .. systemName .. "' has no loadState/setState method to restore state")
             else
-                print("⚠️  System '" .. systemName .. "' has no loadState/setState method to restore state")
+                DebugLogger.log("⚠️  System '" .. systemName .. "' has no loadState/setState method to restore state")
             end
         end
     end
@@ -415,7 +426,7 @@ function Game.keypressed(key)
         if gameState.modes and gameState.modes.idle and gameState.modes.idle.enter then
             gameState.modes.idle:enter()
         end
-        print("🎬 Entering game: My Desk")
+        Notifier.notify(gameState.systems.eventBus, gameState.systems.ui, "🎬 Entering game: My Desk", "info")
         return
     end
 
@@ -429,7 +440,7 @@ function Game.keypressed(key)
         love.event.quit()
     elseif key == "p" then
         gameState.paused = not gameState.paused
-        print(gameState.paused and "⏸️  Game paused" or "▶️  Game resumed")
+        Notifier.notify(gameState.systems.eventBus, gameState.systems.ui, gameState.paused and "⏸️  Game paused" or "▶️  Game resumed", "info")
     elseif key == "d" then
         gameState.debugMode = not gameState.debugMode
     elseif key == "r" then
@@ -446,19 +457,19 @@ function Game.keypressed(key)
             local modc = require("src.data.contracts")
             ok2, r2 = pcall(function() return modc.reloadFromJSON() end)
         end
-        print("🔁 Data reload: defs=" .. tostring(ok1) .. ", contracts=" .. tostring(ok2))
+        DebugLogger.log("🔁 Data reload: defs=" .. tostring(ok1) .. ", contracts=" .. tostring(ok2))
     elseif key == "n" then
         -- Show network status
         local status = gameState.systems.save:getConnectionStatus()
-        print("🌐 Network Status:")
-        print("   Online: " .. (status.isOnline and "YES" or "NO"))
-        print("   Save Mode: " .. status.saveMode)
-        print("   Username: " .. status.username)
-        print("   Offline Mode: " .. (status.offlineMode and "YES" or "NO"))
+        DebugLogger.log("🌐 Network Status:")
+        DebugLogger.log("   Online: " .. (status.isOnline and "YES" or "NO"))
+        DebugLogger.log("   Save Mode: " .. status.saveMode)
+        DebugLogger.log("   Username: " .. status.username)
+        DebugLogger.log("   Offline Mode: " .. (status.offlineMode and "YES" or "NO"))
     elseif key == "a" then
         -- Toggle between idle and admin modes
         gameState.currentMode = gameState.currentMode == "idle" and "admin" or "idle"
-        print("🔄 Switched to " .. gameState.currentMode .. " mode")
+        Notifier.notify(gameState.systems.eventBus, gameState.systems.ui, "🔄 Switched to " .. gameState.currentMode .. " mode", "info")
     else
         -- Handle new system shortcuts first
         if key == "c" and gameState.systems.contractModal then
@@ -618,7 +629,7 @@ function Game.save()
         if gameState.systems and gameState.systems.eventBus then
             gameState.systems.eventBus:publish("ui.log", { text = "❌ Save system unavailable", severity = "error" })
         else
-            print("❌ Save system unavailable")
+            DebugLogger.log("❌ Save system unavailable")
         end
         return
     end
@@ -632,14 +643,14 @@ function Game.save()
                 gameState.systems.eventBus:publish("ui.log", { text = "💾 Game saved: " .. tostring(result), severity = "success" })
                 gameState.systems.eventBus:publish("ui.toast", { text = "Game saved", type = "success", duration = 2.5 })
             else
-                print("💾 Game saved: " .. tostring(result))
+                Notifier.notify(gameState.systems.eventBus, gameState.systems.ui, "💾 Game saved: " .. tostring(result), "success")
             end
         else
             if gameState.systems and gameState.systems.eventBus then
                 gameState.systems.eventBus:publish("ui.log", { text = "❌ Save failed: " .. tostring(result), severity = "error" })
                 gameState.systems.eventBus:publish("ui.toast", { text = "Save failed", type = "error", duration = 3.0 })
             else
-                print("❌ Save failed: " .. tostring(result))
+                Notifier.notify(gameState.systems.eventBus, gameState.systems.ui, "❌ Save failed: " .. tostring(result), "error")
             end
         end
     end)

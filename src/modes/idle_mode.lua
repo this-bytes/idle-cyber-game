@@ -8,6 +8,7 @@ local format = require("src.utils.format")
 local PlayerSystem = require("src.systems.player_system")
 local OfficeMap = require("src.ui.office_map")
 local EnhancedOfficeMap = require("src.ui.enhanced_office_map")  -- NEW: Enhanced room rendering
+local Notifier = require("src.utils.notifier")
 
 -- Create new idle mode
 function IdleMode.new(systems)
@@ -103,7 +104,7 @@ function IdleMode:enter()
     -- Show tutorial modal on first run (if not seen). Guard to avoid duplicate displays per session.
     if not self._tutorialDisplayed and self.systems and self.systems.gameState and not self.systems.gameState.tutorialSeen then
         if self.systems.ui and self.systems.ui.showTutorial then
-            print("📘 Showing tutorial modal (first run)")
+            Notifier.notify(self.systems.eventBus, self.systems.ui, "📘 Showing tutorial modal (first run)", "info")
             local title = "Welcome to Cyber Empire Command"
             local body = "Walk around the office with WASD or arrow keys. Press E to interact with departments. Accept contracts to earn money and reputation. Press A for Crisis Mode."
             local function onTutorialClose()
@@ -129,9 +130,9 @@ function IdleMode:enter()
                 if self.systems.save and self.systems.save.save then
                     self.systems.save:save(saveData, function(success, result)
                         if success then
-                            print("💾 Tutorial state saved")
+                            Notifier.notify(self.systems.eventBus, self.systems.ui, "💾 Tutorial state saved", "success")
                         else
-                            print("❌ Failed to save tutorial state: " .. tostring(result))
+                            Notifier.notify(self.systems.eventBus, self.systems.ui, "❌ Failed to save tutorial state: " .. tostring(result), "error")
                         end
                     end)
                 end
@@ -517,8 +518,7 @@ function IdleMode:mousepressed(x, y, button)
                y >= area.y and y <= area.y + area.height then
                 -- Select this contract
                 self.selectedContract = area.contractId
-                print("📋 Selected contract: " .. area.contract.clientName .. 
-                      " - Budget: $" .. area.contract.totalBudget)
+                Notifier.notify(self.systems.eventBus, self.systems.ui, "📋 Selected contract: " .. area.contract.clientName .. " - Budget: $" .. area.contract.totalBudget, "info")
                 return true
             end
         end
@@ -529,11 +529,8 @@ function IdleMode:mousepressed(x, y, button)
             if success then
                 local contract = self:getSelectedContractData()
                 if contract then
-                    print("📝 Accepted contract: " .. contract.clientName .. 
-                          " - Budget: $" .. contract.totalBudget .. 
-                          " | Duration: " .. math.floor(contract.duration) .. "s")
-                    
-                    -- Show immediate feedback
+                    Notifier.notify(self.systems.eventBus, self.systems.ui, "📝 Accepted contract: " .. contract.clientName .. " - Budget: $" .. contract.totalBudget .. " | Duration: " .. math.floor(contract.duration) .. "s", "success")
+                    -- Show immediate feedback (legacy UI hook)
                     if self.systems.ui then
                         self.systems.ui.lastAction = {
                             message = "Contract accepted: " .. contract.clientName,
@@ -545,7 +542,7 @@ function IdleMode:mousepressed(x, y, button)
                 end
             end
         else
-            print("💼 Click on a contract to select it, then press SPACE to accept or click again to accept directly.")
+            Notifier.notify(self.systems.eventBus, self.systems.ui, "💼 Click on a contract to select it, then press SPACE to accept or click again to accept directly.", "hint")
         end
     end
     return false
@@ -615,17 +612,15 @@ function IdleMode:keypressed(key)
             if success then
                 local contract = self:getSelectedContractData()
                 if contract then
-                    print("📝 Accepted contract: " .. contract.clientName .. 
-                          " - Budget: $" .. contract.totalBudget .. 
-                          " | Duration: " .. math.floor(contract.duration) .. "s")
+                    Notifier.notify(self.systems.eventBus, self.systems.ui, "📝 Accepted contract: " .. contract.clientName .. " - Budget: $" .. contract.totalBudget .. " | Duration: " .. math.floor(contract.duration) .. "s", "success")
                     self.selectedContract = nil
                 end
             else
-                print("❌ Failed to accept contract. Check requirements.")
+                Notifier.notify(self.systems.eventBus, self.systems.ui, "❌ Failed to accept contract. Check requirements.", "error")
             end
             return
         else
-            print("💼 No contract selected. Click on a contract first.")
+            Notifier.notify(self.systems.eventBus, self.systems.ui, "💼 No contract selected. Click on a contract first.", "warning")
             return
         end
     end
@@ -640,7 +635,7 @@ function IdleMode:keypressed(key)
         elseif key == "escape" then
             self.roomMenuActive = false
             self.availableRooms = nil
-            print("🚪 Room menu cancelled")
+            Notifier.notify(self.systems.eventBus, self.systems.ui, "🚪 Room menu cancelled", "info")
             return
         end
     else
@@ -658,73 +653,76 @@ function IdleMode:keypressed(key)
         if self.selectedContract then
             local contract = self:getSelectedContractData()
             if contract then
-                print("📋 CONTRACT DETAILS:")
-                print("   Client: " .. contract.clientName)
-                print("   Description: " .. contract.description)
-                print("   Budget: $" .. format.number(contract.totalBudget, 0))
-                print("   Duration: " .. math.floor(contract.duration) .. "s")
-                print("   Reputation Reward: +" .. contract.reputationReward)
-                print("   Risk Level: " .. (contract.riskLevel or "LOW"))
+                local details = table.concat({
+                    "📋 CONTRACT DETAILS:",
+                    "   Client: " .. contract.clientName,
+                    "   Description: " .. contract.description,
+                    "   Budget: $" .. format.number(contract.totalBudget, 0),
+                    "   Duration: " .. math.floor(contract.duration) .. "s",
+                    "   Reputation Reward: +" .. contract.reputationReward,
+                    "   Risk Level: " .. (contract.riskLevel or "LOW")
+                }, "\n")
+                Notifier.notify(self.systems.eventBus, self.systems.ui, details, "info")
             end
         else
-            print("💼 No contract selected. Click on a contract to view details.")
+            Notifier.notify(self.systems.eventBus, self.systems.ui, "💼 No contract selected. Click on a contract to view details.", "warning")
         end
         return
     elseif key == "i" then
-        print("💼 BUSINESS INFORMATION:")
         local resources = self.systems.resourceManager:getAllResources() -- SOC REFACTOR: Use fortress resource manager
-        print("   Current Funds: $" .. format.number(resources.money or 0, 0))
-        print("   Reputation Level: " .. format.number(resources.reputation or 0, 0))
-        print("   Experience Points: " .. format.number(resources.xp or 0, 0))
-        print("   Mission Tokens: " .. format.number(resources.missionTokens or 0, 0))
         local contractStats = self.systems.contracts:getStats()
-        print("   Active Contracts: " .. contractStats.activeContracts)
-        print("   Revenue Rate: $" .. format.number(contractStats.totalIncomeRate, 2) .. "/sec")
+        local info = table.concat({
+            "💼 BUSINESS INFORMATION:",
+            "Current Funds: $" .. format.number(resources.money or 0, 0),
+            "Reputation Level: " .. format.number(resources.reputation or 0, 0),
+            "Experience Points: " .. format.number(resources.xp or 0, 0),
+            "Mission Tokens: " .. format.number(resources.missionTokens or 0, 0),
+            "Active Contracts: " .. contractStats.activeContracts,
+            "Revenue Rate: $" .. format.number(contractStats.totalIncomeRate, 2) .. "/sec"
+        }, "\n")
         if self.systems.save and self.systems.save.getConnectionStatus then
             local status = self.systems.save:getConnectionStatus()
-            print("🌐 NETWORK STATUS:")
-            print("   Server Connection: " .. (status.isOnline and "ONLINE" or "OFFLINE"))
-            print("   Save Mode: " .. string.upper(status.saveMode))
-            print("   Player ID: " .. status.username)
-            if status.offlineMode then
-                print("   Mode: OFFLINE (Network disabled)")
-            end
+            local net = table.concat({
+                "🌐 NETWORK STATUS:",
+                "   Server Connection: " .. (status.isOnline and "ONLINE" or "OFFLINE"),
+                "   Save Mode: " .. string.upper(status.saveMode),
+                "   Player ID: " .. status.username,
+                (status.offlineMode and "   Mode: OFFLINE (Network disabled)" or nil)
+            }, "\n")
+            info = info .. "\n" .. net
         end
+        Notifier.notify(self.systems.eventBus, self.systems.ui, info, "info")
         return
     elseif key == "z" then
-        print("🗺️ Zone System:")
         local zones = self.systems.zones:getUnlockedZones()
         local currentZoneId = self.systems.zones:getCurrentZoneId()
+        local lines = {"🗺️ Zone System:"}
         for zoneId, zone in pairs(zones) do
             local current = zoneId == currentZoneId and " (CURRENT)" or ""
-            print("   " .. zone.name .. current .. " - " .. zone.description)
+            table.insert(lines, "   " .. zone.name .. current .. " - " .. zone.description)
         end
-        print("")
-        print("🏢 Room System:")
+        table.insert(lines, "")
+        table.insert(lines, "🏢 Room System:")
         if self.systems.rooms then
             local rooms = self.systems.rooms:getAvailableRooms()
             local currentRoom = self.systems.rooms:getCurrentRoom()
-            print("   Current: " .. (currentRoom and currentRoom.name or "None"))
-            print("   Available Rooms:")
+            table.insert(lines, "   Current: " .. (currentRoom and currentRoom.name or "None"))
+            table.insert(lines, "   Available Rooms:")
             for _, room in ipairs(rooms) do
                 local indicator = room.current and " (HERE)" or ""
-                print("     • " .. room.name .. indicator)
-                print("       " .. room.description)
+                table.insert(lines, "     • " .. room.name .. indicator)
+                table.insert(lines, "       " .. room.description)
             end
-            print("   Press R to open room navigation menu")
+            table.insert(lines, "   Press R to open room navigation menu")
         else
-            print("   Room system not available")
+            table.insert(lines, "   Room system not available")
         end
+        Notifier.notify(self.systems.eventBus, self.systems.ui, table.concat(lines, "\n"), "info")
         return
     elseif key == "h" then
-        print("🏆 Achievements:")
         local achievements = self.systems.achievements:getAllAchievements()
         local progress = self.systems.achievements:getProgress()
-        print("   📊 Progress:")
-        print("      Total Clicks: " .. progress.totalClicks)
-        print("      Upgrades Purchased: " .. progress.totalUpgradesPurchased)
-        print("      Max Combo: " .. format.number(progress.maxClickCombo, 1) .. "x")
-        print("      Critical Hits: " .. progress.criticalHits)
+        local lines = {"🏆 Achievements:", "   📊 Progress:", "      Total Clicks: " .. progress.totalClicks, "      Upgrades Purchased: " .. progress.totalUpgradesPurchased, "      Max Combo: " .. format.number(progress.maxClickCombo, 1) .. "x", "      Critical Hits: " .. progress.criticalHits}
         local unlockedCount = 0
         local totalCount = 0
         for achievementId, achievement in pairs(achievements) do
@@ -738,84 +736,75 @@ function IdleMode:keypressed(key)
             elseif achievement.requirement.type == "upgrades" then
                 reqText = " (" .. progress.totalUpgradesPurchased .. "/" .. achievement.requirement.value .. " upgrades)"
             end
-            print("   " .. status .. " " .. achievement.name .. reqText)
-            print("      " .. achievement.description)
+            table.insert(lines, "   " .. status .. " " .. achievement.name .. reqText)
+            table.insert(lines, "      " .. achievement.description)
             if achievement.unlocked then unlockedCount = unlockedCount + 1 end
         end
-        print("")
-        print("   🎯 Progress: " .. unlockedCount .. "/" .. totalCount .. " achievements unlocked")
+        table.insert(lines, "")
+        table.insert(lines, "   🎯 Progress: " .. unlockedCount .. "/" .. totalCount .. " achievements unlocked")
+        Notifier.notify(self.systems.eventBus, self.systems.ui, table.concat(lines, "\n"), "info")
         return
     elseif key == "p" then
         -- Handle prestige
         if self.systems.progression and self.systems.progression:canPrestige() then
             local pointsToEarn = self.systems.progression:calculatePrestigePoints()
-            print("🌟 PRESTIGE AVAILABLE!")
-            print("   Points to earn: " .. pointsToEarn)
-            print("   Current level: " .. (self.systems.progression.prestigeLevel or 0))
-            print("   This will reset your company but grant permanent bonuses.")
-            print("   Press P again to confirm prestige.")
+            local lines = {"🌟 PRESTIGE AVAILABLE!", "   Points to earn: " .. pointsToEarn, "   Current level: " .. (self.systems.progression.prestigeLevel or 0), "   This will reset your company but grant permanent bonuses.", "   Press P again to confirm prestige."}
+            Notifier.notify(self.systems.eventBus, self.systems.ui, table.concat(lines, "\n"), "warning")
             -- Simple confirmation - in real game, you'd want a proper confirmation dialog
             if self.prestigeConfirmation then
                 local success = self.systems.progression:performPrestige()
                 if success then
-                    print("🌟 PRESTIGE COMPLETE! Welcome to your new company!")
+                    Notifier.notify(self.systems.eventBus, self.systems.ui, "🌟 PRESTIGE COMPLETE! Welcome to your new company!", "success")
                 end
                 self.prestigeConfirmation = false
             else
                 self.prestigeConfirmation = true
             end
         else
-            print("🌟 Prestige not available. Check progression requirements.")
+            Notifier.notify(self.systems.eventBus, self.systems.ui, "🌟 Prestige not available. Check progression requirements.", "info")
         end
         return
     elseif key == "c" then
         -- Handle currency conversions
         if self.systems.progression then
             self.conversionMode = true
-            print("💱 CURRENCY CONVERSIONS:")
-            print("   [1] Convert 100 XP → 1 Skill Point")
-            print("   [2] Convert $1000 → 1 Research Credit") 
-            print("   [3] Show conversion status")
-            print("   [ESC] Exit conversion mode")
-            print("   Press number to perform conversion.")
+            local lines = {"💱 CURRENCY CONVERSIONS:", "   [1] Convert 100 XP → 1 Skill Point", "   [2] Convert $1000 → 1 Research Credit", "   [3] Show conversion status", "   [ESC] Exit conversion mode", "   Press number to perform conversion."}
+            Notifier.notify(self.systems.eventBus, self.systems.ui, table.concat(lines, "\n"), "info")
         end
         return
     elseif key == "m" then
         -- Show progression milestones and status
         if self.systems.progression then
-            print("🎯 PROGRESSION STATUS:")
             local currentTier = self.systems.progression:getCurrentTier()
-            print("   Current Tier: " .. (currentTier.name or "Unknown"))
-            print("   Tier Description: " .. (currentTier.description or ""))
-            
-            print("")
-            print("🏆 COMPLETED MILESTONES:")
+            local lines = {"🎯 PROGRESSION STATUS:", "   Current Tier: " .. (currentTier.name or "Unknown"), "   Tier Description: " .. (currentTier.description or "")}
+            table.insert(lines, "")
+            table.insert(lines, "🏆 COMPLETED MILESTONES:")
             local milestones = self.systems.progression.config.milestones or {}
             local completed = self.systems.progression.completedMilestones or {}
             for milestoneId, milestone in pairs(milestones) do
                 local status = completed[milestoneId] and "✅" or "❌"
-                print("   " .. status .. " " .. milestone.name)
-                print("      " .. milestone.description)
+                table.insert(lines, "   " .. status .. " " .. milestone.name)
+                table.insert(lines, "      " .. milestone.description)
                 if milestone.rewards then
                     local rewardText = "Rewards: "
                     for rewardType, amount in pairs(milestone.rewards) do
                         rewardText = rewardText .. amount .. " " .. rewardType .. " "
                     end
-                    print("      " .. rewardText)
+                    table.insert(lines, "      " .. rewardText)
                 end
             end
-            
-            print("")
-            print("💰 CURRENCY STATUS:")
+            table.insert(lines, "")
+            table.insert(lines, "💰 CURRENCY STATUS:")
             local currencies = self.systems.progression:getAllCurrencies()
             for currencyId, data in pairs(currencies) do
                 local config = data.config
                 local symbol = config.symbol or currencyId:upper()
-                print("   " .. config.name .. ": " .. format.number(data.amount, 0) .. " " .. symbol)
+                table.insert(lines, "   " .. config.name .. ": " .. format.number(data.amount, 0) .. " " .. symbol)
                 if data.totalEarned > 0 then
-                    print("      Total Earned: " .. format.number(data.totalEarned, 0))
+                    table.insert(lines, "      Total Earned: " .. format.number(data.totalEarned, 0))
                 end
             end
+            Notifier.notify(self.systems.eventBus, self.systems.ui, table.concat(lines, "\n"), "info")
         end
         return
     elseif key >= "1" and key <= "9" then
@@ -826,22 +815,21 @@ function IdleMode:keypressed(key)
             if numKey == 1 then
                 local success = self.systems.progression:convertCurrency("xpToSkillPoints")
                 if success then
-                    print("✅ Converted 100 XP to 1 Skill Point!")
+                    Notifier.notify(self.systems.eventBus, self.systems.ui, "✅ Converted 100 XP to 1 Skill Point!", "success")
                 else
-                    print("❌ Conversion failed. Check XP amount and daily limits.")
+                    Notifier.notify(self.systems.eventBus, self.systems.ui, "❌ Conversion failed. Check XP amount and daily limits.", "error")
                 end
             elseif numKey == 2 then
                 local success = self.systems.progression:convertCurrency("moneyToResearch")
                 if success then
-                    print("✅ Converted $1000 to 1 Research Credit!")
+                    Notifier.notify(self.systems.eventBus, self.systems.ui, "✅ Converted $1000 to 1 Research Credit!", "success")
                 else
-                    print("❌ Conversion failed. Check money amount and daily limits.")
+                    Notifier.notify(self.systems.eventBus, self.systems.ui, "❌ Conversion failed. Check money amount and daily limits.", "error")
                 end
             elseif numKey == 3 then
                 local dailyConversions = self.systems.progression.dailyConversions[os.date("%Y-%m-%d")] or {}
-                print("📊 Today's Conversions:")
-                print("   XP→SP: " .. (dailyConversions["xpToSkillPoints"] or 0) .. "/10")
-                print("   Money→RC: " .. (dailyConversions["moneyToResearch"] or 0) .. "/5")
+                local lines = {"📊 Today's Conversions:", "   XP→SP: " .. (dailyConversions["xpToSkillPoints"] or 0) .. "/10", "   Money→RC: " .. (dailyConversions["moneyToResearch"] or 0) .. "/5"}
+                Notifier.notify(self.systems.eventBus, self.systems.ui, table.concat(lines, "\n"), "info")
             end
             self.conversionMode = false
             return
@@ -861,13 +849,13 @@ function IdleMode:keypressed(key)
                 local cost = self.systems.securityUpgrades:calculateUpgradeCost(upgradeId)
                 local owned = self.systems.securityUpgrades:getUpgradeCount(upgradeId)
                 if owned >= upgradeDef.maxCount then
-                    print("❌ Cannot purchase: Already at maximum count (" .. upgradeDef.maxCount .. ")")
+                    Notifier.notify(self.systems.eventBus, self.systems.ui, "❌ Cannot purchase: Already at maximum count (" .. upgradeDef.maxCount .. ")", "error")
                 else
                     local costText = ""
                     for resource, amount in pairs(cost) do
                         costText = costText .. format.number(amount, 0) .. " " .. resource .. " "
                     end
-                    print("❌ Cannot afford: Need " .. costText)
+                    Notifier.notify(self.systems.eventBus, self.systems.ui, "❌ Cannot afford: Need " .. costText, "error")
                 end
             end
         end
@@ -891,23 +879,23 @@ end
 -- Show room navigation menu
 function IdleMode:showRoomMenu()
     if not self.systems.rooms then 
-        print("🏢 Room system not available")
+        Notifier.notify(self.systems.eventBus, self.systems.ui, "🏢 Room system not available", "info")
         return 
     end
     
     local availableRooms = self.systems.rooms:getAvailableRooms()
     if #availableRooms == 0 then
-        print("🔒 No rooms available")
+        Notifier.notify(self.systems.eventBus, self.systems.ui, "🔒 No rooms available", "warning")
         return
     end
     
-    print("🚪 Available Rooms:")
+    Notifier.notify(self.systems.eventBus, self.systems.ui, "🚪 Available Rooms:", "info")
     for i, room in ipairs(availableRooms) do
         local status = room.current and " [CURRENT]" or ""
-        print("   " .. i .. ". " .. room.name .. status)
-        print("      " .. room.description)
+        Notifier.notify(self.systems.eventBus, self.systems.ui, "   " .. i .. ". " .. room.name .. status, "info")
+        Notifier.notify(self.systems.eventBus, self.systems.ui, "      " .. room.description, "info")
     end
-    print("Enter room number (1-" .. #availableRooms .. ") or ESC to cancel:")
+    Notifier.notify(self.systems.eventBus, self.systems.ui, "Enter room number (1-" .. #availableRooms .. ") or ESC to cancel:", "hint")
     
     -- Set room menu state for number key handling
     self.roomMenuActive = true
@@ -917,72 +905,70 @@ end
 -- Show room-specific help and interaction guide
 function IdleMode:showRoomHelp()
     if not self.systems.rooms then 
-        print("🏢 Room system not available")
+        Notifier.notify(self.systems.eventBus, self.systems.ui, "🏢 Room system not available", "info")
         return 
     end
     
     local currentRoom = self.systems.rooms:getCurrentRoom()
     if not currentRoom then
-        print("❓ No active room")
+        Notifier.notify(self.systems.eventBus, self.systems.ui, "❓ No active room", "info")
         return
     end
     
-    print("❓ " .. currentRoom.name .. " - Help & Interactions")
-    print("📋 " .. currentRoom.description)
-    print("")
-    
+    local lines = {"❓ " .. currentRoom.name .. " - Help & Interactions", "📋 " .. currentRoom.description, ""}
     if currentRoom.areas and #currentRoom.areas > 0 then
-        print("🎯 Available Interactions:")
+        table.insert(lines, "🎯 Available Interactions:")
         for _, area in ipairs(currentRoom.areas) do
-            print("   " .. (area.icon or "●") .. " " .. area.name)
-            print("      Action: " .. (area.action or "interact"):gsub("_", " "))
+            table.insert(lines, "   " .. (area.icon or "●") .. " " .. area.name)
+            table.insert(lines, "      Action: " .. (area.action or "interact"):gsub("_", " "))
         end
-        print("")
-        print("💡 Move close to an area and press E to interact")
+        table.insert(lines, "")
+        table.insert(lines, "💡 Move close to an area and press E to interact")
     else
-        print("   No interactive areas in this room")
+        table.insert(lines, "   No interactive areas in this room")
     end
     
     if currentRoom.bonuses then
-        print("⚡ Room Bonuses:")
+        table.insert(lines, "⚡ Room Bonuses:")
         for bonusName, multiplier in pairs(currentRoom.bonuses) do
             if type(multiplier) == "number" and multiplier > 1 then
                 local bonus = math.floor((multiplier - 1) * 100)
-                print("   • " .. bonusName:gsub("Multiplier", ""):gsub("Bonus", "") .. ": +" .. bonus .. "%")
+                table.insert(lines, "   • " .. bonusName:gsub("Multiplier", ""):gsub("Bonus", "") .. ": +" .. bonus .. "%")
             end
         end
     end
     
     if currentRoom.atmosphere then
-        print("")
-        print("🌟 Atmosphere: " .. currentRoom.atmosphere)
+        table.insert(lines, "")
+        table.insert(lines, "🌟 Atmosphere: " .. currentRoom.atmosphere)
     end
     
     -- Show active events if any
     if self.systems.roomEvents then
         local activeEvents = self.systems.roomEvents:getActiveEvents()
         if #activeEvents > 0 then
-            print("")
-            print("🎭 Active Events in This Room:")
+            table.insert(lines, "")
+            table.insert(lines, "🎭 Active Events in This Room:")
             for _, event in ipairs(activeEvents) do
                 if event.roomId == currentRoom.id then
                     local urgency = event.critical and "🔥 CRITICAL" or event.urgent and "⚡ URGENT" or "📢"
-                    print("   " .. urgency .. " " .. event.title)
+                    table.insert(lines, "   " .. urgency .. " " .. event.title)
                     if event.duration then
-                        print("      ⏱️ " .. math.floor(event.duration) .. " seconds remaining")
+                        table.insert(lines, "      ⏱️ " .. math.floor(event.duration) .. " seconds remaining")
                     end
                 end
             end
         end
     end
     
-    print("")
-    print("🎮 Controls:")
-    print("   WASD/Arrows - Move around")
-    print("   E - Interact with nearby areas")
-    print("   R - Room navigation menu")
-    print("   H - This help (room-specific)")
-    print("   1-9 - Make event choices")
+    table.insert(lines, "")
+    table.insert(lines, "🎮 Controls:")
+    table.insert(lines, "   WASD/Arrows - Move around")
+    table.insert(lines, "   E - Interact with nearby areas")
+    table.insert(lines, "   R - Room navigation menu")
+    table.insert(lines, "   H - This help (room-specific)")
+    table.insert(lines, "   1-9 - Make event choices")
+    Notifier.notify(self.systems.eventBus, self.systems.ui, table.concat(lines, "\n"), "info")
 end
 
 -- Handle room selection
@@ -991,12 +977,12 @@ function IdleMode:selectRoom(roomIndex)
     
     local room = self.availableRooms[roomIndex]
     if not room then
-        print("❌ Invalid room selection")
+        Notifier.notify(self.systems.eventBus, self.systems.ui, "❌ Invalid room selection", "error")
         return false
     end
     
     if room.current then
-        print("📍 Already in " .. room.name)
+        Notifier.notify(self.systems.eventBus, self.systems.ui, "📍 Already in " .. room.name, "info")
     else
         self.systems.rooms:changeRoom(room.id, "menu_selection")
         -- Update player position to room center
@@ -1053,7 +1039,7 @@ function IdleMode:handleEventChoice(choiceNum)
     if event.choices and choiceNum <= #event.choices then
         local success = self.systems.roomEvents:makeEventChoice(event.id, choiceNum)
         if success then
-            print("📝 Choice selected: " .. event.choices[choiceNum].text)
+            Notifier.notify(self.systems.eventBus, self.systems.ui, "📝 Choice selected: " .. event.choices[choiceNum].text, "info")
             return true
         end
     end

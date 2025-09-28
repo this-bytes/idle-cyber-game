@@ -9,7 +9,7 @@ love.timer = love.timer or {}
 love.timer.getTime = function() return os.clock() end
 
 local SkillSystem = require("skill_system")
-local EventBus = require("event_bus")
+local EventBus = require("src.utils.event_bus")
 
 -- Test: Initialize skill system with default skills
 TestRunner.test("SkillSystem: Initialize with default skills", function()

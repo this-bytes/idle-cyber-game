@@ -25,6 +25,12 @@ function TestRunner.assertNotNil(value, message)
     end
 end
 
+-- Ensure test modules can require source files by short names
+do
+    local src_paths = "./?.lua;./?/init.lua;src/?.lua;src/?/init.lua;src/systems/?.lua;src/utils/?.lua;"
+    package.path = src_paths .. package.path
+end
+
 -- Test suite structure
 local tests = {}
 local passed = 0

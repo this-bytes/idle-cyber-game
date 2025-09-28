@@ -2,9 +2,9 @@
 -- Usage: Include in test_runner.lua
 
 local IdleSystem = require("src.systems.idle_system")
-local ResourceSystem = require("src.systems.resource_system")
-local ThreatSystem = require("src.systems.threat_system")
-local UpgradeSystem = require("src.systems.upgrade_system")
+local ResourceSystem = require("src.core.resource_manager")
+local ThreatSystem = require("src.core.threat_simulation")
+local UpgradeSystem = require("src.core.security_upgrades")
 local EventBus = require("src.utils.event_bus")
 
 -- Test basic idle system initialization

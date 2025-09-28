@@ -1,15 +1,15 @@
 -- Tests for Resource System - Cyber Empire Command
 
 -- Add src to package path for testing
-package.path = package.path .. ";src/?.lua;src/systems/?.lua;src/utils/?.lua"
+package.path = package.path .. ";src/?.lua;src/core/?.lua;src/utils/?.lua"
 
 -- Mock love.timer for testing
 love = love or {}
 love.timer = love.timer or {}
 love.timer.getTime = function() return os.clock() end
 
-local ResourceSystem = require("resource_system")
-local EventBus = require("event_bus")
+local ResourceSystem = require("src.core.resource_manager")
+local EventBus = require("src.utils.event_bus")
 
 -- Test resource system initialization
 TestRunner.test("ResourceSystem: Initialize with correct resources", function()

@@ -9,7 +9,7 @@ love.timer = love.timer or {}
 love.timer.getTime = function() return os.clock() end
 
 local SpecialistSystem = require("specialist_system")
-local EventBus = require("event_bus")
+local EventBus = require("src.utils.event_bus")
 
 -- Test specialist system initialization
 TestRunner.test("SpecialistSystem: Initialize with CEO", function()

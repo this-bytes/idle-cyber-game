@@ -153,28 +153,43 @@ function FortressGame:initializeGameModes()
     -- Create game modes with fortress system references
     self.modes.idle = IdleMode.new(systemsWithEventBus)
     self.modes.admin = AdminMode.new(systemsWithEventBus)
+    -- Dashboard is a UI-level mode showing the main overview
+    local ok, Dashboard = pcall(require, "src.ui.dashboard")
+    if ok and Dashboard then
+        self.modes.dashboard = Dashboard.new(systemsWithEventBus)
+    end
     
-    print("🎮 Game Modes initialized with fortress compatibility")
+    if self.eventBus and type(self.eventBus.publish) == "function" then
+        self.eventBus:publish("modes_initialized", {time = os.time()})
+    end
 end
 
 -- Set up inter-system integrations and event bindings
 function FortressGame:setupSystemIntegrations()
-    print("🔄 Setting up system integrations...")
+    if self.eventBus and type(self.eventBus.publish) == "function" then
+        self.eventBus:publish("system_integrations_start", {time = os.time()})
+    end
     
     -- Contract system integration with fortress ResourceManager
     self.eventBus:subscribe("contract_completed", function(data)
         -- This will be handled by ResourceManager automatically via the event
-        print("💼 Contract completed through fortress integration")
+        if self.eventBus and type(self.eventBus.publish) == "function" then
+            self.eventBus:publish("integration_contract_completed", data)
+        end
     end)
     
     -- Specialist system integration
     self.eventBus:subscribe("specialist_hired", function(data)
-        print("👨‍💻 Specialist hired through fortress integration")
+        if self.eventBus and type(self.eventBus.publish) == "function" then
+            self.eventBus:publish("integration_specialist_hired", data)
+        end
     end)
     
     -- Idle system integration with fortress threat simulation
     self.eventBus:subscribe("idle_progress_calculated", function(data)
-        print("⏰ Idle progress calculated through fortress integration")
+        if self.eventBus and type(self.eventBus.publish) == "function" then
+            self.eventBus:publish("integration_idle_progress", data)
+        end
     end)
     
     -- Achievement integration
@@ -182,7 +197,9 @@ function FortressGame:setupSystemIntegrations()
         self.systems.uiManager:showNotification("🏆 Achievement: " .. (data.name or "Unknown"), "success")
     end)
     
-    print("🔄 System integrations complete")
+    if self.eventBus and type(self.eventBus.publish) == "function" then
+        self.eventBus:publish("system_integrations_complete", {time = os.time()})
+    end
 end
 
 -- Update the fortress game
@@ -236,14 +253,21 @@ end
 function FortressGame:keypressed(key)
     -- Handle splash screen advancement
     if self.flowState == "splash" then
-        self.flowState = "game"
-        self.systems.uiManager:setState("GAME")
+        self.flowState = "dashboard"
+        if self.systems and self.systems.uiManager then
+            self.systems.uiManager:setState("DASHBOARD")
+        end
         
         -- Initialize idle mode
         if self.modes.idle and self.modes.idle.enter then
             self.modes.idle:enter()
         end
-        print("🎬 Entering fortress game")
+        if self.modes.dashboard and self.modes.dashboard.enter then
+            self.modes.dashboard:enter()
+        end
+        if self.eventBus and type(self.eventBus.publish) == "function" then
+            self.eventBus:publish("flow_enter", {state = "dashboard"})
+        end
         return
     end
     
@@ -277,6 +301,23 @@ function FortressGame:keypressed(key)
     local currentMode = self.modes[self.currentMode]
     if currentMode and currentMode.keypressed then
         currentMode:keypressed(key)
+    end
+
+    -- UI navigation keys (focus management)
+    if self.systems and self.systems.uiManager then
+        if key == "tab" then
+            if love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift") then
+                self.systems.uiManager:focusPrevious()
+            else
+                self.systems.uiManager:focusNext()
+            end
+        elseif key == "return" or key == "kpenter" or key == "space" then
+            self.systems.uiManager:activateFocused()
+        elseif key == "up" then
+            self.systems.uiManager:focusPrevious()
+        elseif key == "down" then
+            self.systems.uiManager:focusNext()
+        end
     end
 end
 

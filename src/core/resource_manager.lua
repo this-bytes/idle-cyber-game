@@ -2,6 +2,8 @@
 -- Fortress Refactor: Unified resource handling with clean interfaces and event-driven updates
 -- Consolidates all resource operations from scattered systems into a single, maintainable manager
 
+local DebugLogger = require("src.utils.debug_logger")
+
 local ResourceManager = {}
 ResourceManager.__index = ResourceManager
 
@@ -98,7 +100,7 @@ function ResourceManager:initializeResources()
         description = "Office space and equipment capacity"
     })
     
-    print("💰 ResourceManager: Initialized cybersecurity business resources")
+    DebugLogger.log("💰 ResourceManager: Initialized cybersecurity business resources")
 end
 
 -- Define a new resource type
@@ -153,15 +155,19 @@ end
 
 -- Update resource generation
 function ResourceManager:update(dt)
-    local currentTime = love.timer and love.timer.getTime() or os.clock()
-    
-    if self.lastUpdateTime == 0 then
+    -- If an explicit dt is provided (e.g. in unit tests), use it directly.
+    local deltaTime
+    if dt ~= nil then
+        deltaTime = dt
+    else
+        local currentTime = love.timer and love.timer.getTime() or os.clock()
+        if self.lastUpdateTime == 0 then
+            self.lastUpdateTime = currentTime
+            return
+        end
+        deltaTime = currentTime - self.lastUpdateTime
         self.lastUpdateTime = currentTime
-        return
     end
-    
-    local deltaTime = dt or (currentTime - self.lastUpdateTime)
-    self.lastUpdateTime = currentTime
     
     -- Generate resources
     for resourceName, rate in pairs(self.generation) do
@@ -170,6 +176,30 @@ function ResourceManager:update(dt)
             self:addResource(resourceName, generated)
         end
     end
+end
+
+-- Compatibility: set resource value directly (legacy API)
+function ResourceManager:setResource(resourceName, value)
+    if self.resources[resourceName] == nil then
+        return false
+    end
+    local old = self.resources[resourceName]
+    self.resources[resourceName] = value
+    local change = value - old
+    if change ~= 0 then
+        self.eventBus:publish("resource_changed", {
+            resource = resourceName,
+            amount = value,
+            change = change,
+            category = self.categories[resourceName]
+        })
+    end
+    return true
+end
+
+-- Compatibility: return the internal resources table (legacy API)
+function ResourceManager:getResources()
+    return self.resources
 end
 
 -- Add resource amount with validation
@@ -383,18 +413,18 @@ function ResourceManager:loadState(state)
         self.categories = state.categories
     end
     
-    print("💰 ResourceManager: State loaded successfully")
+    DebugLogger.log("💰 ResourceManager: State loaded successfully")
 end
 
 -- Initialize method for GameLoop integration
 function ResourceManager:initialize()
     self.lastUpdateTime = love.timer and love.timer.getTime() or os.clock()
-    print("💰 ResourceManager: Fortress architecture integration complete")
+    DebugLogger.log("💰 ResourceManager: Fortress architecture integration complete")
 end
 
 -- Shutdown method for GameLoop integration
 function ResourceManager:shutdown()
-    print("💰 ResourceManager: Shutdown complete")
+    DebugLogger.log("💰 ResourceManager: Shutdown complete")
 end
 
 return ResourceManager
