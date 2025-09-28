@@ -9,7 +9,7 @@ import json
 import time
 import sys
 
-BASE_URL = "http://localhost:5000"
+BASE_URL = "http://localhost:5001"
 
 def test_endpoint(method, endpoint, data=None, expected_status=200):
     """Test a single API endpoint."""
