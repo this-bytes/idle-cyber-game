@@ -366,12 +366,14 @@ async function saveCurrentFile() {
 async function loadEditor() {
     try {
         // Load currency data
-        const currencyData = await apiGet('/admin/files/currencies.json');
-        displayCurrencyEditor(JSON.parse(currencyData.content));
+        const currencyFile = await apiGet('/admin/files/currencies.json');
+        const currencyData = JSON.parse(currencyFile.content);
+        displayCurrencyEditor(currencyData);
         
         // Load progression data
-        const progressionData = await apiGet('/admin/files/progression.json');
-        displayProgressionEditor(JSON.parse(progressionData.content));
+        const progressionFile = await apiGet('/admin/files/progression.json');
+        const progressionData = JSON.parse(progressionFile.content);
+        displayProgressionEditor(progressionData);
     } catch (error) {
         console.error('Failed to load editor data:', error);
         showNotification('Failed to load editor data', 'error');
@@ -380,35 +382,37 @@ async function loadEditor() {
 
 function displayCurrencyEditor(currencyData) {
     const container = document.getElementById('currency-editor');
+    
+    // Check if we have the expected structure
+    if (!currencyData || !currencyData.currencies) {
+        container.innerHTML = '<div class="text-center text-muted">Invalid currency data structure</div>';
+        return;
+    }
+    
     const currencies = currencyData.currencies;
+    let html = '<div class="card" style="margin: 10px 0;">';
+    html += '<div class="card-header"><h5>Game Currencies</h5></div>';
+    html += '<div style="padding: 15px;">';
     
-    let html = '';
-    
-    Object.keys(currencies).forEach(category => {
-        html += `<div class="card" style="margin: 10px 0;">
-            <div class="card-header">
-                <h5>${category.charAt(0).toUpperCase() + category.slice(1)} Currencies</h5>
-            </div>
-            <div style="padding: 15px;">
-        `;
-        
-        Object.entries(currencies[category]).forEach(([id, currency]) => {
+    // Handle the flat structure where currencies are directly under currencies object
+    Object.entries(currencies).forEach(([id, currency]) => {
+        if (currency && typeof currency === 'object') {
             html += `
                 <div style="margin: 8px 0; padding: 10px; border: 1px solid #34495e; border-radius: 6px; background: rgba(52, 73, 94, 0.3);">
-                    <strong>${currency.name}</strong> (${currency.symbol})
+                    <strong>${currency.name || 'Unknown'}</strong> (${currency.symbol || 'N/A'})
                     <br>
-                    <small style="color: #8fbcdb;">${currency.description}</small>
+                    <small style="color: #8fbcdb;">${currency.description || 'No description'}</small>
                     <br>
-                    <span style="background: #3498db; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; margin-top: 4px; display: inline-block;">
-                        ${currency.rarity}
+                    <span style="background: #3498db; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; margin-top: 4px; display: inline-block; margin-right: 5px;">
+                        ID: ${currency.id || id}
                     </span>
+                    ${currency.startingAmount ? `<span style="background: #27ae60; padding: 2px 6px; border-radius: 4px; font-size: 0.8em;">Start: ${currency.startingAmount}</span>` : ''}
                 </div>
             `;
-        });
-        
-        html += '</div></div>';
+        }
     });
     
+    html += '</div></div>';
     container.innerHTML = html;
 }
 
