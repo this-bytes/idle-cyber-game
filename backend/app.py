@@ -4,7 +4,7 @@ Provides endpoints for game client and admin panel functionality.
 """
 
 from flask import Flask, request, jsonify, send_from_directory
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 
 from game_data import db, Player, GlobalGameState, init_db
@@ -297,6 +297,177 @@ def update_global_state():
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': f'Failed to update global state: {str(e)}'}), 500
+
+
+# ===== NEW ADMIN DASHBOARD ENDPOINTS =====
+
+@app.route('/admin/stats', methods=['GET'])
+def get_admin_stats():
+    """Get comprehensive statistics for admin dashboard."""
+    try:
+        # Player statistics
+        total_players = Player.query.count()
+        active_players = Player.query.filter(
+            Player.last_login >= datetime.utcnow() - timedelta(days=7)
+        ).count() if total_players > 0 else 0
+        
+        # Calculate resource statistics
+        if total_players > 0:
+            avg_currency = db.session.query(db.func.avg(Player.current_currency)).scalar() or 0
+            avg_reputation = db.session.query(db.func.avg(Player.reputation)).scalar() or 0
+            avg_xp = db.session.query(db.func.avg(Player.xp)).scalar() or 0
+            avg_prestige = db.session.query(db.func.avg(Player.prestige_level)).scalar() or 0
+            
+            # Top players
+            top_currency = Player.query.order_by(Player.current_currency.desc()).limit(5).all()
+            top_reputation = Player.query.order_by(Player.reputation.desc()).limit(5).all()
+            top_prestige = Player.query.order_by(Player.prestige_level.desc()).limit(5).all()
+        else:
+            avg_currency = avg_reputation = avg_xp = avg_prestige = 0
+            top_currency = top_reputation = top_prestige = []
+        
+        # Global state
+        global_state = GlobalGameState.query.get(1)
+        
+        return jsonify({
+            'success': True,
+            'stats': {
+                'players': {
+                    'total': total_players,
+                    'active_weekly': active_players,
+                    'activity_rate': round((active_players / total_players * 100) if total_players > 0 else 0, 1)
+                },
+                'resources': {
+                    'avg_currency': round(avg_currency, 2),
+                    'avg_reputation': round(avg_reputation, 2),
+                    'avg_xp': round(avg_xp, 2),
+                    'avg_prestige': round(avg_prestige, 2)
+                },
+                'leaderboards': {
+                    'top_currency': [p.to_dict() for p in top_currency],
+                    'top_reputation': [p.to_dict() for p in top_reputation],
+                    'top_prestige': [p.to_dict() for p in top_prestige]
+                },
+                'global_state': global_state.to_dict() if global_state else None
+            }
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': f'Failed to retrieve statistics: {str(e)}'}), 500
+
+
+@app.route('/admin/files', methods=['GET'])
+def list_game_files():
+    """List all game data files for file browser."""
+    try:
+        files = []
+        
+        # Scan data directory
+        for root, dirs, filenames in os.walk(DATA_DIR):
+            for filename in filenames:
+                if filename.endswith(('.json', '.lua')):
+                    filepath = os.path.join(root, filename)
+                    relpath = os.path.relpath(filepath, DATA_DIR)
+                    
+                    # Get file stats
+                    stat = os.stat(filepath)
+                    
+                    files.append({
+                        'name': filename,
+                        'path': relpath,
+                        'size': stat.st_size,
+                        'modified': datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                        'type': filename.split('.')[-1],
+                        'editable': filename.endswith('.json')
+                    })
+        
+        return jsonify({
+            'success': True,
+            'files': sorted(files, key=lambda x: x['name'])
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': f'Failed to list files: {str(e)}'}), 500
+
+
+@app.route('/admin/files/<path:filename>', methods=['GET'])
+def get_file_content(filename):
+    """Get content of a specific game data file."""
+    try:
+        filepath = safe_join(DATA_DIR, filename)
+        
+        if not os.path.exists(filepath):
+            return jsonify({'error': 'File not found'}), 404
+        
+        with open(filepath, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        return jsonify({
+            'success': True,
+            'filename': filename,
+            'content': content,
+            'size': len(content),
+            'editable': filename.endswith('.json')
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': f'Failed to read file: {str(e)}'}), 500
+
+
+@app.route('/admin/files/<path:filename>', methods=['PUT'])
+def save_file_content(filename):
+    """Save content to a specific game data file."""
+    try:
+        if not filename.endswith('.json'):
+            return jsonify({'error': 'Only JSON files can be edited'}), 400
+        
+        data = request.get_json()
+        if not data or 'content' not in data:
+            return jsonify({'error': 'No content provided'}), 400
+        
+        # Validate JSON content
+        try:
+            pyjson.loads(data['content'])
+        except pyjson.JSONDecodeError as e:
+            return jsonify({'error': f'Invalid JSON: {str(e)}'}), 400
+        
+        filepath = safe_join(DATA_DIR, filename)
+        atomic_write(filepath, data['content'])
+        
+        return jsonify({
+            'success': True,
+            'message': f'File {filename} saved successfully'
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': f'Failed to save file: {str(e)}'}), 500
+
+
+@app.route('/admin/achievements', methods=['GET'])
+def get_achievements():
+    """Get achievements data for management."""
+    try:
+        # Load progression.json for achievement definitions
+        prog_path = safe_join(DATA_DIR, 'progression.json')
+        if os.path.exists(prog_path):
+            with open(prog_path, 'r', encoding='utf-8') as f:
+                progression_data = pyjson.load(f)
+            
+            achievements = progression_data.get('milestones', {})
+        else:
+            achievements = {}
+        
+        # TODO: When player achievement tracking is implemented, 
+        # we could add player progress data here
+        
+        return jsonify({
+            'success': True,
+            'achievements': achievements,
+            'total_count': len(achievements)
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': f'Failed to load achievements: {str(e)}'}), 500
 
 
 # ===== DATA FILE ENDPOINTS (for tuning) =====
