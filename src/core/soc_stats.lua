@@ -2,6 +2,8 @@
 -- SOC REFACTOR: Provides unified offense/defense/detection/analysis metrics
 -- The missing stats layer that transforms fortress architecture into complete SOC
 
+local DebugLogger = require("src.utils.debug_logger")
+
 local SOCStats = {}
 SOCStats.__index = SOCStats
 
@@ -77,7 +79,7 @@ function SOCStats:initializeCapabilities()
     self.capabilities[CAPABILITY_TYPES.DETECTION].base = 8     -- Basic monitoring
     
     self:recalculateCapabilities()
-    print("🛡️ SOC Stats: Initialized capability baseline")
+    DebugLogger.log("🛡️ SOC Stats: Initialized capability baseline")
 end
 
 -- Subscribe to relevant events that affect SOC stats
@@ -86,28 +88,28 @@ function SOCStats:subscribeToEvents()
     self.eventBus:subscribe("upgrade_purchased", function(data)
         self:updateEquipmentCapabilities()
         self:recalculateCapabilities()
-        print("🔧 SOC Stats: Equipment capabilities updated")
+        DebugLogger.log("🔧 SOC Stats: Equipment capabilities updated")
     end)
     
     -- Specialist changes affect personnel capabilities  
     self.eventBus:subscribe("specialist_hired", function(data)
         self:updatePersonnelCapabilities()
         self:recalculateCapabilities()
-        print("👥 SOC Stats: Personnel capabilities updated")
+        DebugLogger.log("👥 SOC Stats: Personnel capabilities updated")
     end)
     
     -- Threat resolution improves stats
     self.eventBus:subscribe("threat_resolved", function(data)
         self.metrics.incidentsHandled = self.metrics.incidentsHandled + 1
         self:gainExperience(data.threat.type, 1)
-        print("📈 SOC Stats: Experience gained from incident resolution")
+        DebugLogger.log("📈 SOC Stats: Experience gained from incident resolution")
     end)
     
     -- Threat detection improves detection stats
     self.eventBus:subscribe("threat_detected", function(data)
         self.metrics.threatsDetected = self.metrics.threatsDetected + 1
         self:improveCapability("detection", 0.1)
-        print("🎯 SOC Stats: Detection capability improved")
+        DebugLogger.log("🎯 SOC Stats: Detection capability improved")
     end)
 end
 
@@ -360,7 +362,7 @@ function SOCStats:loadState(state)
     end
     
     self:recalculateCapabilities()
-    print("🛡️ SOC Stats: State loaded successfully")
+    DebugLogger.log("🛡️ SOC Stats: State loaded successfully")
 end
 
 -- Initialize method for GameLoop integration
@@ -368,12 +370,12 @@ function SOCStats:initialize()
     self:updateEquipmentCapabilities()
     self:updatePersonnelCapabilities()
     self:recalculateCapabilities()
-    print("🛡️ SOC Stats: Fortress architecture integration complete")
+    DebugLogger.log("🛡️ SOC Stats: Fortress architecture integration complete")
 end
 
 -- Shutdown method for GameLoop integration
 function SOCStats:shutdown()
-    print("🛡️ SOC Stats: Shutdown complete")
+    DebugLogger.log("🛡️ SOC Stats: Shutdown complete")
 end
 
 return SOCStats

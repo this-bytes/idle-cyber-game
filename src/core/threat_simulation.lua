@@ -2,6 +2,8 @@
 -- Fortress Refactor: Realistic threat modeling with defense infrastructure integration
 -- Simulates real-world cyber threats and defensive responses for the cybersecurity business
 
+local DebugLogger = require("src.utils.debug_logger")
+
 local ThreatSimulation = {}
 ThreatSimulation.__index = ThreatSimulation
 
@@ -129,7 +131,7 @@ function ThreatSimulation:initializeThreatTypes()
         }
     }
     
-    print("🚨 ThreatSimulation: Initialized realistic cybersecurity threat catalog")
+    DebugLogger.log("🚨 ThreatSimulation: Initialized realistic cybersecurity threat catalog")
 end
 
 -- Subscribe to relevant events
@@ -217,7 +219,7 @@ function ThreatSimulation:generateThreat()
         defenseEffectiveness = defenseEffectiveness
     })
     
-    print("🚨 ThreatSimulation: Generated " .. threat.name .. " (" .. severity .. ")")
+    DebugLogger.log("🚨 ThreatSimulation: Generated " .. threat.name .. " (" .. severity .. ")")
     
     return threat
 end
@@ -370,9 +372,9 @@ function ThreatSimulation:completeThreat(threat, mitigated)
         self.resourceManager:addResource("xp", baseReward * rewardMultiplier * 0.5)
         self.resourceManager:addResource("reputation", math.floor(rewardMultiplier))
         
-        print("🛡️ ThreatSimulation: Successfully mitigated " .. threat.name)
+        DebugLogger.log("🛡️ ThreatSimulation: Successfully mitigated " .. threat.name)
     else
-        print("💥 ThreatSimulation: Failed to mitigate " .. threat.name)
+        DebugLogger.log("💥 ThreatSimulation: Failed to mitigate " .. threat.name)
     end
 end
 
@@ -481,18 +483,18 @@ function ThreatSimulation:loadState(state)
         self.threatFrequency = state.threatFrequency
     end
     
-    print("🚨 ThreatSimulation: State loaded successfully")
+    DebugLogger.log("🚨 ThreatSimulation: State loaded successfully")
 end
 
 -- Initialize method for GameLoop integration
 function ThreatSimulation:initialize()
     self.lastThreatTime = love.timer and love.timer.getTime() or os.clock()
-    print("🚨 ThreatSimulation: Fortress architecture integration complete")
+    DebugLogger.log("🚨 ThreatSimulation: Fortress architecture integration complete")
 end
 
 -- Shutdown method for GameLoop integration
 function ThreatSimulation:shutdown()
-    print("🚨 ThreatSimulation: Shutdown complete")
+    DebugLogger.log("🚨 ThreatSimulation: Shutdown complete")
 end
 
 return ThreatSimulation

@@ -2,6 +2,8 @@
 -- Fortress Refactor: Specialized upgrade system for cybersecurity business progression
 -- Handles defensive infrastructure, security tools, and threat mitigation upgrades
 
+local DebugLogger = require("src.utils.debug_logger")
+
 local SecurityUpgrades = {}
 SecurityUpgrades.__index = SecurityUpgrades
 
@@ -25,9 +27,14 @@ function SecurityUpgrades.new(eventBus, resourceManager)
     -- Upgrade tracking
     self.owned = {}
     self.upgradeDefinitions = {}
+
+    -- Backwards-compatibility alias: some legacy systems expect `upgrades`
+    self.upgrades = self.upgradeDefinitions
     
     -- Initialize upgrade catalog
     self:initializeUpgrades()
+
+    -- Backwards-compatibility: alias 'owned' also accessible (already present) and 'upgrades' set above
     
     return self
 end
@@ -226,7 +233,7 @@ function SecurityUpgrades:initializeUpgrades()
         }
     })
     
-    print("🛡️ SecurityUpgrades: Initialized cybersecurity upgrade catalog")
+    DebugLogger.log("🛡️ SecurityUpgrades: Initialized cybersecurity upgrade catalog")
 end
 
 -- Define a new upgrade
@@ -326,7 +333,7 @@ function SecurityUpgrades:purchaseUpgrade(upgradeId)
         effects = upgrade.effects
     })
     
-    print("🛡️ SecurityUpgrades: Purchased " .. upgrade.name)
+    DebugLogger.log("🛡️ SecurityUpgrades: Purchased " .. upgrade.name)
     return true
 end
 
@@ -457,12 +464,12 @@ function SecurityUpgrades:loadState(state)
         end
     end
     
-    print("🛡️ SecurityUpgrades: State loaded successfully")
+    DebugLogger.log("🛡️ SecurityUpgrades: State loaded successfully")
 end
 
 -- Initialize method for GameLoop integration
 function SecurityUpgrades:initialize()
-    print("🛡️ SecurityUpgrades: Fortress architecture integration complete")
+    DebugLogger.log("🛡️ SecurityUpgrades: Fortress architecture integration complete")
 end
 
 -- Update method for GameLoop integration
@@ -473,7 +480,7 @@ end
 
 -- Shutdown method for GameLoop integration
 function SecurityUpgrades:shutdown()
-    print("🛡️ SecurityUpgrades: Shutdown complete")
+    DebugLogger.log("🛡️ SecurityUpgrades: Shutdown complete")
 end
 
 return SecurityUpgrades
