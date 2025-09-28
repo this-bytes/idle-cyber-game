@@ -46,6 +46,11 @@ function SecurityUpgrades:initializeUpgrades()
             threatReduction = 0.1,
             moneyGeneration = 2 -- Clients pay more for better security
         },
+        -- SOC REFACTOR: Add SOC capability bonuses
+        socCapabilities = {
+            defense = 5,
+            detection = 2
+        },
         unlockRequirements = {}
     })
     
@@ -76,6 +81,12 @@ function SecurityUpgrades:initializeUpgrades()
             threatReduction = 0.15,
             reputationGeneration = 1
         },
+        -- SOC REFACTOR: Detection-focused SOC capabilities
+        socCapabilities = {
+            detection = 15,
+            analysis = 8,
+            coordination = 2
+        },
         unlockRequirements = {
             upgrades = {"basicFirewall"}
         }
@@ -93,6 +104,11 @@ function SecurityUpgrades:initializeUpgrades()
             contractEfficiency = 0.2,
             xpGeneration = 1
         },
+        -- SOC REFACTOR: Analysis-focused SOC capabilities
+        socCapabilities = {
+            analysis = 10,
+            offense = 5
+        },
         unlockRequirements = {}
     })
     
@@ -107,6 +123,13 @@ function SecurityUpgrades:initializeUpgrades()
             threatReduction = 0.3,
             contractEfficiency = 0.4,
             moneyGeneration = 8
+        },
+        -- SOC REFACTOR: Advanced SOC coordination capabilities
+        socCapabilities = {
+            detection = 20,
+            analysis = 25,
+            coordination = 15,
+            automation = 10
         },
         unlockRequirements = {
             upgrades = {"vulnerabilityScanner", "intrusionDetection"}
@@ -378,6 +401,16 @@ end
 -- Get upgrade count
 function SecurityUpgrades:getUpgradeCount(upgradeId)
     return self.owned[upgradeId] or 0
+end
+
+-- SOC REFACTOR: Get all owned upgrades for SOC Stats integration
+function SecurityUpgrades:getAllOwnedUpgrades()
+    return self.owned
+end
+
+-- Get upgrade definition for SOC Stats integration  
+function SecurityUpgrades:getUpgradeDefinition(upgradeId)
+    return self.upgradeDefinitions[upgradeId]
 end
 
 -- Calculate total threat reduction from all upgrades

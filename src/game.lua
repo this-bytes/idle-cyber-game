@@ -29,6 +29,7 @@ local ResourceManager = require("src.core.resource_manager")
 local SecurityUpgrades = require("src.core.security_upgrades")
 local ThreatSimulation = require("src.core.threat_simulation")
 local UIManager = require("src.core.ui_manager")  -- Fortress UI Manager
+local SOCStats = require("src.core.soc_stats")  -- SOC REFACTOR: Statistical backbone
 
 -- Import UI systems (FORTRESS REFACTOR: Use fortress UIManager instead of legacy)
 -- REMOVED: local UIManager = require("src.ui.ui_manager") -- Legacy UI system causing conflicts
@@ -91,10 +92,15 @@ function Game.init()
     gameState.systems.securityUpgrades = SecurityUpgrades.new(gameState.systems.eventBus, gameState.systems.resourceManager)  
     gameState.systems.threatSimulation = ThreatSimulation.new(gameState.systems.eventBus, gameState.systems.resourceManager, gameState.systems.securityUpgrades)
     
+    -- SOC REFACTOR: Initialize statistical backbone
+    gameState.systems.socStats = SOCStats.new(gameState.systems.eventBus, gameState.systems.resourceManager,
+                                            gameState.systems.securityUpgrades, gameState.systems.threatSimulation)
+    
     -- Initialize fortress core systems
     gameState.systems.resourceManager:initialize()
     gameState.systems.securityUpgrades:initialize()  
     gameState.systems.threatSimulation:initialize()
+    gameState.systems.socStats:initialize()  -- SOC REFACTOR: Initialize stats system
     
     -- Legacy systems (now use fortress resource management)
     gameState.systems.resources = ResourceSystem.new(gameState.systems.eventBus)
@@ -143,6 +149,7 @@ function Game.init()
     -- Create compatibility adapter for legacy UI calls
     gameState.systems.ui = FortressUIAdapter.new(fortressUIManager)
     gameState.systems.uiManager = fortressUIManager  -- Direct fortress access
+    gameState.systems.socStats = gameState.systems.socStats  -- Ensure SOC stats available
     
     print("🏰 SOC Fortress UI System initialized")
     

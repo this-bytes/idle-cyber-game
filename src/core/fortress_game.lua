@@ -11,6 +11,7 @@ local ResourceManager = require("src.core.resource_manager")
 local SecurityUpgrades = require("src.core.security_upgrades")
 local ThreatSimulation = require("src.core.threat_simulation")
 local UIManager = require("src.core.ui_manager")
+local SOCStats = require("src.core.soc_stats")  -- SOC REFACTOR: Statistical backbone
 local EventBus = require("src.utils.event_bus")
 
 -- Import legacy systems for integration
@@ -92,12 +93,20 @@ function FortressGame:initializeFortressSystems()
     self.systems.resourceManager = ResourceManager.new(self.eventBus)
     self.systems.securityUpgrades = SecurityUpgrades.new(self.eventBus, self.systems.resourceManager)
     self.systems.threatSimulation = ThreatSimulation.new(self.eventBus, self.systems.resourceManager, self.systems.securityUpgrades)
-    self.systems.uiManager = UIManager.new(self.eventBus, self.systems.resourceManager, self.systems.securityUpgrades, self.systems.threatSimulation, self.gameLoop)
+    
+    -- SOC REFACTOR: Initialize statistical backbone
+    self.systems.socStats = SOCStats.new(self.eventBus, self.systems.resourceManager, 
+                                        self.systems.securityUpgrades, self.systems.threatSimulation)
+    
+    -- Update UI manager to include SOC stats
+    self.systems.uiManager = UIManager.new(self.eventBus, self.systems.resourceManager, 
+                                         self.systems.securityUpgrades, self.systems.threatSimulation, self.gameLoop)
     
     -- Register with game loop in priority order
     self.gameLoop:registerSystem("resourceManager", self.systems.resourceManager, 10)
     self.gameLoop:registerSystem("securityUpgrades", self.systems.securityUpgrades, 20)
     self.gameLoop:registerSystem("threatSimulation", self.systems.threatSimulation, 30)
+    self.gameLoop:registerSystem("socStats", self.systems.socStats, 35)  -- SOC REFACTOR: Stats system
     self.gameLoop:registerSystem("uiManager", self.systems.uiManager, 90)
     
     print("🔧 Fortress Core Systems registered with GameLoop")
