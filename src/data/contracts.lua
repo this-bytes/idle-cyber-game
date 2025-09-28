@@ -116,7 +116,7 @@ function Contracts.instantiate(id, scale, overrides)
     overrides = overrides or {}
 
     local contract = {
-        id = overrides.id or (t.id .. "_" .. tostring(math.floor(love.timer.getTime()))) ,
+        id = overrides.id or (t.id .. "_" .. tostring(math.floor((love and love.timer and love.timer.getTime()) or os.time()))) ,
         templateId = t.id,
         clientName = overrides.clientName or t.clientName,
         description = overrides.description or t.description,

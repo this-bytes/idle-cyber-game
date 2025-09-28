@@ -103,19 +103,19 @@ end
 -- Interface: Comprehensive eligibility check
 function EligibilityChecker:checkEligibility(itemType, itemId, playerState)
     -- Check all eligibility criteria
-    local checks = {
-        self:checkBasicRequirements(itemType, itemId, playerState),
-        self:checkPrerequisites(itemType, itemId, playerState),
-        self:checkRestrictions(itemType, itemId, playerState),
-        self:checkTimeConditions(itemType, itemId, playerState)
-    }
+    local eligible, reason
     
-    for _, result in ipairs(checks) do
-        local eligible, reason = result[1], result[2]
-        if not eligible then
-            return false, reason
-        end
-    end
+    eligible, reason = self:checkBasicRequirements(itemType, itemId, playerState)
+    if not eligible then return false, reason end
+    
+    eligible, reason = self:checkPrerequisites(itemType, itemId, playerState)
+    if not eligible then return false, reason end
+    
+    eligible, reason = self:checkRestrictions(itemType, itemId, playerState)
+    if not eligible then return false, reason end
+    
+    eligible, reason = self:checkTimeConditions(itemType, itemId, playerState)
+    if not eligible then return false, reason end
     
     return true
 end
