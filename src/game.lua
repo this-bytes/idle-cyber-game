@@ -191,34 +191,44 @@ end
 
 -- Load game state from saved data
 function Game.loadGameState(data)
-    gameState.systems.resources:loadState(data.resources or {})
-    gameState.systems.skills:loadState(data.skills or {})  -- NEW: Load skill state
-    gameState.systems.progression:loadState(data.progression or {})  -- NEW: Load progression state
-    gameState.systems.contracts:loadState(data.contracts or {})  -- NEW: Load contract state
-    gameState.systems.specialists:loadState(data.specialists or {})  -- NEW: Load specialist state
-    gameState.systems.upgrades:loadState(data.upgrades or {})
-    gameState.systems.threats:loadState(data.threats or {})
-    gameState.systems.idle:loadState(data.idle or {})  -- NEW: Load idle system state
-    gameState.systems.zones:loadState(data.zones or {})
-    gameState.systems.locations:loadState(data.locations or {})  -- NEW: Load location state
-    gameState.systems.factions:loadState(data.factions or {})
-    gameState.systems.achievements:loadState(data.achievements or {})
+    -- Helper to load state on systems that may expose either loadState or setState
+    local function tryLoad(systemName, systemObj, stateData)
+        if not systemObj then return end
+        if not stateData then return end
+        if type(systemObj.loadState) == "function" then
+            systemObj:loadState(stateData)
+        elseif type(systemObj.setState) == "function" then
+            systemObj:setState(stateData)
+        else
+            -- Log verbose warning in debug mode
+            if gameState.systems and gameState.systems.ui and gameState.systems.ui.logDebug then
+                gameState.systems.ui:logDebug("⚠️  System '" .. systemName .. "' has no loadState/setState method to restore state")
+            else
+                print("⚠️  System '" .. systemName .. "' has no loadState/setState method to restore state")
+            end
+        end
+    end
+
+    tryLoad("resources", gameState.systems.resources, data.resources or {})
+    tryLoad("skills", gameState.systems.skills, data.skills or {})  -- NEW: Load skill state
+    tryLoad("progression", gameState.systems.progression, data.progression or {})  -- NEW: Load progression state
+    tryLoad("contracts", gameState.systems.contracts, data.contracts or {})  -- NEW: Load contract state
+    tryLoad("specialists", gameState.systems.specialists, data.specialists or {})  -- NEW: Load specialist state
+    tryLoad("upgrades", gameState.systems.upgrades, data.upgrades or {})
+    tryLoad("threats", gameState.systems.threats, data.threats or {})
+    tryLoad("idle", gameState.systems.idle, data.idle or {})  -- NEW: Load idle system state
+    tryLoad("zones", gameState.systems.zones, data.zones or {})
+    tryLoad("locations", gameState.systems.locations, data.locations or {})  -- NEW: Load location state
+    tryLoad("factions", gameState.systems.factions, data.factions or {})
+    tryLoad("achievements", gameState.systems.achievements, data.achievements or {})
     
-    -- NEW: Load room system states
-    if gameState.systems.rooms and data.rooms then
-        gameState.systems.rooms:loadState(data.rooms)
-    end
-    if gameState.systems.roomEvents and data.roomEvents then
-        gameState.systems.roomEvents:loadState(data.roomEvents)
-    end
-    
-    -- NEW: Load advanced system states
-    if gameState.systems.sound and data.sound then
-        gameState.systems.sound:loadState(data.sound)
-    end
-    if gameState.systems.advancedAchievements and data.advancedAchievements then
-        gameState.systems.advancedAchievements:loadState(data.advancedAchievements)
-    end
+    -- NEW: Load room system states (safe)
+    tryLoad("rooms", gameState.systems.rooms, data.rooms or {})
+    tryLoad("roomEvents", gameState.systems.roomEvents, data.roomEvents or {})
+
+    -- NEW: Load advanced system states (safe)
+    tryLoad("sound", gameState.systems.sound, data.sound or {})
+    tryLoad("advancedAchievements", gameState.systems.advancedAchievements, data.advancedAchievements or {})
     
     -- Store loaded player state for the IdleMode to apply when it initializes
     if data.playerState then
@@ -551,7 +561,6 @@ function Game.save()
     end
 
     local saveData = {
-<<<<<<< HEAD
         resources = safeState(gameState.systems and gameState.systems.resources),
         skills = safeState(gameState.systems and gameState.systems.skills),
         progression = safeState(gameState.systems and gameState.systems.progression),
@@ -568,29 +577,9 @@ function Game.save()
         achievements = safeState(gameState.systems and gameState.systems.achievements),
         sound = safeState(gameState.systems and gameState.systems.sound),
         advancedAchievements = safeState(gameState.systems and gameState.systems.advancedAchievements),
-        playerState = safePlayerState(),
-=======
-        resources = gameState.systems.resources:getState(),
-        skills = gameState.systems.skills:getState(),  -- NEW: Save skill state
-        progression = gameState.systems.progression:getState(),  -- NEW: Save progression state
-        contracts = gameState.systems.contracts:getState(),  -- NEW: Save contract state
-        specialists = gameState.systems.specialists:getState(),  -- NEW: Save specialist state
-        upgrades = gameState.systems.upgrades:getState(),
-        threats = gameState.systems.threats:getState(),
-        idle = gameState.systems.idle and gameState.systems.idle:getState() or nil,  -- NEW: Save idle system state
-        zones = gameState.systems.zones:getState(),
-        locations = gameState.systems.locations:getState(),  -- NEW: Save location state
-        rooms = gameState.systems.rooms and gameState.systems.rooms:getState() or nil,  -- NEW: Save room state if exists
-        roomEvents = gameState.systems.roomEvents and gameState.systems.roomEvents:getState() or nil,  -- NEW: Save room events if exists
-        factions = gameState.systems.factions:getState(),
-        achievements = gameState.systems.achievements:getState(),
-        -- NEW: Advanced system states
-        sound = gameState.systems.sound and gameState.systems.sound:getState() or nil,
-        advancedAchievements = gameState.systems.advancedAchievements and gameState.systems.advancedAchievements:getState() or nil,
         -- Include player state if initialized
         playerState = (gameState.modes and gameState.modes.idle and gameState.modes.idle.player) and gameState.modes.idle.player:getState() or nil,
         -- Tutorial state
->>>>>>> 0e43d4840a4d025edc3b5d309cf0483a87dc9fea
         tutorialSeen = gameState.tutorialSeen or false,
         version = "1.0.0",
         timestamp = os.time()
@@ -630,7 +619,7 @@ end
 
 -- Auto-save periodically
 local autoSaveTimer = 0
-local AUTO_SAVE_INTERVAL = 60 -- seconds
+local AUTO_SAVE_INTERVAL = 15-- seconds
 
 function Game.handleAutoSave(dt)
     autoSaveTimer = autoSaveTimer + dt

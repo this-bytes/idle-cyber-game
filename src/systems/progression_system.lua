@@ -20,6 +20,12 @@ function ProgressionSystem.new(eventBus)
     self.currentTier = "startup"
     self.prestigeLevel = 0
     self.completedMilestones = {}
+    -- Achievement state (compatibility)
+    self.achievements = {}
+    -- Statistics tracking (more detailed for tests)
+    self.statistics = {
+        rooms_visited = {}
+    }
     
     -- Statistics tracking
     self.totalStats = {
@@ -118,6 +124,13 @@ function ProgressionSystem:subscribeToEvents()
         
         self.eventBus:subscribe("crisis_completed", function(data)
             self.totalStats.crisisMissionsCompleted = self.totalStats.crisisMissionsCompleted + 1
+        end)
+        -- Track location changes for statistics
+        self.eventBus:subscribe("location_changed", function(data)
+            if data and data.newBuilding and data.newFloor and data.newRoom then
+                local key = data.newBuilding .. "/" .. data.newFloor .. "/" .. data.newRoom
+                self.statistics.rooms_visited[key] = (self.statistics.rooms_visited[key] or 0) + 1
+            end
         end)
     end
 end
@@ -323,6 +336,48 @@ function ProgressionSystem:checkTierProgression()
     end
 end
 
+-- Compatibility methods expected by tests
+function ProgressionSystem:getCurrentTier()
+    return self.currentTier
+end
+
+function ProgressionSystem:unlockAchievement(id)
+    if not id then return false end
+    self.achievements[id] = true
+    if self.eventBus then
+        self.eventBus:publish("achievement_unlocked", { id = id })
+    end
+    return true
+end
+
+function ProgressionSystem:getAchievements()
+    return self.achievements
+end
+
+function ProgressionSystem:getStatistics()
+    -- Merge basic totalStats and extended statistics for backward compatibility
+    local merged = {
+        rooms_visited = self.statistics.rooms_visited or {},
+        totalEarnings = self.totalStats.totalEarnings or 0,
+        contractsCompleted = self.totalStats.contractsCompleted or 0
+    }
+    return merged
+end
+
+-- Backwards-compatible state setter
+function ProgressionSystem:setState(state)
+    -- Accept the same structure as loadState/getState
+    if not state then return end
+    self:loadState(state)
+    -- Restore achievements and statistics if present
+    if state.achievements then
+        self.achievements = state.achievements
+    end
+    if state.statistics then
+        self.statistics = state.statistics
+    end
+end
+
 -- Get current tier level (for display)
 function ProgressionSystem:getCurrentTierLevel()
     local tiers = self.config.progressionTiers or {}
@@ -422,6 +477,10 @@ function ProgressionSystem:getState()
         totalStats = self.totalStats,
         dailyConversions = self.dailyConversions
     }
+
+    -- Include achievements and statistics for compatibility
+    state.achievements = self.achievements or {}
+    state.statistics = self.statistics or { rooms_visited = {} }
     
     -- Save currency data
     for currencyId, currency in pairs(self.currencies) do
