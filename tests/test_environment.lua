@@ -44,12 +44,29 @@ function mockGraphics.getFont()
     }
 end
 
+-- Mock love.keyboard functions
+local mockKeyboard = {}
+
+function mockKeyboard.isDown(key)
+    return false -- Always return false for tests
+end
+
+-- Mock love.filesystem functions
+local mockFilesystem = {}
+
+function mockFilesystem.getInfo(path)
+    -- Return nil to simulate file not found
+    return nil
+end
+
 -- Set up global love table for testing
 function testEnv.setup()
     if not love then
         _G.love = {
             timer = mockTimer,
-            graphics = mockGraphics
+            graphics = mockGraphics,
+            keyboard = mockKeyboard,
+            filesystem = mockFilesystem
         }
     end
 end
