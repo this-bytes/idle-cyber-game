@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyberspace Tycoon - Enhanced Admin Dashboard</title>
+    
+    <!-- Load CSS -->
+    <link rel="stylesheet" href="/static/json_form_editor.css">
+    
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0a0f1c 0%, #1a1f3a 100%);
+            color: #e6f3ff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, #0d1421 0%, #1a2332 100%);
+            border-right: 2px solid #2c3e50;
+            box-shadow: 4px 0 15px rgba(0,0,0,0.3);
+            padding: 20px;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        
+        .sidebar h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #3498db;
+            font-size: 1.6em;
+        }
+        
+        .nav-menu {
+            list-style: none;
+        }
+        
+        .nav-item {
+            margin: 8px 0;
+        }
+        
+        .nav-link {
+            display: block;
+            color: #8fbcdb;
+            text-decoration: none;
+            padding: 12px 16px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-size: 0.95em;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            background: linear-gradient(90deg, #3498db, #2980b9);
+            color: white;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+            transform: translateX(4px);
+        }
+        
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 20px;
+        }
+        
+        .content-area {
+            background: rgba(26, 31, 58, 0.8);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            padding: 0;
+            margin-bottom: 20px;
+            min-height: 600px;
+        }
+        
+        .section {
+            display: none;
+        }
+        
+        .section.active {
+            display: block;
+        }
+        
+        .page-header {
+            background: linear-gradient(90deg, #34495e, #2c3e50);
+            padding: 20px;
+            border-radius: 12px 12px 0 0;
+            border-bottom: 2px solid #3498db;
+        }
+        
+        .page-header h1 {
+            color: #3498db;
+            font-size: 1.8em;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .page-header p {
+            color: #8fbcdb;
+            margin-top: 8px;
+            font-size: 1.05em;
+        }
+        
+        .editor-container {
+            padding: 0;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+            max-width: 400px;
+        }
+        
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            background: linear-gradient(45deg, #27ae60, #219a52);
+        }
+        
+        .notification.error {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+        }
+        
+        .notification.info {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+        }
+        
+        .notification.warning {
+            background: linear-gradient(45deg, #f39c12, #e67e22);
+        }
+        
+        .file-selector {
+            background: rgba(26, 31, 58, 0.8);
+            padding: 20px;
+            border-bottom: 1px solid rgba(52, 152, 219, 0.3);
+        }
+        
+        .file-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .file-tab {
+            background: rgba(52, 73, 94, 0.6);
+            color: #8fbcdb;
+            border: 1px solid #34495e;
+            border-radius: 6px 6px 0 0;
+            padding: 10px 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+        }
+        
+        .file-tab.active {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border-color: #2980b9;
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+        }
+        
+        .file-tab:hover:not(.active) {
+            background: rgba(52, 152, 219, 0.2);
+            border-color: #3498db;
+        }
+        
+        .file-info {
+            background: rgba(44, 62, 80, 0.3);
+            border: 1px solid rgba(52, 152, 219, 0.2);
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 0.9em;
+            color: #8fbcdb;
+        }
+        
+        .community-tools {
+            background: rgba(26, 31, 58, 0.6);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px;
+            border: 1px solid rgba(52, 152, 219, 0.3);
+        }
+        
+        .community-tools h3 {
+            color: #3498db;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .tool-card {
+            background: rgba(52, 73, 94, 0.4);
+            border: 1px solid rgba(52, 152, 219, 0.2);
+            border-radius: 6px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .tool-card:hover {
+            background: rgba(52, 152, 219, 0.1);
+            border-color: #3498db;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
+        }
+        
+        .tool-icon {
+            font-size: 2em;
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .tool-name {
+            font-weight: 600;
+            color: #3498db;
+            margin-bottom: 5px;
+        }
+        
+        .tool-desc {
+            font-size: 0.85em;
+            color: #8fbcdb;
+            line-height: 1.3;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                position: static;
+                width: 100%;
+                height: auto;
+                padding: 15px;
+            }
+            
+            .main-content {
+                margin-left: 0;
+                padding: 15px;
+            }
+            
+            .file-tabs {
+                flex-direction: column;
+            }
+            
+            .tool-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .page-header h1 {
+                font-size: 1.4em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Enhanced Sidebar -->
+        <nav class="sidebar">
+            <h2>🚀 Enhanced Admin</h2>
+            
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a class="nav-link active" data-section="json-editor">
+                        🛠️ JSON Form Editor
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-section="community-tools">
+                        🌐 Community Tools
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-section="templates">
+                        📋 Templates
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-section="version-control">
+                        📚 Version Control
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-section="backup-restore">
+                        💾 Backup & Restore
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-section="schema-validator">
+                        ✅ Schema Validator
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-section="data-visualization">
+                        📊 Data Visualization
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-section="api-tester">
+                        🧪 API Tester
+                    </a>
+                </li>
+            </ul>
+            
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(52, 152, 219, 0.3);">
+                <div style="font-size: 0.8em; color: #8fbcdb; text-align: center;">
+                    <p>🌙 Moon-Ready Tools</p>
+                    <p>Version 2.0</p>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- JSON Form Editor Section -->
+            <div id="json-editor" class="section active">
+                <div class="content-area">
+                    <div class="page-header">
+                        <h1>🛠️ Advanced JSON Form Editor</h1>
+                        <p>Transform JSON data into beautiful, editable forms with validation and community features</p>
+                    </div>
+                    
+                    <div class="file-selector">
+                        <div class="file-tabs">
+                            <div class="file-tab active" data-file="contracts">
+                                📋 Contracts
+                            </div>
+                            <div class="file-tab" data-file="defs">
+                                ⚙️ Definitions
+                            </div>
+                            <div class="file-tab" data-file="currencies">
+                                💰 Currencies
+                            </div>
+                            <div class="file-tab" data-file="progression">
+                                📈 Progression
+                            </div>
+                        </div>
+                        
+                        <div class="file-info" id="file-info">
+                            Loading file information...
+                        </div>
+                    </div>
+                    
+                    <div class="editor-container">
+                        <div id="json-form-editor"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Community Tools Section -->
+            <div id="community-tools" class="section">
+                <div class="content-area">
+                    <div class="page-header">
+                        <h1>🌐 Community Tools</h1>
+                        <p>Share, collaborate, and enhance your JSON configurations with the community</p>
+                    </div>
+                    
+                    <div class="community-tools">
+                        <h3>🚀 Moon-Ready Features</h3>
+                        <div class="tool-grid">
+                            <div class="tool-card" onclick="shareToMoon()">
+                                <span class="tool-icon">🌙</span>
+                                <div class="tool-name">Share to Moon</div>
+                                <div class="tool-desc">Upload your configurations to the community repository</div>
+                            </div>
+                            
+                            <div class="tool-card" onclick="importFromMoon()">
+                                <span class="tool-icon">📥</span>
+                                <div class="tool-name">Import from Moon</div>
+                                <div class="tool-desc">Download community-created configurations</div>
+                            </div>
+                            
+                            <div class="tool-card" onclick="validateWithCommunity()">
+                                <span class="tool-icon">🔍</span>
+                                <div class="tool-name">Community Validation</div>
+                                <div class="tool-desc">Validate against community standards</div>
+                            </div>
+                            
+                            <div class="tool-card" onclick="exportTemplate()">
+                                <span class="tool-icon">📋</span>
+                                <div class="tool-name">Create Template</div>
+                                <div class="tool-desc">Generate reusable templates from your data</div>
+                            </div>
+                            
+                            <div class="tool-card" onclick="collaborativeEdit()">
+                                <span class="tool-icon">👥</span>
+                                <div class="tool-name">Collaborative Edit</div>
+                                <div class="tool-desc">Real-time collaborative editing</div>
+                            </div>
+                            
+                            <div class="tool-card" onclick="versionCompare()">
+                                <span class="tool-icon">📊</span>
+                                <div class="tool-name">Version Compare</div>
+                                <div class="tool-desc">Compare different versions of your data</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Templates Section -->
+            <div id="templates" class="section">
+                <div class="content-area">
+                    <div class="page-header">
+                        <h1>📋 Smart Templates</h1>
+                        <p>Pre-built templates for common JSON structures</p>
+                    </div>
+                    
+                    <div style="padding: 20px;">
+                        <div class="tool-grid">
+                            <div class="tool-card">
+                                <span class="tool-icon">🏢</span>
+                                <div class="tool-name">Enterprise Contract</div>
+                                <div class="tool-desc">High-value contracts for large organizations</div>
+                            </div>
+                            
+                            <div class="tool-card">
+                                <span class="tool-icon">🚀</span>
+                                <div class="tool-name">Startup Package</div>
+                                <div class="tool-desc">Contracts tailored for tech startups</div>
+                            </div>
+                            
+                            <div class="tool-card">
+                                <span class="tool-icon">🛡️</span>
+                                <div class="tool-name">Security Audit</div>
+                                <div class="tool-desc">Comprehensive security assessment contracts</div>
+                            </div>
+                            
+                            <div class="tool-card">
+                                <span class="tool-icon">📱</span>
+                                <div class="tool-name">Mobile App Security</div>
+                                <div class="tool-desc">Specialized mobile security contracts</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Other sections (placeholders for now) -->
+            <div id="version-control" class="section">
+                <div class="content-area">
+                    <div class="page-header">
+                        <h1>📚 Version Control</h1>
+                        <p>Track changes and manage versions of your JSON files</p>
+                    </div>
+                    <div style="padding: 20px; text-align: center; color: #8fbcdb;">
+                        <h3>🚧 Coming Soon</h3>
+                        <p>Advanced version control features are in development</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="backup-restore" class="section">
+                <div class="content-area">
+                    <div class="page-header">
+                        <h1>💾 Backup & Restore</h1>
+                        <p>Automated backup and restore functionality</p>
+                    </div>
+                    <div style="padding: 20px; text-align: center; color: #8fbcdb;">
+                        <h3>🚧 Coming Soon</h3>
+                        <p>Backup and restore features are in development</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="schema-validator" class="section">
+                <div class="content-area">
+                    <div class="page-header">
+                        <h1>✅ Schema Validator</h1>
+                        <p>Advanced JSON schema validation and error reporting</p>
+                    </div>
+                    <div style="padding: 20px; text-align: center; color: #8fbcdb;">
+                        <h3>🚧 Coming Soon</h3>
+                        <p>Schema validation features are in development</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="data-visualization" class="section">
+                <div class="content-area">
+                    <div class="page-header">
+                        <h1>📊 Data Visualization</h1>
+                        <p>Visualize your JSON data with interactive charts and graphs</p>
+                    </div>
+                    <div style="padding: 20px; text-align: center; color: #8fbcdb;">
+                        <h3>🚧 Coming Soon</h3>
+                        <p>Data visualization features are in development</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="api-tester" class="section">
+                <div class="content-area">
+                    <div class="page-header">
+                        <h1>🧪 API Tester</h1>
+                        <p>Test your API endpoints with the modified JSON data</p>
+                    </div>
+                    <div style="padding: 20px; text-align: center; color: #8fbcdb;">
+                        <h3>🚧 Coming Soon</h3>
+                        <p>API testing features are in development</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notification" class="notification"></div>
+
+    <!-- Load JavaScript -->
+    <script src="/static/json_form_editor.js"></script>
+    <script src="/static/admin_enhanced.js"></script>
+</body>
+</html>
