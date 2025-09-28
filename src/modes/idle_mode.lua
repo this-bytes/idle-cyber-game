@@ -53,13 +53,19 @@ function IdleMode:enter()
                     self.systems.ui:showNotification("📈 New opportunities: +1 Rep, new contract generated")
                 end
             elseif data.department == "security" then
-                -- Decrease threat level slightly via ThreatSystem if present
-                if self.systems.threats and self.systems.threats.threatReduction ~= nil then
-                    self.systems.threats.threatReduction = math.min((self.systems.threats.threatReduction or 0) + 0.05, 0.9)
-                    if self.systems.ui then
-                        self.systems.ui:showNotification("🛡️ Security briefing: Threat reduction increased")
+                -- SOC REFACTOR: Use fortress threat simulation instead of legacy threats
+                if self.systems.threatSimulation then
+                    -- Improve overall SOC defense capability
+                    if self.systems.socStats then
+                        self.systems.socStats:improveCapability("defense", 0.5)
+                        if self.systems.ui then
+                            self.systems.ui:showNotification("🛡️ SOC briefing: Defense capabilities improved")
+                        end
+                    else
+                        if self.systems.ui then
+                            self.systems.ui:showNotification("🛡️ Security briefing: Defense increased")
+                        end
                     end
-                    self.systems.eventBus:publish("threats_updated", { reduction = self.systems.threats.threatReduction })
                 else
                     if self.systems.ui then
                         self.systems.ui:showNotification("🛡️ Security briefing: Defense increased")
@@ -104,13 +110,14 @@ function IdleMode:enter()
                 -- Mark tutorial as seen and persist a save immediately
                 self.systems.gameState.tutorialSeen = true
 
-                -- Build save snapshot similar to Game.save
+                -- SOC REFACTOR: Build save snapshot with fortress systems
                 local saveData = {
-                    resources = self.systems.resources:getState(),
+                    resources = self.systems.resourceManager:saveState(), -- Use fortress resource manager
                     contracts = self.systems.contracts:getState(),
                     specialists = self.systems.specialists:getState(),
-                    upgrades = self.systems.upgrades:getState(),
-                    threats = self.systems.threats:getState(),
+                    securityUpgrades = self.systems.securityUpgrades:saveState(), -- Use fortress security upgrades
+                    threatSimulation = self.systems.threatSimulation:saveState(), -- Use fortress threat simulation
+                    socStats = self.systems.socStats:saveState(), -- SOC statistical backbone
                     zones = self.systems.zones:getState(),
                     factions = self.systems.factions:getState(),
                     achievements = self.systems.achievements:getState(),
@@ -248,7 +255,7 @@ function IdleMode:draw()
         theme:drawPanel(leftPanelX, y, panelWidth, 200, "BUSINESS RESOURCES")
         local resourceY = y + 25
 
-        local resources = self.systems.resources:getAllResources()
+        local resources = self.systems.resourceManager:getAllResources() -- SOC REFACTOR: Use fortress resource manager
         theme:drawText("BUDGET:", leftPanelX + 10, resourceY, theme:getColor("secondary"))
         theme:drawText("$" .. format.number(resources.money or 0, 0), leftPanelX + 200, resourceY, theme:getColor("success"))
         resourceY = resourceY + 20
@@ -665,7 +672,7 @@ function IdleMode:keypressed(key)
         return
     elseif key == "i" then
         print("💼 BUSINESS INFORMATION:")
-        local resources = self.systems.resources:getAllResources()
+        local resources = self.systems.resourceManager:getAllResources() -- SOC REFACTOR: Use fortress resource manager
         print("   Current Funds: $" .. format.number(resources.money or 0, 0))
         print("   Reputation Level: " .. format.number(resources.reputation or 0, 0))
         print("   Experience Points: " .. format.number(resources.xp or 0, 0))
@@ -840,20 +847,21 @@ function IdleMode:keypressed(key)
             return
         end
         
-        -- Handle upgrade purchases (original behavior)
+        -- SOC REFACTOR: Handle upgrade purchases using fortress security upgrades
         local upgradeIndex = numKey
-        local upgrades = self.systems.upgrades:getUnlockedUpgrades()
+        local upgrades = self.systems.securityUpgrades:getAvailableUpgrades() -- Use fortress security upgrades
         local upgradeIds = {}
-        for upgradeId, upgrade in pairs(upgrades) do table.insert(upgradeIds, upgradeId) end
+        for _, upgrade in ipairs(upgrades) do table.insert(upgradeIds, upgrade.id) end
         if upgradeIndex <= #upgradeIds then
             local upgradeId = upgradeIds[upgradeIndex]
-            local success = self.systems.upgrades:purchaseUpgrade(upgradeId)
+            -- SOC REFACTOR: Use fortress security upgrades
+            local success = self.systems.securityUpgrades:purchaseUpgrade(upgradeId)
             if not success then
-                local upgrade = self.systems.upgrades:getUpgrade(upgradeId)
-                local cost = self.systems.upgrades:getUpgradeCost(upgradeId)
-                local owned = self.systems.upgrades:getUpgradeCount(upgradeId)
-                if owned >= upgrade.maxCount then
-                    print("❌ Cannot purchase: Already at maximum count (" .. upgrade.maxCount .. ")")
+                local upgradeDef = self.systems.securityUpgrades:getUpgradeDefinition(upgradeId)
+                local cost = self.systems.securityUpgrades:calculateUpgradeCost(upgradeId)
+                local owned = self.systems.securityUpgrades:getUpgradeCount(upgradeId)
+                if owned >= upgradeDef.maxCount then
+                    print("❌ Cannot purchase: Already at maximum count (" .. upgradeDef.maxCount .. ")")
                 else
                     local costText = ""
                     for resource, amount in pairs(cost) do

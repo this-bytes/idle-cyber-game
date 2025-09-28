@@ -1,43 +1,39 @@
--- Core Game Controller
--- Manages all game systems and state
+-- Core Game Controller - SOC REFACTOR: Pure Fortress Architecture
+-- Manages all game systems and state using fortress components
+-- Legacy systems removed - vulnerabilities eradicated
 
 local Game = {}
 
--- Import game systems
-local ResourceSystem = require("src.systems.resource_system")
-local SkillSystem = require("src.systems.skill_system")  -- NEW: Skill system
-local ProgressionSystem = require("src.systems.progression_system")  -- NEW: Comprehensive progression
-local UpgradeSystem = require("src.systems.upgrade_system")
-local ThreatSystem = require("src.systems.threat_system")
-local ZoneSystem = require("src.systems.zone_system")
-local LocationSystem = require("src.systems.location_system")  -- NEW: Hierarchical location system
-local RoomSystem = require("src.systems.room_system")  -- NEW: Enhanced room/environment system
-local RoomEventSystem = require("src.systems.room_event_system")  -- NEW: Dynamic room events
-local FactionSystem = require("src.systems.faction_system")
-local AchievementSystem = require("src.systems.achievement_system")
-local ContractSystem = require("src.systems.contract_system")  -- NEW: Core business system
-local SpecialistSystem = require("src.systems.specialist_system")  -- NEW: Team management
-local NetworkSaveSystem = require("src.systems.network_save_system")  -- NEW: Network-aware save system
-local IdleSystem = require("src.systems.idle_system")  -- NEW: Comprehensive idle mechanics
-local SoundSystem = require("src.systems.sound_system")  -- NEW: Advanced audio system
-local CrisisGameSystem = require("src.systems.crisis_game_system")  -- NEW: Interactive crisis mini-games
-local AdvancedAchievementSystem = require("src.systems.advanced_achievement_system")  -- NEW: Rich achievement system
-local ParticleSystem = require("src.systems.particle_system")  -- NEW: Visual effects system
--- Import fortress core components for SOC integration
+-- SOC REFACTOR: Import only fortress core components and essential systems
 local GameLoop = require("src.core.game_loop")
 local ResourceManager = require("src.core.resource_manager") 
 local SecurityUpgrades = require("src.core.security_upgrades")
 local ThreatSimulation = require("src.core.threat_simulation")
 local UIManager = require("src.core.ui_manager")  -- Fortress UI Manager
-local SOCStats = require("src.core.soc_stats")  -- SOC REFACTOR: Statistical backbone
-
--- Import UI systems (FORTRESS REFACTOR: Use fortress UIManager instead of legacy)
--- REMOVED: local UIManager = require("src.ui.ui_manager") -- Legacy UI system causing conflicts
--- USE FORTRESS INSTEAD: Import will happen through fortress integration
-local FortressUIAdapter = require("src.utils.fortress_ui_adapter")  -- SOC REFACTOR: Bridge to fortress UI
-local ContractModal = require("src.ui.contract_modal")  -- NEW: Contract detail modal
-
+local SOCStats = require("src.core.soc_stats")  -- SOC Statistical backbone
 local EventBus = require("src.utils.event_bus")
+
+-- Essential legacy systems (not duplicated in fortress)
+local SkillSystem = require("src.systems.skill_system") 
+local ProgressionSystem = require("src.systems.progression_system")
+local ZoneSystem = require("src.systems.zone_system")
+local LocationSystem = require("src.systems.location_system")
+local RoomSystem = require("src.systems.room_system")
+local RoomEventSystem = require("src.systems.room_event_system")
+local FactionSystem = require("src.systems.faction_system")
+local AchievementSystem = require("src.systems.achievement_system")
+local ContractSystem = require("src.systems.contract_system")
+local SpecialistSystem = require("src.systems.specialist_system")
+local NetworkSaveSystem = require("src.systems.network_save_system")
+local IdleSystem = require("src.systems.idle_system")
+local SoundSystem = require("src.systems.sound_system")
+local CrisisGameSystem = require("src.systems.crisis_game_system")
+local AdvancedAchievementSystem = require("src.systems.advanced_achievement_system")
+local ParticleSystem = require("src.systems.particle_system")
+
+-- Fortress UI components
+local FortressUIAdapter = require("src.utils.fortress_ui_adapter")  -- SOC compatibility bridge
+local ContractModal = require("src.ui.contract_modal")
 
 -- Import game modes
 local IdleMode = require("src.modes.idle_mode")
@@ -102,36 +98,33 @@ function Game.init()
     gameState.systems.threatSimulation:initialize()
     gameState.systems.socStats:initialize()  -- SOC REFACTOR: Initialize stats system
     
-    -- Legacy systems (now use fortress resource management)
-    gameState.systems.resources = ResourceSystem.new(gameState.systems.eventBus)
-    gameState.systems.skills = SkillSystem.new(gameState.systems.eventBus)  -- NEW: Skill system
-    gameState.systems.progression = ProgressionSystem.new(gameState.systems.eventBus)  -- NEW: Progression system
-    gameState.systems.contracts = ContractSystem.new(gameState.systems.eventBus)  -- NEW: Contract system
-    gameState.systems.contracts:setResourceSystem(gameState.systems.resources)  -- NEW: Connect systems
-    gameState.systems.specialists = SpecialistSystem.new(gameState.systems.eventBus)  -- NEW: Specialist system
+    -- Essential systems (use fortress resource management where possible)
+    gameState.systems.skills = SkillSystem.new(gameState.systems.eventBus)
+    gameState.systems.progression = ProgressionSystem.new(gameState.systems.eventBus)
+    gameState.systems.contracts = ContractSystem.new(gameState.systems.eventBus, gameState.systems.resourceManager) -- Use fortress resources
+    gameState.systems.specialists = SpecialistSystem.new(gameState.systems.eventBus, gameState.systems.resourceManager) -- Use fortress resources
     
-    -- NEW: Initialize advanced systems
-    gameState.systems.sound = SoundSystem.new(gameState.systems.eventBus)  -- Advanced audio system
-    gameState.systems.crisisGame = CrisisGameSystem.new(gameState.systems.eventBus)  -- Interactive crisis games
-    gameState.systems.advancedAchievements = AdvancedAchievementSystem.new(gameState.systems.eventBus)  -- Rich achievements
-    gameState.systems.particles = ParticleSystem.new(gameState.systems.eventBus)  -- Visual effects system
-    gameState.systems.specialists:setSkillSystem(gameState.systems.skills)  -- NEW: Connect skill system
-    gameState.systems.upgrades = UpgradeSystem.new(gameState.systems.eventBus)
-    gameState.systems.threats = ThreatSystem.new(gameState.systems.eventBus)
-    -- Initialize idle system after core systems (needs resources, threats, upgrades)
-    gameState.systems.idle = IdleSystem.new(gameState.systems.eventBus, gameState.systems.resources, gameState.systems.threats, gameState.systems.upgrades)
+    -- Advanced systems  
+    gameState.systems.sound = SoundSystem.new(gameState.systems.eventBus)
+    gameState.systems.crisisGame = CrisisGameSystem.new(gameState.systems.eventBus)
+    gameState.systems.advancedAchievements = AdvancedAchievementSystem.new(gameState.systems.eventBus)
+    gameState.systems.particles = ParticleSystem.new(gameState.systems.eventBus)
+    gameState.systems.specialists:setSkillSystem(gameState.systems.skills)
     gameState.systems.zones = ZoneSystem.new(gameState.systems.eventBus)
-    gameState.systems.locations = LocationSystem.new(gameState.systems.eventBus)  -- NEW: Location system
-    -- Initialize room systems if they exist in main branch (check if files exist)
+    gameState.systems.locations = LocationSystem.new(gameState.systems.eventBus)
+    
+    -- Initialize idle system with fortress dependencies
+    gameState.systems.idle = IdleSystem.new(gameState.systems.eventBus, gameState.systems.resourceManager, 
+                                          gameState.systems.threatSimulation, gameState.systems.securityUpgrades)
+    
+    -- Room systems (if available)
     local roomSystemExists = pcall(require, "src.systems.room_system")
     if roomSystemExists then
-        gameState.systems.rooms = RoomSystem.new(gameState.systems.eventBus)  -- NEW: Enhanced room system
-        gameState.systems.rooms:connectResourceSystem(gameState.systems.resources)  -- Connect for unlocking
-        gameState.systems.roomEvents = RoomEventSystem.new(gameState.systems.eventBus, gameState.systems.rooms)  -- NEW: Room events
+        gameState.systems.rooms = RoomSystem.new(gameState.systems.eventBus)
+        gameState.systems.rooms:connectResourceSystem(gameState.systems.resourceManager) -- Use fortress resources
+        gameState.systems.roomEvents = RoomEventSystem.new(gameState.systems.eventBus, gameState.systems.rooms)
     end
-    gameState.systems.rooms = RoomSystem.new(gameState.systems.eventBus)  -- NEW: Enhanced room system
-    gameState.systems.rooms:connectResourceSystem(gameState.systems.resources)  -- Connect for unlocking
-    gameState.systems.roomEvents = RoomEventSystem.new(gameState.systems.eventBus, gameState.systems.rooms)  -- NEW: Room events
+    
     gameState.systems.factions = FactionSystem.new(gameState.systems.eventBus)
     gameState.systems.achievements = AchievementSystem.new(gameState.systems.eventBus)
     gameState.systems.save = NetworkSaveSystem.new()

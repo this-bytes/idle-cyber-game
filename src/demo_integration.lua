@@ -1,8 +1,8 @@
--- Integration Demo
--- Demonstrates the new location and progression systems working together
+-- Integration Demo - SOC REFACTOR: Use fortress architecture
+-- Demonstrates the fortress components working together with legacy systems
 
 local EventBus = require("src.utils.event_bus")
-local ResourceSystem = require("src.systems.resource_system")
+local ResourceManager = require("src.core.resource_manager") -- SOC REFACTOR: Use fortress resource manager
 local LocationSystem = require("src.systems.location_system")
 local ProgressionSystem = require("src.systems.progression_system")
 local EnhancedPlayerSystem = require("src.systems.enhanced_player_system")
@@ -11,17 +11,18 @@ local function demo_complete_workflow()
     print("🚀 Starting Integration Demo...")
     print("=" .. string.rep("=", 50))
     
-    -- Initialize core systems
+    -- Initialize core systems with fortress architecture
     local eventBus = EventBus.new()
-    local resourceSystem = ResourceSystem.new(eventBus)
+    local resourceManager = ResourceManager.new(eventBus) -- SOC REFACTOR: Use fortress resource manager
+    resourceManager:initialize()
     local locationSystem = LocationSystem.new(eventBus)
-    local progressionSystem = ProgressionSystem.new(eventBus, resourceSystem)
+    local progressionSystem = ProgressionSystem.new(eventBus, resourceManager) -- Updated to use fortress resources
     local playerSystem = EnhancedPlayerSystem.new(eventBus, locationSystem)
     
     print("\n📊 Initial State:")
-    print("Money: " .. (resourceSystem:getResource("money") or 0))
-    print("Reputation: " .. (resourceSystem:getResource("reputation") or 0))
-    print("Experience: " .. (resourceSystem:getResource("experience") or 0))
+    print("Money: " .. (resourceManager:getResource("money") or 0))
+    print("Reputation: " .. (resourceManager:getResource("reputation") or 0)) 
+    print("Experience: " .. (resourceManager:getResource("xp") or 0)) -- SOC REFACTOR: Use xp instead of experience
     print("Location: " .. locationSystem:getCurrentLocationString())
     
     -- Simulate player interactions
