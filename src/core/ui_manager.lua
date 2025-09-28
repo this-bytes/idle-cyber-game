@@ -359,8 +359,20 @@ end
 
 -- Draw Dashboard (main screen) with away summary popout
 function UIManager:drawDashboard()
-    -- For now reuse drawGameUI layout but include an away summary if present
-    self:drawGameUI()
+    -- Background
+    love.graphics.setColor(self.colors.background)
+    love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
+    
+    -- Draw title
+    love.graphics.setColor(self.colors.accent)
+    love.graphics.printf("CYBER EMPIRE COMMAND - DASHBOARD", 0, 50, self.screenWidth, "center")
+    
+    -- Draw selectables
+    for _, selectable in ipairs(self.selectables) do
+        selectable:draw(self)
+    end
+    
+    -- Draw away summary if present
     if self.panelData and self.panelData.awaySummary and self.panelData.awaySummary.totalTime and self.panelData.awaySummary.totalTime > 0 then
         -- Draw a centered popout
         local w, h = 480, 180
