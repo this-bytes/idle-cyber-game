@@ -10,6 +10,11 @@ local EventBus = require("src.utils.event_bus")
 local ResourceManager = require("src.core.resource_manager")
 local UIManager = require("src.core.ui_manager")
 
+-- Import new UI helpers and components
+local UIHelpers = require("src.ui.ui_helpers")
+local QuickMenu = require("src.ui.quick_menu")
+local ASCIIRoomParser = require("src.ui.ascii_room_parser")
+
 -- Import data loading utilities
 local defs = require("src.data.defs")
 local json = require("dkjson")
@@ -37,6 +42,11 @@ function IdleGame.new()
     self.resourceManager = nil
     self.uiManager = nil
     
+    -- New UI components
+    self.quickMenu = nil
+    self.asciiParser = nil
+    self.currentLocationASCII = nil
+    
     -- Idle game specific state
     self.offlineProgress = {
         lastSave = love.timer.getTime(),
@@ -48,7 +58,7 @@ function IdleGame.new()
     -- UI state management
     self.showOfflineModal = false
     self.splashDisplayTime = 0
-    self.splashMinTime = 2.0 -- Minimum splash screen time
+    self.splashMinTime = 1.0 -- Reduced minimum splash screen time for better UX
     
     return self
 end
@@ -88,6 +98,10 @@ function IdleGame:initializeCore()
     -- UI manager for all interface elements
     self.uiManager = UIManager.new(self.eventBus, self.resourceManager)
     self.uiManager:initialize()
+    
+    -- Initialize new UI components
+    self.quickMenu = QuickMenu.new(self.eventBus, self.resourceManager)
+    self.asciiParser = ASCIIRoomParser.new()
     
     print("🔧 Core components initialized")
 end
@@ -148,12 +162,15 @@ end
 function IdleGame:initializeIdleSystems()
     print("⚙️ Initializing idle game systems...")
     
-    -- Set up automatic money generation (core idle mechanic)
+    -- Set up dynamic money generation based on player resources and capabilities
     self.moneyGeneration = {
-        baseRate = 10, -- money per second
+        baseRate = 0, -- Start with no automatic generation
         multiplier = 1.0,
         lastUpdate = love.timer.getTime()
     }
+    
+    -- Calculate initial generation rate based on player capabilities
+    self:updateMoneyGenerationRate()
     
     -- Set up contract auto-completion system
     self.autoContracts = {
@@ -166,6 +183,27 @@ function IdleGame:initializeIdleSystems()
     self:calculateOfflineProgress()
     
     print("⚙️ Idle systems initialized")
+end
+
+-- Calculate money generation rate based on player capabilities
+function IdleGame:updateMoneyGenerationRate()
+    local baseRate = 0
+    
+    -- Base rate from reputation (reflects your business reputation bringing in work)
+    local reputation = self.resourceManager:getResource("reputation") or 0
+    baseRate = baseRate + (reputation * 0.5) -- 50 cents per reputation point per second
+    
+    -- Base rate from completed contracts (reflects residual income from past work)
+    local contractsCompleted = self.offlineProgress.contractsCompleted or 0
+    baseRate = baseRate + (contractsCompleted * 0.25) -- 25 cents per completed contract per second
+    
+    -- Minimum viable rate for new players (reflects small freelance work)
+    if baseRate < 1 then
+        baseRate = 1 -- $1/sec minimum for new players
+    end
+    
+    self.moneyGeneration.baseRate = baseRate
+    print("💰 Money generation rate updated: $" .. string.format("%.2f", baseRate) .. "/sec")
 end
 
 -- Calculate offline progress (key idle game feature)
@@ -256,6 +294,12 @@ function IdleGame:completeAutoContract()
         self.resourceManager:addResource("money", contract.baseBudget or 100)
         self.resourceManager:addResource("reputation", contract.reputationReward or 1)
         
+        -- Update contract completion count
+        self.offlineProgress.contractsCompleted = (self.offlineProgress.contractsCompleted or 0) + 1
+        
+        -- Update money generation rate based on new reputation/contracts
+        self:updateMoneyGenerationRate()
+        
         -- Show notification
         self.eventBus:publish("contract_completed", {
             name = contract.clientName or "Unknown Client",
@@ -301,11 +345,17 @@ function IdleGame:drawSplash()
     local subtitleWidth = font:getWidth(subtitle)
     love.graphics.print(subtitle, (width - subtitleWidth) / 2, height / 2 - 30)
     
-    -- Continue prompt (fade in after minimum time)
-    if self.splashDisplayTime > self.splashMinTime then
-        local alpha = math.min(1.0, (self.splashDisplayTime - self.splashMinTime) / 1.0)
-        love.graphics.setColor(1.0, 0.8, 0.2, alpha)
-        local prompt = "Press any key to continue..."
+    -- Continue prompt (with better user feedback)
+    local alpha = 1.0
+    if self.splashDisplayTime <= self.splashMinTime then
+        alpha = 0.3 + 0.7 * (self.splashDisplayTime / self.splashMinTime)
+        love.graphics.setColor(1.0, 0.6, 0.6, alpha)
+        local prompt = "Loading... (please wait)"
+        local promptWidth = font:getWidth(prompt)
+        love.graphics.print(prompt, (width - promptWidth) / 2, height / 2 + 30)
+    else
+        love.graphics.setColor(0.2, 1.0, 0.4, alpha)
+        local prompt = "🎮 Press any key or click to continue!"
         local promptWidth = font:getWidth(prompt)
         love.graphics.print(prompt, (width - promptWidth) / 2, height / 2 + 30)
     end
@@ -319,10 +369,18 @@ function IdleGame:drawDashboard()
     love.graphics.setColor(0.05, 0.05, 0.1, 1.0)
     love.graphics.rectangle("fill", 0, 0, width, height)
     
+    -- Draw current location ASCII art if available
+    self:drawLocationASCII()
+    
     -- Draw dashboard components
     self:drawResourcePanel()
     self:drawContractPanel()
     self:drawStatsPanel()
+    
+    -- Draw quick menu
+    if self.quickMenu then
+        self.quickMenu:draw()
+    end
     
     -- Draw offline progress modal if needed
     if self.showOfflineModal then
@@ -414,6 +472,49 @@ function IdleGame:drawStatsPanel()
     love.graphics.print("Next auto-save: " .. string.format("%.0f", 30 - (uptime % 30)) .. "s", x + 300, y + 35)
 end
 
+-- Draw current location ASCII art
+function IdleGame:drawLocationASCII()
+    if not self.asciiParser or not self.gameData.locations then
+        return
+    end
+    
+    -- Generate ASCII for current location if not cached
+    if not self.currentLocationASCII then
+        local locationsData = {}
+        if love.filesystem.getInfo("src/data/locations.json") then
+            local content = love.filesystem.read("src/data/locations.json")
+            local data, pos, err = json.decode(content)
+            if data then
+                locationsData = data
+            end
+        end
+        
+        -- Default to home office
+        local buildingId = "home_office"
+        local floorId = "main"
+        local roomId = "my_office"
+        
+        self.currentLocationASCII = self.asciiParser:getLocationASCII(locationsData, buildingId, floorId, roomId)
+    end
+    
+    -- Draw ASCII art in center-left area
+    if self.currentLocationASCII then
+        love.graphics.setColor(UIHelpers.colors.text)
+        local startX, startY = 50, 50
+        
+        for i, line in ipairs(self.currentLocationASCII) do
+            if i <= 15 then -- Limit lines to prevent overflow
+                love.graphics.print(line, startX, startY + (i - 1) * 15)
+            end
+        end
+        
+        -- Location info
+        love.graphics.setColor(UIHelpers.colors.accent)
+        love.graphics.print("📍 Current Location:", startX, startY - 25)
+        love.graphics.print("🏠 Home Office > Main Floor > My Office", startX, startY - 10)
+    end
+end
+
 -- Draw offline progress modal (key idle game feature)
 function IdleGame:drawOfflineModal()
     local width, height = love.graphics.getDimensions()
@@ -461,6 +562,11 @@ end
 
 -- Handle key presses
 function IdleGame:keypressed(key)
+    -- Let quick menu handle key presses first
+    if self.quickMenu and self.quickMenu:handleKeyPress(key) then
+        return -- Quick menu handled the key
+    end
+    
     if self.currentState == GAME_STATES.SPLASH then
         if self.splashDisplayTime > self.splashMinTime then
             self:advanceToGame()
@@ -478,8 +584,19 @@ end
 
 -- Handle mouse presses
 function IdleGame:mousepressed(x, y, button)
-    if self.currentState == GAME_STATES.DASHBOARD and self.showOfflineModal then
-        self.showOfflineModal = false
+    -- Let quick menu handle mouse presses first
+    if self.quickMenu and self.quickMenu:handleMousePress(x, y, button) then
+        return -- Quick menu handled the click
+    end
+    
+    if self.currentState == GAME_STATES.SPLASH then
+        if self.splashDisplayTime > self.splashMinTime then
+            self:advanceToGame()
+        end
+    elseif self.currentState == GAME_STATES.DASHBOARD then
+        if self.showOfflineModal then
+            self.showOfflineModal = false
+        end
     end
 end
 
