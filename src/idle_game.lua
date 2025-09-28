@@ -131,19 +131,17 @@ end
 
 -- Initialize starting resources from data
 function IdleGame:initializeStartingResources()
-    -- Set up starting resources
-    local startingResources = {
-        money = 1000,
-        reputation = 10,
-        xp = 0,
-        missionTokens = 5
+    -- Add bonus starting resources beyond the ResourceManager defaults
+    local bonusResources = {
+        reputation = 10,  -- Add 10 reputation (default is 0)
+        missionTokens = 5 -- Add 5 mission tokens (default is 0)
     }
     
-    for resource, amount in pairs(startingResources) do
-        self.resourceManager:setResource(resource, amount)
+    for resource, amount in pairs(bonusResources) do
+        self.resourceManager:addResource(resource, amount)
     end
     
-    print("💰 Starting resources initialized")
+    print("💰 Starting resources initialized (money: " .. self.resourceManager:getResource("money") .. ", reputation: " .. self.resourceManager:getResource("reputation") .. ")")
 end
 
 -- Initialize idle game specific systems
