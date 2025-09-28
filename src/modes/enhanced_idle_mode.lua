@@ -87,8 +87,9 @@ function EnhancedIdleMode:handleTrainingInteraction(data)
     local focusBonus = self.player:getState().locationBonuses.skill_gain or 1.0
     local experience = math.floor(baseExp * focusBonus)
     
-    self.systems.resources:addResource("experience", experience)
-    self.systems.resources:addResource("focus", 20)
+    -- SOC REFACTOR: Use fortress resource manager
+    self.systems.resourceManager:addResource("xp", experience) -- Changed from experience to xp
+    self.systems.resourceManager:addResource("focus", 20)
     
     print("📚 Training completed! +" .. experience .. " XP, +20 Focus")
 end
@@ -99,7 +100,8 @@ function EnhancedIdleMode:handleResearchInteraction(data)
     local researchBonus = self.player:getState().locationBonuses.research_speed or 1.0
     local reputation = math.floor(baseRep * researchBonus)
     
-    self.systems.resources:addResource("reputation", reputation)
+    -- SOC REFACTOR: Use fortress resource manager  
+    self.systems.resourceManager:addResource("reputation", reputation)
     print("🔬 Research completed! +" .. reputation .. " Reputation")
 end
 
@@ -249,7 +251,7 @@ function EnhancedIdleMode:drawTopPanel()
     local x = 300
     
     for _, currency in ipairs(currencies) do
-        local value = self.systems.resources:getResource(currency) or 0
+        local value = self.systems.resourceManager:getResource(currency) or 0 -- SOC REFACTOR: Use fortress resource manager
         local displayValue = format.number(value)
         
         -- Currency color coding
