@@ -1,4 +1,32 @@
 ---
+name: Bug report
+about: Create a report to help us improve
+title: ''
+labels: bug
+assignees: ''
+
+---
+
+## Steps to reproduce
+
+1. 
+2. 
+
+## Expected behavior
+
+
+## Actual behavior
+
+
+## Environment
+
+- OS: 
+- Love2D / Lua version: 
+
+## Notes
+
+Add logs, screenshots, or steps to debug.
+---
 name: Bug Report
 about: Report a bug or unexpected behavior in the game
 title: '[BUG] '
