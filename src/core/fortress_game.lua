@@ -271,6 +271,15 @@ function FortressGame:keypressed(key)
         -- Reset/reload (for development)
         print("🔄 Reloading fortress game...")
         self:initialize()
+    elseif key == "tab" then
+        -- Toggle between idle and admin modes
+        local newMode = self.currentMode == "idle" and "admin" or "idle"
+        self:switchMode(newMode)
+        return
+    elseif key == "a" and self.currentMode == "admin" then
+        -- Return to idle mode from admin mode
+        self:switchMode("idle")
+        return
     end
     
     -- Mode-specific key handling
@@ -298,6 +307,48 @@ function FortressGame:resize(w, h)
     if currentMode and currentMode.resize then
         currentMode:resize(w, h)
     end
+end
+
+-- Switch between game modes
+function FortressGame:switchMode(newMode)
+    if not self.modes[newMode] then
+        print("❌ Unknown mode: " .. tostring(newMode))
+        return false
+    end
+    
+    if self.currentMode == newMode then
+        return false -- Already in the requested mode
+    end
+    
+    local oldMode = self.currentMode
+    local currentModeObj = self.modes[self.currentMode]
+    local newModeObj = self.modes[newMode]
+    
+    -- Exit current mode if it has an exit method
+    if currentModeObj and currentModeObj.exit then
+        currentModeObj:exit()
+    end
+    
+    -- Switch the mode
+    self.currentMode = newMode
+    
+    -- Enter new mode if it has an enter method
+    if newModeObj and newModeObj.enter then
+        newModeObj:enter()
+    end
+    
+    -- Show notification
+    local modeNames = {
+        idle = "Idle Operations",
+        admin = "Admin Mode"
+    }
+    
+    if self.systems.uiManager then
+        self.systems.uiManager:showNotification("🔄 Switched to " .. (modeNames[newMode] or newMode), "info")
+    end
+    
+    print("🔄 Mode switched: " .. oldMode .. " → " .. newMode)
+    return true
 end
 
 -- Auto-save handling

@@ -21,26 +21,37 @@ function AdminMode.new(systems)
         description = "Targeted phishing emails detected across client network",
         severity = "HIGH",
         timeLimit = 300, -- 5 minutes to respond
+        threatSignature = "MD5: e3b0c44298fc1c149afbf4c8996fb924",
+        affectedSystems = 47,
         stages = {
             {
                 name = "Initial Detection",
                 description = "Unusual email traffic patterns detected",
-                complete = true
+                complete = true,
+                logEntry = "[12:34:56] ALERT: Email volume spike +340% from baseline"
             },
             {
-                name = "Analysis Required",
+                name = "Analysis Required", 
                 description = "Determine scope and impact of phishing campaign",
                 complete = false,
+                logEntry = "[12:35:12] ANALYSIS: Scanning email headers for IOCs...",
                 options = {
-                    {key = "1", action = "Deploy Incident Responder", cost = "specialist_time"},
-                    {key = "2", action = "Run Automated Analysis", cost = "processing_power"},
-                    {key = "3", action = "Manual Investigation", cost = "time"}
+                    {key = "1", action = "Deploy Incident Responder", cost = "specialist_time", description = "Human analysis (High accuracy)"},
+                    {key = "2", action = "Run Automated Analysis", cost = "processing_power", description = "AI scan (Fast results)"},
+                    {key = "3", action = "Manual Investigation", cost = "time", description = "Deep dive (Thorough)"}
                 }
             },
             {
                 name = "Containment",
                 description = "Block malicious emails and quarantine affected systems",
-                complete = false
+                complete = false,
+                logEntry = "[12:36:00] PENDING: Awaiting containment protocol execution"
+            },
+            {
+                name = "Eradication",
+                description = "Remove malicious content and patch vulnerabilities",
+                complete = false,
+                logEntry = "[12:37:00] PENDING: Malware removal and system hardening"
             }
         }
     }
@@ -72,20 +83,31 @@ function AdminMode:draw()
     -- Show current crisis or status
     if self.currentCrisis then
         -- Active crisis display with high alert styling
-        theme:drawPanel(20, y, 980, 300, "🚨 ACTIVE INCIDENT - CODE RED")
+        theme:drawPanel(20, y, 980, 350, "🚨 ACTIVE INCIDENT - CODE RED")
         local crisisY = y + 25
         
-        theme:drawText("INCIDENT:", 30, crisisY, theme:getColor("danger"))
+        -- Crisis header info in terminal style
+        theme:drawText("╔═══════════════════════════════════════════════════════════════════╗", 30, crisisY, theme:getColor("danger"))
+        crisisY = crisisY + 15
+        theme:drawText("║ INCIDENT:", 30, crisisY, theme:getColor("danger"))
         theme:drawText(self.currentCrisis.title, 150, crisisY, theme:getColor("warning"))
-        crisisY = crisisY + 20
+        theme:drawText("║", 680, crisisY, theme:getColor("danger"))
+        crisisY = crisisY + 15
         
-        theme:drawText("SEVERITY:", 30, crisisY, theme:getColor("danger"))
+        theme:drawText("║ SEVERITY:", 30, crisisY, theme:getColor("danger"))
         theme:drawText(self.currentCrisis.severity, 150, crisisY, theme:getColor("danger"))
-        crisisY = crisisY + 20
+        theme:drawText("║", 680, crisisY, theme:getColor("danger"))
+        crisisY = crisisY + 15
         
-        theme:drawText("DETAILS:", 30, crisisY, theme:getColor("secondary"))
-        theme:drawText(self.currentCrisis.description, 150, crisisY, theme:getColor("primary"))
-        crisisY = crisisY + 30
+        theme:drawText("║ THREAT ID:", 30, crisisY, theme:getColor("secondary"))
+        theme:drawText(self.currentCrisis.threatSignature or "N/A", 150, crisisY, theme:getColor("dimmed"))
+        theme:drawText("║", 680, crisisY, theme:getColor("danger"))
+        crisisY = crisisY + 15
+        
+        theme:drawText("║ AFFECTED:", 30, crisisY, theme:getColor("secondary"))
+        theme:drawText(tostring(self.currentCrisis.affectedSystems or 0) .. " systems", 150, crisisY, theme:getColor("warning"))
+        theme:drawText("║", 680, crisisY, theme:getColor("danger"))
+        crisisY = crisisY + 15
         
         -- Time remaining with urgent styling
         local timeRemaining = math.max(0, self.currentCrisis.timeLimit - self.crisisTimer)
@@ -93,12 +115,15 @@ function AdminMode:draw()
         local seconds = math.floor(timeRemaining % 60)
         local timeColor = timeRemaining < 60 and theme:getColor("danger") or theme:getColor("warning")
         
-        theme:drawText("TIME REMAINING:", 30, crisisY, theme:getColor("secondary"))
-        theme:drawText(minutes .. ":" .. string.format("%02d", seconds), 200, crisisY, timeColor)
+        theme:drawText("║ TIME LEFT:", 30, crisisY, theme:getColor("secondary"))
+        theme:drawText(minutes .. ":" .. string.format("%02d", seconds), 150, crisisY, timeColor)
+        theme:drawText("║", 680, crisisY, theme:getColor("danger"))
+        crisisY = crisisY + 15
+        theme:drawText("╚═══════════════════════════════════════════════════════════════════╝", 30, crisisY, theme:getColor("danger"))
         
         -- Show crisis stages
-        y = y + 320
-        theme:drawPanel(20, y, 980, 200, "INCIDENT RESPONSE PROTOCOL")
+        y = y + 370
+        theme:drawPanel(20, y, 980, 250, "📋 INCIDENT RESPONSE PROTOCOL")
         local stageY = y + 25
         
         for i, stage in ipairs(self.currentCrisis.stages) do
@@ -106,22 +131,35 @@ function AdminMode:draw()
             local statusColor = stage.complete and theme:getColor("success") or theme:getColor("warning")
             
             theme:drawText(statusIcon, 30, stageY, statusColor)
-            theme:drawText(stage.name, 60, stageY, theme:getColor("secondary"))
+            theme:drawText(string.format("%d. %s", i, stage.name), 60, stageY, theme:getColor("secondary"))
             stageY = stageY + 15
-            theme:drawText(stage.description, 60, stageY, theme:getColor("dimmed"))
-            stageY = stageY + 20
+            
+            -- Show log entry if available
+            if stage.logEntry then
+                theme:drawText("   " .. stage.logEntry, 60, stageY, theme:getColor("dimmed"))
+                stageY = stageY + 15
+            else
+                theme:drawText("   " .. stage.description, 60, stageY, theme:getColor("dimmed"))
+                stageY = stageY + 15
+            end
             
             -- Show options for current stage
             if not stage.complete and stage.options then
-                theme:drawText("RESPONSE OPTIONS:", 60, stageY, theme:getColor("accent"))
+                theme:drawText("   ┌─ RESPONSE OPTIONS:", 60, stageY, theme:getColor("accent"))
                 stageY = stageY + 15
                 for _, option in ipairs(stage.options) do
-                    theme:drawText("[" .. option.key .. "]", 70, stageY, theme:getColor("warning"))
-                    theme:drawText(option.action .. " (Cost: " .. option.cost .. ")", 110, stageY, theme:getColor("primary"))
+                    theme:drawText("   │ [" .. option.key .. "]", 70, stageY, theme:getColor("warning"))
+                    theme:drawText(option.action, 110, stageY, theme:getColor("primary"))
+                    if option.description then
+                        theme:drawText("(" .. option.description .. ")", 320, stageY, theme:getColor("dimmed"))
+                    end
                     stageY = stageY + 15
                 end
+                theme:drawText("   └─", 60, stageY, theme:getColor("accent"))
+                stageY = stageY + 10
                 break -- Only show options for first incomplete stage
             end
+            stageY = stageY + 5
         end
         
     else
@@ -172,28 +210,40 @@ function AdminMode:draw()
         y = y + 270
     end
     
-    -- Response log panel
+    -- Response log panel with terminal-style formatting
     if #self.responseLog > 0 then
-        theme:drawPanel(20, y, 980, 120, "📝 RESPONSE LOG")
+        theme:drawPanel(20, y, 980, 150, "📝 RESPONSE LOG")
         local logY = y + 25
         
-        for i = math.max(1, #self.responseLog - 4), #self.responseLog do
+        theme:drawText("┌─ RECENT ACTIVITY ─────────────────────────────────────────────────┐", 30, logY, theme:getColor("border"))
+        logY = logY + 15
+        
+        for i = math.max(1, #self.responseLog - 6), #self.responseLog do
             local logColor = theme:getColor("dimmed")
+            local prefix = "│ "
+            
             if string.find(self.responseLog[i], "ERROR") then
                 logColor = theme:getColor("danger")
-            elseif string.find(self.responseLog[i], "SUCCESS") then
+                prefix = "│ [ERR] "
+            elseif string.find(self.responseLog[i], "SUCCESS") or string.find(self.responseLog[i], "✅") then
                 logColor = theme:getColor("success")
+                prefix = "│ [OK]  "
+            elseif string.find(self.responseLog[i], "🚨") or string.find(self.responseLog[i], "CRISIS") then
+                logColor = theme:getColor("warning")
+                prefix = "│ [!!!] "
             end
             
-            theme:drawText("> " .. self.responseLog[i], 30, logY, logColor)
+            theme:drawText(prefix .. self.responseLog[i], 30, logY, logColor)
             logY = logY + 15
         end
+        
+        theme:drawText("└───────────────────────────────────────────────────────────────────┘", 30, logY, theme:getColor("border"))
     end
     
     -- Status bar with crisis mode controls
     local statusText = self.currentCrisis and 
-        "CRISIS ACTIVE | [1-3] Response Options | Press [A] to return to Idle Mode" or
-        "MONITORING | [C] Simulate Crisis | [A] Return to Idle Mode"
+        "CRISIS ACTIVE | [1-3] Response Options | [A] Return to Idle Mode" or
+        "MONITORING | [C] Simulate Crisis | [H] Help | [A] Return to Idle Mode | [TAB] Toggle Modes"
     theme:drawStatusBar(statusText)
 
     -- Admin editor quick-controls (visible in Admin Mode)
@@ -226,6 +276,9 @@ function AdminMode:keypressed(key)
         -- No active crisis
         if key == "c" then
             self:startCrisis()
+        elseif key == "h" then
+            -- Show help information
+            self:showHelp()
         end
         -- Admin quick keys
         if key == "r" then
@@ -254,6 +307,48 @@ function AdminMode:keypressed(key)
     end
 end
 
+-- Show help information
+function AdminMode:showHelp()
+    table.insert(self.responseLog, "╔══════════════════════════════════════════════════════════════════╗")
+    table.insert(self.responseLog, "║ ADMIN MODE HELP SYSTEM")
+    table.insert(self.responseLog, "║")
+    table.insert(self.responseLog, "║ KEY BINDINGS:")
+    table.insert(self.responseLog, "║ [C] - Start crisis simulation")
+    table.insert(self.responseLog, "║ [H] - Show this help")
+    table.insert(self.responseLog, "║ [A] - Return to Idle Mode")
+    table.insert(self.responseLog, "║ [TAB] - Toggle between modes")
+    table.insert(self.responseLog, "║")
+    table.insert(self.responseLog, "║ ADMIN TOOLS:")
+    table.insert(self.responseLog, "║ [R] - Reload JSON data")
+    table.insert(self.responseLog, "║ [S] - Save data to JSON")
+    table.insert(self.responseLog, "║")
+    table.insert(self.responseLog, "║ CRISIS RESPONSE:")
+    table.insert(self.responseLog, "║ [1-3] - Select response options during crisis")
+    table.insert(self.responseLog, "║")
+    table.insert(self.responseLog, "║ For web admin interface: open /admin in browser")
+    table.insert(self.responseLog, "╚══════════════════════════════════════════════════════════════════╝")
+    print("📚 Admin mode help displayed")
+end
+
+-- Mode lifecycle methods
+function AdminMode:enter()
+    table.insert(self.responseLog, "🚨 ADMIN MODE ACTIVATED")
+    table.insert(self.responseLog, "🔍 SOC monitoring systems online")
+    table.insert(self.responseLog, "📚 Press [H] for help or [C] to start crisis simulation")
+    print("🚨 Entering Admin Mode - Crisis Response Center")
+end
+
+function AdminMode:exit()
+    table.insert(self.responseLog, "👋 EXITING ADMIN MODE")
+    -- Reset crisis if leaving mid-crisis (optional)
+    if self.currentCrisis then
+        table.insert(self.responseLog, "⚠️ Crisis abandoned - returning to monitoring")
+        self.currentCrisis = nil
+        self.crisisTimer = 0
+    end
+    print("👋 Exiting Admin Mode")
+end
+
 -- Start a crisis scenario
 function AdminMode:startCrisis()
     if self.currentCrisis then return end
@@ -273,7 +368,13 @@ function AdminMode:startCrisis()
     end
     
     self.crisisTimer = 0
-    table.insert(self.responseLog, "🚨 CRISIS INITIATED: " .. self.currentCrisis.title)
+    local timestamp = os.date("[%H:%M:%S]")
+    
+    table.insert(self.responseLog, "╔══════════════════════════════════════════════════════════════════╗")
+    table.insert(self.responseLog, "║ " .. timestamp .. " CRISIS INITIATED: " .. self.currentCrisis.title)
+    table.insert(self.responseLog, "║ Severity: " .. self.currentCrisis.severity .. " | Systems affected: " .. (self.currentCrisis.affectedSystems or "Unknown"))
+    table.insert(self.responseLog, "║ All hands on deck - immediate response required")
+    table.insert(self.responseLog, "╚══════════════════════════════════════════════════════════════════╝")
     
     print("🚨 Crisis started: " .. self.currentCrisis.title)
 end
@@ -306,17 +407,29 @@ function AdminMode:handleCrisisResponse(key)
     end
     
     if selectedOption then
-        -- Execute response
-        table.insert(self.responseLog, "▶️ RESPONSE: " .. selectedOption.action)
+        -- Execute response with terminal-style logging
+        local timestamp = os.date("[%H:%M:%S]")
+        table.insert(self.responseLog, timestamp .. " EXECUTING: " .. selectedOption.action)
         
         -- Mark current stage as complete
         currentStage.complete = true
+        
+        -- Update log entry for completed stage
+        if currentStage.logEntry then
+            currentStage.logEntry = currentStage.logEntry:gsub("PENDING", "COMPLETE")
+        end
         
         -- Award mission tokens for successful response
         self.systems.eventBus:publish("add_resource", {
             resource = "missionTokens",
             amount = 1
         })
+        
+        -- Activate next stage if available
+        local nextStage = self.currentCrisis.stages[stageIndex + 1]
+        if nextStage and nextStage.logEntry then
+            nextStage.logEntry = nextStage.logEntry:gsub("PENDING", "ACTIVE")
+        end
         
         -- Check if all stages complete
         local allComplete = true
@@ -329,6 +442,9 @@ function AdminMode:handleCrisisResponse(key)
         
         if allComplete then
             self:resolveCrisis("success")
+        else
+            -- Add progress log entry
+            table.insert(self.responseLog, timestamp .. " STAGE " .. stageIndex .. " COMPLETE - Proceeding to next phase")
         end
     end
 end
@@ -337,7 +453,9 @@ end
 function AdminMode:resolveCrisis(outcome)
     if not self.currentCrisis then return end
     
+    local timestamp = os.date("[%H:%M:%S]")
     local timeBonus = 1.0
+    
     if outcome == "success" then
         -- Calculate time bonus (faster resolution = better rewards)
         local timeUsed = self.crisisTimer
@@ -355,9 +473,12 @@ function AdminMode:resolveCrisis(outcome)
         local moneyGain = math.floor(baseReward.money * timeBonus)
         local tokenGain = baseReward.missionTokens
         
-        table.insert(self.responseLog, "✅ CRISIS RESOLVED SUCCESSFULLY")
-        table.insert(self.responseLog, string.format("⏱️ Response Time: %.1fs (%.0f%% efficiency)", timeUsed, timeBonus * 100))
-        table.insert(self.responseLog, string.format("💰 Earned: $%d, +%d reputation, +%d tokens", moneyGain, reputationGain, tokenGain))
+        table.insert(self.responseLog, "╔══════════════════════════════════════════════════════════════════╗")
+        table.insert(self.responseLog, "║ " .. timestamp .. " CRISIS RESOLVED SUCCESSFULLY")
+        table.insert(self.responseLog, "║ Response Time: " .. string.format("%.1fs (%.0f%% efficiency)", timeUsed, timeBonus * 100))
+        table.insert(self.responseLog, "║ Rewards: $" .. moneyGain .. ", +" .. reputationGain .. " reputation, +" .. tokenGain .. " tokens")
+        table.insert(self.responseLog, "║ All affected systems secured and operational")
+        table.insert(self.responseLog, "╚══════════════════════════════════════════════════════════════════╝")
         
         -- Award scaled rewards
         self.systems.eventBus:publish("add_resource", {
@@ -379,8 +500,11 @@ function AdminMode:resolveCrisis(outcome)
               moneyGain, reputationGain, tokenGain, timeBonus * 100))
         
     elseif outcome == "timeout" then
-        table.insert(self.responseLog, "❌ CRISIS TIMED OUT - REPUTATION DAMAGE")
-        table.insert(self.responseLog, "⚠️ Client confidence decreased")
+        table.insert(self.responseLog, "╔══════════════════════════════════════════════════════════════════╗")
+        table.insert(self.responseLog, "║ " .. timestamp .. " CRISIS TIMED OUT - REPUTATION DAMAGE")
+        table.insert(self.responseLog, "║ Client confidence decreased due to slow response")
+        table.insert(self.responseLog, "║ Penalty: -5 reputation")
+        table.insert(self.responseLog, "╚══════════════════════════════════════════════════════════════════╝")
         
         -- Penalty for timeout
         self.systems.eventBus:publish("add_resource", {
