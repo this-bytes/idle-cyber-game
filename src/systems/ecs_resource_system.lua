@@ -9,243 +9,534 @@ ECSResourceSystem.__index = ECSResourceSystem
 -- Create new ECS resource system
 function ECSResourceSystem.new(world, eventBus)
     local self = System.new("ECSResourceSystem", world, eventBus)
-    setmetatable(self, ECSResourceSystem)
-    
-    -- Set required components
-    self:setRequiredComponents({"resources"})
-    
-    -- Resource generation rates
-    self.baseGeneration = {
-        money = 1.0,      -- $1 per second base
-        reputation = 0.1, -- 0.1 reputation per second base  
-        experience = 0.5, -- 0.5 XP per second base
-        energy = 5.0      -- 5 energy per second regen
+    -- ECS Resource System - Fortress-inspired resource orchestration for the ECS world
+    -- Reimagines ResourceManager concepts (generation, multipliers, storage, categories)
+    -- using pure entity-component logic so every gameplay element can bolt on cleanly.
+
+    local System = require("src.ecs.system")
+
+    local DEFAULT_RESOURCES = {
+        money = {
+            category = "primary",
+            initial = 1500,
+            generation = 2.0,
+            storage = nil,
+            description = "Currency for hiring, equipment, and facility growth"
+        },
+        reputation = {
+            category = "primary",
+            initial = 0,
+            generation = 0,
+            storage = nil,
+            description = "Unlocks higher-tier contracts and factions"
+        },
+        xp = {
+            category = "primary",
+            initial = 0,
+            generation = 0,
+            storage = nil,
+            description = "Company experience used for progression"
+        },
+        missionTokens = {
+            category = "primary",
+            initial = 0,
+            generation = 0,
+            storage = nil,
+            description = "Rare Crisis Mode currency for elite upgrades"
+        },
+        energy = {
+            category = "secondary",
+            initial = 100,
+            generation = 6,
+            storage = 100,
+            description = "Action energy for specialist deployments"
+        },
+        specialists = {
+            category = "secondary",
+            initial = 1,
+            generation = 0,
+            storage = nil,
+            description = "Total specialists on the payroll"
+        },
+        contracts = {
+            category = "derived",
+            initial = 0,
+            generation = 0,
+            storage = nil,
+            description = "Active contracts providing revenue"
+        }
     }
-    
-    -- Resource limits
-    self.resourceLimits = {
-        money = 1000000,     -- $1M limit
-        reputation = 10000,  -- 10k reputation limit
-        experience = 100000, -- 100k XP limit  
-        energy = 100         -- 100 energy limit
+
+    local RESOURCE_EVENTS = {
+        addSingle = "add_resource",
+        addBatch = "add_resources",
+        spendSingle = "spend_resource",
+        spendBatch = "spend_resources",
+        reset = "resources_reset",
+        sync = "resource_sync"
     }
-    
-    return self
-end
 
--- Initialize the system
-function ECSResourceSystem:initialize()
-    System.initialize(self)
-    
-    -- Subscribe to resource events
-    if self.eventBus then
-        self.eventBus:subscribe("add_resources", function(data)
-            self:addResources(data.entityId, data.resources)
-        end)
-        
-        self.eventBus:subscribe("spend_resources", function(data)
-            self:spendResources(data.entityId, data.resources)
-        end)
-        
-        self.eventBus:subscribe("contract_completed", function(data)
-            self:applyContractRewards(data.rewards)
-        end)
-    end
-end
+    local ECSResourceSystem = setmetatable({}, {__index = System})
+    ECSResourceSystem.__index = ECSResourceSystem
 
--- Process resource entities (passive generation)
-function ECSResourceSystem:processEntity(entityId, dt)
-    local resources = self:getComponent(entityId, "resources")
-    if not resources then
-        return
-    end
-    
-    -- Apply passive resource generation
-    for resourceType, baseRate in pairs(self.baseGeneration) do
-        if resources[resourceType] ~= nil then
-            local generation = baseRate * dt
-            local newValue = resources[resourceType] + generation
-            local limit = self.resourceLimits[resourceType] or math.huge
-            
-            resources[resourceType] = math.min(newValue, limit)
+    local function deepCopy(tbl)
+        local copy = {}
+        for k, v in pairs(tbl or {}) do
+            if type(v) == "table" then
+                copy[k] = deepCopy(v)
+            else
+                copy[k] = v
+            end
         end
+        return copy
     end
-end
 
--- Add resources to an entity
-function ECSResourceSystem:addResources(entityId, resourceAmounts)
-    local resources = self:getComponent(entityId, "resources")
-    if not resources then
-        return false
+    local function ensureTables(component)
+        component.values = component.values or {}
+        component.generation = component.generation or {}
+        component.multipliers = component.multipliers or {}
+        component.storage = component.storage or {}
+        component.categories = component.categories or {}
+        component.passiveSources = component.passiveSources or {}
+        component.lastTick = component.lastTick or ((love and love.timer and love.timer.getTime()) or os.clock())
+        component.totalGenerated = component.totalGenerated or {}
     end
-    
-    local added = {}
-    for resourceType, amount in pairs(resourceAmounts) do
-        if resources[resourceType] ~= nil and amount > 0 then
-            local oldValue = resources[resourceType]
-            local limit = self.resourceLimits[resourceType] or math.huge
-            local newValue = math.min(oldValue + amount, limit)
-            
-            resources[resourceType] = newValue
-            added[resourceType] = newValue - oldValue
+
+    -- Create new ECS resource system
+    function ECSResourceSystem.new(world, eventBus)
+        local self = System.new("ECSResourceSystem", world, eventBus)
+        setmetatable(self, ECSResourceSystem)
+
+        self:setRequiredComponents({"resources"})
+
+        self.primaryEntity = nil
+        self.offlineGraceSeconds = 30
+        self.notificationsEnabled = true
+
+        return self
+    end
+
+    -- Initialize the system and wire up event listeners
+    function ECSResourceSystem:initialize()
+        System.initialize(self)
+
+        if self.eventBus then
+            self.eventBus:subscribe(RESOURCE_EVENTS.addSingle, function(data)
+                if not data then return end
+                local target = data.entityId or self:getPrimaryResourceEntity()
+                if target then
+                    self:addResources(target, {[data.resource] = data.amount}, data.context)
+                end
+            end)
+
+            self.eventBus:subscribe(RESOURCE_EVENTS.addBatch, function(data)
+                if not data or not data.resources then return end
+                local target = data.entityId or self:getPrimaryResourceEntity()
+                if target then
+                    self:addResources(target, data.resources, data.context)
+                end
+            end)
+
+            self.eventBus:subscribe(RESOURCE_EVENTS.spendSingle, function(data)
+                if not data then return end
+                local target = data.entityId or self:getPrimaryResourceEntity()
+                if target then
+                    self:spendResources(target, {[data.resource] = data.amount}, data.context)
+                end
+            end)
+
+            self.eventBus:subscribe(RESOURCE_EVENTS.spendBatch, function(data)
+                if not data or not data.resources then return end
+                local target = data.entityId or self:getPrimaryResourceEntity()
+                if target then
+                    self:spendResources(target, data.resources, data.context)
+                end
+            end)
+
+            self.eventBus:subscribe("contract_completed", function(data)
+                if not data or not data.rewards then return end
+                self:applyContractRewards(data.rewards)
+            end)
+
+            self.eventBus:subscribe("specialist_hired", function()
+                local target = self:getPrimaryResourceEntity()
+                if target then
+                    self:incrementResource(target, "specialists", 1, {source = "team"})
+                end
+            end)
+
+            self.eventBus:subscribe("specialist_departed", function()
+                local target = self:getPrimaryResourceEntity()
+                if target then
+                    self:incrementResource(target, "specialists", -1, {source = "team"})
+                end
+            end)
+
+            self.eventBus:subscribe("game_session_resumed", function()
+                local target = self:getPrimaryResourceEntity()
+                if target then
+                    self:calculateOfflineProgress(target)
+                end
+            end)
         end
-    end
-    
-    if self.eventBus then
-        self.eventBus:publish("resources_added", {
-            entityId = entityId,
-            added = added
-        })
-    end
-    
-    return true
-end
 
--- Spend resources from an entity
-function ECSResourceSystem:spendResources(entityId, resourceAmounts)
-    local resources = self:getComponent(entityId, "resources")
-    if not resources then
-        return false
+        self:seedDefaultResources()
     end
-    
-    -- Check if we have enough resources
-    for resourceType, amount in pairs(resourceAmounts) do
-        if resources[resourceType] == nil or resources[resourceType] < amount then
-            return false -- Insufficient resources
+
+    function ECSResourceSystem:getPrimaryResourceEntity()
+        if self.primaryEntity and self.world:entityExists(self.primaryEntity) then
+            return self.primaryEntity
         end
-    end
-    
-    -- Spend the resources
-    local spent = {}
-    for resourceType, amount in pairs(resourceAmounts) do
-        resources[resourceType] = resources[resourceType] - amount
-        spent[resourceType] = amount
-    end
-    
-    if self.eventBus then
-        self.eventBus:publish("resources_spent", {
-            entityId = entityId,
-            spent = spent
-        })
-    end
-    
-    return true
-end
 
--- Check if entity can afford resource costs
-function ECSResourceSystem:canAfford(entityId, resourceAmounts)
-    local resources = self:getComponent(entityId, "resources")
-    if not resources then
-        return false
-    end
-    
-    for resourceType, amount in pairs(resourceAmounts) do
-        if resources[resourceType] == nil or resources[resourceType] < amount then
-            return false
+        local entities = self:getMatchingEntities()
+        if #entities > 0 then
+            self.primaryEntity = entities[1]
+            return self.primaryEntity
         end
+        return nil
     end
-    
-    return true
-end
 
--- Get resources for an entity
-function ECSResourceSystem:getResources(entityId)
-    local resources = self:getComponent(entityId, "resources")
-    if not resources then
-        return {}
+    function ECSResourceSystem:seedDefaultResources()
+        local entityId = self:getPrimaryResourceEntity()
+        if not entityId then
+            entityId = self.world:createEntity()
+            self.world:addComponent(entityId, "resources", {})
+            self.primaryEntity = entityId
+        end
+
+        local component = self:getComponent(entityId, "resources")
+        ensureTables(component)
+
+        for name, def in pairs(DEFAULT_RESOURCES) do
+            self:registerResourceDefinition(entityId, name, def)
+            if component.values[name] == nil then
+                component.values[name] = def.initial
+            end
+        end
+
+        self:calculateOfflineProgress(entityId)
     end
-    
-    -- Return a copy to prevent external modification
-    local copy = {}
-    for resourceType, amount in pairs(resources) do
-        copy[resourceType] = amount
+
+    function ECSResourceSystem:registerResourceDefinition(entityId, resourceName, definition)
+        local component = self:getComponent(entityId, "resources")
+        if not component then return end
+
+        ensureTables(component)
+
+        component.generation[resourceName] = definition.generation or component.generation[resourceName] or 0
+        component.multipliers[resourceName] = component.multipliers[resourceName] or 1.0
+        component.storage[resourceName] = definition.storage
+        component.categories[resourceName] = definition.category or "primary"
+        component.values[resourceName] = component.values[resourceName]
+        component.descriptions = component.descriptions or {}
+        component.descriptions[resourceName] = definition.description
     end
-    
-    return copy
-end
 
--- Set resource generation rate
-function ECSResourceSystem:setGenerationRate(resourceType, rate)
-    self.baseGeneration[resourceType] = rate
-end
+    -- Passive generation + streak tracking per entity
+    function ECSResourceSystem:processEntity(entityId, dt)
+        local component = self:getComponent(entityId, "resources")
+        if not component then return end
 
--- Get resource generation rate
-function ECSResourceSystem:getGenerationRate(resourceType)
-    return self.baseGeneration[resourceType] or 0
-end
+        ensureTables(component)
 
--- Set resource limit
-function ECSResourceSystem:setResourceLimit(resourceType, limit)
-    self.resourceLimits[resourceType] = limit
-end
+        local now = (love and love.timer and love.timer.getTime()) or os.clock()
+        local deltaSeconds = dt or (now - component.lastTick)
+        component.lastTick = now
 
--- Get resource limit
-function ECSResourceSystem:getResourceLimit(resourceType)
-    return self.resourceLimits[resourceType] or math.huge
-end
-
--- Apply contract completion rewards
-function ECSResourceSystem:applyContractRewards(rewards)
-    -- Find player entity with resources component
-    local playerEntities = self:getMatchingEntities()
-    
-    for _, entityId in ipairs(playerEntities) do
-        -- Apply rewards to first player entity found
-        self:addResources(entityId, rewards)
-        break
-    end
-end
-
--- Get total resources across all entities
-function ECSResourceSystem:getTotalResources()
-    local totals = {}
-    local entities = self:getMatchingEntities()
-    
-    for _, entityId in ipairs(entities) do
-        local resources = self:getComponent(entityId, "resources")
-        if resources then
-            for resourceType, amount in pairs(resources) do
-                totals[resourceType] = (totals[resourceType] or 0) + amount
+        for resourceName, baseRate in pairs(component.generation) do
+            local rate = baseRate * (component.multipliers[resourceName] or 1.0)
+            if rate ~= 0 then
+                local gain = rate * deltaSeconds
+                self:incrementResource(entityId, resourceName, gain, {source = "generation"})
+                component.totalGenerated[resourceName] = (component.totalGenerated[resourceName] or 0) + gain
             end
         end
     end
-    
-    return totals
-end
 
--- Get system statistics
-function ECSResourceSystem:getStats()
-    local entities = self:getMatchingEntities()
-    local totalResources = self:getTotalResources()
-    
-    return {
-        resourceEntityCount = #entities,
-        totalResources = totalResources,
-        generationRates = self.baseGeneration,
-        resourceLimits = self.resourceLimits
-    }
-end
+    function ECSResourceSystem:incrementResource(entityId, resourceName, amount, context)
+        if amount == 0 then return 0 end
 
--- Reset resources for an entity
-function ECSResourceSystem:resetResources(entityId, newResources)
-    local resources = self:getComponent(entityId, "resources")
-    if not resources then
-        return false
+        local component = self:getComponent(entityId, "resources")
+        if not component or not component.values then return 0 end
+
+        ensureTables(component)
+
+        local current = component.values[resourceName] or 0
+        local storage = component.storage[resourceName]
+        local newValue = current + amount
+
+        if storage then
+            if amount > 0 then
+                newValue = math.min(newValue, storage)
+            else
+                newValue = math.max(newValue, 0)
+            end
+        end
+
+        component.values[resourceName] = newValue
+
+        if self.eventBus then
+            self.eventBus:publish("resource_changed", {
+                entityId = entityId,
+                resource = resourceName,
+                newValue = newValue,
+                delta = amount,
+                category = component.categories[resourceName],
+                context = context
+            })
+        end
+
+        return newValue - current
     end
-    
-    -- Reset to new values
-    for resourceType, amount in pairs(newResources) do
-        resources[resourceType] = amount
+
+    function ECSResourceSystem:addResources(entityId, bundle, context)
+        local actual = {}
+        for resourceName, amount in pairs(bundle or {}) do
+            if amount and amount ~= 0 then
+                actual[resourceName] = self:incrementResource(entityId, resourceName, amount, context)
+            end
+        end
+
+        if self.eventBus then
+            self.eventBus:publish("resources_added", {
+                entityId = entityId,
+                added = actual,
+                context = context
+            })
+        end
+
+        return actual
     end
-    
-    if self.eventBus then
-        self.eventBus:publish("resources_reset", {
+
+    function ECSResourceSystem:spendResources(entityId, costs, context)
+        local component = self:getComponent(entityId, "resources")
+        if not component then return false end
+        ensureTables(component)
+
+        if not self:canAfford(entityId, costs) then
+            return false
+        end
+
+        local spent = {}
+        for resourceName, amount in pairs(costs or {}) do
+            local delta = self:incrementResource(entityId, resourceName, -amount, context)
+            spent[resourceName] = -delta
+        end
+
+        if self.eventBus then
+            self.eventBus:publish("resources_spent", {
+                entityId = entityId,
+                spent = spent,
+                context = context
+            })
+        end
+
+        return true
+    end
+
+    function ECSResourceSystem:canAfford(entityId, costs)
+        local component = self:getComponent(entityId, "resources")
+        if not component or not component.values then
+            return false
+        end
+
+        for resourceName, amount in pairs(costs or {}) do
+            if amount > 0 then
+                if (component.values[resourceName] or 0) < amount then
+                    return false
+                end
+            end
+        end
+        return true
+    end
+
+    function ECSResourceSystem:getResources(entityId)
+        local component = self:getComponent(entityId, "resources")
+        if not component then return {} end
+        ensureTables(component)
+        return deepCopy(component.values)
+    end
+
+    function ECSResourceSystem:getGenerationRates(entityId)
+        local component = self:getComponent(entityId, "resources")
+        if not component then return {} end
+        ensureTables(component)
+        local rates = {}
+        for resourceName, rate in pairs(component.generation) do
+            rates[resourceName] = rate * (component.multipliers[resourceName] or 1.0)
+        end
+        return rates
+    end
+
+    function ECSResourceSystem:setGeneration(entityId, resourceName, rate)
+        local component = self:getComponent(entityId, "resources")
+        if not component then return end
+        ensureTables(component)
+        component.generation[resourceName] = rate
+
+        if self.eventBus then
+            self.eventBus:publish("resource_generation_changed", {
+                entityId = entityId,
+                resource = resourceName,
+                rate = rate
+            })
+        end
+    end
+
+    function ECSResourceSystem:addGeneration(entityId, resourceName, delta)
+        local component = self:getComponent(entityId, "resources")
+        if not component then return end
+        ensureTables(component)
+        component.generation[resourceName] = (component.generation[resourceName] or 0) + delta
+
+        if self.eventBus then
+            self.eventBus:publish("resource_generation_changed", {
+                entityId = entityId,
+                resource = resourceName,
+                rate = component.generation[resourceName]
+            })
+        end
+    end
+
+    function ECSResourceSystem:addMultiplier(entityId, resourceName, delta)
+        local component = self:getComponent(entityId, "resources")
+        if not component then return end
+        ensureTables(component)
+        component.multipliers[resourceName] = (component.multipliers[resourceName] or 1.0) + delta
+
+        if self.eventBus then
+            self.eventBus:publish("resource_multiplier_changed", {
+                entityId = entityId,
+                resource = resourceName,
+                multiplier = component.multipliers[resourceName]
+            })
+        end
+    end
+
+    function ECSResourceSystem:setMultiplier(entityId, resourceName, value)
+        local component = self:getComponent(entityId, "resources")
+        if not component then return end
+        ensureTables(component)
+        component.multipliers[resourceName] = value
+
+        if self.eventBus then
+            self.eventBus:publish("resource_multiplier_changed", {
+                entityId = entityId,
+                resource = resourceName,
+                multiplier = value
+            })
+        end
+    end
+
+    function ECSResourceSystem:calculateOfflineProgress(entityId)
+        local idleComponent = self.world:getComponent(entityId, "idleState")
+        local resourceComponent = self:getComponent(entityId, "resources")
+        if not idleComponent or not resourceComponent then return end
+
+        local now = (love and love.timer and love.timer.getTime()) or os.clock()
+        local lastSave = idleComponent.lastSeen or now
+        idleComponent.lastSeen = now
+
+        local offlineSeconds = now - lastSave
+        if offlineSeconds <= self.offlineGraceSeconds then
+            return
+        end
+
+        ensureTables(resourceComponent)
+
+        local totalMoney = 0
+        for resourceName, rate in pairs(resourceComponent.generation) do
+            local generated = rate * (resourceComponent.multipliers[resourceName] or 1.0) * offlineSeconds
+            if generated > 0 then
+                local applied = self:incrementResource(entityId, resourceName, generated, {source = "offline", seconds = offlineSeconds})
+                if resourceName == "money" then
+                    totalMoney = totalMoney + applied
+                end
+            end
+        end
+
+        idleComponent.offlineSummary = {
+            seconds = offlineSeconds,
+            moneyEarned = totalMoney
+        }
+
+        if self.eventBus then
+            self.eventBus:publish("offline_progress_applied", idleComponent.offlineSummary)
+        end
+    end
+
+    function ECSResourceSystem:recordSessionSnapshot(entityId)
+        local idleComponent = self.world:getComponent(entityId, "idleState")
+        if not idleComponent then
+            self.world:addComponent(entityId, "idleState", {lastSeen = (love and love.timer and love.timer.getTime()) or os.clock()})
+        else
+            idleComponent.lastSeen = (love and love.timer and love.timer.getTime()) or os.clock()
+        end
+    end
+
+    function ECSResourceSystem:applyContractRewards(rewards)
+        if not rewards then return end
+        local target = self:getPrimaryResourceEntity()
+        if not target then return end
+        self:addResources(target, rewards, {source = "contract"})
+    end
+
+    function ECSResourceSystem:getTotalResources()
+        local totals = {}
+        for _, entityId in ipairs(self:getMatchingEntities()) do
+            local component = self:getComponent(entityId, "resources")
+            if component and component.values then
+                for resourceName, amount in pairs(component.values) do
+                    totals[resourceName] = (totals[resourceName] or 0) + amount
+                end
+            end
+        end
+        return totals
+    end
+
+    function ECSResourceSystem:getStats()
+        local entityId = self:getPrimaryResourceEntity()
+        local component = entityId and self:getComponent(entityId, "resources") or nil
+        local generation = entityId and self:getGenerationRates(entityId) or {}
+        local totals = self:getTotalResources()
+
+        return {
+            entityCount = #self:getMatchingEntities(),
+            totals = totals,
+            generation = generation,
+            multipliers = component and deepCopy(component.multipliers) or {},
+            storage = component and deepCopy(component.storage) or {},
+            totalGenerated = component and deepCopy(component.totalGenerated) or {}
+        }
+    end
+
+    function ECSResourceSystem:resetResources(entityId, newValues)
+        local component = self:getComponent(entityId, "resources")
+        if not component then return false end
+        ensureTables(component)
+
+        component.values = deepCopy(newValues or {})
+
+        if self.eventBus then
+            self.eventBus:publish(RESOURCE_EVENTS.reset, {
+                entityId = entityId,
+                values = deepCopy(component.values)
+            })
+        end
+
+        return true
+    end
+
+    function ECSResourceSystem:syncState(entityId)
+        local component = self:getComponent(entityId, "resources")
+        if not component or not self.eventBus then return end
+
+        self.eventBus:publish(RESOURCE_EVENTS.sync, {
             entityId = entityId,
-            newResources = newResources
+            values = deepCopy(component.values),
+            generation = deepCopy(component.generation),
+            multipliers = deepCopy(component.multipliers)
         })
     end
-    
-    return true
-end
 
-return ECSResourceSystem
+    return ECSResourceSystem

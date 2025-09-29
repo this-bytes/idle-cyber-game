@@ -148,14 +148,28 @@ function ECSGame:registerSystems()
     -- Core game systems
     local resourceSystem = ECSResourceSystem.new(self.world, self.eventBus)
     local contractSystem = ECSContractSystem.new(self.world, self.eventBus)
+    local skillSystem = require("src.systems.skill_system").new(self.eventBus)
+    local specialistSystem = require("src.systems.specialist_system").new(self.eventBus)
     local threatSystem = ThreatSystem.new(self.eventBus)
     local upgradeSystem = UpgradeSystem.new(self.eventBus)
     
     -- Register systems with priorities (lower number = higher priority)
+    -- Register resource and specialist systems early so others can query them
     self.world:registerSystem(resourceSystem, 1)  -- Resources first
-    self.world:registerSystem(contractSystem, 2)  -- Contracts second
-    self.world:registerSystem(threatSystem, 3)    -- Threats third
-    self.world:registerSystem(upgradeSystem, 4)   -- Upgrades last
+    -- Skill system should be registered before specialist so specialists can init skills
+    self.world:registerSystem(skillSystem, 2)
+    self.world:registerSystem(specialistSystem, 3) -- Specialists now third (provide bonuses)
+    -- Ensure specialist has reference to skill system
+    if specialistSystem.setSkillSystem then
+        specialistSystem:setSkillSystem(skillSystem)
+    end
+    -- Wire contract system with its dependencies
+    contractSystem:setResourceSystem(resourceSystem)
+    contractSystem:setSpecialistSystem(specialistSystem)
+    contractSystem:setUpgradeSystem(upgradeSystem)
+    self.world:registerSystem(contractSystem, 3)  -- Contracts third
+    self.world:registerSystem(threatSystem, 4)    -- Threats fourth
+    self.world:registerSystem(upgradeSystem, 5)   -- Upgrades last
     
     print("✅ ECS systems registered")
 end
