@@ -1,9 +1,9 @@
--- Cyber Empire Command - Cybersecurity Idle Game
--- Unified Main Entry Point with Dynamic Data-Driven Architecture
--- This is the single entry point for the idle cybersecurity game
+-- Cyber Empire Command - Pure ECS Architecture  
+-- Main Entry Point for Entity-Component-System based Idle Cybersecurity Game
+-- No legacy systems - pure ECS implementation
 
--- Import the unified game controller
-local IdleGame = require("src.idle_game")
+-- Import the pure ECS game controller
+local ECSGame = require("src.ecs_game")
 
 -- Global game instance
 local game
@@ -12,23 +12,23 @@ local game
 function love.load()
     -- Set up LÖVE 2D configuration
     love.graphics.setDefaultFilter("nearest", "nearest")
-    love.window.setTitle("🏰 Cyber Empire Command - Idle Cybersecurity Tycoon")
+    love.window.setTitle("🎯 Cyber Empire Command - Pure ECS Architecture")
     
-    -- Set window size for optimal dashboard display
+    -- Set window size for optimal display
     love.window.setMode(1024, 768, {resizable=true, minwidth=800, minheight=600})
     
     -- Set up clean monospace font for cybersecurity theme
     local font = love.graphics.newFont(12)
     love.graphics.setFont(font)
     
-    -- Initialize the unified idle game
-    game = IdleGame.new()
+    -- Initialize the pure ECS game
+    game = ECSGame.new()
     local success = game:initialize()
     
     if success then
-        print("🚀 Cyber Empire Command loaded successfully!")
+        print("🎯 Pure ECS Cyber Empire Command loaded successfully!")
     else
-        print("❌ Failed to initialize game")
+        print("❌ Failed to initialize ECS game")
     end
 end
 
@@ -42,13 +42,24 @@ function love.draw()
     if game then
         game:draw()
     else
-        love.graphics.print("Game not initialized", 10, 10)
+        love.graphics.print("ECS Game not initialized", 10, 10)
     end
 end
 
 function love.keypressed(key)
     if game then
         game:keypressed(key)
+    end
+    
+    -- Global quit key
+    if key == "escape" then
+        love.event.quit()
+    end
+end
+
+function love.quit()
+    if game then
+        game:shutdown()
     end
 end
 
