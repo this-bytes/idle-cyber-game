@@ -18,6 +18,7 @@ local UIManager = require("src.core.ui_manager")
 
 -- Import save system
 local SaveSystem = require("src.systems.save_system")
+local SOCIdleOperations = require("src.systems.soc_idle_operations")
 
 -- SOC Game States
 local SOC_STATES = {
@@ -48,6 +49,7 @@ function SOCGame.new()
     -- SOC-specific state
     self.socOperations = {
         startTime = love.timer.getTime(),
+        lastSaveTime = love.timer.getTime(), -- Track for offline progress
         totalThreatsHandled = 0,
         totalIncidentsResolved = 0,
         operationalLevel = "STARTING", -- STARTING, BASIC, ADVANCED, ENTERPRISE
@@ -121,10 +123,15 @@ function SOCGame:initializeFortressSystems()
     self.systems.uiManager = UIManager.new(self.eventBus, self.systems.resourceManager, 
                                          self.systems.securityUpgrades, self.systems.threatSimulation, self.gameLoop)
     
+    -- SOC idle operations for automation and passive gameplay
+    self.systems.socIdleOperations = SOCIdleOperations.new(self.eventBus, self.systems.resourceManager,
+                                                          self.systems.threatSimulation, self.systems.securityUpgrades)
+    
     -- Register systems with game loop in priority order
     self.gameLoop:registerSystem("resourceManager", self.systems.resourceManager, 10)
     self.gameLoop:registerSystem("securityUpgrades", self.systems.securityUpgrades, 20)
     self.gameLoop:registerSystem("threatSimulation", self.systems.threatSimulation, 30)
+    self.gameLoop:registerSystem("socIdleOperations", self.systems.socIdleOperations, 40)
     self.gameLoop:registerSystem("uiManager", self.systems.uiManager, 90)
     
     -- Initialize all systems
@@ -194,6 +201,9 @@ function SOCGame:loadGameData()
     if self.saveSystem:saveExists() then
         print("📁 Found existing SOC save data")
         self:loadGame()
+        
+        -- Calculate offline progress if there was a gap
+        self:calculateOfflineProgress()
     else
         print("🆕 Starting new SOC operations")
         self:initializeStartingResources()
@@ -219,6 +229,43 @@ function SOCGame:initializeStartingResources()
     print("💰 Starting SOC resources initialized (Budget: $5000, Rep: 5)")
 end
 
+-- Calculate offline progress when player returns to the game
+function SOCGame:calculateOfflineProgress()
+    if not self.systems.socIdleOperations then
+        return
+    end
+    
+    local lastSaveTime = self.socOperations.lastSaveTime or love.timer.getTime()
+    local currentTime = love.timer.getTime()
+    local offlineTime = currentTime - lastSaveTime
+    
+    -- Only show offline progress if away for more than 2 minutes
+    if offlineTime > 120 then
+        local progress = self.systems.socIdleOperations:calculateOfflineProgress(offlineTime)
+        
+        if progress.income > 0 then
+            -- Apply offline progress
+            self.resourceManager:addResource("money", progress.income)
+            self.resourceManager:addResource("xp", progress.xpGained)
+            self.resourceManager:addResource("reputation", progress.reputationGained)
+            
+            -- Update SOC statistics
+            self.socOperations.totalThreatsHandled = self.socOperations.totalThreatsHandled + progress.threatsHandled
+            self.socOperations.totalIncidentsResolved = self.socOperations.totalIncidentsResolved + progress.incidentsResolved
+            
+            -- Show offline progress summary
+            print("📈 SOC Offline Progress Report:")
+            print(progress.summary)
+            
+            -- Publish event for UI to show offline modal
+            self.eventBus:publish("offline_progress_calculated", progress)
+        end
+    end
+    
+    -- Update last save time
+    self.socOperations.lastSaveTime = currentTime
+end
+
 -- Update SOC operational level based on performance
 function SOCGame:updateOperationalLevel()
     local totalOperations = self.socOperations.totalThreatsHandled + self.socOperations.totalIncidentsResolved
@@ -236,7 +283,9 @@ function SOCGame:updateOperationalLevel()
     if newLevel ~= self.socOperations.operationalLevel then
         self.socOperations.operationalLevel = newLevel
         print("📈 SOC operational level upgraded to: " .. newLevel)
-        self.eventBus:publish("soc_level_upgraded", {level = newLevel})
+        if self.eventBus then
+            self.eventBus:publish("soc_level_upgraded", {level = newLevel})
+        end
     end
 end
 
@@ -349,6 +398,9 @@ end
 
 -- Save/Load functionality
 function SOCGame:saveGame()
+    -- Update last save time before saving
+    self.socOperations.lastSaveTime = love.timer.getTime()
+    
     local gameData = {
         socOperations = self.socOperations,
         resources = {},
@@ -369,6 +421,11 @@ function SOCGame:saveGame()
     -- Save threat simulation state
     if self.systems.threatSimulation then
         gameData.systems.threatSimulation = self.systems.threatSimulation:getState()
+    end
+    
+    -- Save SOC idle operations state
+    if self.systems.socIdleOperations then
+        gameData.systems.socIdleOperations = self.systems.socIdleOperations:getState()
     end
     
     local success = self.saveSystem:save(gameData)
@@ -408,6 +465,11 @@ function SOCGame:loadGame()
         self.systems.threatSimulation:loadState(gameData.systems.threatSimulation)
     end
     
+    -- Load SOC idle operations state
+    if gameData.systems and gameData.systems.socIdleOperations and self.systems.socIdleOperations then
+        self.systems.socIdleOperations:loadState(gameData.systems.socIdleOperations)
+    end
+    
     print("📁 SOC operations loaded successfully")
     return true
 end
@@ -421,6 +483,7 @@ function SOCGame:restartGame()
     -- Reset SOC operations
     self.socOperations = {
         startTime = love.timer.getTime(),
+        lastSaveTime = love.timer.getTime(),
         totalThreatsHandled = 0,
         totalIncidentsResolved = 0,
         operationalLevel = "STARTING",
