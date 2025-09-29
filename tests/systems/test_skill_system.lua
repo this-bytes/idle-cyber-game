@@ -1,4 +1,4 @@
--- Tests for Skill System - Cyber Empire Command
+-- Tests for Skill System - Idle Sec Ops
 
 -- Add src to package path for testing
 package.path = package.path .. ";src/?.lua;src/systems/?.lua;src/utils/?.lua"

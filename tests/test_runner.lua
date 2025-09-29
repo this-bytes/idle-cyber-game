@@ -1,5 +1,5 @@
 #!/usr/bin/env lua5.3
--- Simple Test Runner for Cyber Empire Command
+-- Simple Test Runner for Idle Sec Ops
 -- Usage: lua5.3 tests/test_runner.lua
 
 local TestRunner = {}
@@ -35,7 +35,7 @@ function TestRunner.test(name, testFunc)
 end
 
 function TestRunner.run()
-    print("🧪 Running Cyber Empire Command Tests...")
+    print("🧪 Running Idle Sec Ops Tests...")
     print("=" .. string.rep("=", 50))
     
     for _, test in ipairs(tests) do

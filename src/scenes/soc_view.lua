@@ -47,20 +47,55 @@ end
 -- Initialize SOC view
 function SOCView:initialize(eventBus)
     self.eventBus = eventBus
-    
+
+    -- Ensure default scene state exists if module wasn't instantiated via new()
+    if not self.socStatus then
+        self.socStatus = {
+            alertLevel = "GREEN",
+            activeIncidents = {},
+            detectionCapability = 0,
+            responseCapability = 0,
+            lastThreatScan = 0,
+            scanInterval = 5.0
+        }
+    end
+
+    if not self.layout then
+        self.layout = {
+            headerHeight = 80,
+            sidebarWidth = 250,
+            panelSpacing = 10
+        }
+    end
+
+    if not self.selectedPanel then
+        self.selectedPanel = 1
+    end
+
+    if not self.panels then
+        self.panels = {
+            {name = "Threat Monitor", key = "threats"},
+            {name = "Incident Response", key = "incidents"},
+            {name = "Resource Status", key = "resources"},
+            {name = "Upgrades", key = "upgrades"}
+        }
+    end
+
     -- Subscribe to SOC events
-    self.eventBus:subscribe("threat_detected", function(data)
-        self:handleThreatDetected(data)
-    end)
-    
-    self.eventBus:subscribe("incident_resolved", function(data) 
-        self:handleIncidentResolved(data)
-    end)
-    
-    self.eventBus:subscribe("security_upgrade_purchased", function(data)
-        self:updateSOCCapabilities()
-    end)
-    
+    if self.eventBus then
+        self.eventBus:subscribe("threat_detected", function(data)
+            self:handleThreatDetected(data)
+        end)
+
+        self.eventBus:subscribe("incident_resolved", function(data)
+            self:handleIncidentResolved(data)
+        end)
+
+        self.eventBus:subscribe("security_upgrade_purchased", function(data)
+            self:updateSOCCapabilities()
+        end)
+    end
+
     print("🛡️ SOCView: Initialized SOC operational interface")
 end
 

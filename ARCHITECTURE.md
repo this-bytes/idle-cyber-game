@@ -2,7 +2,7 @@
 
 ## Fortress Architecture Overview
 
-This document describes the comprehensive technical architecture of **Cyber Empire Command**, featuring the modern fortress architecture alongside the legacy location system with JSON-driven mechanics.
+This document describes the comprehensive technical architecture of **Idle Sec Ops**, featuring the modern fortress architecture alongside the legacy location system with JSON-driven mechanics.
 
 The fortress architecture represents a complete architectural transformation from monolithic `game.lua` to world-class, maintainable components built on industry-standard SOLID principles.
 

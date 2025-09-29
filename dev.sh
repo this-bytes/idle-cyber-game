@@ -1,7 +1,7 @@
 #!/bin/bash
-# Development script for Cyber Empire Command
+# Development script for Idle Sec Ops
 
-echo "🔐 Cyber Empire Command - Development Tools"
+echo "🔐 Idle Sec Ops - Development Tools"
 echo "==========================================="
 
 case "$1" in

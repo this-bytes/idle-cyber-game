@@ -104,7 +104,7 @@ function IdleMode:enter()
     if not self._tutorialDisplayed and self.systems and self.systems.gameState and not self.systems.gameState.tutorialSeen then
         if self.systems.ui and self.systems.ui.showTutorial then
             print("📘 Showing tutorial modal (first run)")
-            local title = "Welcome to Cyber Empire Command"
+            local title = "Welcome to Idle Sec Ops"
             local body = "Walk around the office with WASD or arrow keys. Press E to interact with departments. Accept contracts to earn money and reputation. Press A for Crisis Mode."
             local function onTutorialClose()
                 -- Mark tutorial as seen and persist a save immediately
@@ -243,7 +243,7 @@ function IdleMode:draw()
     -- Draw terminal header and panels on top of the office map (only when showFull is true)
     local contentY = 0
     local y = 0
-    contentY = theme:drawHeader("CYBER EMPIRE COMMAND v2.1.7", "Security Consultancy Management Terminal")
+    contentY = theme:drawHeader("Idle Sec Ops v2.1.7", "Security Consultancy Management Terminal")
     y = contentY + 20
     local leftPanelX = 20
     local rightPanelX = 520

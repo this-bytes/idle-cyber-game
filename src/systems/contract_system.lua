@@ -1,4 +1,4 @@
--- Contract Management System - Cyber Empire Command
+-- Contract Management System - Idle Sec Ops
 -- Handles client contracts, the primary idle gameplay loop
 
 local ContractSystem = {}

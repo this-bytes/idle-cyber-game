@@ -1,4 +1,4 @@
-# Balancing & Mathematical Framework — Cyber Empire Command
+# Balancing & Mathematical Framework — Idle Sec Ops
 
 Purpose
 Provide balancing formulas, constants, and testing guidance so designers can tune progression and keep Crisis Mode relevant.
@@ -13,7 +13,7 @@ Example formulas (data-driven)
 - PassiveIncome/sec = Σ(contract_base × assigned_efficiency) × (1 + facility_bonus)
 - ThreatLevel = (NetWorth ^ 0.75) × ZoneModifier × RandomVariance
 
-Crisis calculations
+Active Mode calculations
 - AttackProgressRate = BaseRate × (ThreatSeverity / DefenseRating) × AdaptationFactor
 - SpecialistEffectiveness = BaseSkill × (1 + Level * 0.05) × (role_multiplier)
 - Cooldown scaling: Cooldown = BaseCooldown × (1 - skill_reduction_percent)

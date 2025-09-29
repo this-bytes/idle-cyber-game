@@ -1,4 +1,4 @@
-# UI Design — Cyber Empire Command
+# UI Design — Idle Sec Ops
 
 Design Goals
 - Clear, readable HUD that shows Budget, Reputation, Revenue/sec, Active Teams, and pending Contracts.

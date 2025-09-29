@@ -1,4 +1,4 @@
--- Cyber Empire Command - Cybersecurity Idle Game
+-- Idle Sec Ops - Cybersecurity Idle Game
 -- SOC-Focused Entry Point with Systematic Refactor Architecture
 -- This is the single entry point for the idle SOC (Security Operations Center) game
 

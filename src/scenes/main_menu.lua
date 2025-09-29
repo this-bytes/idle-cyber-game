@@ -56,22 +56,26 @@ function MainMenu:draw()
     love.graphics.setColor(0.05, 0.1, 0.15, 1) -- Dark blue SOC theme
     love.graphics.rectangle("fill", 0, 0, screenWidth, screenHeight)
     
-    -- Title
+    -- Title (nil-safe)
     love.graphics.setColor(0.2, 0.8, 1, 1) -- Bright cyan
     local titleFont = love.graphics.getFont()
-    local titleWidth = titleFont:getWidth(self.titleText)
-    love.graphics.print(self.titleText, (screenWidth - titleWidth) / 2, screenHeight * 0.2)
+    local titleText = tostring(self.titleText or "")
+    local titleWidth = titleFont:getWidth(titleText)
+    love.graphics.print(titleText, (screenWidth - titleWidth) / 2, screenHeight * 0.2)
     
-    -- Subtitle
+    -- Subtitle (nil-safe)
     love.graphics.setColor(0.7, 0.9, 1, 1) -- Light cyan
-    local subtitleWidth = titleFont:getWidth(self.subtitleText)
-    love.graphics.print(self.subtitleText, (screenWidth - subtitleWidth) / 2, screenHeight * 0.25)
+    local subtitleText = tostring(self.subtitleText or "")
+    local subtitleWidth = titleFont:getWidth(subtitleText)
+    love.graphics.print(subtitleText, (screenWidth - subtitleWidth) / 2, screenHeight * 0.25)
     
     -- Menu items
     local startY = screenHeight * 0.4
     local itemHeight = 40
     
-    for i, item in ipairs(self.menuItems) do
+    local menuItems = self.menuItems or {}
+    
+    for i, item in ipairs(menuItems) do
         local y = startY + (i - 1) * itemHeight
         local isSelected = (i == self.selectedItem)
         
@@ -81,12 +85,13 @@ function MainMenu:draw()
             love.graphics.rectangle("fill", screenWidth * 0.3, y - 5, screenWidth * 0.4, itemHeight - 10)
         end
         
-        -- Menu item text
-        local textColor = isSelected and {1, 1, 1, 1} or {0.7, 0.7, 0.7, 1}
-        love.graphics.setColor(textColor)
+    -- Menu item text (nil-safe)
+    local textColor = isSelected and {1, 1, 1, 1} or {0.7, 0.7, 0.7, 1}
+    love.graphics.setColor(textColor)
         
-        local itemWidth = titleFont:getWidth(item.text)
-        love.graphics.print(item.text, (screenWidth - itemWidth) / 2, y)
+    local itemText = tostring(item.text or "")
+    local itemWidth = titleFont:getWidth(itemText)
+    love.graphics.print(itemText, (screenWidth - itemWidth) / 2, y)
     end
     
     -- Instructions
@@ -105,6 +110,8 @@ end
 
 -- Handle key input
 function MainMenu:keypressed(key)
+    if not self.menuItems or #self.menuItems == 0 then return end
+
     if key == "up" then
         self.selectedItem = math.max(1, self.selectedItem - 1)
     elseif key == "down" then
@@ -122,8 +129,9 @@ function MainMenu:mousepressed(x, y, button)
         local screenHeight = love.graphics.getHeight()
         local startY = screenHeight * 0.4
         local itemHeight = 40
-        
-        for i, item in ipairs(self.menuItems) do
+        local menuItems = self.menuItems or {}
+
+        for i, item in ipairs(menuItems) do
             local itemY = startY + (i - 1) * itemHeight
             if y >= itemY and y <= itemY + itemHeight then
                 self.selectedItem = i
@@ -142,10 +150,18 @@ function MainMenu:activateMenuItem(itemIndex)
     if not item then return end
     
     if item.action == "start_game" then
-        self.eventBus:publish("scene_request", {scene = "soc_view"})
+        if self.eventBus then
+            self.eventBus:publish("scene_request", {scene = "soc_view"})
+        else
+            print("scene_request: soc_view (eventBus missing)")
+        end
     elseif item.action == "load_game" then
-        self.eventBus:publish("load_game_request", {})
-        self.eventBus:publish("scene_request", {scene = "soc_view"})
+        if self.eventBus then
+            self.eventBus:publish("load_game_request", {})
+            self.eventBus:publish("scene_request", {scene = "soc_view"})
+        else
+            print("load_game_request + scene_request: eventBus missing")
+        end
     elseif item.action == "settings" then
         -- TODO: Implement settings scene
         print("⚙️ Settings menu not yet implemented")

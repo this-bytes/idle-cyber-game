@@ -1,4 +1,4 @@
--- Specialist Management System - Cyber Empire Command
+-- Specialist Management System - Idle Sec Ops
 -- Handles team members who enhance contract performance and Crisis Mode
 
 local SpecialistSystem = {}

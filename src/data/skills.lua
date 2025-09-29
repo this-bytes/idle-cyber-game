@@ -1,4 +1,4 @@
--- Skill Definitions - Cyber Empire Command
+-- Skill Definitions - Idle Sec Ops
 -- Central data file for all skill trees and progression
 
 local SkillData = {}

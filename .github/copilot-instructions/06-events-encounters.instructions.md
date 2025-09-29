@@ -1,7 +1,7 @@
-# Events & Encounters — Cyber Empire Command
+# Events & Encounters — Idle Sec Ops
 
 Purpose
-Define the event system that creates variety and feeds Crisis Mode. Events are the engine of emergent stories and provide hooks for rewards, reputation shifts, and contract variety.
+Define the event system that creates variety and feeds Active Mode. Events are the engine of emergent stories and provide hooks for rewards, reputation shifts, and contract variety.
 
 Event Types
 - Random Timed Events: Market crash, patch-release rush, regulator audit.
@@ -17,7 +17,7 @@ Structure of an Event
 
 Event Flow Integration
 - Events run through event bus and are displayed in HQ UI.
-- If severity escalates beyond a threshold, the event triggers Crisis Mode.
+- If severity escalates beyond a threshold, the event triggers Active Mode.
 - Events should be authored as data so designers can add content quickly.
 
 Playtesting & Balancing
@@ -26,4 +26,4 @@ Playtesting & Balancing
 
 Deliverables
 - 10 starter events (mix of positive/neutral/negative).
-- 5 crisis templates for immediate Crisis Mode conversion.
+- 5 Active templates for immediate Active Mode conversion.

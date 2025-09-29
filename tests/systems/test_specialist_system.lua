@@ -1,4 +1,4 @@
--- Tests for Specialist System - Cyber Empire Command
+-- Tests for Specialist System - Idle Sec Ops
 
 -- Add src to package path for testing
 package.path = package.path .. ";src/?.lua;src/systems/?.lua;src/utils/?.lua"

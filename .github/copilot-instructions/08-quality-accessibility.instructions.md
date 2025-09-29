@@ -1,4 +1,4 @@
-# Quality of Life & Accessibility — Cyber Empire Command
+# Quality of Life & Accessibility — Idle Sec Ops
 
 Core Goals
 - Make the game approachable for a wide audience while preserving depth for experienced players.

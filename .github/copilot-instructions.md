@@ -1,6 +1,6 @@
 ## Project: Cyberspace Tycoon - Idle Cybersecurity Game
 
-**Goal:** To develop an idle game using Lua and LÖVE 2D, focusing on learning software development principles, particularly Git version control, through an engaging cybersecurity theme.
+**Goal:** Idle game focused around a managed Security Operations Center (SOC) using Lua and LÖVE 2D. Design for extensibility and moddability.
 
 ---
 

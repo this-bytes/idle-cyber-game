@@ -1,4 +1,4 @@
-# Cyber Empire Command - Idle Cybersecurity Game
+# Idle Sec Ops - Idle Cybersecurity Game
 
 A comprehensive idle cybersecurity simulation built with Lua and LÖVE 2D, featuring modern fortress architecture and authentic threat modeling.
 
