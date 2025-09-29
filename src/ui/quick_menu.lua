@@ -176,7 +176,7 @@ function QuickMenu:executeAction(action)
     if action == "toggle_auto_contracts" then
         -- This would integrate with the main game's auto-contract system
         if self.eventBus then
-            self.eventBus:emit("toggle_auto_contracts")
+            self.eventBus:publish("toggle_auto_contracts")
         end
         self.visible = false
         
