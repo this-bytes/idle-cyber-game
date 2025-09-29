@@ -488,9 +488,9 @@ function IdleMode:draw()
     
     -- Status bar with controls
     if showFull then
-        theme:drawStatusBar("READY | [CLICK] Select Contract | [SPACE] Accept | [P] Prestige | [C] Convert | [M] Milestones | [A] Crisis Mode | [ESC] Quit")
+        theme:drawStatusBar("READY | [CLICK] Select Contract | [SPACE] Accept | [P] Prestige | [C] Convert | [M] Milestones | [TAB] Admin Mode | [ESC] Quit")
     else
-        theme:drawStatusBar("READY | [TAB] Toggle Terminal | [P] Prestige | [C] Convert | [M] Milestones | [A] Crisis Mode | [ESC] Quit")
+        theme:drawStatusBar("READY | [TAB] Admin Mode | [P] Prestige | [C] Convert | [M] Milestones | [ESC] Quit")
     end
 
     -- (Office map drawn earlier as the main background)
@@ -1138,6 +1138,22 @@ function IdleMode:drawRoomEvents(theme, x, y, width)
     end
     
     return y
+end
+
+-- Mode lifecycle methods
+function IdleMode:enter()
+    print("🏢 Entering Idle Mode - SOC Operations Center")
+    if self.systems.ui then
+        self.systems.ui:showNotification("🏢 SOC Operations Center Active", "info")
+    end
+end
+
+function IdleMode:exit()
+    print("👋 Exiting Idle Mode")
+    -- Clean up any active UI states
+    self.roomMenuActive = false
+    self.availableRooms = nil
+    self.conversionMode = false
 end
 
 

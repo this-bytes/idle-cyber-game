@@ -192,8 +192,8 @@ function AdminMode:draw()
     
     -- Status bar with crisis mode controls
     local statusText = self.currentCrisis and 
-        "CRISIS ACTIVE | [1-3] Response Options | Press [A] to return to Idle Mode" or
-        "MONITORING | [C] Simulate Crisis | [A] Return to Idle Mode"
+        "CRISIS ACTIVE | [1-3] Response Options | [A] Return to Idle Mode" or
+        "MONITORING | [C] Simulate Crisis | [A] Return to Idle Mode | [TAB] Toggle Modes"
     theme:drawStatusBar(statusText)
 
     -- Admin editor quick-controls (visible in Admin Mode)
@@ -252,6 +252,24 @@ function AdminMode:keypressed(key)
             table.insert(self.responseLog, "💾 Saved data: defs=" .. tostring(ok1) .. ", contracts=" .. tostring(ok2))
         end
     end
+end
+
+-- Mode lifecycle methods
+function AdminMode:enter()
+    table.insert(self.responseLog, "🚨 ADMIN MODE ACTIVATED")
+    table.insert(self.responseLog, "🔍 SOC monitoring systems online")
+    print("🚨 Entering Admin Mode - Crisis Response Center")
+end
+
+function AdminMode:exit()
+    table.insert(self.responseLog, "👋 EXITING ADMIN MODE")
+    -- Reset crisis if leaving mid-crisis (optional)
+    if self.currentCrisis then
+        table.insert(self.responseLog, "⚠️ Crisis abandoned - returning to monitoring")
+        self.currentCrisis = nil
+        self.crisisTimer = 0
+    end
+    print("👋 Exiting Admin Mode")
 end
 
 -- Start a crisis scenario
