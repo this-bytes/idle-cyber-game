@@ -243,7 +243,7 @@ function AdminMode:draw()
     -- Status bar with crisis mode controls
     local statusText = self.currentCrisis and 
         "CRISIS ACTIVE | [1-3] Response Options | [A] Return to Idle Mode" or
-        "MONITORING | [C] Simulate Crisis | [A] Return to Idle Mode | [TAB] Toggle Modes"
+        "MONITORING | [C] Simulate Crisis | [H] Help | [A] Return to Idle Mode | [TAB] Toggle Modes"
     theme:drawStatusBar(statusText)
 
     -- Admin editor quick-controls (visible in Admin Mode)
@@ -276,6 +276,9 @@ function AdminMode:keypressed(key)
         -- No active crisis
         if key == "c" then
             self:startCrisis()
+        elseif key == "h" then
+            -- Show help information
+            self:showHelp()
         end
         -- Admin quick keys
         if key == "r" then
@@ -304,10 +307,34 @@ function AdminMode:keypressed(key)
     end
 end
 
+-- Show help information
+function AdminMode:showHelp()
+    table.insert(self.responseLog, "╔══════════════════════════════════════════════════════════════════╗")
+    table.insert(self.responseLog, "║ ADMIN MODE HELP SYSTEM")
+    table.insert(self.responseLog, "║")
+    table.insert(self.responseLog, "║ KEY BINDINGS:")
+    table.insert(self.responseLog, "║ [C] - Start crisis simulation")
+    table.insert(self.responseLog, "║ [H] - Show this help")
+    table.insert(self.responseLog, "║ [A] - Return to Idle Mode")
+    table.insert(self.responseLog, "║ [TAB] - Toggle between modes")
+    table.insert(self.responseLog, "║")
+    table.insert(self.responseLog, "║ ADMIN TOOLS:")
+    table.insert(self.responseLog, "║ [R] - Reload JSON data")
+    table.insert(self.responseLog, "║ [S] - Save data to JSON")
+    table.insert(self.responseLog, "║")
+    table.insert(self.responseLog, "║ CRISIS RESPONSE:")
+    table.insert(self.responseLog, "║ [1-3] - Select response options during crisis")
+    table.insert(self.responseLog, "║")
+    table.insert(self.responseLog, "║ For web admin interface: open /admin in browser")
+    table.insert(self.responseLog, "╚══════════════════════════════════════════════════════════════════╝")
+    print("📚 Admin mode help displayed")
+end
+
 -- Mode lifecycle methods
 function AdminMode:enter()
     table.insert(self.responseLog, "🚨 ADMIN MODE ACTIVATED")
     table.insert(self.responseLog, "🔍 SOC monitoring systems online")
+    table.insert(self.responseLog, "📚 Press [H] for help or [C] to start crisis simulation")
     print("🚨 Entering Admin Mode - Crisis Response Center")
 end
 
