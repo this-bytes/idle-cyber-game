@@ -1,9 +1,9 @@
--- Cyber Empire Command - Pure ECS Architecture  
--- Main Entry Point for Entity-Component-System based Idle Cybersecurity Game
--- No legacy systems - pure ECS implementation
+-- Cyber Empire Command - Core Idle Game
+-- Main Entry Point for simplified idle cybersecurity game
+-- Focus on core idle game principles
 
--- Import the pure ECS game controller
-local ECSGame = require("src.ecs_game")
+-- Import the simplified idle game controller
+local IdleGame = require("src.idle_game")
 
 -- Global game instance
 local game
@@ -12,7 +12,7 @@ local game
 function love.load()
     -- Set up LÖVE 2D configuration
     love.graphics.setDefaultFilter("nearest", "nearest")
-    love.window.setTitle("🎯 Cyber Empire Command - Pure ECS Architecture")
+    love.window.setTitle("💼 Cyber Empire Command - Core Idle Game")
     
     -- Set window size for optimal display
     love.window.setMode(1024, 768, {resizable=true, minwidth=800, minheight=600})
@@ -21,14 +21,14 @@ function love.load()
     local font = love.graphics.newFont(12)
     love.graphics.setFont(font)
     
-    -- Initialize the pure ECS game
-    game = ECSGame.new()
+    -- Initialize the core idle game
+    game = IdleGame.new()
     local success = game:initialize()
     
     if success then
-        print("🎯 Pure ECS Cyber Empire Command loaded successfully!")
+        print("💼 Core Idle Cyber Empire Command loaded successfully!")
     else
-        print("❌ Failed to initialize ECS game")
+        print("❌ Failed to initialize idle game")
     end
 end
 
@@ -42,7 +42,7 @@ function love.draw()
     if game then
         game:draw()
     else
-        love.graphics.print("ECS Game not initialized", 10, 10)
+        love.graphics.print("Idle Game not initialized", 10, 10)
     end
 end
 
@@ -79,5 +79,5 @@ function love.quit()
     if game then
         game:shutdown()
     end
-    print("🏰 Thanks for playing Cyber Empire Command!")
+    print("💼 Thanks for playing Cyber Empire Command!")
 end
