@@ -113,6 +113,13 @@ function SOCGame:initializeFortressSystems()
     -- Resource manager for SOC operations
     self.systems.resourceManager = ResourceManager.new(self.eventBus)
     
+    -- Idle generators for dynamic resource generation
+    local IdleGenerators = require("src.systems.idle_generators")
+    self.systems.idleGenerators = IdleGenerators.new(self.eventBus, self.systems.resourceManager)
+    
+    -- Connect resource manager to idle generators
+    self.systems.resourceManager:setIdleGenerators(self.systems.idleGenerators)
+    
     -- Security upgrades for SOC infrastructure
     self.systems.securityUpgrades = SecurityUpgrades.new(self.eventBus, self.systems.resourceManager)
     
@@ -129,6 +136,7 @@ function SOCGame:initializeFortressSystems()
     
     -- Register systems with game loop in priority order
     self.gameLoop:registerSystem("resourceManager", self.systems.resourceManager, 10)
+    self.gameLoop:registerSystem("idleGenerators", self.systems.idleGenerators, 15) -- Before other systems
     self.gameLoop:registerSystem("securityUpgrades", self.systems.securityUpgrades, 20)
     self.gameLoop:registerSystem("threatSimulation", self.systems.threatSimulation, 30)
     self.gameLoop:registerSystem("socIdleOperations", self.systems.socIdleOperations, 40)
