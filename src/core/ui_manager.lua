@@ -21,6 +21,7 @@ local UI_PANELS = {
     UPGRADES = "upgrades", -- Security upgrades panel
     CONTRACTS = "contracts", -- Business contracts
     STATS = "stats",       -- Performance statistics
+    ROSTER = "roster",     -- Specialist roster
     NOTIFICATIONS = "notifications" -- Floating notifications
 }
 
@@ -81,6 +82,7 @@ function UIManager:initializePanels()
         [UI_PANELS.UPGRADES] = false, -- Hidden until upgrades available
         [UI_PANELS.CONTRACTS] = false, -- Hidden until contracts available  
         [UI_PANELS.STATS] = false,   -- Hidden by default
+        [UI_PANELS.ROSTER] = true,   -- Always visible for Phase 1
         [UI_PANELS.NOTIFICATIONS] = true
     }
     
@@ -88,7 +90,10 @@ function UIManager:initializePanels()
     self.panelData = {
         [UI_PANELS.HUD] = {
             title = "Idle Sec Ops",
-            subtitle = "Cybersecurity Consultancy Simulator"
+            subtitle = "Cybersecurity Consultancy Simulator",
+            money = 0,
+            incomePerSec = 0,
+            reputation = 0
         },
         [UI_PANELS.RESOURCES] = {
             resources = {}
@@ -108,6 +113,10 @@ function UIManager:initializePanels()
         [UI_PANELS.STATS] = {
             performance = {},
             statistics = {}
+        },
+        [UI_PANELS.ROSTER] = {
+            specialists = {},
+            starterSpecialists = {} -- 3 starter specialists for Phase 1
         },
         [UI_PANELS.NOTIFICATIONS] = {
             messages = self.notifications
@@ -170,6 +179,22 @@ function UIManager:subscribeToEvents()
     end)
 end
 
+-- Utility function for formatting numbers (e.g., 1234 -> "1.23k")
+function UIManager:formatNumber(num)
+    if num >= 1000000 then
+        return string.format("%.2fm", num / 1000000)
+    elseif num >= 1000 then
+        return string.format("%.2fk", num / 1000)
+    else
+        return string.format("%.0f", num)
+    end
+end
+
+-- Utility function for formatting income per second
+function UIManager:formatIncomePerSec(num)
+    return self:formatNumber(num) .. "/sec"
+end
+
 -- Update resource display
 function UIManager:updateResourceDisplay(data)
     if not self.panelData[UI_PANELS.RESOURCES] then
@@ -178,6 +203,66 @@ function UIManager:updateResourceDisplay(data)
     
     -- Get fresh resource data
     self.panelData[UI_PANELS.RESOURCES].resources = self.resourceManager:getAllResources()
+end
+
+-- Update HUD display with money, income/sec, and reputation
+function UIManager:updateHUDDisplay()
+    if not self.panelData[UI_PANELS.HUD] then
+        self.panelData[UI_PANELS.HUD] = {
+            title = "Idle Sec Ops",
+            subtitle = "Cybersecurity Consultancy Simulator",
+            money = 0,
+            incomePerSec = 0,
+            reputation = 0
+        }
+    end
+    
+    -- Get current resource values
+    self.panelData[UI_PANELS.HUD].money = self.resourceManager:getResource("money") or 0
+    self.panelData[UI_PANELS.HUD].reputation = self.resourceManager:getResource("reputation") or 0
+    
+    -- Calculate income per second from resource generation
+    self.panelData[UI_PANELS.HUD].incomePerSec = self.resourceManager:getGeneration("money") or 0
+end
+
+-- Update specialist roster display
+function UIManager:updateRosterDisplay()
+    if not self.panelData[UI_PANELS.ROSTER] then
+        self.panelData[UI_PANELS.ROSTER] = {
+            specialists = {},
+            starterSpecialists = {}
+        }
+    end
+    
+    -- Create 3 starter specialists for Phase 1 placeholder
+    if #self.panelData[UI_PANELS.ROSTER].starterSpecialists == 0 then
+        self.panelData[UI_PANELS.ROSTER].starterSpecialists = {
+            {
+                id = 1,
+                name = "You (CEO)",
+                role = "Security Lead",
+                level = 1,
+                status = "Active",
+                efficiency = 1.0
+            },
+            {
+                id = 2,
+                name = "Alex Rivera",
+                role = "Junior Analyst",
+                level = 1,
+                status = "Ready",
+                efficiency = 1.2
+            },
+            {
+                id = 3,
+                name = "Sam Chen",
+                role = "Network Admin",
+                level = 1,
+                status = "Ready",
+                efficiency = 1.1
+            }
+        }
+    end
 end
 
 -- Update threat display
@@ -246,6 +331,14 @@ function UIManager:update(dt)
     -- Update performance stats
     if self.gameLoop then
         self.panelData[UI_PANELS.STATS].performance = self.gameLoop:getPerformanceMetrics()
+    end
+    
+    -- Update HUD data (money, income/sec, reputation)
+    self:updateHUDDisplay()
+    
+    -- Update specialist roster
+    if self.panelVisibility[UI_PANELS.ROSTER] then
+        self:updateRosterDisplay()
     end
     
     -- Update threat panel data if visible
@@ -358,6 +451,10 @@ function UIManager:drawGameUI()
         self:drawStatsPanel()
     end
     
+    if self.panelVisibility[UI_PANELS.ROSTER] then
+        self:drawRosterPanel()
+    end
+    
     if self.panelVisibility[UI_PANELS.NOTIFICATIONS] then
         self:drawNotifications()
     end
@@ -366,8 +463,8 @@ end
 -- Draw HUD panel
 function UIManager:drawHUDPanel()
     local x, y = self.margin, self.margin
-    local width = 300
-    local height = 60
+    local width = 450
+    local height = 80
     
     -- Panel background
     love.graphics.setColor(self.colors.panel)
@@ -379,9 +476,30 @@ function UIManager:drawHUDPanel()
     love.graphics.setColor(self.colors.accent)
     love.graphics.print(self.panelData[UI_PANELS.HUD].title, x + self.padding, y + self.padding)
     
-    -- Subtitle
+    -- Resource displays in a row
     love.graphics.setColor(self.colors.text)
-    love.graphics.print(self.panelData[UI_PANELS.HUD].subtitle, x + self.padding, y + self.padding + 20)
+    local yOffset = 25
+    
+    -- Money display
+    local money = self.panelData[UI_PANELS.HUD].money
+    local moneyText = "💰 " .. self:formatNumber(money)
+    love.graphics.print(moneyText, x + self.padding, y + self.padding + yOffset)
+    
+    -- Income per second display  
+    local incomePerSec = self.panelData[UI_PANELS.HUD].incomePerSec
+    local incomeText = "📈 " .. self:formatIncomePerSec(incomePerSec)
+    love.graphics.print(incomeText, x + self.padding + 120, y + self.padding + yOffset)
+    
+    -- Reputation display
+    local reputation = self.panelData[UI_PANELS.HUD].reputation
+    local repText = "⭐ " .. self:formatNumber(reputation) .. " Rep"
+    love.graphics.print(repText, x + self.padding + 240, y + self.padding + yOffset)
+    
+    -- Sub-labels
+    love.graphics.setColor(self.colors.textDim)
+    love.graphics.print("Money", x + self.padding, y + self.padding + yOffset + 15)
+    love.graphics.print("Income", x + self.padding + 120, y + self.padding + yOffset + 15)
+    love.graphics.print("Reputation", x + self.padding + 240, y + self.padding + yOffset + 15)
 end
 
 -- Draw resource panel
@@ -519,6 +637,60 @@ function UIManager:drawStatsPanel()
                            x + self.padding, y + self.padding + 45)
         love.graphics.print("Time Scale: " .. string.format("%.1fx", perf.timeScale or 1.0), 
                            x + self.padding, y + self.padding + 65)
+    end
+end
+
+-- Draw specialist roster panel
+function UIManager:drawRosterPanel()
+    local x, y = self.margin, self.screenHeight - 150 - self.margin
+    local width = self.screenWidth - (2 * self.margin)
+    local height = 150
+    
+    -- Panel background
+    love.graphics.setColor(self.colors.panel)
+    love.graphics.rectangle("fill", x, y, width, height)
+    love.graphics.setColor(self.colors.border)
+    love.graphics.rectangle("line", x, y, width, height)
+    
+    -- Title
+    love.graphics.setColor(self.colors.accent)
+    love.graphics.print("👥 Specialist Roster", x + self.padding, y + self.padding)
+    
+    -- Draw starter specialists in a row
+    local specialists = self.panelData[UI_PANELS.ROSTER].starterSpecialists
+    local specialistWidth = (width - (4 * self.padding)) / 3
+    
+    for i, specialist in ipairs(specialists) do
+        local specX = x + self.padding + ((i - 1) * (specialistWidth + self.padding))
+        local specY = y + self.padding + 25
+        local specHeight = height - 50
+        
+        -- Specialist card background
+        love.graphics.setColor(self.colors.backgroundLight)
+        love.graphics.rectangle("fill", specX, specY, specialistWidth, specHeight)
+        love.graphics.setColor(self.colors.border)
+        love.graphics.rectangle("line", specX, specY, specialistWidth, specHeight)
+        
+        -- Specialist info
+        love.graphics.setColor(self.colors.text)
+        love.graphics.print(specialist.name, specX + 5, specY + 5)
+        
+        love.graphics.setColor(self.colors.textDim)
+        love.graphics.print(specialist.role, specX + 5, specY + 20)
+        love.graphics.print("Level " .. specialist.level, specX + 5, specY + 35)
+        
+        -- Status indicator
+        local statusColor = self.colors.success
+        if specialist.status == "Ready" then
+            statusColor = self.colors.accent
+        end
+        love.graphics.setColor(statusColor)
+        love.graphics.print("● " .. specialist.status, specX + 5, specY + 50)
+        
+        -- Efficiency display
+        love.graphics.setColor(self.colors.text)
+        love.graphics.print("Eff: " .. string.format("%.1fx", specialist.efficiency), 
+                           specX + 5, specY + 65)
     end
 end
 
