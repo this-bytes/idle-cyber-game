@@ -1,25 +1,25 @@
-# Defense & Threat Systems — Cyber Empire Command
+# Defense & Threat Systems — Idle Sec Ops
 
 Purpose
-Define the threat taxonomy, escalation mechanics, and how threats interact with idle and Crisis Mode gameplay.
+Define the threat taxonomy, escalation mechanics, and how threats interact with idle and Active Mode gameplay.
 
 Threat Tiers
 - Tier 1: Script Kiddies, Basic Malware — low damage, frequent.
 - Tier 2: Ransomware, Targeted Phishing, DDoS — medium impact, needs specialist coordination.
-- Tier 3: APTs, Supply Chain, Zero-Day Chains — high-impact, multi-stage, Crisis Mode material.
+- Tier 3: APTs, Supply Chain, Zero-Day Chains — high-impact, multi-stage, Active Mode material.
 
 Threat Properties
 - Vector: technical path (network, app, supply chain, social).
 - Severity: determines resources required to respond and possible losses.
-- Detection Time & Escalation: time windows before escalation; Crisis Mode begins when escalation threshold or contract conditions are met.
+- Detection Time & Escalation: time windows before escalation; Active Mode begins when escalation threshold or contract conditions are met.
 
-Crisis Triggering
+Active Triggering
 - Random or rule-based events during contracts: repeated low-level events, critical detection thresholds, or time-based scheduled audits.
-- Each crisis has metadata: duration, stages, initial detection feed, client-specific modifiers.
+- Each Active has metadata: duration, stages, initial detection feed, client-specific modifiers.
 
 Defense Mechanics
 - Passive: facility upgrades, auto-defence scripts, subscription intelligence reduce chance/severity of events.
-- Active: Crisis Mode actions—Deploy, Trace, Quarantine, Patch, Divert — mapped to specialist abilities.
+- Active: Active Mode actions—Deploy, Trace, Quarantine, Patch, Divert — mapped to specialist abilities.
 - Adaptive learning: repeated use of same countermeasure reduces its efficiency (attackers adapt), encouraging varied play.
 
 Outcome System

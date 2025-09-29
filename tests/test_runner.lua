@@ -1,5 +1,5 @@
 #!/usr/bin/env lua5.3
--- Simple Test Runner for Cyber Empire Command
+-- Simple Test Runner for Idle Sec Ops
 -- Usage: lua5.3 tests/test_runner.lua
 
 local TestRunner = {}
@@ -35,7 +35,7 @@ function TestRunner.test(name, testFunc)
 end
 
 function TestRunner.run()
-    print("🧪 Running Cyber Empire Command Tests...")
+    print("🧪 Running Idle Sec Ops Tests...")
     print("=" .. string.rep("=", 50))
     
     for _, test in ipairs(tests) do
@@ -74,7 +74,9 @@ if arg and arg[0] and arg[0]:match("test_runner%.lua$") then
         "tests/systems/test_location_system.lua",     -- NEW: Location system tests
         "tests/systems/test_progression_system.lua", -- NEW: Progression system tests
         "tests/systems/test_idle_system.lua",        -- NEW: Idle system tests from main
-        "tests/systems/test_soc_stats.lua"           -- SOC REFACTOR: SOC Stats system tests
+        "tests/systems/test_soc_stats.lua",          -- SOC REFACTOR: SOC Stats system tests
+        "tests/systems/test_soc_game.lua",           -- SOC REFACTOR: SOC Game architecture tests
+        "tests/systems/test_soc_idle_operations.lua" -- SOC REFACTOR: SOC Idle operations tests
     }
     
     -- Track total tests across all modules

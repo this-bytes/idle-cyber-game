@@ -1,8 +1,8 @@
-# Endgame & Meta Systems — Cyber Empire Command
+# Endgame & Meta Systems — Idle Sec Ops
 
 High-Level Vision
 - Endgame revolves around reputation, global contracts, and rare "Singularity-level" events that test the player's whole firm.
-- Long-term goals: create a resilient, diversified consultancy that can handle the toughest multi-stage crises.
+- Long-term goals: create a resilient, diversified Managed SOC that can handle the toughest multi-stage crises.
 
 Endgame Features
 - Global Contracts: simultaneous multi-client crisis coordination for massive rewards.

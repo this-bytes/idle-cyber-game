@@ -1,4 +1,4 @@
-# UI Design — Cyber Empire Command
+# UI Design — Idle Sec Ops
 
 Design Goals
 - Clear, readable HUD that shows Budget, Reputation, Revenue/sec, Active Teams, and pending Contracts.
@@ -10,8 +10,9 @@ HUD (Idle)
 - Left/Right panels: Contracts and Facility/Upgrade quick panels.
 - Bottom bar: Specialist roster with level, cooldown, and quick-deploy buttons.
 
-Crisis UI
-- Full-screen neon overlay with terminal panels (logs, suggested actions, countdown).
+Active Mode UI
+- Full-screen 'hacker' station view with terminal-style overlays.
+- Central log area with scrolling incident updates and severity color coding.
 - Specialist panel with animated avatars, busy indicator, and ability buttons.
 - Large countdown timer and clear cost/cooldown readouts for each action.
 - Use mono bitmap font for logs; use colored text (green/amber/magenta) for severity levels.

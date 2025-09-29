@@ -408,6 +408,38 @@ function SecurityUpgrades:getAllOwnedUpgrades()
     return self.owned
 end
 
+-- Compatibility method for legacy code: return array of owned upgrade entries
+function SecurityUpgrades:getOwnedUpgrades()
+    local ownedList = {}
+    for upgradeId, count in pairs(self.owned) do
+        if count and count > 0 then
+            local def = self.upgradeDefinitions[upgradeId]
+            local entry = {
+                id = upgradeId,
+                name = def and def.name or upgradeId,
+                category = def and def.category,
+                tier = def and def.tier,
+                count = count,
+                effects = def and def.effects or {}
+            }
+
+            -- Expose top-level effect fields for older callers expecting direct fields
+            if def and def.effects then
+                for k, v in pairs(def.effects) do
+                    -- only set if not present to avoid overwriting explicit fields
+                    if entry[k] == nil then
+                        entry[k] = v
+                    end
+                end
+            end
+
+            table.insert(ownedList, entry)
+        end
+    end
+
+    return ownedList
+end
+
 -- Get upgrade definition for SOC Stats integration  
 function SecurityUpgrades:getUpgradeDefinition(upgradeId)
     return self.upgradeDefinitions[upgradeId]
