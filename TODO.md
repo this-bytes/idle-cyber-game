@@ -1,11 +1,11 @@
-# Cyber Empire Command - Development TODO
+# Idle Sec Ops - Development TODO
 
 ## Completed ✅
 - [x] Resource system refactor (Money, Reputation, XP, Mission Tokens)
 - [x] Contract system implementation with client tiers
 - [x] Specialist system with team management
 - [x] incident Mode foundation with sample scenario
-- [x] UI refactor to Cyber Empire Command theme
+- [x] UI refactor to Idle Sec Ops theme
 - [x] Test suite with 46 tests (42 passing, 4 legacy issues)
 - [x] Save/load integration for all systems
 - [x] **Fortress Architecture Implementation (PR #37)**

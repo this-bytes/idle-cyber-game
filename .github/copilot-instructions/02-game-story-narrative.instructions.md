@@ -1,27 +1,42 @@
-# Story & Narrative — Cyber Empire Command
-
+# Story & Narrative — Idle Sec Ops
 Tone & Setting
-- Neo-noir, cyberpunk, hacker aesthetic with retro-pixel presentation. The game emphasizes being a fast-thinking Chief Security Officer running an expanding cybersecurity consultancy that takes contracts from a variety of clients (startups, enterprises, government).
-- Keep text punchy and atmospheric — short narrative blurbs, ASCII-style terminal flavor for crisis play, and in-HQ flavor text for idle moments.
-
+- Style: Light cyberpunk/neo-noir with a retro-pixel hacker aesthetic.
+- Presentation: Snappy text, short bursts of narrative, flavored with SOC humor (punny upgrades, playful cybersecurity jargon).
+- Atmosphere: Players feel like a decisive Chief Security Officer running a growing SOC consultancy, handling both idle operations and sudden crisis bursts.
+- Flavor Delivery: Crisis Mode uses ASCII/terminal-style logs for immersion, while Idle HQ features quick one-liners, notifications, and playful flavor text.
 Player Role & Arc
-- Player is the Lead Security Principal / CEO of a boutique cybersecurity firm.
-- Arc: garage → local consultancy → global cyber-firm. Progression is company-tier based (small, mid-market, enterprise, government).
-
-Clients & Factions
-- Clients are the game's "contract engines" — each client has budget, risk, tech stack quirks, and reputation rewards.
-- Factions are industry clusters (FinTech, HealthTech, Gov, Black Market, Research Labs). Faction relationships affect contract availability and threat types.
-- Keep faction descriptions short and functional: how they change threats and rewards.
-
+- Role: Player is Lead Security Principal / CEO of a boutique managed SOC.
+- Progression Arc:
+- Start: garage SOC with cobbled-together tools.
+- Mid-game: mid-market clientele, recognizable contracts, expanded team and upgrades.
+- Late-game: global-scale SOC with enterprise, government, and shadow clients.
+- Narrative Growth: Company-tier expansion becomes the main narrative driver (garage → consultancy → global authority).
+Clients & Faction
+- Clients (Contracts): Provide revenue, XP, and reputation. Each has quirks (budget, risk appetite, tech stack).
+- Factions (Industry Clusters): Shape the types of contracts, difficulty, and threats.
+    - FinTech — fast cash, high fraud risk.
+    - HealthTech — sensitive data, ransomware-prone.
+    - Gov — reputation-heavy, lots of regulations.
+    - Research Labs — advanced threats, espionage attempts.
+    - Black Market — shady payouts, chaotic rewards/penalties.
+    - Faction Impact: Each introduces unique threats, rewards, and challenges for variety and replayability.
 Narrative Usage
-- Use story sparingly — short client intros, crisis flavor text, and milestone narration (e.g., "First Fortune 500 contract won").
-- Crisis Mode uses terminal log narratives to present the attack and escalate tension (e.g., "APT-ShadowKnife detected attempting lateral movement on corp-db").
-
+- Minimal / Punchy: Story is not cutscene-heavy; it’s short bursts tied to progression.
+Key Narrative Hooks:
+- Onboarding: Tutorial in the garage SOC (simple intro to contracts, specialists, and first crisis).
+- Client Intros: One-liners describing contract context.
+- Active Mode Flavor: ASCII-style logs (escalation snippets, attacker signatures, resolution messages).
+- Milestones: Celebratory text when hitting major goals (“First Fortune 500 secured,” “Global threat intel unlocked”).
+- Tone: Witty and thematic, leaning on SOC humor, but always concise and localizable.
 Accessibility & Localization
-- Keep lines short. Use simple vocabulary for localization.
-- Provide narrative as short strings in data files to make localization straightforward.
-
-Deliverables for writers
-- 1-line client descriptions for the first 10 clients
-- 2–3 crisis templates (log snippets, escalation lines, success/failure messages)
-- A short onboarding script that introduces the player to the HQ and their first crisis
+- Sentences capped short (1–2 lines).
+- Simple vocabulary for easy localization and rapid data-file injection.
+- Narrative delivered in small data files for flexible iteration.
+Deliverables for Writer
+- Clients: 1-line description for the first 10 (blurb-sized, mixing humor with SOC theme).
+- Crisis Events: 2–3 templates with detection, escalation snippets, and resolution text.
+- Onboarding Script: A tight intro that:
+    - Sets the garage SOC scene.
+    - Introduces the HQ interface.
+    - Walks through the first crisis event.
+    - Unlocks the first contract client.

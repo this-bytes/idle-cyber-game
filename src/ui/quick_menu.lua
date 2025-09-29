@@ -574,7 +574,7 @@ function QuickMenu:drawHelpPanel()
     
     -- Version info
     love.graphics.setColor(UIHelpers.colors.textDim)
-    love.graphics.print("Cyber Empire Command " .. (self.viewData.help and self.viewData.help.version or ""), 
+    love.graphics.print("Idle Sec Ops " .. (self.viewData.help and self.viewData.help.version or ""), 
                       x + 15, y + panelHeight - 30)
 end
 

@@ -87,7 +87,7 @@ function UIManager:initializePanels()
     -- Initialize panel data
     self.panelData = {
         [UI_PANELS.HUD] = {
-            title = "Cyber Empire Command",
+            title = "Idle Sec Ops",
             subtitle = "Cybersecurity Consultancy Simulator"
         },
         [UI_PANELS.RESOURCES] = {
@@ -300,7 +300,7 @@ function UIManager:drawLoadingScreen()
     love.graphics.rectangle("fill", 0, 0, self.screenWidth, self.screenHeight)
     
     love.graphics.setColor(self.colors.text)
-    local text = "Loading Cyber Empire Command..."
+    local text = "Loading Idle Sec Ops..."
     local font = love.graphics.getFont()
     local textWidth = font:getWidth(text)
     love.graphics.print(text, (self.screenWidth - textWidth) / 2, self.screenHeight / 2)

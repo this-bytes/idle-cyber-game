@@ -1,4 +1,4 @@
-# Core Mechanics — Cyber Empire Command
+# Core Mechanics — Idle Sec Ops
 
 Objective
 Define the game's mechanics so developers and designers implement consistent, testable systems. This file maps to the canonical gameplay in the main instruction file.

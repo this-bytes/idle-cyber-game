@@ -334,7 +334,7 @@ function IdleGame:drawSplash()
     
     -- Title
     love.graphics.setColor(0.2, 0.8, 1.0, 1.0)
-    local title = "🏰 Cyber Empire Command"
+    local title = "🏰 Idle Sec Ops"
     local font = love.graphics.getFont()
     local titleWidth = font:getWidth(title)
     love.graphics.print(title, (width - titleWidth) / 2, height / 2 - 60)

@@ -1,4 +1,28 @@
 ---
+name: Feature request
+about: Propose a new feature aligned with the development roadmap
+title: ''
+labels: enhancement
+assignees: ''
+
+---
+
+## Summary
+
+Describe the feature and the problem it solves. Reference the relevant instruction file (e.g., `.github/copilot-instructions/03-core-mechanics.instructions.md`).
+
+## Design / Implementation Notes
+
+- Acceptance criteria (minimal):
+  - 
+  - 
+- Branch name: `feature/<short>`
+
+## Risks / Rollout
+
+- Migration steps if any
+- Backwards compatibility notes
+---
 name: Feature Request
 about: Suggest a new feature for the game
 title: '[FEATURE] '

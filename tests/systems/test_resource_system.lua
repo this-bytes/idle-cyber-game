@@ -1,4 +1,4 @@
--- Tests for Resource System - Cyber Empire Command
+-- Tests for Resource System - Idle Sec Ops
 
 -- Add src to package path for testing
 package.path = package.path .. ";src/?.lua;src/systems/?.lua;src/utils/?.lua;src/core/?.lua"
@@ -17,7 +17,7 @@ TestRunner.test("ResourceManager: Initialize with correct resources", function()
     local resources = ResourceManager.new(eventBus)
     resources:initialize()
     
-    -- Test core Cyber Empire Command resources exist
+    -- Test core Idle Sec Ops resources exist
     TestRunner.assertNotNil(resources:getResource("money"), "Should have money resource")
     TestRunner.assertNotNil(resources:getResource("reputation"), "Should have reputation resource")
     TestRunner.assertNotNil(resources:getResource("missionTokens"), "Should have mission tokens resource")

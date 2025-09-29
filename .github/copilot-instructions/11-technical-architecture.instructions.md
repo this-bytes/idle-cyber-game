@@ -1,16 +1,16 @@
-# Technical Architecture — Cyber Empire Command
+# Technical Architecture — Idle Sec Ops
 
-## Fortress Architecture (Current)
+## game Architecture (Modern, Production-Ready)
 
-The fortress architecture represents the modern, production-ready technical foundation for Cyber Empire Command, implementing industry-standard SOLID design principles.
+The game architecture represents the modern, production-ready technical foundation for Idle Sec Ops, implementing industry-standard SOLID design principles.
 
-### Fortress Core Components
+### game Core Components
 
-#### 1. FortressGame (`src/core/fortress_game.lua`)
-- **Purpose**: Central game controller replacing monolithic game.lua
-- **Integration**: Seamless fortress-legacy system compatibility
-- **Entry Point**: fortress_main.lua provides modern LÖVE 2D interface
-- **Features**: Auto-save, debug mode, performance monitoring
+#### 1. Game (`src/core/game.lua`)
+- **Purpose**: Central game controller importing and orchestrating all core systems
+- **Integration**: Seamless LÖVE 2D callbacks (load, update, draw, input)
+- **Entry Point**: main.lua provides modern LÖVE 2D interface
+- **Features**: Auto-save, debug mode, performance monitoring, and configuration loading
 
 #### 2. GameLoop (`src/core/game_loop.lua`)
 - **Purpose**: System orchestration with priority-based updates
@@ -34,13 +34,13 @@ The fortress architecture represents the modern, production-ready technical foun
 
 #### 6. UIManager (`src/core/ui_manager.lua`)
 - **Purpose**: Modern reactive UI system
-- **Features**: Event-driven updates, panel management, notifications, cybersecurity theming
+- **Features**: Event-driven updates, panel management, notifications, cybersecurity theming, user interaction handling.
 
 ### Development Guidelines
 
 #### System Integration Patterns
 ```lua
--- Always use fortress components for new systems
+-- Always use game components for new systems
 local MySystem = {}
 function MySystem.new(eventBus, resourceManager, securityUpgrades)
     -- Dependency injection pattern
@@ -60,31 +60,31 @@ resourceManager:spendResources({money = cost, reputation = repCost})
 eventBus:publish("resource_changed", {resource = "money", newValue = value})
 ```
 
-## Legacy Architecture (Maintained for Compatibility)
+## Legacy Architecture (Cool concepts to be migrated and then deprecated and removed)
 
 ### Core Modules (map to `src/systems/`)
 - `resource_system.lua` — Legacy resource handling (still functional)
-- `contract_system.lua` — Contract management with fortress ResourceManager integration
-- `specialist_system.lua` — Team management with fortress resource integration
+- `contract_system.lua` — Contract management with game ResourceManager integration
+- `specialist_system.lua` — Team management with game resource integration
 - `skill_system.lua` — Skill progression system
 - `location_system.lua` — Hierarchical location management
 - `progression_system.lua` — Currency and achievement tracking
-- `idle_system.lua` — Offline progress with fortress ThreatSimulation
+- `idle_system.lua` — Offline progress with game ThreatSimulation
 - `achievement_system.lua` — Achievement tracking and rewards
 
 ### Game Modes
 - `modes/idle_mode.lua` — HQ management and passive progression
-- `modes/admin_mode.lua` — Crisis management and active gameplay
-- Both modes integrate seamlessly with fortress architecture
+- `modes/admin_mode.lua` — Admin mode management and active gameplay
+- Both modes integrate seamlessly with game architecture
 
 ### Utilities
-- `utils/event_bus.lua` — Enhanced for fortress-legacy communication
+- `utils/event_bus.lua` — Enhanced for game-legacy communication
 - `utils/game_tick.lua` — Timing utilities for consistent updates
 
 ## Data-Driven Configuration
 
-### Fortress Configuration
-- Security upgrades defined in fortress SecurityUpgrades module
+### Game Configuration
+- Security upgrades defined in game SecurityUpgrades module
 - Threat types and behaviors in ThreatSimulation definitions
 - Resource rules configured via ResourceManager initialization
 
@@ -96,9 +96,9 @@ eventBus:publish("resource_changed", {resource = "money", newValue = value})
 
 ## Testing Architecture
 
-### Fortress Tests (`tests/systems/test_fortress_architecture.lua`)
-- 12 comprehensive tests covering all fortress components
-- Integration tests validating fortress-legacy compatibility
+### game Tests (`tests/systems/test_game_architecture.lua`)
+- 12 comprehensive tests covering all game components
+- Integration tests validating game-legacy compatibility
 - Performance benchmarking and metrics validation
 
 ### Legacy Tests
@@ -113,7 +113,7 @@ lua5.3 tests/test_runner.lua    # All 46 tests (42 pass, 4 fail - known legacy i
 
 ## Performance Optimization
 
-### Fortress Optimizations
+### game Optimizations
 - Fixed timestep updates for consistent simulation
 - Priority-based system scheduling
 - Event-driven architecture preventing unnecessary coupling
@@ -128,36 +128,36 @@ lua5.3 tests/test_runner.lua    # All 46 tests (42 pass, 4 fail - known legacy i
 ## Development Workflow
 
 ### For New Features
-1. **Use Fortress Architecture**: Implement new systems using fortress patterns
+1. **Use game Architecture**: Implement new systems using game patterns
 2. **System Registration**: Register with GameLoop for proper orchestration
 3. **Event Communication**: Use EventBus for system interaction
 4. **Resource Integration**: Use ResourceManager for all resource operations
-5. **Testing**: Add fortress-style tests with mocking support
+5. **Testing**: Add game-style tests with mocking support
 
 ### For Legacy Features
 1. **Maintain Compatibility**: Keep existing systems functional
-2. **Gradual Migration**: Integrate legacy systems with fortress components
-3. **Event Bridge**: Use EventBus to connect legacy and fortress systems
+2. **Gradual Migration**: Integrate legacy systems with game components
+3. **Event Bridge**: Use EventBus to connect legacy and game systems
 
 ## Migration Strategy
 
 ### Current Status
-- ✅ Fortress architecture implemented and tested (12/12 tests pass)
+- ✅ game architecture implemented and tested (12/12 tests pass)
 - ✅ Legacy systems maintained and integrated (34/34 core tests pass)
-- ✅ fortress_main.lua provides modern entry point
+- ✅ game_main.lua provides modern entry point
 - ✅ Backward compatibility with existing save files
-- ✅ All major systems use fortress components where beneficial
+- ✅ All major systems use game components where beneficial
 
 ### Recommended Approach
-- **New Development**: Use fortress architecture exclusively
-- **Existing Features**: Maintain legacy systems, integrate with fortress where beneficial
-- **Entry Point**: Use fortress_main.lua for new installations
-- **Testing**: Maintain both fortress and legacy test suites
+- **New Development**: Use game architecture exclusively
+- **Existing Features**: Maintain legacy systems, integrate with game where beneficial
+- **Entry Point**: Use game_main.lua for new installations
+- **Testing**: Maintain both game and legacy test suites
 
 ## Integration & Deployment
 
 ### Entry Points
-- **fortress_main.lua**: Modern fortress architecture (recommended)
+- **game_main.lua**: Modern game architecture (recommended)
 - **main.lua**: Legacy monolithic system (backward compatibility)
 - Both support full LÖVE 2D callbacks and game functionality
 
@@ -167,15 +167,15 @@ lua5.3 tests/test_runner.lua    # All 46 tests (42 pass, 4 fail - known legacy i
 - Configuration files in `src/data/` for runtime customization
 
 ### Security & Integrity
-- Save checksums implemented in fortress ResourceManager
+- Save checksums implemented in game ResourceManager
 - Local-only validation prevents common save manipulation
 - Event system provides audit trail for resource changes
 
 ## Deliverables Status
 
-✅ **Technical Architecture Documentation**: Comprehensive fortress + legacy docs
-✅ **System Integration**: All systems work with fortress or legacy patterns  
-✅ **Testing Framework**: 46 tests covering fortress and legacy functionality
+✅ **Technical Architecture Documentation**: Comprehensive game + legacy docs
+✅ **System Integration**: All systems work with game or legacy patterns  
+✅ **Testing Framework**: 46 tests covering game and legacy functionality
 ✅ **Performance Monitoring**: Real-time metrics and optimization tracking
-✅ **Migration Path**: Clear fortress adoption strategy with backward compatibility
+✅ **Migration Path**: Clear game adoption strategy with backward compatibility
 ✅ **Development Guidelines**: Patterns and best practices documented

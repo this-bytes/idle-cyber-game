@@ -1,4 +1,4 @@
--- Skill System - Cyber Empire Command
+-- Skill System - Idle Sec Ops
 -- Handles expandable skill trees, progression, and effects
 
 local SkillSystem = {}

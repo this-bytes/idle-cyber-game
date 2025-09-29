@@ -1,4 +1,4 @@
-# Cyber Empire Command - Game Usage Guide
+# Idle Sec Ops - Game Usage Guide
 
 ## Quick Start
 

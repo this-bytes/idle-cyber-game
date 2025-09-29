@@ -12,7 +12,7 @@ local fortressGame
 function love.load()
     -- Set up LÖVE 2D configuration
     love.graphics.setDefaultFilter("nearest", "nearest")
-    love.window.setTitle("🏰 Cyber Empire Command - Fortress Edition")
+    love.window.setTitle("🏰 Idle Sec Ops - Fortress Edition")
     
     -- Set window size
     love.window.setMode(1024, 768, {resizable=true, minwidth=800, minheight=600})

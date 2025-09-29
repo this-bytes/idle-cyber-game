@@ -1,10 +1,10 @@
-# Progression & Prestige — Cyber Empire Command
+# Progression & Prestige — Idle Sec Ops
 
 Overview
 Defines how the player's firm grows, how specialists progress, and the long-term prestige/legacy mechanics.
 
 Specialist Progression
-- XP from contracts and crisis events.
+- XP from contracts and incident events.
 - Levels grant stat increases and unlock new abilities.
 - Hard caps per tier for early phases (e.g., 10 levels per tier), expand later.
 
