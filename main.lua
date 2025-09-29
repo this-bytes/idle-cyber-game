@@ -1,9 +1,9 @@
 -- Cyber Empire Command - Cybersecurity Idle Game
--- Unified Main Entry Point with Dynamic Data-Driven Architecture
--- This is the single entry point for the idle cybersecurity game
+-- SOC-Focused Entry Point with Systematic Refactor Architecture
+-- This is the single entry point for the idle SOC (Security Operations Center) game
 
--- Import the unified game controller
-local IdleGame = require("src.idle_game")
+-- Import the SOC game controller
+local SOCGame = require("src.soc_game")
 
 -- Global game instance
 local game
@@ -12,23 +12,23 @@ local game
 function love.load()
     -- Set up LÖVE 2D configuration
     love.graphics.setDefaultFilter("nearest", "nearest")
-    love.window.setTitle("🏰 Cyber Empire Command - Idle Cybersecurity Tycoon")
+    love.window.setTitle("🛡️ SOC Command Center - Cybersecurity Operations Simulator")
     
-    -- Set window size for optimal dashboard display
+    -- Set window size for optimal SOC dashboard display
     love.window.setMode(1024, 768, {resizable=true, minwidth=800, minheight=600})
     
-    -- Set up clean monospace font for cybersecurity theme
+    -- Set up clean monospace font for SOC terminal theme
     local font = love.graphics.newFont(12)
     love.graphics.setFont(font)
     
-    -- Initialize the unified idle game
-    game = IdleGame.new()
+    -- Initialize the SOC game
+    game = SOCGame.new()
     local success = game:initialize()
     
     if success then
-        print("🚀 Cyber Empire Command loaded successfully!")
+        print("🚀 SOC Command Center loaded successfully!")
     else
-        print("❌ Failed to initialize game")
+        print("❌ Failed to initialize SOC operations")
     end
 end
 
@@ -42,7 +42,7 @@ function love.draw()
     if game then
         game:draw()
     else
-        love.graphics.print("Game not initialized", 10, 10)
+        love.graphics.print("SOC Command Center not initialized", 10, 10)
     end
 end
 
@@ -68,5 +68,5 @@ function love.quit()
     if game then
         game:shutdown()
     end
-    print("🏰 Thanks for playing Cyber Empire Command!")
+    print("🛡️ Thanks for operating the SOC Command Center!")
 end
