@@ -81,13 +81,33 @@ function IdleSystem:calculateOfflineProgress(idleTimeSeconds)
         }
     end
     
-    -- Get current player state
-    local resources = self.resourceSystem:getResources()
-    local threatReduction = self.threatSystem.threatReduction or 0
+    -- Get current player state (compatible with fortress ResourceManager)
+    local resources = {}
+    if self.resourceSystem.getResources then
+        resources = self.resourceSystem:getResources()
+    else
+        -- Fortress ResourceManager compatibility
+        resources = {
+            money = self.resourceSystem:getResource("money") or 1000,
+            reputation = self.resourceSystem:getResource("reputation") or 0
+        }
+    end
+    
+    local threatReduction = 0
+    if self.threatSystem and self.threatSystem.threatReduction then
+        threatReduction = self.threatSystem.threatReduction
+    end
+    
     local securityRating = self:calculateSecurityRating()
     
     -- Calculate base earnings (from existing resource generation)
-    local baseEarningsPerSecond = self.resourceSystem.generation.money or 0
+    local baseEarningsPerSecond = 0
+    if self.resourceSystem.generation and self.resourceSystem.generation.money then
+        baseEarningsPerSecond = self.resourceSystem.generation.money
+    else
+        -- Use default idle earnings based on reputation
+        baseEarningsPerSecond = (resources.reputation or 0) * 0.1
+    end
     local totalEarnings = math.floor(baseEarningsPerSecond * idleTimeSeconds)
     
     -- Apply idle earnings bonus if resource generation is low (help early game)
@@ -209,24 +229,44 @@ end
 function IdleSystem:calculateSecurityRating()
     local totalRating = 0
     
-    -- Sum up security ratings from all owned upgrades
-    for upgradeId, count in pairs(self.upgradeSystem.owned) do
-        local upgrade = self.upgradeSystem.upgrades[upgradeId]
-        if upgrade and upgrade.effects then
-            if upgrade.effects.securityRating then
-                totalRating = totalRating + (upgrade.effects.securityRating * count)
+    -- Compatibility with fortress SecurityUpgrades system
+    if self.upgradeSystem and self.upgradeSystem.owned then
+        -- Legacy upgrade system
+        for upgradeId, count in pairs(self.upgradeSystem.owned) do
+            local upgrade = self.upgradeSystem.upgrades and self.upgradeSystem.upgrades[upgradeId]
+            if upgrade and upgrade.effects then
+                if upgrade.effects.securityRating then
+                    totalRating = totalRating + (upgrade.effects.securityRating * count)
+                end
+                -- Also consider threat reduction upgrades
+                if upgrade.effects.threatReduction then
+                    -- Convert threat reduction to security rating equivalent
+                    totalRating = totalRating + (upgrade.effects.threatReduction * 100 * count)
+                end
             end
-            -- Also consider threat reduction upgrades
-            if upgrade.effects.threatReduction then
-                -- Convert threat reduction to security rating equivalent
-                totalRating = totalRating + (upgrade.effects.threatReduction * 100 * count)
+        end
+    elseif self.upgradeSystem and self.upgradeSystem.getOwnedUpgrades then
+        -- Fortress SecurityUpgrades system
+        local ownedUpgrades = self.upgradeSystem:getOwnedUpgrades()
+        for _, upgrade in ipairs(ownedUpgrades) do
+            if upgrade.threatReduction then
+                totalRating = totalRating + (upgrade.threatReduction * 10) -- Convert to rating scale
+            end
+            if upgrade.detectionImprovement then
+                totalRating = totalRating + (upgrade.detectionImprovement * 5)
             end
         end
     end
     
     -- Add base security from experience (cyber skills progression)
-    local resources = self.resourceSystem:getResources()
-    local xp = resources.xp or 0
+    local xp = 0
+    if self.resourceSystem.getResources then
+        local resources = self.resourceSystem:getResources()
+        xp = resources.xp or 0
+    elseif self.resourceSystem.getResource then
+        xp = self.resourceSystem:getResource("xp") or 0
+    end
+    
     local xpSecurityBonus = math.floor(xp / 100) * 10 -- +10 security per 100 XP
     totalRating = totalRating + xpSecurityBonus
     
