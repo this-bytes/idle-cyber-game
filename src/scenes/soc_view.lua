@@ -45,6 +45,12 @@ function SOCView.new(systems, eventBus)
         scanInterval = 5.0
     }
 
+    -- Event System State
+    self.currentEvent = nil
+    self.eventDisplayTime = 0
+    self.eventDisplayDuration = 5.0 -- How long to show simple events
+    self.showingChoiceEvent = false
+
     -- Subscribe to long-lived events
     if self.eventBus then
         self.eventBus:subscribe("threat_detected", function(event)
@@ -57,6 +63,10 @@ function SOCView.new(systems, eventBus)
         self.eventBus:subscribe("incident_resolved", function(data) self:handleIncidentResolved(data) end)
         self.eventBus:subscribe("security_upgrade_purchased", function(data) self:updateSOCCapabilities() end)
         
+        -- Dynamic Event System integration
+        self.eventBus:subscribe("dynamic_event_triggered", function(data)
+            self:handleDynamicEvent(data.event)
+        end)
         -- Specialist progression events
         self.eventBus:subscribe("specialist_leveled_up", function(data)
             self:handleSpecialistLevelUp(data)
@@ -130,6 +140,15 @@ function SOCView:update(dt)
         if incident.timeRemaining <= 0 then
             self:autoResolveIncident(incident)
             table.remove(self.socStatus.activeIncidents, i)
+        end
+    end
+    
+    -- Update event display timer
+    if self.currentEvent and not self.showingChoiceEvent then
+        self.eventDisplayTime = self.eventDisplayTime + dt
+        if self.eventDisplayTime >= self.eventDisplayDuration then
+            self.currentEvent = nil
+            self.eventDisplayTime = 0
         end
     end
 end
@@ -226,6 +245,9 @@ function SOCView:draw()
             y = y + 15
         end
     end
+    
+    -- Draw current event at the bottom of the screen
+    self:drawEventDisplay()
 end
 
 -- Draw SOC header
@@ -562,6 +584,15 @@ end
 
 -- Handle key input
 function SOCView:keypressed(key)
+    -- Handle event choices first (highest priority)
+    if self.showingChoiceEvent and self.currentEvent and self.currentEvent.choices then
+        local choiceNum = tonumber(key)
+        if choiceNum and choiceNum >= 1 and choiceNum <= #self.currentEvent.choices then
+            self:handleEventChoice(choiceNum)
+            return
+        end
+    end
+    
     if key == "up" then
         self.selectedPanel = math.max(1, self.selectedPanel - 1)
     elseif key == "down" then
@@ -779,6 +810,121 @@ function SOCView:getAlertLevelColor()
         return {0.8, 0.2, 0.2, 1}
     end
     return {1, 1, 1, 1}
+end
+
+-- Dynamic Event System Methods
+function SOCView:handleDynamicEvent(event)
+    if not event then return end
+    
+    self.currentEvent = event
+    self.eventDisplayTime = 0
+    
+    if event.type == "choice" then
+        self.showingChoiceEvent = true
+        print("🎯 Choice event displayed: " .. event.description)
+    else
+        self.showingChoiceEvent = false
+        print("📢 Event triggered: " .. event.description)
+    end
+end
+
+function SOCView:drawEventDisplay()
+    if not self.currentEvent then return end
+    
+    local screenWidth = love.graphics.getWidth()
+    local screenHeight = love.graphics.getHeight()
+    
+    -- Event panel dimensions
+    local panelWidth = math.min(600, screenWidth - 40)
+    local panelHeight = self.showingChoiceEvent and 200 or 120
+    local panelX = (screenWidth - panelWidth) / 2
+    local panelY = screenHeight - panelHeight - 20
+    
+    -- Draw panel background
+    love.graphics.setColor(0.2, 0.2, 0.3, 0.95)
+    love.graphics.rectangle("fill", panelX, panelY, panelWidth, panelHeight)
+    
+    -- Draw panel border
+    local borderColor = self:getEventTypeColor(self.currentEvent.type)
+    love.graphics.setColor(borderColor)
+    love.graphics.setLineWidth(3)
+    love.graphics.rectangle("line", panelX, panelY, panelWidth, panelHeight)
+    
+    -- Draw event type indicator
+    love.graphics.setColor(borderColor)
+    love.graphics.print("● " .. string.upper(self.currentEvent.type), panelX + 10, panelY + 10)
+    
+    -- Draw event description
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.printf(self.currentEvent.description, panelX + 10, panelY + 35, panelWidth - 20, "left")
+    
+    if self.showingChoiceEvent and self.currentEvent.choices then
+        -- Draw choices
+        love.graphics.setColor(0.8, 0.8, 0.8, 1)
+        love.graphics.print("Choose an option:", panelX + 10, panelY + 80)
+        
+        for i, choice in ipairs(self.currentEvent.choices) do
+            love.graphics.setColor(0.7, 0.9, 1, 1)
+            love.graphics.print(string.format("[%d] %s", i, choice.text), panelX + 20, panelY + 95 + (i - 1) * 20)
+        end
+        
+        love.graphics.setColor(0.6, 0.6, 0.6, 1)
+        love.graphics.print("Press number key to choose", panelX + 10, panelY + panelHeight - 25)
+    else
+        -- Show auto-close timer for simple events
+        local remaining = self.eventDisplayDuration - self.eventDisplayTime
+        love.graphics.setColor(0.6, 0.6, 0.6, 1)
+        love.graphics.print(string.format("Auto-closing in %.1f seconds", remaining), panelX + 10, panelY + panelHeight - 25)
+    end
+    
+    love.graphics.setColor(1, 1, 1, 1) -- Reset color
+end
+
+function SOCView:getEventTypeColor(eventType)
+    if eventType == "positive" then
+        return {0.2, 0.8, 0.2, 1} -- Green
+    elseif eventType == "negative" then
+        return {0.8, 0.2, 0.2, 1} -- Red
+    elseif eventType == "choice" then
+        return {0.2, 0.6, 1, 1} -- Blue
+    else
+        return {0.6, 0.6, 0.6, 1} -- Gray for neutral
+    end
+end
+
+function SOCView:handleEventChoice(choiceIndex)
+    if not self.currentEvent or not self.currentEvent.choices then return end
+    
+    local choice = self.currentEvent.choices[choiceIndex]
+    if not choice then return end
+    
+    print("🎯 Player chose: " .. choice.text)
+    
+    -- Process choice effects
+    if choice.effects.chance then
+        -- Probabilistic effects
+        local random = math.random()
+        local totalProbability = 0
+        
+        for _, outcome in ipairs(choice.effects.chance) do
+            totalProbability = totalProbability + outcome.probability
+            if random <= totalProbability then
+                print("🎲 Outcome selected with " .. (outcome.probability * 100) .. "% chance")
+                if outcome.effect then
+                    self.eventBus:publish("resource_add", outcome.effect)
+                end
+                break
+            end
+        end
+    elseif choice.effects then
+        -- Direct effects
+        self.eventBus:publish("resource_add", choice.effects)
+    end
+    
+    -- Clear the event
+    self.currentEvent = nil
+    self.showingChoiceEvent = false
+    self.eventDisplayTime = 0
 end
 
 return SOCView

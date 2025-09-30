@@ -32,7 +32,6 @@ function ResourceManager:subscribeToEvents()
     self.eventBus:subscribe("resource_spend_request", function(data)
         self:handleSpendRequest(data)
     end)
-    
     -- Threat resolution rewards and penalties
     self.eventBus:subscribe("threat_resolved", function(data)
         self:handleThreatResolution(data)
@@ -136,6 +135,31 @@ function ResourceManager:loadState(data)
         end
         if self.eventBus then
             self.eventBus:publish("resource_state_loaded", { resources = self.resources })
+        end
+    end
+end
+
+function ResourceManager:processEventEffects(event)
+    if not event or not event.effects then return end
+    
+    -- Process simple resource effects
+    for resourceName, amount in pairs(event.effects) do
+        if self.resources[resourceName] ~= nil and type(amount) == "number" then
+            local oldValue = self.resources[resourceName]
+            self.resources[resourceName] = math.max(0, self.resources[resourceName] + amount)
+            
+            if amount > 0 then
+                print("💰 Event bonus: +" .. amount .. " " .. resourceName)
+            else
+                print("💸 Event cost: " .. amount .. " " .. resourceName)
+            end
+            
+            self.eventBus:publish("resource_changed", { 
+                resource = resourceName, 
+                newValue = self.resources[resourceName],
+                oldValue = oldValue,
+                change = amount
+            })
         end
     end
 end
