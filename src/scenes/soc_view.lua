@@ -83,8 +83,21 @@ function SOCView:initialize(eventBus)
 
     -- Subscribe to SOC events
     if self.eventBus then
-        self.eventBus:subscribe("threat_detected", function(data)
-            self:handleThreatDetected(data.threat)
+        -- Canonical event shape: { threat = <obj>, ... }
+        -- Consumers now expect the canonical payload to simplify event handling.
+        self.eventBus:subscribe("threat_detected", function(event)
+            local threatObj = event and event.threat
+
+            if not threatObj then
+                return
+            end
+
+            -- Ensure threatObj has a name (fallback to id)
+            if not threatObj.name and threatObj.id then
+                threatObj.name = tostring(threatObj.id)
+            end
+
+            self:handleThreatDetected(threatObj)
         end)
 
         self.eventBus:subscribe("incident_resolved", function(data)
@@ -424,6 +437,7 @@ function SOCView:performThreatScan()
     if math.random() < (self.socStatus.detectionCapability / 100) then
         local threat = self:generateThreat()
         if threat then
+            -- Publish canonical event shape for threat detection
             self.eventBus:publish("threat_detected", { threat = threat, source = "soc_view" })
         end
     end

@@ -188,7 +188,13 @@ function SOCGame:setupSOCIntegrations()
     end)
     
     -- SOC operational events
-    self.eventBus:subscribe("threat_detected", function(data)
+    -- Expect canonical event table: { threat = <obj>, ... }
+    self.eventBus:subscribe("threat_detected", function(event)
+        local threatObj = event and event.threat
+        if not threatObj then
+            return
+        end
+
         self.socOperations.totalThreatsHandled = self.socOperations.totalThreatsHandled + 1
         self:updateOperationalLevel()
     end)

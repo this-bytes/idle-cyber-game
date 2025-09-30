@@ -137,9 +137,16 @@ function UIManager:subscribeToEvents()
     end)
     
     -- Threat events
-    self.eventBus:subscribe("threat_detected", function(data)
+    -- Expect canonical event table: { threat = <obj>, defenseEffectiveness = <num>, ... }
+    self.eventBus:subscribe("threat_detected", function(event)
+        local threatObj = event and event.threat
+        if not threatObj then
+            return
+        end
+
         self:updateThreatDisplay()
-        self:showNotification("🚨 Threat Detected: " .. data.threat.name, "danger")
+        local name = (threatObj.name and threatObj.name) or tostring(threatObj.id or "Unknown")
+        self:showNotification("🚨 Threat Detected: " .. name, "danger")
         self.panelVisibility[UI_PANELS.THREATS] = true
     end)
     

@@ -104,7 +104,12 @@ function SOCStats:subscribeToEvents()
     end)
     
     -- Threat detection improves detection stats
-    self.eventBus:subscribe("threat_detected", function(data)
+    self.eventBus:subscribe("threat_detected", function(event)
+        local threatObj = event and event.threat
+        if not threatObj then
+            return
+        end
+
         self.metrics.threatsDetected = self.metrics.threatsDetected + 1
         self:improveCapability("detection", 0.1)
         print("🎯 SOC Stats: Detection capability improved")
