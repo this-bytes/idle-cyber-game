@@ -3,12 +3,34 @@
         {
             "id": "upgrade_001",
             "name": "Faster Routers",
-            "description": "Increases income from all contracts by 5%.",
+            "description": "Increases income from all contracts by 10%.",
+            "cost": {
+                "money": 50
+            },
+            "effects": {
+                "income_multiplier": 1.10
+            }
+        },
+        {
+            "id": "upgrade_002",
+            "name": "Advanced Encryption",
+            "description": "Increases income from all contracts by 20%.",
+            "cost": {
+                "money": 250
+            },
+            "effects": {
+                "income_multiplier": 1.20
+            }
+        },
+        {
+            "id": "upgrade_003",
+            "name": "AI-Powered Threat Intel",
+            "description": "Increases income from all contracts by 50%.",
             "cost": {
                 "money": 1000
             },
             "effects": {
-                "money_multiplier": 0.05
+                "income_multiplier": 1.50
             }
         }
     ]

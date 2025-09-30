@@ -23,53 +23,75 @@ function ResourceManager.new(eventBus)
 end
 
 function ResourceManager:subscribeToEvents()
-    self.eventBus:subscribe("spend_resource", function(data)
-        self:spendResource(data.resource, data.amount)
+    self.eventBus:subscribe("resource_spend", function(data)
+        self:spendResources(data)
     end)
-    self.eventBus:subscribe("spend_resources", function(data)
-        if not data.costs or type(data.costs) ~= "table" then return end
-        for resource, cost in pairs(data.costs) do
-            if not self:spendResource(resource, cost) then
-                print("WARN: Could not spend " .. cost .. " of " .. resource)
-            end
-        end
+    self.eventBus:subscribe("resource_add", function(data)
+        self:addResources(data)
     end)
-    self.eventBus:subscribe("add_resource", function(data)
-        self:addResource(data.resource, data.amount)
-    end)
-    self.eventBus:subscribe("contract_completed", function(data)
-        if not data.contract or not data.contract.rewards or type(data.contract.rewards) ~= "table" then return end
-        for resource, amount in pairs(data.contract.rewards) do
-            self:addResource(resource, amount)
-        end
+    self.eventBus:subscribe("resource_spend_request", function(data)
+        self:handleSpendRequest(data)
     end)
 end
 
-function ResourceManager:addResource(name, amount)
-    if self.resources[name] ~= nil then
-        self.resources[name] = self.resources[name] + amount
-        if self.eventBus then
-            self.eventBus:publish("resource_changed", { resource = name, new_value = self.resources[name] })
+function ResourceManager:addResources(resourcesToAdd)
+    if type(resourcesToAdd) ~= "table" then return end
+    for name, amount in pairs(resourcesToAdd) do
+        if self.resources[name] ~= nil and type(amount) == "number" then
+            self.resources[name] = self.resources[name] + amount
+            self.eventBus:publish("resource_changed", { resource = name, newValue = self.resources[name] })
         end
+    end
+end
+
+function ResourceManager:spendResources(resourcesToSpend)
+    if type(resourcesToSpend) ~= "table" then return false end
+
+    -- First, check if all resources can be spent
+    for name, amount in pairs(resourcesToSpend) do
+        if self:getResource(name) < amount then
+            print("Warning: Not enough " .. name .. " to spend " .. amount)
+            self.eventBus:publish("insufficient_funds", { resource = name, needed = amount, has = self:getResource(name) })
+            return false
+        end
+    end
+
+    -- If all checks pass, spend the resources
+    for name, amount in pairs(resourcesToSpend) do
+        self.resources[name] = self.resources[name] - amount
+        self.eventBus:publish("resource_changed", { resource = name, newValue = self.resources[name] })
+    end
+    
+    return true
+end
+
+function ResourceManager:handleSpendRequest(request)
+    if not request or not request.cost or not request.onSuccess or not request.onFailure then
+        print("Error: Invalid spend request received.")
+        return
+    end
+
+    local canAfford = true
+    for resource, amount in pairs(request.cost) do
+        if self:getResource(resource) < amount then
+            canAfford = false
+            break
+        end
+    end
+
+    if canAfford then
+        for resource, amount in pairs(request.cost) do
+            self.resources[resource] = self.resources[resource] - amount
+            self.eventBus:publish("resource_changed", { resource = resource, newValue = self.resources[resource] })
+        end
+        request.onSuccess()
     else
-        print("Warning: Resource '" .. name .. "' not found.")
+        request.onFailure()
     end
 end
 
 function ResourceManager:getResource(name)
     return self.resources[name] or 0
-end
-
-function ResourceManager:spendResource(name, amount)
-    if self:getResource(name) >= amount then
-        self.resources[name] = self.resources[name] - amount
-        if self.eventBus then
-            self.eventBus:publish("resource_changed", { resource = name, new_value = self.resources[name] })
-        end
-        return true
-    end
-    print("Warning: Not enough " .. name .. " to spend " .. amount)
-    return false
 end
 
 function ResourceManager:getState()

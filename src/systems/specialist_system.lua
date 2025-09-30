@@ -133,35 +133,44 @@ end
 
 -- Hire a specialist
 function SpecialistSystem:hireSpecialist(index)
-    local specialist = self.availableSpecialists[index]
-    if not specialist then return false end
-    
-    -- Check if player can afford
-    local canAfford = true
-    for resource, cost in pairs(specialist.cost) do
-        -- TODO: Check actual resource values from resource system
-        -- For now, assume always affordable for testing
+    if not self.availableSpecialists or not self.availableSpecialists[index] then
+        print("Error: Invalid specialist index " .. tostring(index))
+        return false
+    end
+
+    local specialistToHire = self.availableSpecialists[index]
+    if not specialistToHire or not specialistToHire.cost then
+        print("Error: Specialist data is corrupt or missing cost.")
+        return false
     end
     
-    if canAfford then
-        -- Deduct costs
-        for resource, cost in pairs(specialist.cost) do
-            self.eventBus:publish("spend_resource", {
-                resource = resource,
-                amount = cost
+    -- The ResourceManager will listen for this and handle the transaction.
+    -- It needs to know if the purchase was successful to proceed.
+    self.eventBus:publish("resource_spend_request", {
+        cost = specialistToHire.cost,
+        onSuccess = function()
+            -- This callback will be executed by the ResourceManager on success
+            print("Purchase successful for: " .. specialistToHire.name)
+            self:addSpecialist(specialistToHire.type, specialistToHire)
+            table.remove(self.availableSpecialists, index)
+            self.eventBus:publish("ui_notification", {
+                message = "Hired: " .. specialistToHire.name,
+                type = "success"
+            })
+        end,
+        onFailure = function()
+            -- This callback will be executed by the ResourceManager on failure
+            print("Purchase failed for: " .. specialistToHire.name .. ". Not enough resources.")
+            self.eventBus:publish("ui_notification", {
+                message = "Not enough resources to hire " .. specialistToHire.name,
+                type = "error"
             })
         end
-        
-        -- Add to team
-        self:addSpecialist(specialist.type)
-        
-        -- Remove from available
-        table.remove(self.availableSpecialists, index)
-        
-        return true
-    end
-    
-    return false
+    })
+
+    print("Attempting to hire: " .. specialistToHire.name)
+    -- The function now returns immediately, and the outcome is handled asynchronously.
+    return true
 end
 
 -- Update specialist system

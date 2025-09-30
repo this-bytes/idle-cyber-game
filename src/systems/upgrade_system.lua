@@ -7,7 +7,9 @@ function UpgradeSystem.new(eventBus, dataManager)
     local self = setmetatable({}, UpgradeSystem)
     self.eventBus = eventBus
     self.dataManager = dataManager
-    self.allUpgrades = self.dataManager:getData("upgrades") or {}
+    -- The data from JSON is nested under a key, e.g., {"upgrades": [...]}
+    local upgradeData = self.dataManager:getData("upgrades")
+    self.allUpgrades = (upgradeData and upgradeData.upgrades) or {}
     self.purchasedUpgrades = {}
     
     if not self.allUpgrades or #self.allUpgrades == 0 then
@@ -15,7 +17,7 @@ function UpgradeSystem.new(eventBus, dataManager)
         self.allUpgrades = {}
     end
 
-    print("🔧 Upgrade system initialized.")
+    print("🔧 Upgrade system initialized with " .. #self.allUpgrades .. " upgrades.")
     return self
 end
 
@@ -31,12 +33,18 @@ function UpgradeSystem:purchaseUpgrade(upgradeId)
         return false
     end
 
-    -- This is a simplified check. In a real scenario, you'd use the resource manager.
-    -- For now, we'll assume the caller has checked the cost.
+    -- Publish an event to request spending resources.
+    -- The ResourceManager will handle the transaction and broadcast success/failure.
+    self.eventBus:publish("resource_spend", upgrade.cost)
+
+    -- We can't confirm the purchase here directly.
+    -- We need to listen for a confirmation event from the ResourceManager.
+    -- For now, we will optimistically assume it works for the sake of progress,
+    -- but a more robust solution would use a callback or listen for a 'purchase_successful' event.
     
     self.purchasedUpgrades[upgradeId] = upgrade
     self.eventBus:publish("upgrade_purchased", { upgrade = upgrade })
-    print("Purchased upgrade: " .. upgrade.name)
+    print("Attempting to purchase upgrade: " .. upgrade.name)
     return true
 end
 

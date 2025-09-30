@@ -97,6 +97,7 @@ function SOCView:updateData()
     end
     if self.systems.specialistSystem then
         self.specialists = self.systems.specialistSystem:getAllSpecialists()
+        self.availableForHire = self.systems.specialistSystem:getAvailableForHire()
     end
     if self.systems.upgradeSystem then
         self.upgrades = self.systems.upgradeSystem:getPurchasedUpgrades()
@@ -173,6 +174,39 @@ function SOCView:draw()
     else
         love.graphics.print("No specialists hired.", 20, y)
         y = y + 15
+    end
+    y = y + 10
+
+    -- Draw Available for Hire
+    love.graphics.print("== Available for Hire (Press 'h' to hire first) ==", 10, y)
+    y = y + 20
+    if self.availableForHire and #self.availableForHire > 0 then
+        for i, specialist in ipairs(self.availableForHire) do
+            local cost = specialist.cost.money or "N/A"
+            love.graphics.print(string.format("[%d] %s (Cost: %s)", i, specialist.name, cost), 20, y)
+            y = y + 15
+        end
+    else
+        love.graphics.print("No specialists available for hire.", 20, y)
+        y = y + 15
+    end
+    y = y + 10
+
+    -- Draw Available Upgrades
+    love.graphics.print("== Available Upgrades (Press 'u' to buy first) ==", 10, y)
+    y = y + 20
+    if self.systems.upgradeSystem then
+        local availableUpgrades = self.systems.upgradeSystem:getAvailableUpgrades()
+        if availableUpgrades and #availableUpgrades > 0 then
+            for _, upgrade in ipairs(availableUpgrades) do
+                local cost = upgrade.cost.money or "N/A"
+                love.graphics.print(string.format("[%s] %s (Cost: %s)", upgrade.id, upgrade.name, cost), 20, y)
+                y = y + 15
+            end
+        else
+            love.graphics.print("No new upgrades available.", 20, y)
+            y = y + 15
+        end
     end
 end
 
@@ -469,13 +503,6 @@ function SOCView:keypressed(key)
         self.selectedPanel = math.max(1, self.selectedPanel - 1)
     elseif key == "down" then
         self.selectedPanel = math.min(#self.panels, self.selectedPanel + 1)
-    elseif key == "u" then
-        if self.upgradeSystem then
-            local available = self.upgradeSystem:getAvailableUpgrades()
-            if #available > 0 then
-                self.upgradeSystem:purchaseUpgrade(available[1].id)
-            end
-        end
     elseif key == "c" then
         if self.contractSystem and self.dataManager then
             local contracts = self.dataManager:getData("contracts")
@@ -484,10 +511,18 @@ function SOCView:keypressed(key)
             end
         end
     elseif key == "h" then
-        if self.specialistSystem and self.dataManager then
-            local specialists = self.dataManager:getData("specialists")
-            if specialists and #specialists.specialists > 0 then
-                self.specialistSystem:hireSpecialist(specialists.specialists[1].id)
+        if self.systems.specialistSystem then
+            local availableForHire = self.systems.specialistSystem:getAvailableForHire()
+            if availableForHire and #availableForHire > 0 then
+                -- Hire the first one in the list (index 1)
+                self.systems.specialistSystem:hireSpecialist(1)
+            end
+        end
+    elseif key == "u" then
+        if self.systems.upgradeSystem then
+            local availableUpgrades = self.systems.upgradeSystem:getAvailableUpgrades()
+            if availableUpgrades and #availableUpgrades > 0 then
+                self.systems.upgradeSystem:purchaseUpgrade(availableUpgrades[1].id)
             end
         end
     elseif key == "m" then
@@ -543,6 +578,7 @@ function SOCView:generateThreat()
     return threat
 end
 
+-- Handle threat detection
 function SOCView:handleThreatDetected(threat)
     table.insert(self.socStatus.activeIncidents, threat)
     print("🚨 SOC: Threat detected - " .. threat.name)

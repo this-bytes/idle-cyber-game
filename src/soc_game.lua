@@ -33,15 +33,17 @@ function SOCGame:initialize()
     -- 1. Create Systems
     self.systems.dataManager = DataManager:new()
     self.systems.resourceManager = ResourceManager.new(self.eventBus)
-    self.systems.contractSystem = ContractSystem.new(self.eventBus, self.systems.dataManager)
-    self.systems.specialistSystem = SpecialistSystem.new(self.eventBus, self.systems.dataManager)
-    self.systems.upgradeSystem = UpgradeSystem.new(self.eventBus, self.systems.dataManager)
-    self.sceneManager = SceneManager.new(self.eventBus)
-
-    -- 2. Load Data
+    
+    -- Load data BEFORE initializing systems that depend on it
     self.systems.dataManager:loadDataFromFile("contracts", "src/data/contracts.json")
     self.systems.dataManager:loadDataFromFile("specialists", "src/data/specialists.json")
     self.systems.dataManager:loadDataFromFile("upgrades", "src/data/upgrades.json")
+
+    -- Now create systems that use the loaded data
+    self.systems.upgradeSystem = UpgradeSystem.new(self.eventBus, self.systems.dataManager)
+    self.systems.specialistSystem = SpecialistSystem.new(self.eventBus, self.systems.dataManager)
+    self.systems.contractSystem = ContractSystem.new(self.eventBus, self.systems.dataManager, self.systems.upgradeSystem, self.systems.specialistSystem)
+    self.sceneManager = SceneManager.new(self.eventBus)
 
     -- 3. Initialize Systems (that need it)
     self.systems.contractSystem:initialize()
