@@ -1,0 +1,24 @@
+[
+  {
+    "id": "event_001",
+    "type": "positive",
+    "description": "A grateful client sent a bonus for your team's excellent passive monitoring!",
+    "effects": {
+      "money": 250
+    }
+  },
+  {
+    "id": "event_002",
+    "type": "negative",
+    "description": "A server rack has overheated, requiring immediate replacement.",
+    "effects": {
+      "money": -75
+    }
+  },
+  {
+    "id": "event_003",
+    "type": "neutral",
+    "description": "Industry conference highlights new trends in threat intelligence. Your team feels inspired.",
+    "effects": {}
+  }
+]
