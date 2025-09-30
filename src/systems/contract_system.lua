@@ -162,7 +162,7 @@ function ContractSystem:acceptContract(id)
         self.eventBus:publish("contract_accepted", { contract = contract })
         print("Accepted contract: " .. contract.clientName)
     else
-        print("Error: Tried to accept non-existent contract with id: " .. id)
+        print("Error: Tried to accept non-existent contract with id: " .. tostring(id))
     end
 end
 
@@ -172,11 +172,20 @@ function ContractSystem:completeContract(id)
         self.activeContracts[id] = nil
         self.completedContracts[id] = contract
         
-        -- Publish completion event with reward info
-        self.eventBus:publish("contract_completed", { contract = contract })
+        -- Calculate XP award based on contract value
+        local xpAmount = math.floor((contract.reward or 0) * 0.1) -- 10% of contract reward as XP
+        if xpAmount < 25 then
+            xpAmount = 25 -- Minimum XP award
+        end
+        
+        -- Publish completion event with reward info and XP
+        self.eventBus:publish("contract_completed", { 
+            contract = contract,
+            xpAwarded = xpAmount
+        })
         self.eventBus:publish("resource_change", { money = contract.reward }) -- Assuming direct resource change
         
-        print("Completed contract: " .. contract.clientName .. ". Reward: " .. contract.reward)
+        print("Completed contract: " .. contract.clientName .. ". Reward: " .. contract.reward .. ", XP: " .. xpAmount)
     end
 end
 

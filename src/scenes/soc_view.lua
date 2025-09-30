@@ -57,6 +57,11 @@ function SOCView.new(systems, eventBus)
         self.eventBus:subscribe("incident_resolved", function(data) self:handleIncidentResolved(data) end)
         self.eventBus:subscribe("security_upgrade_purchased", function(data) self:updateSOCCapabilities() end)
         
+        -- Specialist progression events
+        self.eventBus:subscribe("specialist_leveled_up", function(data)
+            self:handleSpecialistLevelUp(data)
+        end)
+        
         -- UI update events
         self.eventBus:subscribe("resource_changed", function() self:updateData() end)
         self.eventBus:subscribe("contract_accepted", function() self:updateData() end)
@@ -168,7 +173,20 @@ function SOCView:draw()
     y = y + 20
     if self.specialists and next(self.specialists) then
         for id, specialist in pairs(self.specialists) do
-            love.graphics.print(string.format("[%s] %s (Lvl %d)", id, specialist.name, specialist.level), 20, y)
+            local level = specialist.level or 1
+            local currentXp = specialist.xp or 0
+            local nextLevelXp = "MAX"
+            
+            -- Get XP required for next level if available
+            if self.systems.specialistSystem and self.systems.specialistSystem.getXpForNextLevel then
+                local requiredXp = self.systems.specialistSystem:getXpForNextLevel(level)
+                if requiredXp then
+                    nextLevelXp = tostring(requiredXp)
+                end
+            end
+            
+            local xpDisplay = nextLevelXp == "MAX" and "[MAX LEVEL]" or "[" .. currentXp .. " / " .. nextLevelXp .. " XP]"
+            love.graphics.print(string.format("[%s] %s (Lvl %d) %s", id, specialist.name, level, xpDisplay), 20, y)
             y = y + 15
         end
     else
@@ -592,6 +610,25 @@ function SOCView:handleIncidentResolved(incident)
         end
     end
     print("✅ SOC: Incident resolved - " .. incident.name)
+end
+
+function SOCView:handleSpecialistLevelUp(data)
+    local specialist = data.specialist
+    local newLevel = data.newLevel
+    local message = specialist.name .. " has been promoted to Level " .. newLevel .. "!"
+    
+    print("🎉 " .. message)
+    
+    -- Show a temporary notification
+    if self.eventBus then
+        self.eventBus:publish("ui_notification", {
+            message = message,
+            type = "success"
+        })
+    end
+    
+    -- Update data to refresh the UI
+    self:updateData()
 end
 
 function SOCView:autoResolveIncident(incident)
