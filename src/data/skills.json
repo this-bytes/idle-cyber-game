@@ -3,32 +3,105 @@
     "basic_analysis": {
       "id": "basic_analysis",
       "name": "Basic Analysis",
-      "description": "Fundamental security analysis techniques",
+      "description": "Fundamental security analysis techniques.",
       "category": "analysis",
       "maxLevel": 10,
       "baseXpCost": 100,
       "xpGrowth": 1.2,
-      "prerequisites": [],
-      "effects": {
-        "efficiency": 0.05,
-        "trace": 0.02
-      },
-      "unlockRequirements": {}
+      "effects": [
+        { "stat": "efficiency", "bonus": 0.05 },
+        { "stat": "trace", "bonus": 0.02 }
+      ],
+      "requirements": {}
     },
-    "incident_response": {
-      "id": "incident_response",
-      "name": "Incident Response",
-      "description": "Rapid response to security incidents and breaches",
-      "category": "specialized",
-      "maxLevel": 8,
-      "baseXpCost": 300,
-      "xpGrowth": 1.4,
-      "prerequisites": [],
-      "effects": {
-        "speed": 0.2,
-        "defense": 0.15
-      },
-      "unlockRequirements": {}
+    "network_fundamentals": {
+      "id": "network_fundamentals",
+      "name": "Network Fundamentals",
+      "description": "Understanding of network protocols and traffic analysis.",
+      "category": "network",
+      "maxLevel": 10,
+      "baseXpCost": 150,
+      "xpGrowth": 1.3,
+      "effects": [
+        { "stat": "defense", "bonus": 0.05 },
+        { "stat": "speed", "bonus": 0.03 }
+      ],
+      "requirements": {}
+    },
+    "basic_response": {
+        "id": "basic_response",
+        "name": "Basic Incident Response",
+        "description": "Core procedures for handling low-level security incidents.",
+        "category": "specialized",
+        "maxLevel": 8,
+        "baseXpCost": 200,
+        "xpGrowth": 1.4,
+        "effects": [
+            { "stat": "speed", "bonus": 0.1 },
+            { "stat": "defense", "bonus": 0.05 }
+        ],
+        "requirements": {}
+    },
+    "team_coordination": {
+        "id": "team_coordination",
+        "name": "Team Coordination",
+        "description": "Improve the efficiency and speed of the entire team.",
+        "category": "leadership",
+        "maxLevel": 5,
+        "baseXpCost": 500,
+        "xpGrowth": 1.8,
+        "effects": [
+            { "stat": "efficiency", "bonus": 0.02, "target": "team" },
+            { "stat": "speed", "bonus": 0.02, "target": "team" }
+        ],
+        "requirements": {}
+    },
+    "malware_analysis": {
+        "id": "malware_analysis",
+        "name": "Malware Analysis",
+        "description": "Reverse-engineering and analyzing malicious software.",
+        "category": "specialized",
+        "maxLevel": 10,
+        "baseXpCost": 400,
+        "xpGrowth": 1.5,
+        "effects": [
+            { "stat": "trace", "bonus": 0.15 },
+            { "stat": "efficiency", "bonus": 0.1 }
+        ],
+        "requirements": {
+            "basic_analysis": 3,
+            "network_fundamentals": 2
+        }
+    },
+    "negotiation": {
+        "id": "negotiation",
+        "name": "Negotiation",
+        "description": "Increase contract payouts and manage client relationships.",
+        "category": "leadership",
+        "maxLevel": 5,
+        "baseXpCost": 800,
+        "xpGrowth": 2.0,
+        "effects": [
+            { "stat": "contract_reward_bonus", "bonus": 0.05 }
+        ],
+        "requirements": {
+            "team_coordination": 2
+        }
+    },
+    "firewall_management": {
+        "id": "firewall_management",
+        "name": "Firewall Management",
+        "description": "Configure and maintain network firewalls for optimal defense.",
+        "category": "network",
+        "maxLevel": 12,
+        "baseXpCost": 300,
+        "xpGrowth": 1.4,
+        "effects": [
+            { "stat": "defense", "bonus": 0.12 }
+        ],
+        "requirements": {
+            "network_fundamentals": 4
+        }
     }
   },
   "categories": {
@@ -49,5 +122,5 @@
       "description": "Advanced specialized security skills"
     }
   },
-  "lastUpdated": "2025-09-30T04:01:46.259212"
+  "lastUpdated": "2025-09-30T05:00:00.000000"
 }

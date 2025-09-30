@@ -21,7 +21,7 @@ function GameLoop.new(eventBus)
     -- Timing and performance
     self.gameTick = GameTick
     self.isPaused = false
-    self.timeScale = 1.0
+    self.timeScale = 0.1
     
     -- Performance monitoring
     self.performanceMetrics = {
@@ -113,7 +113,7 @@ function GameLoop:initialize()
     
     self.initialized = true
     self.eventBus:publish("game_loop_initialized", {})
-    print("🎯 GameLoop: Fortress architecture initialized")
+    print("🎯 GameLoop: initialized")
 end
 
 -- Main update loop - called every frame

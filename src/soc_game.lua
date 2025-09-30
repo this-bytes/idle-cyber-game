@@ -2,54 +2,53 @@
 -- This file now focuses on managing the core game loop and state,
 -- while main.lua handles the initial setup and object creation.
 
-local SOCGame = {}
-SOCGame.__index = SOCGame
-
--- Import necessary components
+-- System Dependencies
+local EventBus = require("src.utils.event_bus")
+local DataManager = require("src.core.data_manager")
 local SceneManager = require("src.scenes.scene_manager")
-local DataManager = require("src.utils.data_manager")
-local ResourceManager = require("src.core.resource_manager")
 local ContractSystem = require("src.systems.contract_system")
 local SpecialistSystem = require("src.systems.specialist_system")
 local UpgradeSystem = require("src.systems.upgrade_system")
 local EventSystem = require("src.systems.event_system")
 local ThreatSystem = require("src.systems.threat_system")
+local SkillSystem = require("src.systems.skill_system")
 
--- Scene Files
+-- Scene Dependencies
 local MainMenu = require("src.scenes.main_menu")
 local SOCView = require("src.scenes.soc_view")
 local UpgradeShop = require("src.scenes.upgrade_shop")
 local GameOver = require("src.scenes.game_over")
+local IncidentResponse = require("src.scenes.incident_response")
+
+
+local SOCGame = {}
+SOCGame.__index = SOCGame
 
 function SOCGame.new(eventBus)
     local self = setmetatable({}, SOCGame)
     self.eventBus = eventBus
     self.systems = {}
     self.sceneManager = nil
+    self.isInitialized = false
     return self
 end
 
 function SOCGame:initialize()
     print("🛡️ Initializing SOC Game Systems...")
+    -- 1. Create Core Systems & Data Manager
+    self.systems.dataManager = DataManager.new(self.eventBus)
+    self.systems.dataManager:loadAllData()
 
-    -- 1. Create Systems
-    self.systems.dataManager = DataManager:new()
-    self.systems.resourceManager = ResourceManager.new(self.eventBus)
-    
-    -- Load data BEFORE initializing systems that depend on it
-    self.systems.dataManager:loadDataFromFile("contracts", "src/data/contracts.json")
-    self.systems.dataManager:loadDataFromFile("specialists", "src/data/specialists.json")
-    self.systems.dataManager:loadDataFromFile("upgrades", "src/data/upgrades.json")
-    self.systems.dataManager:loadDataFromFile("events", "src/data/events.json")
-    self.systems.dataManager:loadDataFromFile("threats", "src/data/threats.json")
-
-    -- Now create systems that use the loaded data
+    -- Create other systems
+    self.systems.skillSystem = SkillSystem.new(self.eventBus, self.systems.dataManager)
     self.systems.upgradeSystem = UpgradeSystem.new(self.eventBus, self.systems.dataManager)
-    self.systems.specialistSystem = SpecialistSystem.new(self.eventBus, self.systems.dataManager)
+    self.systems.specialistSystem = SpecialistSystem.new(self.eventBus, self.systems.dataManager, self.systems.skillSystem)
     self.systems.contractSystem = ContractSystem.new(self.eventBus, self.systems.dataManager, self.systems.upgradeSystem, self.systems.specialistSystem)
     self.systems.eventSystem = EventSystem.new(self.eventBus, self.systems.dataManager)
-    self.systems.threatSystem = ThreatSystem.new(self.eventBus, self.systems.dataManager)
-    self.sceneManager = SceneManager.new(self.eventBus)
+    self.systems.threatSystem = ThreatSystem.new(self.eventBus, self.systems.dataManager, self.systems.specialistSystem)
+
+    -- 2. Create Scene Manager AFTER systems are created
+    self.sceneManager = SceneManager.new(self.eventBus, self.systems)
 
     -- 3. Initialize Systems (that need it)
     self.systems.contractSystem:initialize()
@@ -59,10 +58,11 @@ function SOCGame:initialize()
     self.sceneManager:initialize()
 
     -- 4. Register Scenes
-    self.sceneManager:registerScene("main_menu", MainMenu:new(self.eventBus))
-    self.sceneManager:registerScene("soc_view", SOCView.new(self.systems, self.eventBus))
-    self.sceneManager:registerScene("upgrade_shop", UpgradeShop:new(self.eventBus))
-    self.sceneManager:registerScene("game_over", GameOver:new(self.eventBus))
+    self.sceneManager:registerScene("main_menu", MainMenu.new(self.eventBus))
+    self.sceneManager:registerScene("soc_view", SOCView.new(self.eventBus))
+    self.sceneManager:registerScene("upgrade_shop", UpgradeShop.new(self.eventBus))
+    self.sceneManager:registerScene("game_over", GameOver.new(self.eventBus))
+    self.sceneManager:registerScene("incident_response", IncidentResponse.new(self.eventBus))
     
     -- 5. Start Initial Scene
     self.sceneManager:requestScene("soc_view")
@@ -72,17 +72,6 @@ function SOCGame:initialize()
 end
 
 function SOCGame:update(dt)
-    if self.systems.contractSystem then
-        self.systems.contractSystem:update(dt)
-    end
-    if self.systems.specialistSystem then
-        self.systems.specialistSystem:update(dt)
-    end
-    if self.systems.eventSystem then
-        self.systems.eventSystem:update(dt)
-    if self.systems.threatSystem then
-        self.systems.threatSystem:update(dt)
-    end
     if self.sceneManager then
         self.sceneManager:update(dt)
     end
@@ -107,13 +96,12 @@ function SOCGame:mousepressed(x, y, button)
 end
 
 function SOCGame:resize(w, h)
-    if self.sceneManager then
-        self.sceneManager:resize(w, h)
-    end
+    -- Handle window resizing if needed
 end
 
 function SOCGame:shutdown()
     print("Shutting down SOC game...")
+    -- Perform any cleanup here
 end
 
 return SOCGame

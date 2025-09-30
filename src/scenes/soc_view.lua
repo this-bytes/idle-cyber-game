@@ -5,12 +5,14 @@
 local SOCView = {}
 SOCView.__index = SOCView
 
+local NotificationPanel = require("src.ui.notification_panel")
+
 -- Create new SOC view scene
-function SOCView.new(systems, eventBus)
+function SOCView.new(eventBus)
     local self = setmetatable({}, SOCView)
     
     -- Dependencies
-    self.systems = systems or {}
+    self.systems = {} -- Injected by SceneManager on enter
     self.eventBus = eventBus
 
     -- Internal State
@@ -18,6 +20,9 @@ function SOCView.new(systems, eventBus)
     self.contracts = {}
     self.specialists = {}
     self.upgrades = {}
+
+    -- UI Components
+    self.notificationPanel = NotificationPanel.new(eventBus)
 
     -- UI State
     self.layout = {
@@ -32,7 +37,8 @@ function SOCView.new(systems, eventBus)
         {name = "Resource Status", key = "resources"},
         {name = "Upgrades", key = "upgrades"},
         {name = "Contracts", key = "contracts"},
-        {name = "Specialists", key = "specialists"}
+        {name = "Specialists", key = "specialists"},
+        {name = "Skills", key = "skills"}
     }
 
     -- Game Logic State
@@ -80,11 +86,11 @@ function SOCView.new(systems, eventBus)
         self.eventBus:subscribe("upgrade_purchased", function() self:updateData() end)
     end
 
-    -- Initial data fetch
-    if self.systems.resourceManager then
-        self.resources = self.systems.resourceManager:getState()
-    end
-    self:updateSOCCapabilities()
+    -- Initial data fetch is now done in :enter()
+    -- if self.systems.resourceManager then
+    --     self.resources = self.systems.resourceManager:getState()
+    -- end
+    -- self:updateSOCCapabilities()
 
     print("🛡️ SOCView: Initialized SOC operational interface")
     return self
@@ -95,6 +101,7 @@ function SOCView:enter(data)
     print("🛡️ SOCView: SOC operations center activated")
     -- Refresh data every time the scene is entered
     self:updateData()
+    self:updateSOCCapabilities()
 end
 
 -- Exit SOC view scene
@@ -121,14 +128,9 @@ end
 
 -- Update SOC view
 function SOCView:update(dt)
-    -- Update threat scanning
-    self.socStatus.lastThreatScan = self.socStatus.lastThreatScan + dt
-    
-    if self.socStatus.lastThreatScan >= self.socStatus.scanInterval then
-        self:performThreatScan()
-        self.socStatus.lastThreatScan = 0
-    end
-    
+    -- Update UI components
+    self.notificationPanel:update(dt)
+
     -- Update alert level based on active incidents
     self:updateAlertLevel()
     
@@ -248,6 +250,61 @@ function SOCView:draw()
     
     -- Draw current event at the bottom of the screen
     self:drawEventDisplay()
+    
+    -- Draw notification panel on top of everything
+    self.notificationPanel:draw()
+end
+
+function SOCView:keypressed(key)
+    if self.showingChoiceEvent and self.currentEvent and self.currentEvent.choices then
+        local choiceIndex = tonumber(key)
+        if choiceIndex and choiceIndex > 0 and choiceIndex <= #self.currentEvent.choices then
+            self.eventBus:publish("dynamic_event_choice_made", {
+                eventId = self.currentEvent.id,
+                choiceIndex = choiceIndex
+            })
+            self.currentEvent = nil
+            self.showingChoiceEvent = false
+        end
+        return
+    end
+
+    if key == "m" then
+        self.eventBus:publish("change_scene", { scene = "main_menu" })
+    elseif key == "u" then
+        if self.systems.upgradeSystem then
+            local availableUpgrades = self.systems.upgradeSystem:getAvailableUpgrades()
+            if availableUpgrades and #availableUpgrades > 0 then
+                self.systems.upgradeSystem:purchaseUpgrade(availableUpgrades[1].id)
+            end
+        end
+    elseif key == "h" then
+        if self.systems.specialistSystem then
+            local availableForHire = self.systems.specialistSystem:getAvailableForHire()
+            if availableForHire and #availableForHire > 0 then
+                self.systems.specialistSystem:hireSpecialist(1)
+            end
+        end
+    elseif key == "t" then
+        if self.systems.threatSystem then
+            local activeThreats = self.systems.threatSystem:getActiveThreats()
+            if #activeThreats > 0 then
+                self.eventBus:publish("change_scene", {
+                    scene = "incident_response",
+                    data = { threat = activeThreats[1] }
+                })
+            end
+        end
+    elseif key == "s" then
+        self.eventBus:publish("save_game_request")
+    elseif key == "right" then
+        self.selectedPanel = self.selectedPanel % #self.panels + 1
+    elseif key == "left" then
+        self.selectedPanel = self.selectedPanel - 1
+        if self.selectedPanel < 1 then
+            self.selectedPanel = #self.panels
+        end
+    end
 end
 
 -- Draw SOC header
@@ -312,6 +369,8 @@ function SOCView:drawMainContent()
             self:drawContractsPanel(contentX + 20, contentY + 50, contentWidth - 40, contentHeight - 70)
         elseif selectedPanel.key == "specialists" then
             self:drawSpecialistsPanel(contentX + 20, contentY + 50, contentWidth - 40, contentHeight - 70)
+        elseif selectedPanel.key == "skills" then
+            self:drawSkillsPanel(contentX + 20, contentY + 50, contentWidth - 40, contentHeight - 70)
         end
     end
 end
@@ -357,6 +416,53 @@ function SOCView:drawSidebar()
     love.graphics.print("[H] - Hire Specialist", 15, actionY + 50)
     love.graphics.print("[M] - Main Menu", 15, actionY + 75)
     love.graphics.print("[S] - Save Game", 15, actionY + 100)
+end
+
+-- Draw the skills panel
+function SOCView:drawSkillsPanel(x, y, width, height)
+    love.graphics.setColor(0.7, 0.7, 0.7, 1)
+    love.graphics.print("📚 Specialist Skills", x, y)
+    
+    if not self.systems.skillSystem or not self.systems.specialistSystem then
+        love.graphics.setColor(1, 0.5, 0.5, 1)
+        love.graphics.print("Skill and/or Specialist systems not available.", x, y + 30)
+        return
+    end
+
+    local specialists = self.systems.specialistSystem:getAllSpecialists()
+    local skillSystem = self.systems.skillSystem
+    
+    local currentY = y + 30
+    
+    for specialistId, specialist in pairs(specialists) do
+        if currentY > y + height - 50 then break end -- Prevent drawing off-panel
+
+        love.graphics.setColor(0.9, 0.9, 0.9, 1)
+        love.graphics.print(string.format("%s (Lvl %d)", specialist.name, specialist.level), x, currentY)
+        currentY = currentY + 20
+
+        local skillProgress = skillSystem:getSkillProgress(specialistId)
+        if skillProgress and next(skillProgress) then
+            for skillId, progress in pairs(skillProgress) do
+                if currentY > y + height - 30 then break end
+
+                local skillDef = skillSystem:getSkill(skillId)
+                if skillDef then
+                    local xpRequired = skillSystem:getXpRequiredForLevel(skillId, progress.level + 1)
+                    local progressText = string.format("  - %s (Lvl %d): %d / %d XP", skillDef.name, progress.level, progress.xp, xpRequired)
+                    
+                    love.graphics.setColor(0.6, 0.8, 1, 1)
+                    love.graphics.print(progressText, x + 15, currentY)
+                    currentY = currentY + 18
+                end
+            end
+        else
+            love.graphics.setColor(0.5, 0.5, 0.5, 1)
+            love.graphics.print("  No skills unlocked.", x + 15, currentY)
+            currentY = currentY + 18
+        end
+        currentY = currentY + 10 -- Spacing between specialists
+    end
 end
 
 -- Draw status indicators
@@ -581,350 +687,3 @@ function SOCView:drawSpecialistsPanel(x, y, width, height)
         end
     end
 end
-
--- Handle key input
-function SOCView:keypressed(key)
-    -- Handle event choices first (highest priority)
-    if self.showingChoiceEvent and self.currentEvent and self.currentEvent.choices then
-        local choiceNum = tonumber(key)
-        if choiceNum and choiceNum >= 1 and choiceNum <= #self.currentEvent.choices then
-            self:handleEventChoice(choiceNum)
-            return
-        end
-    end
-    
-    if key == "up" then
-        self.selectedPanel = math.max(1, self.selectedPanel - 1)
-    elseif key == "down" then
-        self.selectedPanel = math.min(#self.panels, self.selectedPanel + 1)
-    elseif key == "c" then
-        if self.contractSystem and self.dataManager then
-            local contracts = self.dataManager:getData("contracts")
-            if contracts and #contracts.contracts > 0 then
-                self.contractSystem:startContract(contracts.contracts[1].id)
-            end
-        end
-    elseif key == "h" then
-        if self.systems.specialistSystem then
-            local availableForHire = self.systems.specialistSystem:getAvailableForHire()
-            if availableForHire and #availableForHire > 0 then
-                -- Hire the first one in the list (index 1)
-                self.systems.specialistSystem:hireSpecialist(1)
-            end
-        end
-    elseif key == "u" then
-        if self.systems.upgradeSystem then
-            local availableUpgrades = self.systems.upgradeSystem:getAvailableUpgrades()
-            if availableUpgrades and #availableUpgrades > 0 then
-                self.systems.upgradeSystem:purchaseUpgrade(availableUpgrades[1].id)
-            end
-        end
-    elseif key == "m" then
-        self.eventBus:publish("scene_request", {scene = "main_menu"})
-    elseif key == "s" then
-        self.eventBus:publish("save_game_request", {})
-    elseif key == "t" then
-        -- Manual threat response (for testing and low-severity threats)
-        if self.systems and self.systems.threatSystem then
-            local activeThreats = self.systems.threatSystem:getActiveThreats()
-            if #activeThreats > 0 then
-                print("🚨 Manually triggering crisis response for: " .. activeThreats[1].name)
-                self.eventBus:publish("scene_request", {
-                    scene = "incident_response",
-                    data = {
-                        threat = activeThreats[1],
-                        systems = self.systems
-                    }
-                })
-            else
-                print("No active threats to respond to")
-            end
-        end
-    elseif key == "escape" then
-        self.eventBus:publish("scene_request", {scene = "main_menu"})
-    end
-end
-
--- Handle mouse input
-function SOCView:mousepressed(x, y, button)
-    -- Handle sidebar panel selection
-    if x <= self.layout.sidebarWidth and y >= self.layout.headerHeight then
-        local itemHeight = 40
-        local startY = self.layout.headerHeight + 20
-        
-        for i, panel in ipairs(self.panels) do
-            local panelY = startY + (i - 1) * (itemHeight + 5)
-            if y >= panelY and y <= panelY + itemHeight then
-                self.selectedPanel = i
-                break
-            end
-        end
-    end
-end
-
--- SOC operational methods
-function SOCView:performThreatScan()
-    -- Simulate threat detection based on capabilities
-    if math.random() < (self.socStatus.detectionCapability / 100) then
-        local threat = self:generateThreat()
-        if threat then
-            -- Publish canonical event shape for threat detection
-            self.eventBus:publish("threat_detected", { threat = threat, source = "soc_view" })
-        end
-    end
-end
-
-function SOCView:generateThreat()
-    local threatTypes = {
-        {name = "Port Scan", severity = "low", impact = "Reconnaissance attempt"},
-        {name = "Phishing Email", severity = "medium", impact = "Credential theft attempt"},
-        {name = "Malware Detection", severity = "high", impact = "System compromise attempt"},
-        {name = "DDoS Attack", severity = "high", impact = "Service disruption"}
-    }
-    
-    local threat = threatTypes[math.random(#threatTypes)]
-    threat.id = "threat_" .. os.time() .. "_" .. math.random(1000)
-    threat.timeRemaining = math.random(30, 120) -- 30-120 seconds to resolve
-    
-    return threat
-end
-
--- Handle threat detection
-function SOCView:handleThreatDetected(threat)
-    table.insert(self.socStatus.activeIncidents, threat)
-    print("🚨 SOC: Threat detected - " .. threat.name)
-    
-    -- Switch to incident response scene for high-severity threats
-    if threat.severity and threat.severity >= 5 then
-        print("🚨 High-severity threat detected, switching to incident response mode")
-        self.eventBus:publish("scene_request", {
-            scene = "incident_response", 
-            data = {
-                threat = threat,
-                systems = self.systems
-            }
-        })
-    end
-end
-
-function SOCView:handleIncidentResolved(incident)
-    for i, activeIncident in ipairs(self.socStatus.activeIncidents) do
-        if activeIncident.id == incident.id then
-            table.remove(self.socStatus.activeIncidents, i)
-            break
-        end
-    end
-    print("✅ SOC: Incident resolved - " .. incident.name)
-end
-
-function SOCView:handleSpecialistLevelUp(data)
-    local specialist = data.specialist
-    local newLevel = data.newLevel
-    local message = specialist.name .. " has been promoted to Level " .. newLevel .. "!"
-    
-    print("🎉 " .. message)
-    
-    -- Show a temporary notification
-    if self.eventBus then
-        self.eventBus:publish("ui_notification", {
-            message = message,
-            type = "success"
-        })
-    end
-    
-    -- Update data to refresh the UI
-    self:updateData()
-end
-
-function SOCView:autoResolveIncident(incident)
-    -- Auto-resolve incident based on response capability
-    local successChance = self.socStatus.responseCapability / 100
-    local success = math.random() < successChance
-    
-    if success then
-        print("✅ SOC: Auto-resolved incident - " .. incident.name)
-        if self.resourceManager then
-            self.resourceManager:addResource("xp", 10)
-            self.resourceManager:addResource("reputation", 1)
-        end
-    else
-        print("❌ SOC: Failed to resolve incident - " .. incident.name)
-        if self.resourceManager then
-            self.resourceManager:addResource("money", -100)
-            self.resourceManager:addResource("reputation", -2)
-        end
-    end
-end
-
-function SOCView:updateAlertLevel()
-    local incidentCount = #self.socStatus.activeIncidents
-    local highSeverityCount = 0
-    
-    for _, incident in ipairs(self.socStatus.activeIncidents) do
-        if incident.severity == "high" then
-            highSeverityCount = highSeverityCount + 1
-        end
-    end
-    
-    if highSeverityCount > 0 then
-        self.socStatus.alertLevel = "RED"
-    elseif incidentCount >= 3 then
-        self.socStatus.alertLevel = "ORANGE"
-    elseif incidentCount >= 1 then
-        self.socStatus.alertLevel = "YELLOW"
-    else
-        self.socStatus.alertLevel = "GREEN"
-    end
-end
-
-function SOCView:updateSOCCapabilities()
-    -- Calculate capabilities based on upgrades
-    self.socStatus.detectionCapability = 10 -- Base 10%
-    self.socStatus.responseCapability = 20  -- Base 20%
-    
-    if self.securityUpgrades then
-        local owned = self.securityUpgrades:getOwnedUpgrades() or {}
-        for _, upgrade in ipairs(owned) do
-            if upgrade.detectionImprovement then
-                self.socStatus.detectionCapability = self.socStatus.detectionCapability + upgrade.detectionImprovement
-            end
-            if upgrade.responseImprovement then
-                self.socStatus.responseCapability = self.socStatus.responseCapability + upgrade.responseImprovement
-            end
-        end
-    end
-    
-    -- Cap capabilities at 95%
-    self.socStatus.detectionCapability = math.min(95, self.socStatus.detectionCapability)
-    self.socStatus.responseCapability = math.min(95, self.socStatus.responseCapability)
-end
-
-function SOCView:getAlertLevelColor()
-    if self.socStatus.alertLevel == "GREEN" then
-        return {0.2, 0.8, 0.2, 1}
-    elseif self.socStatus.alertLevel == "YELLOW" then
-        return {0.8, 0.8, 0.2, 1}
-    elseif self.socStatus.alertLevel == "ORANGE" then
-        return {0.8, 0.5, 0.2, 1}
-    elseif self.socStatus.alertLevel == "RED" then
-        return {0.8, 0.2, 0.2, 1}
-    end
-    return {1, 1, 1, 1}
-end
-
--- Dynamic Event System Methods
-function SOCView:handleDynamicEvent(event)
-    if not event then return end
-    
-    self.currentEvent = event
-    self.eventDisplayTime = 0
-    
-    if event.type == "choice" then
-        self.showingChoiceEvent = true
-        print("🎯 Choice event displayed: " .. event.description)
-    else
-        self.showingChoiceEvent = false
-        print("📢 Event triggered: " .. event.description)
-    end
-end
-
-function SOCView:drawEventDisplay()
-    if not self.currentEvent then return end
-    
-    local screenWidth = love.graphics.getWidth()
-    local screenHeight = love.graphics.getHeight()
-    
-    -- Event panel dimensions
-    local panelWidth = math.min(600, screenWidth - 40)
-    local panelHeight = self.showingChoiceEvent and 200 or 120
-    local panelX = (screenWidth - panelWidth) / 2
-    local panelY = screenHeight - panelHeight - 20
-    
-    -- Draw panel background
-    love.graphics.setColor(0.2, 0.2, 0.3, 0.95)
-    love.graphics.rectangle("fill", panelX, panelY, panelWidth, panelHeight)
-    
-    -- Draw panel border
-    local borderColor = self:getEventTypeColor(self.currentEvent.type)
-    love.graphics.setColor(borderColor)
-    love.graphics.setLineWidth(3)
-    love.graphics.rectangle("line", panelX, panelY, panelWidth, panelHeight)
-    
-    -- Draw event type indicator
-    love.graphics.setColor(borderColor)
-    love.graphics.print("● " .. string.upper(self.currentEvent.type), panelX + 10, panelY + 10)
-    
-    -- Draw event description
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.printf(self.currentEvent.description, panelX + 10, panelY + 35, panelWidth - 20, "left")
-    
-    if self.showingChoiceEvent and self.currentEvent.choices then
-        -- Draw choices
-        love.graphics.setColor(0.8, 0.8, 0.8, 1)
-        love.graphics.print("Choose an option:", panelX + 10, panelY + 80)
-        
-        for i, choice in ipairs(self.currentEvent.choices) do
-            love.graphics.setColor(0.7, 0.9, 1, 1)
-            love.graphics.print(string.format("[%d] %s", i, choice.text), panelX + 20, panelY + 95 + (i - 1) * 20)
-        end
-        
-        love.graphics.setColor(0.6, 0.6, 0.6, 1)
-        love.graphics.print("Press number key to choose", panelX + 10, panelY + panelHeight - 25)
-    else
-        -- Show auto-close timer for simple events
-        local remaining = self.eventDisplayDuration - self.eventDisplayTime
-        love.graphics.setColor(0.6, 0.6, 0.6, 1)
-        love.graphics.print(string.format("Auto-closing in %.1f seconds", remaining), panelX + 10, panelY + panelHeight - 25)
-    end
-    
-    love.graphics.setColor(1, 1, 1, 1) -- Reset color
-end
-
-function SOCView:getEventTypeColor(eventType)
-    if eventType == "positive" then
-        return {0.2, 0.8, 0.2, 1} -- Green
-    elseif eventType == "negative" then
-        return {0.8, 0.2, 0.2, 1} -- Red
-    elseif eventType == "choice" then
-        return {0.2, 0.6, 1, 1} -- Blue
-    else
-        return {0.6, 0.6, 0.6, 1} -- Gray for neutral
-    end
-end
-
-function SOCView:handleEventChoice(choiceIndex)
-    if not self.currentEvent or not self.currentEvent.choices then return end
-    
-    local choice = self.currentEvent.choices[choiceIndex]
-    if not choice then return end
-    
-    print("🎯 Player chose: " .. choice.text)
-    
-    -- Process choice effects
-    if choice.effects.chance then
-        -- Probabilistic effects
-        local random = math.random()
-        local totalProbability = 0
-        
-        for _, outcome in ipairs(choice.effects.chance) do
-            totalProbability = totalProbability + outcome.probability
-            if random <= totalProbability then
-                print("🎲 Outcome selected with " .. (outcome.probability * 100) .. "% chance")
-                if outcome.effect then
-                    self.eventBus:publish("resource_add", outcome.effect)
-                end
-                break
-            end
-        end
-    elseif choice.effects then
-        -- Direct effects
-        self.eventBus:publish("resource_add", choice.effects)
-    end
-    
-    -- Clear the event
-    self.currentEvent = nil
-    self.showingChoiceEvent = false
-    self.eventDisplayTime = 0
-end
-
-return SOCView

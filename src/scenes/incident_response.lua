@@ -5,31 +5,22 @@
 local IncidentResponse = {}
 IncidentResponse.__index = IncidentResponse
 
-function IncidentResponse.new()
+function IncidentResponse.new(eventBus)
     local self = setmetatable({}, IncidentResponse)
-    self.eventBus = nil
-    self.systems = nil
+    self.eventBus = eventBus
+    self.systems = {} -- Injected by SceneManager on enter
     
     -- Crisis state
     self.activeThreat = nil
     self.availableSpecialists = {}
     self.selectedSpecialistIndex = 1
     
-    return self
-end
-
-function IncidentResponse:initialize(eventBus)
-    self.eventBus = eventBus
     print("🚨 IncidentResponse: Initialized incident response scene")
+    return self
 end
 
 function IncidentResponse:enter(data)
     print("🚨 IncidentResponse: Entering incident response mode")
-    
-    -- Store system references
-    if data and data.systems then
-        self.systems = data.systems
-    end
     
     -- Get the active threat from the data
     if data and data.threat then
@@ -48,6 +39,8 @@ function IncidentResponse:enter(data)
                 table.insert(self.availableSpecialists, specialist)
             end
         end
+    else
+        print("Warning: specialistSystem not found in IncidentResponse:enter")
     end
 end
 

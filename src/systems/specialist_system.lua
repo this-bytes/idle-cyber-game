@@ -4,13 +4,11 @@ local SpecialistSystem = {}
 SpecialistSystem.__index = SpecialistSystem
 
 -- Create new specialist system
-function SpecialistSystem.new(eventBus, dataManager)
+function SpecialistSystem.new(eventBus, dataManager, skillSystem)
     local self = setmetatable({}, SpecialistSystem)
     self.eventBus = eventBus
     self.dataManager = dataManager
-    
-    -- Reference to skill system (will be set externally)
-    self.skillSystem = nil
+    self.skillSystem = skillSystem
     
     -- Hired specialists
     self.specialists = {}
@@ -77,9 +75,9 @@ function SpecialistSystem:initialize()
 end
 
 -- Set skill system reference
-function SpecialistSystem:setSkillSystem(skillSystem)
-    self.skillSystem = skillSystem
-end
+-- function SpecialistSystem:setSkillSystem(skillSystem)
+--     self.skillSystem = skillSystem
+-- end
 
 -- Add a specialist to the team
 function SpecialistSystem:addSpecialist(specialistType, specialistData)
@@ -129,6 +127,10 @@ function SpecialistSystem:addSpecialist(specialistType, specialistData)
     end
     
     return specialist
+end
+
+function SpecialistSystem:getAllSpecialists()
+    return self.specialists
 end
 
 -- Generate an available specialist for hire
@@ -194,6 +196,54 @@ function SpecialistSystem:hireSpecialist(index)
     return true
 end
 
+-- Get a specialist's effective stats including skill bonuses
+function SpecialistSystem:getSpecialistEffectiveStats(specialistId)
+    local specialist = self.specialists[specialistId]
+    if not specialist then return nil end
+
+    -- Start with base stats
+    local effectiveStats = {
+        efficiency = specialist.efficiency,
+        speed = specialist.speed,
+        trace = specialist.trace,
+        defense = specialist.defense,
+    }
+
+    -- Apply skill effects
+    if self.skillSystem then
+        local skillEffects = self.skillSystem:getSkillEffects(specialistId)
+        for stat, bonus in pairs(skillEffects) do
+            if effectiveStats[stat] then
+                effectiveStats[stat] = effectiveStats[stat] + bonus
+            end
+        end
+    end
+
+    return effectiveStats
+end
+
+function SpecialistSystem:getTeamBonuses()
+    local totalEfficiency = 0
+    local specialistCount = 0
+    local averageEfficiency = 1.0
+
+    for id, _ in pairs(self.specialists) do
+        local stats = self:getSpecialistEffectiveStats(id)
+        if stats and stats.efficiency then
+            totalEfficiency = totalEfficiency + stats.efficiency
+            specialistCount = specialistCount + 1
+        end
+    end
+
+    if specialistCount > 0 then
+        averageEfficiency = totalEfficiency / specialistCount
+    end
+
+    return {
+        efficiency = averageEfficiency
+    }
+end
+
 -- Update specialist system
 function SpecialistSystem:update(dt)
     local currentTime = (love and love.timer and love.timer.getTime()) or os.clock()
@@ -208,6 +258,11 @@ function SpecialistSystem:update(dt)
             })
         end
     end
+end
+
+-- Get all specialists on the team
+function SpecialistSystem:getTeam()
+    return self.specialists
 end
 
 -- Get available specialists for contracts/activities

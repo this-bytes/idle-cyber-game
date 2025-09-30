@@ -4,9 +4,10 @@
 local SceneManager = {}
 SceneManager.__index = SceneManager
 
-function SceneManager.new(eventBus)
+function SceneManager.new(eventBus, systems)
     local self = setmetatable({}, SceneManager)
     self.eventBus = eventBus
+    self.systems = systems
     self.scenes = {}
     self.currentScene = nil
     self.currentSceneName = nil
@@ -47,6 +48,9 @@ function SceneManager:requestScene(sceneName, params)
 
     self.currentSceneName = sceneName
     self.currentScene = self.scenes[sceneName]
+    
+    -- Inject the systems table into the scene
+    self.currentScene.systems = self.systems
 
     if self.currentScene.enter then
         self.currentScene:enter(params)

@@ -11,6 +11,7 @@ function ContractSystem.new(eventBus, dataManager, upgradeSystem, specialistSyst
     self.dataManager = dataManager
     self.upgradeSystem = upgradeSystem
     self.specialistSystem = specialistSystem -- Store reference to specialist system
+    self.skillSystem = specialistSystem.skillSystem -- Get from specialist system
     self.contracts = nil -- Will be loaded during initialize
     self.availableContracts = {}
     self.activeContracts = {}
@@ -158,9 +159,13 @@ function ContractSystem:acceptContract(id)
             return
         end
         self.availableContracts[id] = nil
+        
+        -- Assign specialists (auto-assign CEO for now)
+        contract.assignedSpecialists = {0} -- ID 0 is the CEO
+
         self.activeContracts[id] = contract
         self.eventBus:publish("contract_accepted", { contract = contract })
-        print("Accepted contract: " .. contract.clientName)
+        print("Accepted contract: " .. contract.clientName .. " (Assigned: CEO)")
     else
         print("Error: Tried to accept non-existent contract with id: " .. tostring(id))
     end
@@ -181,7 +186,8 @@ function ContractSystem:completeContract(id)
         -- Publish completion event with reward info and XP
         self.eventBus:publish("contract_completed", { 
             contract = contract,
-            xpAwarded = xpAmount
+            xpAwarded = xpAmount,
+            assignedSpecialists = contract.assignedSpecialists
         })
         self.eventBus:publish("resource_change", { money = contract.reward }) -- Assuming direct resource change
         

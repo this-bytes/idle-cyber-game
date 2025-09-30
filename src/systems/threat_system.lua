@@ -6,10 +6,11 @@ local ThreatSystem = {}
 ThreatSystem.__index = ThreatSystem
 
 -- Create new threat system
-function ThreatSystem.new(eventBus, dataManager)
+function ThreatSystem.new(eventBus, dataManager, specialistSystem)
     local self = setmetatable({}, ThreatSystem)
     self.eventBus = eventBus
     self.dataManager = dataManager
+    self.specialistSystem = specialistSystem
     
     -- Threat generation state
     self.threatGenerationTimer = 0
@@ -172,7 +173,60 @@ function ThreatSystem:assignSpecialist(threatId, specialistId)
     })
     
     print("🛡️ Specialist " .. specialistId .. " assigned to threat: " .. threat.name)
+    
+    -- Immediately calculate resolution chance
+    threat.resolutionChance = self:calculateThreatResolutionChance(threatId)
+    print("   - Resolution chance: " .. string.format("%.1f%%", threat.resolutionChance * 100))
+
     return true
+end
+
+-- Calculate the chance of a specialist successfully resolving a threat
+function ThreatSystem:calculateThreatResolutionChance(threatId)
+    local threat = self.activeThreats[threatId]
+    if not threat or not threat.assignedSpecialist then return 0 end
+
+    local specialistId = threat.assignedSpecialist
+    local specialistStats = self.specialistSystem:getSpecialistEffectiveStats(specialistId)
+    if not specialistStats then return 0 end
+
+    -- Determine the most relevant stat for the threat category
+    local relevantStat = "efficiency" -- Default stat
+    if threat.category == "network_attack" then
+        relevantStat = "defense"
+    elseif threat.category == "data_breach" or threat.category == "social_engineering" then
+        relevantStat = "trace"
+    elseif threat.category == "malware" or threat.category == "insider_threat" then
+        relevantStat = "speed"
+    end
+
+    local statValue = specialistStats[relevantStat] or 1.0
+    local threatSeverity = threat.severity or 5
+
+    -- Formula: Chance is based on the ratio of stat to severity.
+    -- A specialist with a stat equal to the severity has a 50% chance.
+    -- The chance scales, capping at 95%.
+    local chance = (statValue / threatSeverity) * 0.5
+    
+    return math.min(chance, 0.95) -- Cap at 95%
+end
+
+-- Resolve threat attempt
+function ThreatSystem:attemptThreatResolution(threatId)
+    local threat = self.activeThreats[threatId]
+    if not threat or not threat.assignedSpecialist then return false end
+
+    local chance = self:calculateThreatResolutionChance(threatId)
+    local success = math.random() < chance
+
+    if success then
+        self:resolveThreat(threatId)
+    else
+        -- Optional: Implement partial failure or other consequences here
+        print("🛡️ Specialist failed to resolve threat " .. threat.name .. " on this attempt.")
+    end
+    -- For now, we'll just let the timer run down on failure.
+    -- A more complex system could have specialists make periodic attempts.
 end
 
 -- Resolve threat successfully
