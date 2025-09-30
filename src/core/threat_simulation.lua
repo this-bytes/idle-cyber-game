@@ -214,7 +214,7 @@ function ThreatSimulation:generateThreat()
     -- Publish threat detected event
     self.eventBus:publish("threat_detected", {
         threat = threat,
-        defenseEffectiveness = defenseEffectiveness
+        source = "threat_simulation"
     })
     
     print("🚨 ThreatSimulation: Generated " .. threat.name .. " (" .. severity .. ")")
