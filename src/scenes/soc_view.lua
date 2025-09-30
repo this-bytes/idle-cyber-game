@@ -84,7 +84,7 @@ function SOCView:initialize(eventBus)
     -- Subscribe to SOC events
     if self.eventBus then
         self.eventBus:subscribe("threat_detected", function(data)
-            self:handleThreatDetected(data)
+            self:handleThreatDetected(data.threat)
         end)
 
         self.eventBus:subscribe("incident_resolved", function(data)
@@ -424,7 +424,7 @@ function SOCView:performThreatScan()
     if math.random() < (self.socStatus.detectionCapability / 100) then
         local threat = self:generateThreat()
         if threat then
-            self.eventBus:publish("threat_detected", threat)
+            self.eventBus:publish("threat_detected", { threat = threat, source = "soc_view" })
         end
     end
 end

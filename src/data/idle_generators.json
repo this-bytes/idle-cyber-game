@@ -1,0 +1,229 @@
+{
+  "generators": {
+    "equipment": [
+      {
+        "id": "basic_workstation",
+        "name": "Basic Workstation",
+        "description": "A standard computer setup for basic security tasks",
+        "category": "equipment",
+        "cost": {
+          "money": 1000
+        },
+        "unlockRequirements": {},
+        "generation": {
+          "money": 2,
+          "xp": 0.1
+        },
+        "maxOwned": 10,
+        "costMultiplier": 1.15,
+        "tier": 1,
+        "icon": "💻"
+      },
+      {
+        "id": "security_scanner",
+        "name": "Vulnerability Scanner",
+        "description": "Automated security scanning equipment",
+        "category": "equipment",
+        "cost": {
+          "money": 5000,
+          "reputation": 10
+        },
+        "unlockRequirements": {
+          "reputation": 25
+        },
+        "generation": {
+          "money": 8,
+          "xp": 0.5
+        },
+        "maxOwned": 5,
+        "costMultiplier": 1.2,
+        "tier": 2,
+        "icon": "🔍"
+      },
+      {
+        "id": "siem_system",
+        "name": "SIEM System",
+        "description": "Security Information and Event Management system",
+        "category": "equipment",
+        "cost": {
+          "money": 25000,
+          "reputation": 50
+        },
+        "unlockRequirements": {
+          "reputation": 100,
+          "xp": 500
+        },
+        "generation": {
+          "money": 35,
+          "xp": 2,
+          "reputation": 0.1
+        },
+        "maxOwned": 3,
+        "costMultiplier": 1.25,
+        "tier": 3,
+        "icon": "🖥️"
+      }
+    ],
+    "automation": [
+      {
+        "id": "alert_bot",
+        "name": "Alert Bot",
+        "description": "Automated alert processing system",
+        "category": "automation",
+        "cost": {
+          "money": 2500,
+          "xp": 100
+        },
+        "unlockRequirements": {
+          "xp": 200
+        },
+        "generation": {
+          "money": 5,
+          "reputation": 0.05
+        },
+        "maxOwned": 8,
+        "costMultiplier": 1.18,
+        "tier": 1,
+        "icon": "🤖"
+      },
+      {
+        "id": "incident_responder",
+        "name": "Auto-Incident Response",
+        "description": "Automated incident response and remediation",
+        "category": "automation",
+        "cost": {
+          "money": 15000,
+          "reputation": 30,
+          "xp": 750
+        },
+        "unlockRequirements": {
+          "reputation": 75,
+          "xp": 1000
+        },
+        "generation": {
+          "money": 20,
+          "reputation": 0.2,
+          "xp": 0.8
+        },
+        "maxOwned": 4,
+        "costMultiplier": 1.22,
+        "tier": 2,
+        "icon": "⚡"
+      }
+    ],
+    "infrastructure": [
+      {
+        "id": "server_rack",
+        "name": "Server Rack",
+        "description": "Additional computing infrastructure",
+        "category": "infrastructure",
+        "cost": {
+          "money": 8000
+        },
+        "unlockRequirements": {
+          "money": 10000
+        },
+        "generation": {
+          "money": 12,
+          "xp": 0.3
+        },
+        "maxOwned": 15,
+        "costMultiplier": 1.12,
+        "tier": 1,
+        "icon": "🏗️"
+      },
+      {
+        "id": "data_center",
+        "name": "Mini Data Center",
+        "description": "Dedicated data center facility",
+        "category": "infrastructure",
+        "cost": {
+          "money": 100000,
+          "reputation": 200
+        },
+        "unlockRequirements": {
+          "money": 150000,
+          "reputation": 250,
+          "xp": 2500
+        },
+        "generation": {
+          "money": 150,
+          "reputation": 1,
+          "xp": 5
+        },
+        "maxOwned": 2,
+        "costMultiplier": 1.5,
+        "tier": 3,
+        "icon": "🏢"
+      }
+    ],
+    "training": [
+      {
+        "id": "online_course",
+        "name": "Online Security Course",
+        "description": "Continuous learning platform access",
+        "category": "training",
+        "cost": {
+          "money": 500
+        },
+        "unlockRequirements": {},
+        "generation": {
+          "xp": 1,
+          "reputation": 0.02
+        },
+        "maxOwned": 20,
+        "costMultiplier": 1.1,
+        "tier": 1,
+        "icon": "📚"
+      },
+      {
+        "id": "certification_lab",
+        "name": "Certification Lab",
+        "description": "Hands-on certification training environment",
+        "category": "training",
+        "cost": {
+          "money": 10000,
+          "xp": 500
+        },
+        "unlockRequirements": {
+          "xp": 800
+        },
+        "generation": {
+          "xp": 8,
+          "reputation": 0.3,
+          "money": 3
+        },
+        "maxOwned": 5,
+        "costMultiplier": 1.25,
+        "tier": 2,
+        "icon": "🎓"
+      }
+    ]
+  },
+  "categories": {
+    "equipment": {
+      "name": "Equipment",
+      "description": "Hardware and software tools for security operations",
+      "icon": "🔧",
+      "color": [0.3, 0.7, 0.9, 1]
+    },
+    "automation": {
+      "name": "Automation", 
+      "description": "Automated systems and bots for efficiency",
+      "icon": "🤖",
+      "color": [0.9, 0.5, 0.2, 1]
+    },
+    "infrastructure": {
+      "name": "Infrastructure",
+      "description": "Computing and facility infrastructure",
+      "icon": "🏗️", 
+      "color": [0.6, 0.8, 0.3, 1]
+    },
+    "training": {
+      "name": "Training",
+      "description": "Education and skill development resources",
+      "icon": "📚",
+      "color": [0.8, 0.3, 0.9, 1]
+    }
+  }
+}
