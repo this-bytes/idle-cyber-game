@@ -337,6 +337,89 @@
                 grid-template-columns: 1fr;
             }
         }
+        
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: linear-gradient(145deg, #1e2a3a, #2c3e50);
+            border: 1px solid #3498db;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+            padding: 20px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #3498db;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            color: #3498db;
+        }
+        
+        .item-card, .skill-card, .specialist-card {
+            background: linear-gradient(145deg, #2c3e50, #34495e);
+            border: 1px solid #3498db;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            transition: all 0.3s ease;
+        }
+        
+        .item-card:hover, .skill-card:hover, .specialist-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.3);
+        }
+        
+        .card-title {
+            color: #3498db;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        
+        .card-stats {
+            display: flex;
+            gap: 15px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+        
+        .stat-badge {
+            background: rgba(52, 152, 219, 0.2);
+            border: 1px solid #3498db;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 0.9em;
+            color: #e6f3ff;
+        }
+        
+        .card-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -374,6 +457,21 @@
                 <li class="nav-item">
                     <a class="nav-link" data-section="achievements">
                         🏆 Achievements
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-section="skills">
+                        🛠️ Skills
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-section="specialists">
+                        👥 Specialists
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-section="items">
+                        📦 Items
                     </a>
                 </li>
                 <li class="nav-item">
@@ -569,6 +667,218 @@
                         </div>
                         <div id="achievements-list">
                             <div class="loading">Loading achievements...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Skills Section -->
+            <div id="skills" class="section">
+                <div class="content-area">
+                    <h1>🛠️ Skills Management</h1>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>💡 Skill Library</h3>
+                            <button class="btn btn-small" onclick="showCreateSkillForm()">➕ New Skill</button>
+                        </div>
+                        <div id="skills-list">
+                            <div class="loading">Loading skills...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Create/Edit Skill Form -->
+                    <div id="skill-form-modal" class="modal" style="display: none;">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h3 id="skill-form-title">Create New Skill</h3>
+                                <button class="btn btn-small" onclick="hideSkillForm()">✖️ Close</button>
+                            </div>
+                            <form id="skill-form">
+                                <div class="form-group">
+                                    <label class="form-label">Skill ID *</label>
+                                    <input type="text" id="skill-id" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Name *</label>
+                                    <input type="text" id="skill-name" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Description</label>
+                                    <textarea id="skill-description" class="form-control" rows="3"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Category *</label>
+                                    <select id="skill-category" class="form-control" required>
+                                        <option value="analysis">Analysis</option>
+                                        <option value="network">Network</option>
+                                        <option value="leadership">Leadership</option>
+                                        <option value="specialized">Specialized</option>
+                                    </select>
+                                </div>
+                                <div class="grid grid-2">
+                                    <div class="form-group">
+                                        <label class="form-label">Max Level</label>
+                                        <input type="number" id="skill-max-level" class="form-control" value="10" min="1">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Base XP Cost</label>
+                                        <input type="number" id="skill-base-xp" class="form-control" value="100" min="1">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">XP Growth Rate</label>
+                                    <input type="number" id="skill-xp-growth" class="form-control" value="1.2" step="0.1" min="1">
+                                </div>
+                                <button type="submit" class="btn">💾 Save Skill</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Specialists Section -->
+            <div id="specialists" class="section">
+                <div class="content-area">
+                    <h1>👥 Specialists Management</h1>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>🧑‍💼 Specialist Roster</h3>
+                            <button class="btn btn-small" onclick="showCreateSpecialistForm()">➕ New Specialist</button>
+                        </div>
+                        <div id="specialists-list">
+                            <div class="loading">Loading specialists...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Create/Edit Specialist Form -->
+                    <div id="specialist-form-modal" class="modal" style="display: none;">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h3 id="specialist-form-title">Create New Specialist</h3>
+                                <button class="btn btn-small" onclick="hideSpecialistForm()">✖️ Close</button>
+                            </div>
+                            <form id="specialist-form">
+                                <div class="form-group">
+                                    <label class="form-label">Specialist Type *</label>
+                                    <input type="text" id="specialist-type" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Name *</label>
+                                    <input type="text" id="specialist-name" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Description</label>
+                                    <textarea id="specialist-description" class="form-control" rows="3"></textarea>
+                                </div>
+                                <div class="grid grid-2">
+                                    <div class="form-group">
+                                        <label class="form-label">Efficiency</label>
+                                        <input type="number" id="specialist-efficiency" class="form-control" value="1.0" step="0.1" min="0.1">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Speed</label>
+                                        <input type="number" id="specialist-speed" class="form-control" value="1.0" step="0.1" min="0.1">
+                                    </div>
+                                </div>
+                                <div class="grid grid-2">
+                                    <div class="form-group">
+                                        <label class="form-label">Trace</label>
+                                        <input type="number" id="specialist-trace" class="form-control" value="1.0" step="0.1" min="0.1">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Defense</label>
+                                        <input type="number" id="specialist-defense" class="form-control" value="1.0" step="0.1" min="0.1">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Tier</label>
+                                    <select id="specialist-tier" class="form-control">
+                                        <option value="1">Tier 1 - Basic</option>
+                                        <option value="2">Tier 2 - Advanced</option>
+                                        <option value="3">Tier 3 - Expert</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn">💾 Save Specialist</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Items Section -->
+            <div id="items" class="section">
+                <div class="content-area">
+                    <h1>📦 Items Management</h1>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>🎒 Item Catalog</h3>
+                            <button class="btn btn-small" onclick="showCreateItemForm()">➕ New Item</button>
+                        </div>
+                        <div id="items-list">
+                            <div class="loading">Loading items...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Create/Edit Item Form -->
+                    <div id="item-form-modal" class="modal" style="display: none;">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h3 id="item-form-title">Create New Item</h3>
+                                <button class="btn btn-small" onclick="hideItemForm()">✖️ Close</button>
+                            </div>
+                            <form id="item-form">
+                                <div class="form-group">
+                                    <label class="form-label">Item ID *</label>
+                                    <input type="text" id="item-id" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Name *</label>
+                                    <input type="text" id="item-name" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Description</label>
+                                    <textarea id="item-description" class="form-control" rows="3"></textarea>
+                                </div>
+                                <div class="grid grid-2">
+                                    <div class="form-group">
+                                        <label class="form-label">Category *</label>
+                                        <select id="item-category" class="form-control" required>
+                                            <option value="equipment">Equipment</option>
+                                            <option value="consumable">Consumable</option>
+                                            <option value="upgrade">Upgrade</option>
+                                            <option value="tool">Tool</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Rarity</label>
+                                        <select id="item-rarity" class="form-control">
+                                            <option value="common">Common</option>
+                                            <option value="uncommon">Uncommon</option>
+                                            <option value="rare">Rare</option>
+                                            <option value="epic">Epic</option>
+                                            <option value="legendary">Legendary</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="grid grid-2">
+                                    <div class="form-group">
+                                        <div class="checkbox-group">
+                                            <input type="checkbox" id="item-stackable">
+                                            <label for="item-stackable">Stackable</label>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="checkbox-group">
+                                            <input type="checkbox" id="item-consumable">
+                                            <label for="item-consumable">Consumable</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn">💾 Save Item</button>
+                            </form>
                         </div>
                     </div>
                 </div>

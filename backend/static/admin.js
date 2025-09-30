@@ -103,6 +103,15 @@ function showSection(sectionName) {
         case 'achievements':
             loadAchievements();
             break;
+        case 'skills':
+            loadSkills();
+            break;
+        case 'specialists':
+            loadSpecialists();
+            break;
+        case 'items':
+            loadItems();
+            break;
         case 'settings':
             loadSettings();
             break;
@@ -536,6 +545,117 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
+    // Skills form handler
+    const skillForm = document.getElementById('skill-form');
+    if (skillForm) {
+        skillForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            try {
+                const formData = {
+                    id: document.getElementById('skill-id').value,
+                    name: document.getElementById('skill-name').value,
+                    description: document.getElementById('skill-description').value,
+                    category: document.getElementById('skill-category').value,
+                    maxLevel: parseInt(document.getElementById('skill-max-level').value),
+                    baseXpCost: parseInt(document.getElementById('skill-base-xp').value),
+                    xpGrowth: parseFloat(document.getElementById('skill-xp-growth').value),
+                    prerequisites: [],
+                    unlockRequirements: {},
+                    effects: {}
+                };
+                
+                if (currentSkillId) {
+                    await apiPut(`/api/skills/${currentSkillId}`, formData);
+                    showNotification('Skill updated successfully', 'success');
+                } else {
+                    await apiPost('/api/skills', formData);
+                    showNotification('Skill created successfully', 'success');
+                }
+                
+                hideSkillForm();
+                loadSkills();
+            } catch (error) {
+                console.error('Failed to save skill:', error);
+                showNotification('Failed to save skill: ' + error.message, 'error');
+            }
+        });
+    }
+    
+    // Specialists form handler
+    const specialistForm = document.getElementById('specialist-form');
+    if (specialistForm) {
+        specialistForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            try {
+                const formData = {
+                    specialistType: document.getElementById('specialist-type').value,
+                    name: document.getElementById('specialist-name').value,
+                    description: document.getElementById('specialist-description').value,
+                    efficiency: parseFloat(document.getElementById('specialist-efficiency').value),
+                    speed: parseFloat(document.getElementById('specialist-speed').value),
+                    trace: parseFloat(document.getElementById('specialist-trace').value),
+                    defense: parseFloat(document.getElementById('specialist-defense').value),
+                    cost: {},
+                    abilities: [],
+                    tier: parseInt(document.getElementById('specialist-tier').value)
+                };
+                
+                if (currentSpecialistId) {
+                    await apiPut(`/api/specialists/${currentSpecialistId}`, formData);
+                    showNotification('Specialist updated successfully', 'success');
+                } else {
+                    await apiPost('/api/specialists', formData);
+                    showNotification('Specialist created successfully', 'success');
+                }
+                
+                hideSpecialistForm();
+                loadSpecialists();
+            } catch (error) {
+                console.error('Failed to save specialist:', error);
+                showNotification('Failed to save specialist: ' + error.message, 'error');
+            }
+        });
+    }
+    
+    // Items form handler
+    const itemForm = document.getElementById('item-form');
+    if (itemForm) {
+        itemForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            try {
+                const formData = {
+                    itemId: document.getElementById('item-id').value,
+                    name: document.getElementById('item-name').value,
+                    description: document.getElementById('item-description').value,
+                    category: document.getElementById('item-category').value,
+                    rarity: document.getElementById('item-rarity').value,
+                    cost: {},
+                    effects: {},
+                    stackable: document.getElementById('item-stackable').checked,
+                    consumable: document.getElementById('item-consumable').checked,
+                    maxStack: 1
+                };
+                
+                if (currentItemId) {
+                    await apiPut(`/api/items/${currentItemId}`, formData);
+                    showNotification('Item updated successfully', 'success');
+                } else {
+                    await apiPost('/api/items', formData);
+                    showNotification('Item created successfully', 'success');
+                }
+                
+                hideItemForm();
+                loadItems();
+            } catch (error) {
+                console.error('Failed to save item:', error);
+                showNotification('Failed to save item: ' + error.message, 'error');
+            }
+        });
+    }
+    
     // Player search
     const playerSearch = document.getElementById('player-search');
     if (playerSearch) {
@@ -586,5 +706,299 @@ function editPlayer(playerId) {
 function deletePlayer(playerId) {
     if (confirm('Are you sure you want to delete this player?')) {
         showNotification('Player deletion functionality coming soon!', 'error');
+    }
+}
+
+// ===== SKILLS MANAGEMENT =====
+
+let currentSkillId = null;
+
+async function loadSkills() {
+    try {
+        const response = await apiGet('/api/skills');
+        displaySkills(response.skills);
+    } catch (error) {
+        console.error('Failed to load skills:', error);
+        showNotification('Failed to load skills', 'error');
+    }
+}
+
+function displaySkills(skills) {
+    const container = document.getElementById('skills-list');
+    
+    if (skills.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted">No skills found</div>';
+        return;
+    }
+    
+    let html = '<div class="grid grid-2">';
+    
+    skills.forEach(skill => {
+        html += `
+            <div class="skill-card">
+                <div class="card-title">${skill.name}</div>
+                <p style="color: #8fbcdb; margin-bottom: 10px;">${skill.description}</p>
+                <div class="card-stats">
+                    <span class="stat-badge">Category: ${skill.category}</span>
+                    <span class="stat-badge">Max Level: ${skill.maxLevel}</span>
+                    <span class="stat-badge">Base XP: ${skill.baseXpCost}</span>
+                </div>
+                <div class="card-actions">
+                    <button class="btn btn-small" onclick="editSkill('${skill.id}')">✏️ Edit</button>
+                    <button class="btn btn-small btn-danger" onclick="deleteSkill('${skill.id}')">🗑️ Delete</button>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function showCreateSkillForm() {
+    currentSkillId = null;
+    document.getElementById('skill-form-title').textContent = 'Create New Skill';
+    document.getElementById('skill-form').reset();
+    document.getElementById('skill-id').disabled = false;
+    document.getElementById('skill-form-modal').style.display = 'flex';
+}
+
+async function editSkill(skillId) {
+    try {
+        const response = await apiGet(`/api/skills/${skillId}`);
+        const skill = response.skill;
+        
+        currentSkillId = skillId;
+        document.getElementById('skill-form-title').textContent = 'Edit Skill';
+        
+        // Populate form
+        document.getElementById('skill-id').value = skill.id;
+        document.getElementById('skill-id').disabled = true;
+        document.getElementById('skill-name').value = skill.name;
+        document.getElementById('skill-description').value = skill.description;
+        document.getElementById('skill-category').value = skill.category;
+        document.getElementById('skill-max-level').value = skill.maxLevel;
+        document.getElementById('skill-base-xp').value = skill.baseXpCost;
+        document.getElementById('skill-xp-growth').value = skill.xpGrowth;
+        
+        document.getElementById('skill-form-modal').style.display = 'flex';
+    } catch (error) {
+        console.error('Failed to load skill:', error);
+        showNotification('Failed to load skill', 'error');
+    }
+}
+
+function hideSkillForm() {
+    document.getElementById('skill-form-modal').style.display = 'none';
+}
+
+async function deleteSkill(skillId) {
+    if (confirm('Are you sure you want to delete this skill?')) {
+        try {
+            await fetch(`/api/skills/${skillId}`, { method: 'DELETE' });
+            showNotification('Skill deleted successfully', 'success');
+            loadSkills();
+        } catch (error) {
+            console.error('Failed to delete skill:', error);
+            showNotification('Failed to delete skill', 'error');
+        }
+    }
+}
+
+// ===== SPECIALISTS MANAGEMENT =====
+
+let currentSpecialistId = null;
+
+async function loadSpecialists() {
+    try {
+        const response = await apiGet('/api/specialists');
+        displaySpecialists(response.specialists);
+    } catch (error) {
+        console.error('Failed to load specialists:', error);
+        showNotification('Failed to load specialists', 'error');
+    }
+}
+
+function displaySpecialists(specialists) {
+    const container = document.getElementById('specialists-list');
+    
+    if (specialists.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted">No specialists found</div>';
+        return;
+    }
+    
+    let html = '<div class="grid grid-2">';
+    
+    specialists.forEach(specialist => {
+        html += `
+            <div class="specialist-card">
+                <div class="card-title">${specialist.name}</div>
+                <p style="color: #8fbcdb; margin-bottom: 10px;">${specialist.description}</p>
+                <div class="card-stats">
+                    <span class="stat-badge">Type: ${specialist.specialistType}</span>
+                    <span class="stat-badge">Tier: ${specialist.tier}</span>
+                    <span class="stat-badge">Efficiency: ${specialist.efficiency}x</span>
+                    <span class="stat-badge">Speed: ${specialist.speed}x</span>
+                </div>
+                <div class="card-actions">
+                    <button class="btn btn-small" onclick="editSpecialist(${specialist.id})">✏️ Edit</button>
+                    <button class="btn btn-small btn-danger" onclick="deleteSpecialist(${specialist.id})">🗑️ Delete</button>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function showCreateSpecialistForm() {
+    currentSpecialistId = null;
+    document.getElementById('specialist-form-title').textContent = 'Create New Specialist';
+    document.getElementById('specialist-form').reset();
+    document.getElementById('specialist-form-modal').style.display = 'flex';
+}
+
+async function editSpecialist(specialistId) {
+    try {
+        const response = await apiGet(`/api/specialists/${specialistId}`);
+        const specialist = response.specialist;
+        
+        currentSpecialistId = specialistId;
+        document.getElementById('specialist-form-title').textContent = 'Edit Specialist';
+        
+        // Populate form
+        document.getElementById('specialist-type').value = specialist.specialistType;
+        document.getElementById('specialist-name').value = specialist.name;
+        document.getElementById('specialist-description').value = specialist.description;
+        document.getElementById('specialist-efficiency').value = specialist.efficiency;
+        document.getElementById('specialist-speed').value = specialist.speed;
+        document.getElementById('specialist-trace').value = specialist.trace;
+        document.getElementById('specialist-defense').value = specialist.defense;
+        document.getElementById('specialist-tier').value = specialist.tier;
+        
+        document.getElementById('specialist-form-modal').style.display = 'flex';
+    } catch (error) {
+        console.error('Failed to load specialist:', error);
+        showNotification('Failed to load specialist', 'error');
+    }
+}
+
+function hideSpecialistForm() {
+    document.getElementById('specialist-form-modal').style.display = 'none';
+}
+
+async function deleteSpecialist(specialistId) {
+    if (confirm('Are you sure you want to delete this specialist?')) {
+        try {
+            await fetch(`/api/specialists/${specialistId}`, { method: 'DELETE' });
+            showNotification('Specialist deleted successfully', 'success');
+            loadSpecialists();
+        } catch (error) {
+            console.error('Failed to delete specialist:', error);
+            showNotification('Failed to delete specialist', 'error');
+        }
+    }
+}
+
+// ===== ITEMS MANAGEMENT =====
+
+let currentItemId = null;
+
+async function loadItems() {
+    try {
+        const response = await apiGet('/api/items');
+        displayItems(response.items);
+    } catch (error) {
+        console.error('Failed to load items:', error);
+        showNotification('Failed to load items', 'error');
+    }
+}
+
+function displayItems(items) {
+    const container = document.getElementById('items-list');
+    
+    if (items.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted">No items found</div>';
+        return;
+    }
+    
+    let html = '<div class="grid grid-2">';
+    
+    items.forEach(item => {
+        const rarityColors = {
+            common: '#8fbcdb',
+            uncommon: '#27ae60',
+            rare: '#3498db',
+            epic: '#9b59b6',
+            legendary: '#f39c12'
+        };
+        
+        html += `
+            <div class="item-card">
+                <div class="card-title" style="color: ${rarityColors[item.rarity] || '#8fbcdb'}">${item.name}</div>
+                <p style="color: #8fbcdb; margin-bottom: 10px;">${item.description}</p>
+                <div class="card-stats">
+                    <span class="stat-badge">Category: ${item.category}</span>
+                    <span class="stat-badge" style="color: ${rarityColors[item.rarity] || '#8fbcdb'}">Rarity: ${item.rarity}</span>
+                    <span class="stat-badge">Stackable: ${item.stackable ? 'Yes' : 'No'}</span>
+                </div>
+                <div class="card-actions">
+                    <button class="btn btn-small" onclick="editItem(${item.id})">✏️ Edit</button>
+                    <button class="btn btn-small btn-danger" onclick="deleteItem(${item.id})">🗑️ Delete</button>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function showCreateItemForm() {
+    currentItemId = null;
+    document.getElementById('item-form-title').textContent = 'Create New Item';
+    document.getElementById('item-form').reset();
+    document.getElementById('item-form-modal').style.display = 'flex';
+}
+
+async function editItem(itemId) {
+    try {
+        const response = await apiGet(`/api/items/${itemId}`);
+        const item = response.item;
+        
+        currentItemId = itemId;
+        document.getElementById('item-form-title').textContent = 'Edit Item';
+        
+        // Populate form
+        document.getElementById('item-id').value = item.itemId;
+        document.getElementById('item-name').value = item.name;
+        document.getElementById('item-description').value = item.description;
+        document.getElementById('item-category').value = item.category;
+        document.getElementById('item-rarity').value = item.rarity;
+        document.getElementById('item-stackable').checked = item.stackable;
+        document.getElementById('item-consumable').checked = item.consumable;
+        
+        document.getElementById('item-form-modal').style.display = 'flex';
+    } catch (error) {
+        console.error('Failed to load item:', error);
+        showNotification('Failed to load item', 'error');
+    }
+}
+
+function hideItemForm() {
+    document.getElementById('item-form-modal').style.display = 'none';
+}
+
+async function deleteItem(itemId) {
+    if (confirm('Are you sure you want to delete this item?')) {
+        try {
+            await fetch(`/api/items/${itemId}`, { method: 'DELETE' });
+            showNotification('Item deleted successfully', 'success');
+            loadItems();
+        } catch (error) {
+            console.error('Failed to delete item:', error);
+            showNotification('Failed to delete item', 'error');
+        }
     }
 }

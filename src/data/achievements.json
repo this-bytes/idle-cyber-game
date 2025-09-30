@@ -1,0 +1,41 @@
+{
+  "achievements": {
+    "firstClick": {
+      "id": "firstClick",
+      "name": "\ud83d\uddb1\ufe0f First Click",
+      "description": "Click to earn your first Data Bit",
+      "requirement": {
+        "type": "clicks",
+        "value": 1
+      },
+      "reward": {
+        "type": "none"
+      },
+      "unlocked": false,
+      "hidden": false
+    },
+    "test_achievement": {
+      "id": "test_achievement",
+      "name": "Test Achievement",
+      "description": "Updated achievement",
+      "requirement": {
+        "type": "test",
+        "value": 10
+      },
+      "reward": {
+        "type": "money",
+        "value": 500
+      },
+      "unlocked": true,
+      "hidden": false
+    }
+  },
+  "categories": [
+    "progression",
+    "combat",
+    "business",
+    "exploration",
+    "special"
+  ],
+  "lastUpdated": "2025-09-30T04:01:46.287277"
+}
