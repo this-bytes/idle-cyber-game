@@ -20,5 +20,42 @@
     "type": "neutral",
     "description": "Industry conference highlights new trends in threat intelligence. Your team feels inspired.",
     "effects": {}
+  },
+  {
+    "id": "event_004",
+    "type": "choice",
+    "description": "A new, experimental security patch is available. It could boost efficiency, but it's unstable. Install it?",
+    "choices": [
+      {
+        "text": "Install the patch",
+        "effects": {
+          "chance": [
+            { "probability": 0.7, "effect": { "money": 500, "reputation": 1 } },
+            { "probability": 0.3, "effect": { "money": -200, "reputation": -1 } }
+          ]
+        }
+      },
+      {
+        "text": "Wait for a stable release",
+        "effects": {}
+      }
+    ]
+  },
+  {
+    "id": "event_005",
+    "type": "positive",
+    "description": "A successful security audit impressed a new client. They've referred several contacts!",
+    "effects": {
+      "money": 400,
+      "reputation": 2
+    }
+  },
+  {
+    "id": "event_006",
+    "type": "negative",
+    "description": "Network maintenance requires updating all monitoring systems. Unexpected costs arise.",
+    "effects": {
+      "money": -150
+    }
   }
 ]
