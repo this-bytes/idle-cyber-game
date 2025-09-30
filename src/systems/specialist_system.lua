@@ -21,6 +21,20 @@ function SpecialistSystem.new(eventBus, dataManager)
     -- Specialist roles and their base stats
     self.specialistTypes = {}
     
+    -- XP thresholds for leveling up
+    self.levelUpThresholds = {
+        [2] = 100,   -- XP needed to reach level 2
+        [3] = 250,   -- XP needed to reach level 3
+        [4] = 500,   -- XP needed to reach level 4
+        [5] = 1000,  -- XP needed to reach level 5
+        [6] = 2000,  -- XP needed to reach level 6
+        [7] = 4000,  -- XP needed to reach level 7
+        [8] = 8000,  -- XP needed to reach level 8
+        [9] = 16000, -- XP needed to reach level 9
+        [10] = 32000, -- XP needed to reach level 10
+        [11] = 50000  -- XP needed to reach level 11
+    }
+    
     self.nextSpecialistId = 1
     
     return self
@@ -53,6 +67,13 @@ function SpecialistSystem:initialize()
     -- Generate some initial available specialists
     self:generateAvailableSpecialist("junior_analyst")
     self:generateAvailableSpecialist("network_admin")
+    
+    -- Subscribe to contract completion events for XP awards
+    if self.eventBus then
+        self.eventBus:subscribe("contract_completed", function(data)
+            self:awardXpToAllSpecialists(data.xpAwarded or 25)
+        end)
+    end
 end
 
 -- Set skill system reference
@@ -313,7 +334,89 @@ function SpecialistSystem:getSpecialistSkillEffects(specialistId)
     return self.skillSystem:getSkillEffects(specialistId)
 end
 
--- Award XP to a specialist
+-- Award XP to all specialists
+function SpecialistSystem:awardXpToAllSpecialists(amount)
+    local specialistCount = 0
+    for specialistId, specialist in pairs(self.specialists) do
+        if self:awardXp(specialistId, amount) then
+            specialistCount = specialistCount + 1
+        end
+    end
+    
+    if specialistCount > 0 then
+        print("Awarded " .. amount .. " XP to " .. specialistCount .. " specialists")
+    end
+    
+    return specialistCount
+end
+
+function SpecialistSystem:awardXp(specialistId, amount)
+    local specialist = self.specialists[specialistId]
+    if not specialist then
+        return false
+    end
+    
+    -- Award XP
+    specialist.xp = (specialist.xp or 0) + amount
+    
+    -- Check for level up
+    local currentLevel = specialist.level or 1
+    local requiredXp = self.levelUpThresholds[currentLevel + 1]
+    
+    if requiredXp and specialist.xp >= requiredXp then
+        self:levelUp(specialistId)
+    end
+    
+    -- Publish XP gained event
+    self.eventBus:publish("specialist_xp_gained", {
+        specialistId = specialistId,
+        specialist = specialist,
+        amount = amount,
+        currentXp = specialist.xp,
+        currentLevel = specialist.level
+    })
+    
+    return true
+end
+
+-- Level up a specialist
+function SpecialistSystem:levelUp(specialistId)
+    local specialist = self.specialists[specialistId]
+    if not specialist then
+        return false
+    end
+    
+    local oldLevel = specialist.level or 1
+    local newLevel = oldLevel + 1
+    
+    -- Check if we have a threshold for this level
+    if not self.levelUpThresholds[newLevel] then
+        return false -- Max level reached
+    end
+    
+    -- Level up the specialist
+    specialist.level = newLevel
+    
+    -- Apply stat boost (10% increase to efficiency)
+    specialist.efficiency = (specialist.efficiency or 1.0) * 1.1
+    
+    -- Publish level up event
+    self.eventBus:publish("specialist_leveled_up", {
+        specialistId = specialistId,
+        specialist = specialist,
+        oldLevel = oldLevel,
+        newLevel = newLevel
+    })
+    
+    return true
+end
+
+-- Get XP required for next level
+function SpecialistSystem:getXpForNextLevel(currentLevel)
+    return self.levelUpThresholds[currentLevel + 1]
+end
+
+-- Award XP to a specialist (skill system integration)
 function SpecialistSystem:awardSpecialistXp(specialistId, skillId, amount)
     if not self.skillSystem then
         return false
