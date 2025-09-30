@@ -14,8 +14,16 @@ function SceneManager.new(eventBus)
 end
 
 function SceneManager:initialize()
-    -- This function is now mostly for show, as scenes are registered externally.
-    print("🎬 SceneManager: Initialized.")
+    -- Subscribe to scene request events
+    if self.eventBus then
+        self.eventBus:subscribe("scene_request", function(data)
+            if data.scene then
+                self:requestScene(data.scene, data.data)
+            end
+        end)
+    end
+    
+    print("🎬 SceneManager: Initialized with event subscriptions.")
 end
 
 function SceneManager:registerScene(name, scene)

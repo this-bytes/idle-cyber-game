@@ -344,22 +344,67 @@ function SOCView:drawThreatMonitor(x, y, width, height)
     love.graphics.setColor(0.7, 0.7, 0.7, 1)
     love.graphics.print("🚨 Real-time Threat Detection", x, y)
     
-    -- Threat statistics
-    if self.threatSimulation and type(self.threatSimulation.getThreatStatistics) == "function" then
-        local stats = self.threatSimulation:getThreatStatistics() or {}
-        love.graphics.print("Threats Detected: " .. (stats.totalThreats or 0), x, y + 30)
-        love.graphics.print("Active Threats: " .. (stats.activeThreats or 0), x, y + 50)
-        love.graphics.print("Mitigated: " .. (stats.mitigatedThreats or 0) .. " | Failed: " .. (stats.failedThreats or 0), x, y + 70)
-    else
-        love.graphics.print("Threat statistics unavailable", x, y + 30)
+    -- Get active threats from ThreatSystem
+    local activeThreats = {}
+    local threatCount = 0
+    if self.systems and self.systems.threatSystem then
+        activeThreats = self.systems.threatSystem:getActiveThreats()
+        threatCount = #activeThreats
     end
     
-    -- Recent threat activity (placeholder)
-    love.graphics.print("Recent Activity:", x, y + 110)
-    love.graphics.setColor(0.6, 0.6, 0.6, 1)
-    love.graphics.print("• Network scan attempt blocked", x + 20, y + 135)
-    love.graphics.print("• Phishing email quarantined", x + 20, y + 155)
-    love.graphics.print("• Malware signature updated", x + 20, y + 175)
+    -- Threat statistics
+    love.graphics.print("Active Threats: " .. threatCount, x, y + 30)
+    if threatCount > 0 then
+        local highSeverityCount = 0
+        for _, threat in ipairs(activeThreats) do
+            if threat.severity >= 7 then
+                highSeverityCount = highSeverityCount + 1
+            end
+        end
+        love.graphics.setColor(1, 0.5, 0.5, 1)
+        love.graphics.print("High Severity: " .. highSeverityCount, x, y + 50)
+    else
+        love.graphics.setColor(0.5, 1, 0.5, 1)
+        love.graphics.print("All systems secure", x, y + 50)
+    end
+    
+    -- Active threat list
+    love.graphics.setColor(0.7, 0.7, 0.7, 1)
+    love.graphics.print("Active Threats:", x, y + 80)
+    
+    if threatCount == 0 then
+        love.graphics.setColor(0.6, 0.6, 0.6, 1)
+        love.graphics.print("• No active threats detected", x + 20, y + 105)
+    else
+        local maxDisplay = 4 -- Limit display to prevent UI overflow
+        for i = 1, math.min(maxDisplay, threatCount) do
+            local threat = activeThreats[i]
+            local timeColor = {0.6, 0.6, 0.6, 1}
+            if threat.timeRemaining < 15 then
+                timeColor = {1, 0.2, 0.2, 1} -- Red for urgent
+            elseif threat.timeRemaining < 30 then
+                timeColor = {1, 0.8, 0.2, 1} -- Orange for warning
+            end
+            
+            love.graphics.setColor(0.9, 0.9, 0.9, 1)
+            love.graphics.print("• " .. threat.name, x + 20, y + 95 + i * 20)
+            love.graphics.setColor(timeColor[1], timeColor[2], timeColor[3], timeColor[4])
+            love.graphics.print("(" .. math.ceil(threat.timeRemaining) .. "s)", x + 320, y + 95 + i * 20)
+        end
+        
+        if threatCount > maxDisplay then
+            love.graphics.setColor(0.5, 0.5, 0.5, 1)
+            love.graphics.print("... and " .. (threatCount - maxDisplay) .. " more", x + 20, y + 95 + (maxDisplay + 1) * 20)
+        end
+    end
+    
+    -- Instructions for crisis response
+    if threatCount > 0 then
+        love.graphics.setColor(0.8, 0.8, 0.2, 1)
+        love.graphics.print("High-severity threats will auto-trigger crisis mode", x, y + 220)
+        love.graphics.setColor(0.6, 0.6, 0.6, 1)
+        love.graphics.print("Press [T] to manually respond to active threats", x, y + 240)
+    end
 end
 
 -- Draw incident response panel
@@ -529,6 +574,23 @@ function SOCView:keypressed(key)
         self.eventBus:publish("scene_request", {scene = "main_menu"})
     elseif key == "s" then
         self.eventBus:publish("save_game_request", {})
+    elseif key == "t" then
+        -- Manual threat response (for testing and low-severity threats)
+        if self.systems and self.systems.threatSystem then
+            local activeThreats = self.systems.threatSystem:getActiveThreats()
+            if #activeThreats > 0 then
+                print("🚨 Manually triggering crisis response for: " .. activeThreats[1].name)
+                self.eventBus:publish("scene_request", {
+                    scene = "incident_response",
+                    data = {
+                        threat = activeThreats[1],
+                        systems = self.systems
+                    }
+                })
+            else
+                print("No active threats to respond to")
+            end
+        end
     elseif key == "escape" then
         self.eventBus:publish("scene_request", {scene = "main_menu"})
     end
@@ -582,6 +644,18 @@ end
 function SOCView:handleThreatDetected(threat)
     table.insert(self.socStatus.activeIncidents, threat)
     print("🚨 SOC: Threat detected - " .. threat.name)
+    
+    -- Switch to incident response scene for high-severity threats
+    if threat.severity and threat.severity >= 5 then
+        print("🚨 High-severity threat detected, switching to incident response mode")
+        self.eventBus:publish("scene_request", {
+            scene = "incident_response", 
+            data = {
+                threat = threat,
+                systems = self.systems
+            }
+        })
+    end
 end
 
 function SOCView:handleIncidentResolved(incident)
