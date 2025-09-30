@@ -12,6 +12,7 @@ local ResourceManager = require("src.core.resource_manager")
 local ContractSystem = require("src.systems.contract_system")
 local SpecialistSystem = require("src.systems.specialist_system")
 local UpgradeSystem = require("src.systems.upgrade_system")
+local EventSystem = require("src.systems.event_system")
 
 -- Scene Files
 local MainMenu = require("src.scenes.main_menu")
@@ -38,16 +39,19 @@ function SOCGame:initialize()
     self.systems.dataManager:loadDataFromFile("contracts", "src/data/contracts.json")
     self.systems.dataManager:loadDataFromFile("specialists", "src/data/specialists.json")
     self.systems.dataManager:loadDataFromFile("upgrades", "src/data/upgrades.json")
+    self.systems.dataManager:loadDataFromFile("events", "src/data/events.json")
 
     -- Now create systems that use the loaded data
     self.systems.upgradeSystem = UpgradeSystem.new(self.eventBus, self.systems.dataManager)
     self.systems.specialistSystem = SpecialistSystem.new(self.eventBus, self.systems.dataManager)
     self.systems.contractSystem = ContractSystem.new(self.eventBus, self.systems.dataManager, self.systems.upgradeSystem, self.systems.specialistSystem)
+    self.systems.eventSystem = EventSystem.new(self.eventBus, self.systems.dataManager)
     self.sceneManager = SceneManager.new(self.eventBus)
 
     -- 3. Initialize Systems (that need it)
     self.systems.contractSystem:initialize()
     self.systems.specialistSystem:initialize()
+    self.systems.eventSystem:initialize()
     self.sceneManager:initialize()
 
     -- 4. Register Scenes
@@ -69,6 +73,9 @@ function SOCGame:update(dt)
     end
     if self.systems.specialistSystem then
         self.systems.specialistSystem:update(dt)
+    end
+    if self.systems.eventSystem then
+        self.systems.eventSystem:update(dt)
     end
     if self.sceneManager then
         self.sceneManager:update(dt)
