@@ -111,8 +111,8 @@ function IdleSystem:calculateOfflineProgress(idleTimeSeconds)
     local totalEarnings = math.floor(baseEarningsPerSecond * idleTimeSeconds)
     
     -- Apply idle earnings bonus if resource generation is low (help early game)
-    if baseEarningsPerSecond < 1 then
-        local idleBonus = math.min(10, 2 + securityRating * 5) -- 2-7 per second based on security
+    if baseEarningsPerSecond < 100 then
+        local idleBonus = math.min(1000, 200 + securityRating * 500) -- 200-700 per second based on security
         totalEarnings = totalEarnings + math.floor(idleBonus * idleTimeSeconds)
     end
     

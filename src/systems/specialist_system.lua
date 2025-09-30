@@ -71,7 +71,73 @@ function SpecialistSystem:initialize()
         self.eventBus:subscribe("contract_completed", function(data)
             self:awardXpToAllSpecialists(data.xpAwarded or 25)
         end)
+        
+        -- Subscribe to admin commands
+        self.eventBus:subscribe("admin_command_deploy_specialist", function(data)
+            self:handleAdminDeploy(data)
+        end)
     end
+end
+
+function SpecialistSystem:handleAdminDeploy(data)
+    local specialist = self:getSpecialistByName(data.specialistName)
+    local abilityName = data.abilityName
+
+    if not specialist then
+        self.eventBus:publish("admin_log", { message = string.format("[ERROR] Specialist '%s' not found.", data.specialistName) })
+        return
+    end
+
+    if specialist.status ~= "available" then
+        self.eventBus:publish("admin_log", { message = string.format("[ERROR] Specialist '%s' is currently %s.", specialist.name, specialist.status) })
+        return
+    end
+
+    local hasAbility = false
+    if specialist.abilities then
+        for _, abilityId in ipairs(specialist.abilities) do
+            -- This assumes abilityId matches the abilityName from the command.
+            -- We might need to look up an ability by its ID from skill data later.
+            if abilityId == abilityName then
+                hasAbility = true
+                break
+            end
+        end
+    end
+
+    if not hasAbility then
+        self.eventBus:publish("admin_log", { message = string.format("[ERROR] Specialist '%s' does not have the ability '%s'.", specialist.name, abilityName) })
+        return
+    end
+
+    -- TODO: Define ability effects, costs, and cooldowns.
+    local cooldown = 30 -- Placeholder cooldown in seconds
+    specialist.status = "busy"
+    specialist.busyUntil = love.timer.getTime() + cooldown
+
+    self.eventBus:publish("admin_log", { message = string.format("[SUCCESS] %s is now executing '%s'. Cooldown: %d seconds.", specialist.name, abilityName, cooldown) })
+    
+    -- We can also publish a more specific event for other systems to react to
+    self.eventBus:publish("specialist_ability_used", {
+        specialistId = specialist.id,
+        abilityName = abilityName,
+        incidentId = data.incidentId
+    })
+end
+
+function SpecialistSystem:update(dt)
+    local currentTime = love.timer.getTime()
+    for _, specialist in pairs(self.specialists) do
+        if specialist.status == "busy" and specialist.busyUntil and currentTime >= specialist.busyUntil then
+            specialist.status = "available"
+            specialist.busyUntil = 0
+            self.eventBus:publish("admin_log", { message = string.format("[INFO] Specialist %s is now available.", specialist.name) })
+        end
+    end
+end
+
+function SpecialistSystem:getSpecialists()
+    return self.specialists
 end
 
 -- Set skill system reference

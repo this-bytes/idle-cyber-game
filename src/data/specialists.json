@@ -11,8 +11,8 @@
       "defense": 1.1,
       "description": "Updated specialist",
       "abilities": [
-        "basic_scan",
-        "log_analysis"
+        "basic_analysis",
+        "network_fundamentals"
       ],
       "tier": 1
     },
@@ -28,8 +28,8 @@
       "defense": 1.3,
       "description": "A test specialist for API validation",
       "abilities": [
-        "test_ability",
-        "another_ability"
+        "malware_analysis",
+        "basic_response"
       ],
       "tier": 2
     }

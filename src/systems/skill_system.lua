@@ -99,20 +99,13 @@ function SkillSystem:initializeEntity(entityId, entityType)
         self.skillProgress[entityId] = {}
     end
     
-    -- Unlock basic skills based on entity type
-    if entityType == "ceo" then
-        self:unlockSkill(entityId, "basic_analysis")
-        self:unlockSkill(entityId, "team_coordination")
-    elseif entityType then
-        -- For specialists, unlock basic skills in their domain
-        self:unlockSkill(entityId, "basic_analysis")
-        if entityType:find("network") then
-            self:unlockSkill(entityId, "network_fundamentals")
-        end
-        if entityType:find("incident") or entityType:find("response") then
-            self:unlockSkill(entityId, "basic_response")
-        end
-    end
+    -- Automatically unlock basic skills for now
+    self:unlockSkill(entityId, "basic_analysis")
+    self:unlockSkill(entityId, "network_fundamentals")
+end
+
+function SkillSystem:getSkillDefinition(skillId)
+    return self.skills and self.skills[skillId]
 end
 
 -- Unlock a skill for an entity

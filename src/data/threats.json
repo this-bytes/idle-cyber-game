@@ -5,7 +5,8 @@
     "description": "Suspicious emails targeting client employees with credential harvesting links.",
     "baseSeverity": 3,
     "baseTimeToResolve": 45,
-    "category": "social_engineering"
+    "category": "social_engineering",
+    "hp": 100
   },
   {
     "id": "ddos_attack", 
@@ -13,7 +14,8 @@
     "description": "Coordinated attack overwhelming client web infrastructure.",
     "baseSeverity": 5,
     "baseTimeToResolve": 30,
-    "category": "network_attack"
+    "category": "network_attack",
+    "hp": 250
   },
   {
     "id": "malware_detection",
@@ -21,7 +23,8 @@
     "description": "Known malware samples detected in client network traffic.",
     "baseSeverity": 4,
     "baseTimeToResolve": 60,
-    "category": "malware"
+    "category": "malware",
+    "hp": 150
   },
   {
     "id": "data_exfiltration",
@@ -29,7 +32,8 @@
     "description": "Unusual outbound data transfer patterns detected from sensitive systems.",
     "baseSeverity": 7,
     "baseTimeToResolve": 90,
-    "category": "data_breach"
+    "category": "data_breach",
+    "hp": 300
   },
   {
     "id": "insider_threat",
@@ -37,7 +41,8 @@
     "description": "Employee account showing unusual access patterns and privilege requests.",
     "baseSeverity": 6,
     "baseTimeToResolve": 120,
-    "category": "insider_threat"
+    "category": "insider_threat",
+    "hp": 200
   },
   {
     "id": "ransomware_detection",
@@ -45,7 +50,8 @@
     "description": "File encryption patterns and suspicious process activity indicating ransomware deployment.",
     "baseSeverity": 9,
     "baseTimeToResolve": 180,
-    "category": "malware"
+    "category": "malware",
+    "hp": 500
   },
   {
     "id": "sql_injection",
@@ -53,7 +59,8 @@
     "description": "Database query manipulation attempts detected on web application endpoints.",
     "baseSeverity": 8,
     "baseTimeToResolve": 50,
-    "category": "web_attack"
+    "category": "web_attack",
+    "hp": 180
   },
   {
     "id": "brute_force",
@@ -61,6 +68,7 @@
     "description": "Repeated authentication failures from multiple IP addresses targeting user accounts.",
     "baseSeverity": 3,
     "baseTimeToResolve": 25,
-    "category": "authentication_attack"
+    "category": "authentication_attack",
+    "hp": 80
   }
 ]

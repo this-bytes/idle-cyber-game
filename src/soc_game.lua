@@ -19,6 +19,7 @@ local SOCView = require("src.scenes.soc_view")
 local UpgradeShop = require("src.scenes.upgrade_shop")
 local GameOver = require("src.scenes.game_over")
 local IncidentResponse = require("src.scenes.incident_response")
+local AdminMode = require("src.scenes.admin_mode")
 
 
 local SOCGame = {}
@@ -45,7 +46,7 @@ function SOCGame:initialize()
     self.systems.specialistSystem = SpecialistSystem.new(self.eventBus, self.systems.dataManager, self.systems.skillSystem)
     self.systems.contractSystem = ContractSystem.new(self.eventBus, self.systems.dataManager, self.systems.upgradeSystem, self.systems.specialistSystem)
     self.systems.eventSystem = EventSystem.new(self.eventBus, self.systems.dataManager)
-    self.systems.threatSystem = ThreatSystem.new(self.eventBus, self.systems.dataManager, self.systems.specialistSystem)
+    self.systems.threatSystem = ThreatSystem.new(self.eventBus, self.systems.dataManager, self.systems.specialistSystem, self.systems.skillSystem)
 
     -- 2. Create Scene Manager AFTER systems are created
     self.sceneManager = SceneManager.new(self.eventBus, self.systems)
@@ -63,6 +64,7 @@ function SOCGame:initialize()
     self.sceneManager:registerScene("upgrade_shop", UpgradeShop.new(self.eventBus))
     self.sceneManager:registerScene("game_over", GameOver.new(self.eventBus))
     self.sceneManager:registerScene("incident_response", IncidentResponse.new(self.eventBus))
+    self.sceneManager:registerScene("admin_mode", AdminMode.new(self.eventBus))
     
     -- 5. Start Initial Scene
     self.sceneManager:requestScene("soc_view")
@@ -74,6 +76,14 @@ end
 function SOCGame:update(dt)
     if self.sceneManager then
         self.sceneManager:update(dt)
+    end
+
+    -- Update core systems
+    if self.systems.specialistSystem then
+        self.systems.specialistSystem:update(dt)
+    end
+    if self.systems.threatSystem then
+        self.systems.threatSystem:update(dt)
     end
 end
 

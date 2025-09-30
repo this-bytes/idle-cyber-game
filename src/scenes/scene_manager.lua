@@ -4,21 +4,28 @@
 local SceneManager = {}
 SceneManager.__index = SceneManager
 
+--- Creates a new SceneManager instance.
+-- @param eventBus The event system for communication.
+-- @param systems A table of global systems to inject into scenes.
 function SceneManager.new(eventBus, systems)
     local self = setmetatable({}, SceneManager)
+    
     self.eventBus = eventBus
     self.systems = systems
     self.scenes = {}
     self.currentScene = nil
     self.currentSceneName = nil
+    
     return self
 end
 
+--- Initializes the SceneManager, primarily by setting up event subscriptions.
 function SceneManager:initialize()
     -- Subscribe to scene request events
     if self.eventBus then
-        self.eventBus:subscribe("scene_request", function(data)
-            if data.scene then
+        self.eventBus:subscribe("request_scene_change", function(data)
+            -- Check if 'data' and 'data.scene' exist to prevent errors
+            if data and data.scene then
                 self:requestScene(data.scene, data.data)
             end
         end)
@@ -27,64 +34,92 @@ function SceneManager:initialize()
     print("🎬 SceneManager: Initialized with event subscriptions.")
 end
 
+--- Registers a new scene with the manager.
+-- @param name The unique name of the scene (string).
+-- @param scene The scene object (must have an 'enter' and 'exit' function, 
+--              and optionally 'update', 'draw', etc.).
 function SceneManager:registerScene(name, scene)
-    if not name or not scene then
-        print("Error: Invalid scene registration.")
+    if not name or type(name) ~= "string" or not scene or type(scene) ~= "table" then
+        print("Error: Invalid scene registration. Name must be a string and scene must be a table.")
         return
     end
+    
     self.scenes[name] = scene
     print("Registered scene: " .. name)
 end
 
+--- Requests a transition to a new scene.
+-- @param sceneName The name of the scene to switch to.
+-- @param params Optional parameters to pass to the new scene's 'enter' function.
 function SceneManager:requestScene(sceneName, params)
     if not self.scenes[sceneName] then
         print("Error: Scene '" .. sceneName .. "' not found.")
         return
     end
-
+    
+    -- 1. Exit current scene
     if self.currentScene and self.currentScene.exit then
         self.currentScene:exit()
     end
-
+    
+    -- 2. Set new current scene
     self.currentSceneName = sceneName
     self.currentScene = self.scenes[sceneName]
     
-    -- Inject the systems table into the scene
+    -- Inject the systems table into the scene for easy access
     self.currentScene.systems = self.systems
-
+    
+    -- 3. Enter new scene
     if self.currentScene.enter then
         self.currentScene:enter(params)
     end
+
+    print("Transitioned to scene: " .. sceneName)
 end
 
+--- Gets a registered scene object.
+-- @param name The name of the scene.
+-- @return The scene object, or nil if not found.
 function SceneManager:getScene(name)
     return self.scenes[name]
 end
 
+--- Calls the current scene's 'update' function.
+-- @param dt Delta time.
 function SceneManager:update(dt)
     if self.currentScene and self.currentScene.update then
         self.currentScene:update(dt)
     end
 end
 
+--- Calls the current scene's 'draw' function.
 function SceneManager:draw()
     if self.currentScene and self.currentScene.draw then
         self.currentScene:draw()
     end
 end
 
+--- Passes a key press event to the current scene.
+-- @param key The key that was pressed.
 function SceneManager:keypressed(key)
     if self.currentScene and self.currentScene.keypressed then
         self.currentScene:keypressed(key)
     end
 end
 
+--- Passes a mouse press event to the current scene.
+-- @param x Mouse x-coordinate.
+-- @param y Mouse y-coordinate.
+-- @param button Mouse button index.
 function SceneManager:mousepressed(x, y, button)
     if self.currentScene and self.currentScene.mousepressed then
         self.currentScene:mousepressed(x, y, button)
     end
 end
 
+--- Passes a resize event to the current scene.
+-- @param w New window width.
+-- @param h New window height.
 function SceneManager:resize(w, h)
     if self.currentScene and self.currentScene.resize then
         self.currentScene:resize(w, h)

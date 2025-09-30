@@ -6,11 +6,12 @@ local ThreatSystem = {}
 ThreatSystem.__index = ThreatSystem
 
 -- Create new threat system
-function ThreatSystem.new(eventBus, dataManager, specialistSystem)
+function ThreatSystem.new(eventBus, dataManager, specialistSystem, skillSystem)
     local self = setmetatable({}, ThreatSystem)
     self.eventBus = eventBus
     self.dataManager = dataManager
     self.specialistSystem = specialistSystem
+    self.skillSystem = skillSystem
     
     -- Threat generation state
     self.threatGenerationTimer = 0
@@ -35,7 +36,46 @@ function ThreatSystem:initialize()
     -- For now, use embedded threat templates
     self:loadThreatTemplates()
     
+    -- Subscribe to events
+    self.eventBus:subscribe("specialist_ability_used", function(data)
+        self:handleAbilityUsage(data)
+    end)
+
     print("🚨 ThreatSystem: Initialized with " .. #self.threatTemplates .. " threat templates")
+end
+
+function ThreatSystem:handleAbilityUsage(data)
+    -- A more complex system would use the incidentId to target a specific threat.
+    local targetThreat = self.activeThreats[data.incidentId]
+
+    if not targetThreat then
+        self.eventBus:publish("admin_log", { message = "[SYSTEM] No active incident to target." })
+        return
+    end
+
+    local abilityName = data.abilityName
+    local skillDef = self.skillSystem:getSkillDefinition(abilityName)
+
+    local damage = 10 -- Default damage if skill is not found or has no effect
+    local logMessage = string.format("'%s' is executed.", abilityName)
+
+    if skillDef and skillDef.activeEffect then
+        damage = skillDef.activeEffect.baseAmount or damage
+        if skillDef.activeEffect.description then
+            logMessage = string.format(skillDef.activeEffect.description, abilityName)
+        end
+    else
+        self.eventBus:publish("admin_log", { message = string.format("[WARNING] Skill '%s' has no defined active effect.", abilityName) })
+    end
+    
+    self.eventBus:publish("admin_log", { message = logMessage })
+
+    targetThreat.hp = targetThreat.hp - damage
+    self.eventBus:publish("admin_log", { message = string.format("Threat '%s' takes %d damage. (HP: %d/%d)", targetThreat.name, damage, targetThreat.hp, targetThreat.baseHp) })
+
+    if targetThreat.hp <= 0 then
+        self:resolveThreat(targetThreat.id, "success")
+    end
 end
 
 -- Load threat templates (embedded for now, can be moved to JSON later)
@@ -58,7 +98,8 @@ function ThreatSystem:loadThreatTemplates()
             description = "Suspicious emails targeting client employees with credential harvesting links.",
             baseSeverity = 3,
             baseTimeToResolve = 45,
-            category = "social_engineering"
+            category = "social_engineering",
+            hp = 100
         },
         {
             id = "ddos_attack",
@@ -66,7 +107,8 @@ function ThreatSystem:loadThreatTemplates()
             description = "Coordinated attack overwhelming client web infrastructure.",
             baseSeverity = 5,
             baseTimeToResolve = 30,
-            category = "network_attack"
+            category = "network_attack",
+            hp = 150
         },
         {
             id = "malware_detection",
@@ -74,7 +116,8 @@ function ThreatSystem:loadThreatTemplates()
             description = "Known malware samples detected in client network traffic.",
             baseSeverity = 4,
             baseTimeToResolve = 60,
-            category = "malware"
+            category = "malware",
+            hp = 120
         },
         {
             id = "data_exfiltration",
@@ -82,7 +125,8 @@ function ThreatSystem:loadThreatTemplates()
             description = "Unusual outbound data transfer patterns detected from sensitive systems.",
             baseSeverity = 7,
             baseTimeToResolve = 90,
-            category = "data_breach"
+            category = "data_breach",
+            hp = 180
         },
         {
             id = "insider_threat",
@@ -90,7 +134,8 @@ function ThreatSystem:loadThreatTemplates()
             description = "Employee account showing unusual access patterns and privilege requests.",
             baseSeverity = 6,
             baseTimeToResolve = 120,
-            category = "insider_threat"
+            category = "insider_threat",
+            hp = 160
         }
     }
     print("🚨 ThreatSystem: Using embedded threat templates")
@@ -131,31 +176,31 @@ function ThreatSystem:generateThreat()
     local template = self.threatTemplates[math.random(#self.threatTemplates)]
     
     -- Create threat instance with some randomization
-    local threat = {
-        id = "threat_" .. self.nextThreatId,
+    local newThreat = {
+        id = self.nextThreatId,
         templateId = template.id,
         name = template.name,
         description = template.description,
-        severity = template.baseSeverity + math.random(-1, 2), -- ±1-2 severity variation
+        severity = template.baseSeverity,
         timeToResolve = template.baseTimeToResolve,
-        timeRemaining = template.baseTimeToResolve,
         category = template.category,
-        status = "active",
-        detectedAt = (love and love.timer and love.timer.getTime()) or os.clock()
+        hp = template.hp,
+        baseHp = template.hp, -- Store original HP
+        status = "active", -- active, resolved, failed
+        assignedSpecialist = nil,
+        spawnTime = love.timer.getTime()
     }
     
-    -- Ensure severity stays within reasonable bounds
-    threat.severity = math.max(1, math.min(10, threat.severity))
-    
-    -- Add to active threats
-    self.activeThreats[threat.id] = threat
+    self.activeThreats[newThreat.id] = newThreat
     self.nextThreatId = self.nextThreatId + 1
     
-    -- Publish threat detected event
-    self.eventBus:publish("threat_detected", { threat = threat })
-    
-    print("🚨 Threat detected: " .. threat.name .. " (Severity: " .. threat.severity .. ")")
-    return threat
+    self.eventBus:publish("threat_generated", {threat = newThreat})
+
+    -- If threat is critical, force switch to Admin Mode
+    if newThreat.severity >= 7 then
+        self.eventBus:publish("admin_log", { message = "[CRITICAL] High-severity threat detected. Switching to Admin Mode." })
+        self.eventBus:publish("request_scene_change", { scene = "admin_mode", data = { incident = newThreat } })
+    end
 end
 
 -- Assign specialist to threat
@@ -230,11 +275,31 @@ function ThreatSystem:attemptThreatResolution(threatId)
 end
 
 -- Resolve threat successfully
-function ThreatSystem:resolveThreat(threatId)
+function ThreatSystem:resolveThreat(threatId, status)
     local threat = self.activeThreats[threatId]
-    if not threat then return false end
+    if not threat then return end
     
-    -- Calculate rewards based on severity and response time
+    threat.status = status
+    
+    local rewards = self:calculateRewards(threat, status)
+    
+    self.eventBus:publish("threat_resolved", {
+        threat = threat,
+        status = status,
+        rewards = rewards
+    })
+
+    if status == "success" then
+        self.eventBus:publish("admin_log", { message = string.format("[SUCCESS] Threat '%s' has been neutralized.", threat.name) })
+    else
+        self.eventBus:publish("admin_log", { message = string.format("[FAILURE] Failed to neutralize threat '%s'.", threat.name) })
+    end
+    
+    -- Move from active to resolved (or just remove for now)
+    self.activeThreats[threatId] = nil
+end
+
+function ThreatSystem:calculateRewards(threat, status)
     local responseTime = threat.timeToResolve - threat.timeRemaining
     local efficiency = math.max(0.1, threat.timeRemaining / threat.timeToResolve)
     
@@ -244,19 +309,7 @@ function ThreatSystem:resolveThreat(threatId)
         experience = threat.severity * 10
     }
     
-    -- Publish success event
-    self.eventBus:publish("threat_resolved", {
-        status = "success",
-        threat = threat,
-        rewards = rewards,
-        responseTime = responseTime
-    })
-    
-    -- Remove from active threats
-    self.activeThreats[threatId] = nil
-    
-    print("✅ Threat resolved: " .. threat.name .. " (+$" .. math.floor(rewards.money) .. ")")
-    return true
+    return rewards
 end
 
 -- Fail threat (time expired or mishandled)

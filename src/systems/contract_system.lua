@@ -20,7 +20,7 @@ function ContractSystem.new(eventBus, dataManager, upgradeSystem, specialistSyst
     self.contractGenerationTimer = 0
     self.contractGenerationInterval = 10 -- seconds
     self.incomeTimer = 0
-    self.incomeInterval = 1 -- Payout every second
+    self.incomeInterval = 0.1 -- Payout every 0.1 seconds
     return self
 end
 

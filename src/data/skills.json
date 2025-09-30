@@ -12,6 +12,11 @@
         { "stat": "efficiency", "bonus": 0.05 },
         { "stat": "trace", "bonus": 0.02 }
       ],
+      "activeEffect": {
+        "type": "damage",
+        "baseAmount": 40,
+        "description": "Performs a basic scan, dealing 40 damage to a threat's integrity."
+      },
       "requirements": {}
     },
     "network_fundamentals": {
@@ -26,6 +31,11 @@
         { "stat": "defense", "bonus": 0.05 },
         { "stat": "speed", "bonus": 0.03 }
       ],
+      "activeEffect": {
+        "type": "damage",
+        "baseAmount": 60,
+        "description": "Analyzes network traffic to find vulnerabilities, dealing 60 damage."
+      },
       "requirements": {}
     },
     "basic_response": {
@@ -39,8 +49,13 @@
         "effects": [
             { "stat": "speed", "bonus": 0.1 },
             { "stat": "defense", "bonus": 0.05 }
-        ],
-        "requirements": {}
+      ],
+      "activeEffect": {
+        "type": "mitigation",
+        "baseAmount": 20,
+        "description": "Applies basic mitigation techniques, reducing threat severity."
+      },
+      "requirements": {}
     },
     "team_coordination": {
         "id": "team_coordination",
@@ -67,8 +82,13 @@
         "effects": [
             { "stat": "trace", "bonus": 0.15 },
             { "stat": "efficiency", "bonus": 0.1 }
-        ],
-        "requirements": {
+      ],
+      "activeEffect": {
+        "type": "damage",
+        "baseAmount": 120,
+        "description": "Performs deep analysis of malware, dealing 120 damage."
+      },
+      "requirements": {
             "basic_analysis": 3,
             "network_fundamentals": 2
         }
