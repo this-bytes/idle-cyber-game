@@ -7,7 +7,7 @@ from flask import Flask, request, jsonify, send_from_directory
 from datetime import datetime, timedelta
 import os
 
-from game_data import db, Player, GlobalGameState, init_db
+from game_data import db, Player, GlobalGameState, Skill, Specialist, Achievement, Item, init_db
 import json as pyjson
 from flask import send_file
 from functools import wraps
@@ -578,6 +578,563 @@ def admin_ui():
         # Fallback: serve index file if present
         return send_from_directory(static_dir, 'admin.html')
 
+
+# ===== GAME MECHANICS CRUD ENDPOINTS =====
+
+# Skills endpoints
+@app.route('/api/skills', methods=['GET'])
+def list_skills():
+    """Get list of all skills."""
+    try:
+        skills = Skill.query.all()
+        return jsonify({
+            'success': True,
+            'skills': [skill.to_dict() for skill in skills],
+            'total_count': len(skills)
+        }), 200
+    except Exception as e:
+        return jsonify({'error': f'Failed to load skills: {str(e)}'}), 500
+
+
+@app.route('/api/skills/<skill_id>', methods=['GET'])
+def get_skill(skill_id):
+    """Get specific skill by ID."""
+    try:
+        skill = Skill.query.get(skill_id)
+        if not skill:
+            return jsonify({'error': 'Skill not found'}), 404
+        
+        return jsonify({
+            'success': True,
+            'skill': skill.to_dict()
+        }), 200
+    except Exception as e:
+        return jsonify({'error': f'Failed to load skill: {str(e)}'}), 500
+
+
+@app.route('/api/skills', methods=['POST'])
+def create_skill():
+    """Create a new skill."""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+        
+        # Validate required fields
+        required_fields = ['id', 'name', 'category']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'error': f'Missing required field: {field}'}), 400
+        
+        # Check if skill already exists
+        if Skill.query.get(data['id']):
+            return jsonify({'error': 'Skill with this ID already exists'}), 409
+        
+        # Create new skill
+        skill = Skill(
+            id=data['id'],
+            name=data['name'],
+            description=data.get('description', ''),
+            category=data['category'],
+            max_level=data.get('maxLevel', 10),
+            base_xp_cost=data.get('baseXpCost', 100),
+            xp_growth=data.get('xpGrowth', 1.2),
+            prerequisites=pyjson.dumps(data.get('prerequisites', [])),
+            unlock_requirements=pyjson.dumps(data.get('unlockRequirements', {})),
+            effects=pyjson.dumps(data.get('effects', {}))
+        )
+        
+        db.session.add(skill)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'skill': skill.to_dict()
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Failed to create skill: {str(e)}'}), 500
+
+
+@app.route('/api/skills/<skill_id>', methods=['PUT'])
+def update_skill(skill_id):
+    """Update an existing skill."""
+    try:
+        skill = Skill.query.get(skill_id)
+        if not skill:
+            return jsonify({'error': 'Skill not found'}), 404
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+        
+        # Update fields
+        if 'name' in data:
+            skill.name = data['name']
+        if 'description' in data:
+            skill.description = data['description']
+        if 'category' in data:
+            skill.category = data['category']
+        if 'maxLevel' in data:
+            skill.max_level = data['maxLevel']
+        if 'baseXpCost' in data:
+            skill.base_xp_cost = data['baseXpCost']
+        if 'xpGrowth' in data:
+            skill.xp_growth = data['xpGrowth']
+        if 'prerequisites' in data:
+            skill.prerequisites = pyjson.dumps(data['prerequisites'])
+        if 'unlockRequirements' in data:
+            skill.unlock_requirements = pyjson.dumps(data['unlockRequirements'])
+        if 'effects' in data:
+            skill.effects = pyjson.dumps(data['effects'])
+        
+        skill.updated_at = datetime.utcnow()
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'skill': skill.to_dict()
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Failed to update skill: {str(e)}'}), 500
+
+
+@app.route('/api/skills/<skill_id>', methods=['DELETE'])
+def delete_skill(skill_id):
+    """Delete a skill."""
+    try:
+        skill = Skill.query.get(skill_id)
+        if not skill:
+            return jsonify({'error': 'Skill not found'}), 404
+        
+        db.session.delete(skill)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Skill {skill_id} deleted successfully'
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Failed to delete skill: {str(e)}'}), 500
+
+
+# Specialists endpoints
+@app.route('/api/specialists', methods=['GET'])
+def list_specialists():
+    """Get list of all specialists."""
+    try:
+        specialists = Specialist.query.all()
+        return jsonify({
+            'success': True,
+            'specialists': [specialist.to_dict() for specialist in specialists],
+            'total_count': len(specialists)
+        }), 200
+    except Exception as e:
+        return jsonify({'error': f'Failed to load specialists: {str(e)}'}), 500
+
+
+@app.route('/api/specialists/<int:specialist_id>', methods=['GET'])
+def get_specialist(specialist_id):
+    """Get specific specialist by ID."""
+    try:
+        specialist = Specialist.query.get(specialist_id)
+        if not specialist:
+            return jsonify({'error': 'Specialist not found'}), 404
+        
+        return jsonify({
+            'success': True,
+            'specialist': specialist.to_dict()
+        }), 200
+    except Exception as e:
+        return jsonify({'error': f'Failed to load specialist: {str(e)}'}), 500
+
+
+@app.route('/api/specialists', methods=['POST'])
+def create_specialist():
+    """Create a new specialist."""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+        
+        # Validate required fields
+        required_fields = ['specialistType', 'name']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'error': f'Missing required field: {field}'}), 400
+        
+        # Create new specialist
+        specialist = Specialist(
+            specialist_type=data['specialistType'],
+            name=data['name'],
+            description=data.get('description', ''),
+            efficiency=data.get('efficiency', 1.0),
+            speed=data.get('speed', 1.0),
+            trace=data.get('trace', 1.0),
+            defense=data.get('defense', 1.0),
+            cost=pyjson.dumps(data.get('cost', {})),
+            abilities=pyjson.dumps(data.get('abilities', [])),
+            available=data.get('available', True),
+            tier=data.get('tier', 1)
+        )
+        
+        db.session.add(specialist)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'specialist': specialist.to_dict()
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Failed to create specialist: {str(e)}'}), 500
+
+
+@app.route('/api/specialists/<int:specialist_id>', methods=['PUT'])
+def update_specialist(specialist_id):
+    """Update an existing specialist."""
+    try:
+        specialist = Specialist.query.get(specialist_id)
+        if not specialist:
+            return jsonify({'error': 'Specialist not found'}), 404
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+        
+        # Update fields
+        if 'specialistType' in data:
+            specialist.specialist_type = data['specialistType']
+        if 'name' in data:
+            specialist.name = data['name']
+        if 'description' in data:
+            specialist.description = data['description']
+        if 'efficiency' in data:
+            specialist.efficiency = data['efficiency']
+        if 'speed' in data:
+            specialist.speed = data['speed']
+        if 'trace' in data:
+            specialist.trace = data['trace']
+        if 'defense' in data:
+            specialist.defense = data['defense']
+        if 'cost' in data:
+            specialist.cost = pyjson.dumps(data['cost'])
+        if 'abilities' in data:
+            specialist.abilities = pyjson.dumps(data['abilities'])
+        if 'available' in data:
+            specialist.available = data['available']
+        if 'tier' in data:
+            specialist.tier = data['tier']
+        
+        specialist.updated_at = datetime.utcnow()
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'specialist': specialist.to_dict()
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Failed to update specialist: {str(e)}'}), 500
+
+
+@app.route('/api/specialists/<int:specialist_id>', methods=['DELETE'])
+def delete_specialist(specialist_id):
+    """Delete a specialist."""
+    try:
+        specialist = Specialist.query.get(specialist_id)
+        if not specialist:
+            return jsonify({'error': 'Specialist not found'}), 404
+        
+        db.session.delete(specialist)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Specialist {specialist_id} deleted successfully'
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Failed to delete specialist: {str(e)}'}), 500
+
+
+# Achievements endpoints
+@app.route('/api/achievements', methods=['GET'])
+def list_achievements_api():
+    """Get list of all achievements."""
+    try:
+        achievements = Achievement.query.all()
+        return jsonify({
+            'success': True,
+            'achievements': [achievement.to_dict() for achievement in achievements],
+            'total_count': len(achievements)
+        }), 200
+    except Exception as e:
+        return jsonify({'error': f'Failed to load achievements: {str(e)}'}), 500
+
+
+@app.route('/api/achievements/<achievement_id>', methods=['GET'])
+def get_achievement(achievement_id):
+    """Get specific achievement by ID."""
+    try:
+        achievement = Achievement.query.get(achievement_id)
+        if not achievement:
+            return jsonify({'error': 'Achievement not found'}), 404
+        
+        return jsonify({
+            'success': True,
+            'achievement': achievement.to_dict()
+        }), 200
+    except Exception as e:
+        return jsonify({'error': f'Failed to load achievement: {str(e)}'}), 500
+
+
+@app.route('/api/achievements', methods=['POST'])
+def create_achievement():
+    """Create a new achievement."""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+        
+        # Validate required fields
+        required_fields = ['id', 'name']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'error': f'Missing required field: {field}'}), 400
+        
+        # Check if achievement already exists
+        if Achievement.query.get(data['id']):
+            return jsonify({'error': 'Achievement with this ID already exists'}), 409
+        
+        # Create new achievement
+        achievement = Achievement(
+            id=data['id'],
+            name=data['name'],
+            description=data.get('description', ''),
+            requirement=pyjson.dumps(data.get('requirement', {})),
+            reward=pyjson.dumps(data.get('reward', {})),
+            unlocked=data.get('unlocked', False),
+            hidden=data.get('hidden', False)
+        )
+        
+        db.session.add(achievement)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'achievement': achievement.to_dict()
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Failed to create achievement: {str(e)}'}), 500
+
+
+@app.route('/api/achievements/<achievement_id>', methods=['PUT'])
+def update_achievement(achievement_id):
+    """Update an existing achievement."""
+    try:
+        achievement = Achievement.query.get(achievement_id)
+        if not achievement:
+            return jsonify({'error': 'Achievement not found'}), 404
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+        
+        # Update fields
+        if 'name' in data:
+            achievement.name = data['name']
+        if 'description' in data:
+            achievement.description = data['description']
+        if 'requirement' in data:
+            achievement.requirement = pyjson.dumps(data['requirement'])
+        if 'reward' in data:
+            achievement.reward = pyjson.dumps(data['reward'])
+        if 'unlocked' in data:
+            achievement.unlocked = data['unlocked']
+        if 'hidden' in data:
+            achievement.hidden = data['hidden']
+        
+        achievement.updated_at = datetime.utcnow()
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'achievement': achievement.to_dict()
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Failed to update achievement: {str(e)}'}), 500
+
+
+@app.route('/api/achievements/<achievement_id>', methods=['DELETE'])
+def delete_achievement(achievement_id):
+    """Delete an achievement."""
+    try:
+        achievement = Achievement.query.get(achievement_id)
+        if not achievement:
+            return jsonify({'error': 'Achievement not found'}), 404
+        
+        db.session.delete(achievement)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Achievement {achievement_id} deleted successfully'
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Failed to delete achievement: {str(e)}'}), 500
+
+
+# Items endpoints
+@app.route('/api/items', methods=['GET'])
+def list_items():
+    """Get list of all items."""
+    try:
+        items = Item.query.all()
+        return jsonify({
+            'success': True,
+            'items': [item.to_dict() for item in items],
+            'total_count': len(items)
+        }), 200
+    except Exception as e:
+        return jsonify({'error': f'Failed to load items: {str(e)}'}), 500
+
+
+@app.route('/api/items/<int:item_id>', methods=['GET'])
+def get_item(item_id):
+    """Get specific item by ID."""
+    try:
+        item = Item.query.get(item_id)
+        if not item:
+            return jsonify({'error': 'Item not found'}), 404
+        
+        return jsonify({
+            'success': True,
+            'item': item.to_dict()
+        }), 200
+    except Exception as e:
+        return jsonify({'error': f'Failed to load item: {str(e)}'}), 500
+
+
+@app.route('/api/items', methods=['POST'])
+def create_item():
+    """Create a new item."""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+        
+        # Validate required fields
+        required_fields = ['itemId', 'name', 'category']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'error': f'Missing required field: {field}'}), 400
+        
+        # Check if item already exists
+        if Item.query.filter_by(item_id=data['itemId']).first():
+            return jsonify({'error': 'Item with this ID already exists'}), 409
+        
+        # Create new item
+        item = Item(
+            item_id=data['itemId'],
+            name=data['name'],
+            description=data.get('description', ''),
+            category=data['category'],
+            rarity=data.get('rarity', 'common'),
+            cost=pyjson.dumps(data.get('cost', {})),
+            sell_value=data.get('sellValue', 0),
+            effects=pyjson.dumps(data.get('effects', {})),
+            stackable=data.get('stackable', False),
+            consumable=data.get('consumable', False),
+            max_stack=data.get('maxStack', 1),
+            available=data.get('available', True)
+        )
+        
+        db.session.add(item)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'item': item.to_dict()
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Failed to create item: {str(e)}'}), 500
+
+
+@app.route('/api/items/<int:item_id>', methods=['PUT'])
+def update_item(item_id):
+    """Update an existing item."""
+    try:
+        item = Item.query.get(item_id)
+        if not item:
+            return jsonify({'error': 'Item not found'}), 404
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+        
+        # Update fields
+        if 'itemId' in data:
+            item.item_id = data['itemId']
+        if 'name' in data:
+            item.name = data['name']
+        if 'description' in data:
+            item.description = data['description']
+        if 'category' in data:
+            item.category = data['category']
+        if 'rarity' in data:
+            item.rarity = data['rarity']
+        if 'cost' in data:
+            item.cost = pyjson.dumps(data['cost'])
+        if 'sellValue' in data:
+            item.sell_value = data['sellValue']
+        if 'effects' in data:
+            item.effects = pyjson.dumps(data['effects'])
+        if 'stackable' in data:
+            item.stackable = data['stackable']
+        if 'consumable' in data:
+            item.consumable = data['consumable']
+        if 'maxStack' in data:
+            item.max_stack = data['maxStack']
+        if 'available' in data:
+            item.available = data['available']
+        
+        item.updated_at = datetime.utcnow()
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'item': item.to_dict()
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Failed to update item: {str(e)}'}), 500
+
+
+@app.route('/api/items/<int:item_id>', methods=['DELETE'])
+def delete_item(item_id):
+    """Delete an item."""
+    try:
+        item = Item.query.get(item_id)
+        if not item:
+            return jsonify({'error': 'Item not found'}), 404
+        
+        db.session.delete(item)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Item {item_id} deleted successfully'
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Failed to delete item: {str(e)}'}), 500
 
 
 # ===== ERROR HANDLERS =====
