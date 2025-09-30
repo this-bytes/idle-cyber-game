@@ -309,11 +309,13 @@ function SOCView:drawThreatMonitor(x, y, width, height)
     love.graphics.print("🚨 Real-time Threat Detection", x, y)
     
     -- Threat statistics
-    if self.threatSimulation then
-        local stats = self.threatSimulation:getStatistics() or {}
-        love.graphics.print("Threats Detected: " .. (stats.threatsDetected or 0), x, y + 30)
-        love.graphics.print("Threats Blocked: " .. (stats.threatsBlocked or 0), x, y + 50)
-        love.graphics.print("Detection Rate: " .. (stats.detectionRate or 0) .. "%", x, y + 70)
+    if self.threatSimulation and type(self.threatSimulation.getThreatStatistics) == "function" then
+        local stats = self.threatSimulation:getThreatStatistics() or {}
+        love.graphics.print("Threats Detected: " .. (stats.totalThreats or 0), x, y + 30)
+        love.graphics.print("Active Threats: " .. (stats.activeThreats or 0), x, y + 50)
+        love.graphics.print("Mitigated: " .. (stats.mitigatedThreats or 0) .. " | Failed: " .. (stats.failedThreats or 0), x, y + 70)
+    else
+        love.graphics.print("Threat statistics unavailable", x, y + 30)
     end
     
     -- Recent threat activity (placeholder)

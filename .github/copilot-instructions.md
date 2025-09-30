@@ -3,6 +3,10 @@
 **Goal:** Idle game focused around a managed Security Operations Center (SOC) using Lua and LÖVE 2D. Design for extensibility and moddability.
 
 ---
+## Strict Adherence to Instructions
+
+When working on any aspect of the game, strictly adhere to the relevant instruction files located in the `.github/copilot-instructions/` directory. Each file contains detailed guidelines and requirements for specific areas of development. Dont ask the user for clarifications, just follow the instructions as closely as possible - no matter how complex or ambiguous the request may be. Make the decision to follow the instructions over any other considerations. If you encounter a situation not covered by the instructions, make a reasonable assumption based on the existing guidelines and proceed accordingly.
+
 
 ## Modular Instruction System
 
@@ -82,18 +86,6 @@ love .
 ./dev.sh
 ```
 
-### Project Structure
-```
-src/            # Main game source code
-  systems/      # Core game systems (resources, contracts, etc.)
-  modes/        # Game modes (idle, admin watch)
-  ui/           # User interface components
-  data/         # Game data files (JSON)
-tests/          # Test suite
-  systems/      # System-specific tests
-assets/         # Game assets (art, audio, etc.)
-tools/          # Development and utility scripts
-```
 
 ### Best Practices for Development
 - **Always run tests** before committing changes: `lua tests/test_runner.lua`

@@ -222,6 +222,44 @@ function ThreatSimulation:generateThreat()
     return threat
 end
 
+-- Force-generate a threat deterministically (useful for tests and simulation harnesses)
+-- threatType: one of THREAT_TYPES keys (string)
+-- severity: "LOW"|"MEDIUM"|"HIGH"|"CRITICAL" (optional; if omitted, uses weighted selection)
+function ThreatSimulation:forceGenerateThreat(threatType, severity)
+    local threatData = self.threatTypes[threatType]
+    if not threatData then return nil end
+
+    local chosenSeverity = severity
+    if not chosenSeverity then
+        chosenSeverity = self:selectThreatSeverity(threatData.severityWeights)
+    end
+
+    -- Create threat instance (mirrors generateThreat creation)
+    local threat = {
+        id = self.nextThreatId,
+        type = threatType,
+        name = threatData.name,
+        severity = chosenSeverity,
+        baseDamage = threatData.baseDamage,
+        actualDamage = threatData.baseDamage * THREAT_SEVERITY[chosenSeverity].multiplier,
+        description = threatData.description,
+        defenseTypes = threatData.defenseTypes,
+        timestamp = love.timer and love.timer.getTime() or os.clock(),
+        status = "active",
+        mitigationProgress = 0
+    }
+
+    self.nextThreatId = self.nextThreatId + 1
+    threat.defenseEffectiveness = self:calculateDefenseEffectiveness(threat)
+    self.activeThreats[threat.id] = threat
+
+    -- Publish event
+    self.eventBus:publish("threat_detected", {threat = threat, source = "forced"})
+    print("🚨 ThreatSimulation: Force-generated " .. threat.name .. " (" .. chosenSeverity .. ")")
+
+    return threat
+end
+
 -- Select random threat type with realistic weighting
 function ThreatSimulation:selectRandomThreatType()
     -- Weight common threats higher, advanced threats lower

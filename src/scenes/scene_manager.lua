@@ -2,6 +2,11 @@
 -- Manages transitions between different SOC views and states
 -- Implements clean separation between main menu, SOC view, upgrade shop, and game over states
 
+-- NOTE:
+-- Preferred scene module pattern: modules should return an instantiated scene table (i.e. call `return MyScene.new()`)
+-- This keeps scene exports unambiguous and simplifies testing. SceneManager still supports class-style
+-- modules that expose a `new()` constructor and will attempt to construct an instance when present.
+
 local SceneManager = {}
 SceneManager.__index = SceneManager
 
@@ -39,16 +44,38 @@ end
 
 -- Initialize scene manager
 function SceneManager:initialize()
-    -- Load scene modules
-    self.scenes[SCENES.MAIN_MENU] = require("src.scenes.main_menu")
-    self.scenes[SCENES.SOC_VIEW] = require("src.scenes.soc_view")  
-    self.scenes[SCENES.UPGRADE_SHOP] = require("src.scenes.upgrade_shop")
-    self.scenes[SCENES.INCIDENT_RESPONSE] = require("src.scenes.incident_response")
-    self.scenes[SCENES.GAME_OVER] = require("src.scenes.game_over")
-    
+    -- Load scene modules (support both instance modules and class-style modules)
+    -- Note: Scene modules can either export an instantiated table (with methods)
+    -- or a class-style table exposing a `new()` constructor. SceneManager will
+    -- prefer constructing an instance when `new` is present, falling back to
+    -- using the module table itself if construction fails.
+    local modules = {
+        [SCENES.MAIN_MENU] = require("src.scenes.main_menu"),
+        [SCENES.SOC_VIEW] = require("src.scenes.soc_view"),
+        [SCENES.UPGRADE_SHOP] = require("src.scenes.upgrade_shop"),
+        [SCENES.INCIDENT_RESPONSE] = require("src.scenes.incident_response"),
+        [SCENES.GAME_OVER] = require("src.scenes.game_over")
+    }
+
+    -- Instantiate modules that expose a constructor (.new)
+    for name, mod in pairs(modules) do
+        if type(mod) == "table" and type(mod.new) == "function" then
+            -- Prefer instance created from constructor
+            local ok, instance = pcall(mod.new)
+            if ok and type(instance) == "table" then
+                self.scenes[name] = instance
+            else
+                -- Fallback to module table if constructor fails
+                self.scenes[name] = mod
+            end
+        else
+            self.scenes[name] = mod
+        end
+    end
+
     -- Initialize all scenes
     for sceneName, scene in pairs(self.scenes) do
-        if scene.initialize then
+        if scene and scene.initialize then
             scene:initialize(self.eventBus)
         end
     end
@@ -76,7 +103,7 @@ function SceneManager:switchToScene(sceneName, data)
     
     -- Start transition
     self.transitioning = true
-    self.transitionTime = 0
+    self.transitionTime = 2
     
     -- Set new scene
     self.currentScene = sceneName

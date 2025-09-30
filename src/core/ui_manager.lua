@@ -46,6 +46,25 @@ function UIManager.new(eventBus, resourceManager, securityUpgrades, threatSimula
     self.screenHeight = 768
     self.margin = 20
     self.padding = 10
+
+    -- Ensure a safe love.graphics fallback for headless tests
+    -- Many tests run without the full LÖVE environment; provide minimal no-op
+    -- implementations so UI draw calls don't error in headless mode.
+    if not (love and love.graphics) then
+        love = love or {}
+        love.graphics = {
+            getWidth = function() return self.screenWidth end,
+            getHeight = function() return self.screenHeight end,
+            getFont = function()
+                return {
+                    getWidth = function(_, s) return (#tostring(s) * 6) end
+                }
+            end,
+            setColor = function() end,
+            rectangle = function() end,
+            print = function() end
+        }
+    end
     
     -- Color scheme - cybersecurity theme
     self.colors = {
