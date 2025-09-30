@@ -26,6 +26,9 @@ function ResourceManager.new(eventBus)
     self.storage = {}
     self.categories = {}
     
+    -- Idle generators system reference
+    self.idleGenerators = nil
+    
     -- Update tracking
     self.lastUpdateTime = 0
     
@@ -163,10 +166,19 @@ function ResourceManager:update(dt)
     local deltaTime = dt or (currentTime - self.lastUpdateTime)
     self.lastUpdateTime = currentTime
     
-    -- Generate resources
+    -- Generate resources from base generation
     for resourceName, rate in pairs(self.generation) do
         if rate > 0 then
             local generated = rate * self.multipliers[resourceName] * deltaTime
+            self:addResource(resourceName, generated)
+        end
+    end
+    
+    -- Generate resources from idle generators
+    local idleGeneration = self:getIdleGeneration()
+    for resourceName, rate in pairs(idleGeneration) do
+        if rate > 0 then
+            local generated = rate * deltaTime
             self:addResource(resourceName, generated)
         end
     end
@@ -214,7 +226,8 @@ function ResourceManager:spendResource(resourceName, amount)
         return false
     end
     
-    return self:addResource(resourceName, -amount) < 0
+    local spent = self:addResource(resourceName, -amount)
+    return spent < 0  -- True if we actually spent something (negative change)
 end
 
 -- Check if resources can be spent
@@ -395,6 +408,38 @@ end
 -- Shutdown method for GameLoop integration
 function ResourceManager:shutdown()
     print("💰 ResourceManager: Shutdown complete")
+end
+
+-- Initialize connection to idle generators system
+function ResourceManager:setIdleGenerators(idleGenerators)
+    self.idleGenerators = idleGenerators
+    print("🔗 ResourceManager: Connected to IdleGenerators system")
+end
+
+-- Get idle generation rates from generators
+function ResourceManager:getIdleGeneration()
+    if self.idleGenerators then
+        return self.idleGenerators:getCurrentGeneration()
+    end
+    return {}
+end
+
+-- Get total generation (base + idle generators)
+function ResourceManager:getTotalGeneration()
+    local total = {}
+    
+    -- Add base generation
+    for resource, rate in pairs(self.generation) do
+        total[resource] = rate * self.multipliers[resource]
+    end
+    
+    -- Add idle generator generation
+    local idleGen = self:getIdleGeneration()
+    for resource, rate in pairs(idleGen) do
+        total[resource] = (total[resource] or 0) + rate
+    end
+    
+    return total
 end
 
 return ResourceManager
