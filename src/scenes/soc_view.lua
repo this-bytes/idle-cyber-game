@@ -6,128 +6,101 @@ local SOCView = {}
 SOCView.__index = SOCView
 
 -- Create new SOC view scene
-function SOCView.new()
+function SOCView.new(systems, eventBus)
     local self = setmetatable({}, SOCView)
     
-    -- Scene state
-    self.eventBus = nil
-    self.resourceManager = nil
-    self.threatSimulation = nil
-    self.securityUpgrades = nil
-    
-    -- SOC operational state
-    self.socStatus = {
-        alertLevel = "GREEN", -- GREEN, YELLOW, ORANGE, RED
-        activeIncidents = {},
-        detectionCapability = 0,
-        responseCapability = 0,
-        lastThreatScan = 0,
-        scanInterval = 5.0 -- Scan every 5 seconds
-    }
-    
-    -- UI layout
+    -- Dependencies
+    self.systems = systems or {}
+    self.eventBus = eventBus
+
+    -- Internal State
+    self.resources = {}
+    self.contracts = {}
+    self.specialists = {}
+    self.upgrades = {}
+
+    -- UI State
     self.layout = {
         headerHeight = 80,
         sidebarWidth = 250,
         panelSpacing = 10
     }
-    
-    -- Navigation
     self.selectedPanel = 1
     self.panels = {
         {name = "Threat Monitor", key = "threats"},
         {name = "Incident Response", key = "incidents"},
         {name = "Resource Status", key = "resources"},
-        {name = "Upgrades", key = "upgrades"}
+        {name = "Upgrades", key = "upgrades"},
+        {name = "Contracts", key = "contracts"},
+        {name = "Specialists", key = "specialists"}
     }
-    
-    return self
-end
 
--- Initialize SOC view
-function SOCView:initialize(eventBus)
-    self.eventBus = eventBus
+    -- Game Logic State
+    self.socStatus = {
+        alertLevel = "GREEN",
+        activeIncidents = {},
+        detectionCapability = 0,
+        responseCapability = 0,
+        lastThreatScan = 0,
+        scanInterval = 5.0
+    }
 
-    -- Ensure default scene state exists if module wasn't instantiated via new()
-    if not self.socStatus then
-        self.socStatus = {
-            alertLevel = "GREEN",
-            activeIncidents = {},
-            detectionCapability = 0,
-            responseCapability = 0,
-            lastThreatScan = 0,
-            scanInterval = 5.0
-        }
-    end
-
-    if not self.layout then
-        self.layout = {
-            headerHeight = 80,
-            sidebarWidth = 250,
-            panelSpacing = 10
-        }
-    end
-
-    if not self.selectedPanel then
-        self.selectedPanel = 1
-    end
-
-    if not self.panels then
-        self.panels = {
-            {name = "Threat Monitor", key = "threats"},
-            {name = "Incident Response", key = "incidents"},
-            {name = "Resource Status", key = "resources"},
-            {name = "Upgrades", key = "upgrades"}
-        }
-    end
-
-    -- Subscribe to SOC events
+    -- Subscribe to long-lived events
     if self.eventBus then
-        -- Canonical event shape: { threat = <obj>, ... }
-        -- Consumers now expect the canonical payload to simplify event handling.
         self.eventBus:subscribe("threat_detected", function(event)
             local threatObj = event and event.threat
-
-            if not threatObj then
-                return
-            end
-
-            -- Ensure threatObj has a name (fallback to id)
-            if not threatObj.name and threatObj.id then
-                threatObj.name = tostring(threatObj.id)
-            end
-
+            if not threatObj then return end
+            if not threatObj.name and threatObj.id then threatObj.name = tostring(threatObj.id) end
             self:handleThreatDetected(threatObj)
         end)
 
-        self.eventBus:subscribe("incident_resolved", function(data)
-            self:handleIncidentResolved(data)
-        end)
-
-        self.eventBus:subscribe("security_upgrade_purchased", function(data)
-            self:updateSOCCapabilities()
-        end)
+        self.eventBus:subscribe("incident_resolved", function(data) self:handleIncidentResolved(data) end)
+        self.eventBus:subscribe("security_upgrade_purchased", function(data) self:updateSOCCapabilities() end)
+        
+        -- UI update events
+        self.eventBus:subscribe("resource_changed", function() self:updateData() end)
+        self.eventBus:subscribe("contract_accepted", function() self:updateData() end)
+        self.eventBus:subscribe("contract_completed", function() self:updateData() end)
+        self.eventBus:subscribe("specialist_hired", function() self:updateData() end)
+        self.eventBus:subscribe("upgrade_purchased", function() self:updateData() end)
     end
 
+    -- Initial data fetch
+    if self.systems.resourceManager then
+        self.resources = self.systems.resourceManager:getState()
+    end
+    self:updateSOCCapabilities()
+
     print("🛡️ SOCView: Initialized SOC operational interface")
+    return self
 end
 
 -- Enter SOC view scene
 function SOCView:enter(data)
-    -- Get system references from the game
-    if data and data.systems then
-        self.resourceManager = data.systems.resourceManager
-        self.threatSimulation = data.systems.threatSimulation
-        self.securityUpgrades = data.systems.securityUpgrades
-    end
-    
-    self:updateSOCCapabilities()
     print("🛡️ SOCView: SOC operations center activated")
+    -- Refresh data every time the scene is entered
+    self:updateData()
 end
 
 -- Exit SOC view scene
 function SOCView:exit()
-    print("🛡️ SOCView: SOC operations center deactivated")
+    print("Exiting SOC View")
+    -- Unsubscribe from events if necessary in the future
+end
+
+function SOCView:updateData()
+    if self.systems.resourceManager then
+        self.resources = self.systems.resourceManager:getState()
+    end
+    if self.systems.contractSystem then
+        self.contracts = self.systems.contractSystem:getActiveContracts()
+    end
+    if self.systems.specialistSystem then
+        self.specialists = self.systems.specialistSystem:getAllSpecialists()
+    end
+    if self.systems.upgradeSystem then
+        self.upgrades = self.systems.upgradeSystem:getPurchasedUpgrades()
+    end
 end
 
 -- Update SOC view
@@ -155,29 +128,52 @@ function SOCView:update(dt)
     end
 end
 
--- Draw SOC view
 function SOCView:draw()
-    local screenWidth = love.graphics.getWidth()
-    local screenHeight = love.graphics.getHeight()
-    
-    -- Background
-    love.graphics.setColor(0.02, 0.05, 0.08, 1) -- Very dark blue SOC background
-    love.graphics.rectangle("fill", 0, 0, screenWidth, screenHeight)
-    
-    -- Draw header
-    self:drawHeader()
-    
-    -- Draw main content area
-    self:drawMainContent()
-    
-    -- Draw sidebar
-    self:drawSidebar()
-    
-    -- Draw status indicators
-    self:drawStatusIndicators()
-    
-    -- Reset color
-    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.setBackgroundColor(0.1, 0.1, 0.12)
+    love.graphics.clear()
+    love.graphics.setColor(1, 1, 1)
+
+    local y = 10
+    love.graphics.printf("SOC Command Center - Alert Level: " .. self.socStatus.alertLevel, 0, y, love.graphics.getWidth(), "center")
+    y = y + 30
+
+    -- Draw Resources
+    love.graphics.print("== Resources ==", 10, y)
+    y = y + 20
+    if self.resources then
+        for name, value in pairs(self.resources) do
+            love.graphics.print(string.format("%s: %s", name, tostring(value)), 20, y)
+            y = y + 15
+        end
+    end
+    y = y + 10
+
+    -- Draw Active Contracts
+    love.graphics.print("== Active Contracts ==", 10, y)
+    y = y + 20
+    if self.contracts and next(self.contracts) then
+        for id, contract in pairs(self.contracts) do
+            love.graphics.print(string.format("[%s] %s - Time Left: %d", id, contract.clientName, contract.remainingTime), 20, y)
+            y = y + 15
+        end
+    else
+        love.graphics.print("No active contracts.", 20, y)
+        y = y + 15
+    end
+    y = y + 10
+
+    -- Draw Specialists
+    love.graphics.print("== Your Specialists ==", 10, y)
+    y = y + 20
+    if self.specialists and next(self.specialists) then
+        for id, specialist in pairs(self.specialists) do
+            love.graphics.print(string.format("[%s] %s (Lvl %d)", id, specialist.name, specialist.level), 20, y)
+            y = y + 15
+        end
+    else
+        love.graphics.print("No specialists hired.", 20, y)
+        y = y + 15
+    end
 end
 
 -- Draw SOC header
@@ -205,8 +201,8 @@ function SOCView:drawHeader()
     
     -- Resources summary
     if self.resourceManager then
-        local money = self.resourceManager:getResource("money") or 0
-        local reputation = self.resourceManager:getResource("reputation") or 0
+        local money = math.floor(self.resourceManager:getResource("money") or 0)
+        local reputation = math.floor(self.resourceManager:getResource("reputation") or 0)
         love.graphics.print("Budget: $" .. money .. " | Reputation: " .. reputation, 300, 50)
     end
 end
@@ -238,6 +234,10 @@ function SOCView:drawMainContent()
             self:drawResourceStatus(contentX + 20, contentY + 50, contentWidth - 40, contentHeight - 70)
         elseif selectedPanel.key == "upgrades" then
             self:drawUpgradesPanel(contentX + 20, contentY + 50, contentWidth - 40, contentHeight - 70)
+        elseif selectedPanel.key == "contracts" then
+            self:drawContractsPanel(contentX + 20, contentY + 50, contentWidth - 40, contentHeight - 70)
+        elseif selectedPanel.key == "specialists" then
+            self:drawSpecialistsPanel(contentX + 20, contentY + 50, contentWidth - 40, contentHeight - 70)
         end
     end
 end
@@ -279,8 +279,10 @@ function SOCView:drawSidebar()
     love.graphics.setColor(0.7, 0.7, 0.7, 1)
     local actionY = startY + (#self.panels + 2) * (itemHeight + 5)
     love.graphics.print("[U] - Upgrade Shop", 15, actionY)
-    love.graphics.print("[M] - Main Menu", 15, actionY + 25)
-    love.graphics.print("[S] - Save Game", 15, actionY + 50)
+    love.graphics.print("[C] - Start Contract", 15, actionY + 25)
+    love.graphics.print("[H] - Hire Specialist", 15, actionY + 50)
+    love.graphics.print("[M] - Main Menu", 15, actionY + 75)
+    love.graphics.print("[S] - Save Game", 15, actionY + 100)
 end
 
 -- Draw status indicators
@@ -362,16 +364,23 @@ function SOCView:drawResourceStatus(x, y, width, height)
     love.graphics.print("💰 Resource Overview", x, y)
     
     if self.resourceManager then
-        love.graphics.print("Money: $" .. (self.resourceManager:getResource("money") or 0), x, y + 30)
-        love.graphics.print("Reputation: " .. (self.resourceManager:getResource("reputation") or 0), x, y + 50)
-        love.graphics.print("XP: " .. (self.resourceManager:getResource("xp") or 0), x, y + 70)
-        love.graphics.print("Mission Tokens: " .. (self.resourceManager:getResource("missionTokens") or 0), x, y + 90)
+        love.graphics.print("Money: $" .. math.floor(self.resourceManager:getResource("money") or 0), x, y + 30)
+        love.graphics.print("Reputation: " .. math.floor(self.resourceManager:getResource("reputation") or 0), x, y + 50)
+        love.graphics.print("XP: " .. math.floor(self.resourceManager:getResource("xp") or 0), x, y + 70)
+        love.graphics.print("Mission Tokens: " .. math.floor(self.resourceManager:getResource("missionTokens") or 0), x, y + 90)
         
         -- Resource generation rates
         love.graphics.print("Generation Rates:", x, y + 130)
         love.graphics.setColor(0.6, 0.6, 0.6, 1)
-        love.graphics.print("• Money: $" .. (self.resourceManager:getGeneration("money") or 0) .. "/sec", x + 20, y + 155)
-        love.graphics.print("• Reputation: " .. (self.resourceManager:getGeneration("reputation") or 0) .. "/sec", x + 20, y + 175)
+        -- This part is tricky as simple generation is not the whole picture with contracts.
+        -- A better approach would be to sum up income from active contracts.
+        if self.contractSystem then
+            local incomeRate = 0
+            for _, contract in ipairs(self.contractSystem:getActiveContracts()) do
+                incomeRate = incomeRate + (contract.data.rewards.money / contract.data.duration)
+            end
+            love.graphics.print("• Money: $" .. string.format("%.2f", incomeRate) .. "/sec", x + 20, y + 155)
+        end
     end
 end
 
@@ -380,22 +389,77 @@ function SOCView:drawUpgradesPanel(x, y, width, height)
     love.graphics.setColor(0.7, 0.7, 0.7, 1)
     love.graphics.print("🔧 Security Infrastructure", x, y)
     
-    if self.securityUpgrades then
-        local owned = self.securityUpgrades:getOwnedUpgrades() or {}
+    if self.upgradeSystem then
+        local availableUpgrades = self.upgradeSystem:getAvailableUpgrades()
         
-        if #owned == 0 then
+        if #availableUpgrades == 0 then
             love.graphics.setColor(0.8, 0.8, 0.2, 1)
-            love.graphics.print("No upgrades installed - Basic protection only", x, y + 30)
+            love.graphics.print("No new upgrades available.", x, y + 30)
         else
-            love.graphics.print("Installed Upgrades:", x, y + 30)
-            for i, upgrade in ipairs(owned) do
+            love.graphics.print("Available Upgrades:", x, y + 30)
+            for i, upgrade in ipairs(availableUpgrades) do
                 love.graphics.setColor(0.2, 0.8, 0.2, 1)
-                love.graphics.print("• " .. upgrade.name, x + 20, y + 50 + (i - 1) * 25)
+                love.graphics.print("• " .. upgrade.name .. " ($" .. upgrade.cost.money .. ")", x + 20, y + 50 + (i - 1) * 25)
             end
         end
         
         love.graphics.setColor(0.6, 0.6, 0.6, 1)
-        love.graphics.print("Press [U] to open upgrade shop", x, y + height - 30)
+        love.graphics.print("Press [U] to purchase first available upgrade", x, y + height - 30)
+    end
+end
+
+function SOCView:drawContractsPanel(x, y, width, height)
+    love.graphics.setColor(0.7, 0.7, 0.7, 1)
+    love.graphics.print("📄 Contracts", x, y)
+
+    if self.contractSystem then
+        love.graphics.print("Active Contracts:", x, y + 30)
+        local activeContracts = self.contractSystem:getActiveContracts()
+        if #activeContracts == 0 then
+            love.graphics.print("  None", x, y + 50)
+        else
+            for i, contract in ipairs(activeContracts) do
+                local progress = contract.progress * 100
+                love.graphics.print("  - " .. contract.data.title .. " (" .. string.format("%.1f", progress) .. "%)", x, y + 30 + i * 20)
+            end
+        end
+
+        love.graphics.print("Available Contracts:", x, y + 100)
+        local availableContracts = self.dataManager:getData("contracts")
+        if not availableContracts or #availableContracts.contracts == 0 then
+             love.graphics.print("  None", x, y + 120)
+        else
+            for i, contract in ipairs(availableContracts.contracts) do
+                 love.graphics.print("  - " .. contract.title, x, y + 100 + i * 20)
+            end
+        end
+    end
+end
+
+function SOCView:drawSpecialistsPanel(x, y, width, height)
+    love.graphics.setColor(0.7, 0.7, 0.7, 1)
+    love.graphics.print("👥 Specialists", x, y)
+
+    if self.specialistSystem then
+        love.graphics.print("Owned Specialists:", x, y + 30)
+        local owned = self.specialistSystem:getOwnedSpecialists()
+        if #owned == 0 then
+            love.graphics.print("  None", x, y + 50)
+        else
+            for i, specialist in ipairs(owned) do
+                love.graphics.print("  - " .. specialist.data.name, x, y + 30 + i * 20)
+            end
+        end
+
+        love.graphics.print("Available for Hire:", x, y + 100)
+        local available = self.dataManager:getData("specialists")
+        if not available or #available.specialists == 0 then
+            love.graphics.print("  None", x, y + 120)
+        else
+            for i, specialist in ipairs(available.specialists) do
+                love.graphics.print("  - " .. specialist.name .. " ($" .. specialist.cost .. ")", x, y + 100 + i * 20)
+            end
+        end
     end
 end
 
@@ -406,7 +470,26 @@ function SOCView:keypressed(key)
     elseif key == "down" then
         self.selectedPanel = math.min(#self.panels, self.selectedPanel + 1)
     elseif key == "u" then
-        self.eventBus:publish("scene_request", {scene = "upgrade_shop"})
+        if self.upgradeSystem then
+            local available = self.upgradeSystem:getAvailableUpgrades()
+            if #available > 0 then
+                self.upgradeSystem:purchaseUpgrade(available[1].id)
+            end
+        end
+    elseif key == "c" then
+        if self.contractSystem and self.dataManager then
+            local contracts = self.dataManager:getData("contracts")
+            if contracts and #contracts.contracts > 0 then
+                self.contractSystem:startContract(contracts.contracts[1].id)
+            end
+        end
+    elseif key == "h" then
+        if self.specialistSystem and self.dataManager then
+            local specialists = self.dataManager:getData("specialists")
+            if specialists and #specialists.specialists > 0 then
+                self.specialistSystem:hireSpecialist(specialists.specialists[1].id)
+            end
+        end
     elseif key == "m" then
         self.eventBus:publish("scene_request", {scene = "main_menu"})
     elseif key == "s" then

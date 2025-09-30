@@ -5,18 +5,20 @@
 local GameOver = {}
 GameOver.__index = GameOver
 
-function GameOver.new()
+function GameOver.new(eventBus)
     local self = setmetatable({}, GameOver)
-    self.eventBus = nil
+    self.eventBus = eventBus
     self.reason = "Unknown failure"
     self.stats = {}
+    print("💀 GameOver: Initialized game over scene")
     return self
 end
 
-function GameOver:initialize(eventBus)
-    self.eventBus = eventBus
-    print("💀 GameOver: Initialized game over scene")
-end
+-- No longer needed, logic moved to new()
+-- function GameOver:initialize(eventBus)
+--     self.eventBus = eventBus
+--     print("💀 GameOver: Initialized game over scene")
+-- end
 
 function GameOver:enter(data)
     if data then

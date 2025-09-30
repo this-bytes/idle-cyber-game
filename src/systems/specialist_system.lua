@@ -1,13 +1,13 @@
--- Specialist Management System - Idle Sec Ops
--- Handles team members who enhance contract performance and Crisis Mode
+-- src/systems/specialist_system.lua
 
 local SpecialistSystem = {}
 SpecialistSystem.__index = SpecialistSystem
 
 -- Create new specialist system
-function SpecialistSystem.new(eventBus)
+function SpecialistSystem.new(eventBus, dataManager)
     local self = setmetatable({}, SpecialistSystem)
     self.eventBus = eventBus
+    self.dataManager = dataManager
     
     -- Reference to skill system (will be set externally)
     self.skillSystem = nil
@@ -19,79 +19,21 @@ function SpecialistSystem.new(eventBus)
     self.availableSpecialists = {}
     
     -- Specialist roles and their base stats
-    self.specialistTypes = {
-        -- Tier 1: Basic specialists
-        junior_analyst = {
-            name = "Junior Security Analyst",
-            cost = {money = 5000},
-            efficiency = 1.2,    -- Multiplier for contract income
-            speed = 1.1,         -- Reduces contract time
-            trace = 1.0,         -- Crisis Mode ability
-            defense = 1.1,       -- Threat resistance
-            description = "Entry-level analyst with basic security knowledge",
-            abilities = {"basic_scan", "log_analysis"}
-        },
-        
-        network_admin = {
-            name = "Network Administrator", 
-            cost = {money = 8000},
-            efficiency = 1.1,
-            speed = 1.3,
-            trace = 1.2,
-            defense = 1.4,
-            description = "Experienced in network infrastructure and monitoring",
-            abilities = {"network_scan", "firewall_config"}
-        },
-        
-        -- Tier 2: Advanced specialists (reputation requirements)
-        incident_responder = {
-            name = "Incident Response Specialist",
-            cost = {money = 15000, reputation = 25},
-            efficiency = 1.3,
-            speed = 1.2,
-            trace = 1.8,
-            defense = 1.2,
-            description = "Expert in crisis management and threat containment",
-            abilities = {"quarantine", "forensic_analysis", "rapid_response"}
-        },
-        
-        penetration_tester = {
-            name = "Penetration Tester",
-            cost = {money = 12000, reputation = 20},
-            efficiency = 1.4,
-            speed = 1.1,
-            trace = 1.6,
-            defense = 1.0,
-            description = "Offensive security expert who finds vulnerabilities",
-            abilities = {"vulnerability_scan", "exploit_analysis"}
-        },
-        
-        -- Tier 3: Elite specialists (mission token requirements)
-        security_architect = {
-            name = "Security Architect",
-            cost = {money = 50000, reputation = 100, missionTokens = 2},
-            efficiency = 2.0,
-            speed = 1.5,
-            trace = 1.4,
-            defense = 1.8,
-            description = "Designs comprehensive security solutions",
-            abilities = {"architecture_review", "strategic_planning", "advanced_defense"}
-        },
-        
-        threat_hunter = {
-            name = "Threat Hunter",
-            cost = {money = 75000, reputation = 150, missionTokens = 5},
-            efficiency = 1.6,
-            speed = 1.3,
-            trace = 2.5,
-            defense = 1.6,
-            description = "Elite investigator who proactively seeks threats",
-            abilities = {"advanced_hunting", "behavioral_analysis", "threat_intelligence"}
-        }
-    }
+    self.specialistTypes = {}
     
     self.nextSpecialistId = 1
     
+    return self
+end
+
+function SpecialistSystem:initialize()
+    local specialistTypesData = self.dataManager:getData("specialists")
+    if specialistTypesData and specialistTypesData.specialists then
+        for _, specialistType in ipairs(specialistTypesData.specialists) do
+            self.specialistTypes[specialistType.id] = specialistType
+        end
+    end
+
     -- Initialize with player as the first specialist
     self:addSpecialist("ceo", {
         id = 0,
@@ -111,8 +53,6 @@ function SpecialistSystem.new(eventBus)
     -- Generate some initial available specialists
     self:generateAvailableSpecialist("junior_analyst")
     self:generateAvailableSpecialist("network_admin")
-    
-    return self
 end
 
 -- Set skill system reference
@@ -161,9 +101,11 @@ function SpecialistSystem:addSpecialist(specialistType, specialistData)
         self.skillSystem:initializeEntity(specialist.id, specialist.type)
     end
     
-    self.eventBus:publish("specialist_hired", {
-        specialist = specialist
-    })
+    if self.eventBus then
+        self.eventBus:publish("specialist_hired", {
+            specialist = specialist
+        })
+    end
     
     return specialist
 end

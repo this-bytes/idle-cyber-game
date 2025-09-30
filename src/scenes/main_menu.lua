@@ -6,11 +6,11 @@ local MainMenu = {}
 MainMenu.__index = MainMenu
 
 -- Create new main menu scene
-function MainMenu.new()
+function MainMenu.new(eventBus)
     local self = setmetatable({}, MainMenu)
     
     -- Scene state
-    self.eventBus = nil
+    self.eventBus = eventBus
     self.menuItems = {
         {text = "Start SOC Operations", action = "start_game"},
         {text = "Load Previous SOC", action = "load_game"},
@@ -23,13 +23,8 @@ function MainMenu.new()
     self.titleText = "🛡️ SOC Command Center"
     self.subtitleText = "Cybersecurity Operations Management"
     
-    return self
-end
-
--- Initialize main menu
-function MainMenu:initialize(eventBus)
-    self.eventBus = eventBus
     print("🏠 MainMenu: Initialized SOC main menu")
+    return self
 end
 
 -- Enter the main menu scene

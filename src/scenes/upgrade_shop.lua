@@ -6,11 +6,11 @@ local UpgradeShop = {}
 UpgradeShop.__index = UpgradeShop
 
 -- Create new upgrade shop scene
-function UpgradeShop.new()
+function UpgradeShop.new(eventBus)
     local self = setmetatable({}, UpgradeShop)
     
     -- Scene state
-    self.eventBus = nil
+    self.eventBus = eventBus
     self.resourceManager = nil
     self.securityUpgrades = nil
     
@@ -32,13 +32,8 @@ function UpgradeShop.new()
         panelSpacing = 10
     }
     
-    return self
-end
-
--- Initialize upgrade shop
-function UpgradeShop:initialize(eventBus)
-    self.eventBus = eventBus
     print("🛒 UpgradeShop: Initialized security upgrade shop")
+    return self
 end
 
 -- Enter upgrade shop scene

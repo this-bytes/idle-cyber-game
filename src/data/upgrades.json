@@ -1,0 +1,15 @@
+{
+    "upgrades": [
+        {
+            "id": "upgrade_001",
+            "name": "Faster Routers",
+            "description": "Increases income from all contracts by 5%.",
+            "cost": {
+                "money": 1000
+            },
+            "effects": {
+                "money_multiplier": 0.05
+            }
+        }
+    ]
+}

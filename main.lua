@@ -1,34 +1,31 @@
 -- Idle Sec Ops - Cybersecurity Idle Game
--- SOC-Focused Entry Point with Systematic Refactor Architecture
--- This is the single entry point for the idle SOC (Security Operations Center) game
-
--- Import the SOC game controller
-local SOCGame = require("src.soc_game")
+-- This is the single entry point for the game.
 
 -- Global game instance
 local game
 
--- LÖVE 2D callback functions
 function love.load()
     -- Set up LÖVE 2D configuration
     love.graphics.setDefaultFilter("nearest", "nearest")
     love.window.setTitle("🛡️ SOC Command Center - Cybersecurity Operations Simulator")
-    
-    -- Set window size for optimal SOC dashboard display
     love.window.setMode(1024, 768, {resizable=true, minwidth=800, minheight=600})
     
-    -- Set up clean monospace font for SOC terminal theme
     local font = love.graphics.newFont(12)
     love.graphics.setFont(font)
+
+    -- Create and initialize the main game object
+    local EventBus = require("src.utils.event_bus"):new()
+    local SOCGame = require("src.soc_game")
+    game = SOCGame.new(EventBus)
     
-    -- Initialize the SOC game
-    game = SOCGame.new()
-    local success = game:initialize()
+    local success, err = pcall(function() game:initialize() end)
     
     if success then
-        print("🚀 SOC Command Center loaded successfully!")
+        print("🚀 Game loaded successfully!")
     else
-        print("❌ Failed to initialize SOC operations")
+        print("❌❌❌ FATAL ERROR DURING INITIALIZATION ❌❌❌")
+        print(err)
+        -- In a real build, you might switch to an error scene here.
     end
 end
 
@@ -42,7 +39,7 @@ function love.draw()
     if game then
         game:draw()
     else
-        love.graphics.print("SOC Command Center not initialized", 10, 10)
+        love.graphics.printf("Error during initialization. Check console.", 0, 10, love.graphics.getWidth(), "center")
     end
 end
 
