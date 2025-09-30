@@ -1,0 +1,66 @@
+[
+  {
+    "id": "phishing_attempt",
+    "name": "Phishing Email Campaign",
+    "description": "Suspicious emails targeting client employees with credential harvesting links.",
+    "baseSeverity": 3,
+    "baseTimeToResolve": 45,
+    "category": "social_engineering"
+  },
+  {
+    "id": "ddos_attack", 
+    "name": "Distributed Denial of Service",
+    "description": "Coordinated attack overwhelming client web infrastructure.",
+    "baseSeverity": 5,
+    "baseTimeToResolve": 30,
+    "category": "network_attack"
+  },
+  {
+    "id": "malware_detection",
+    "name": "Malware Signature Match", 
+    "description": "Known malware samples detected in client network traffic.",
+    "baseSeverity": 4,
+    "baseTimeToResolve": 60,
+    "category": "malware"
+  },
+  {
+    "id": "data_exfiltration",
+    "name": "Suspicious Data Transfer",
+    "description": "Unusual outbound data transfer patterns detected from sensitive systems.",
+    "baseSeverity": 7,
+    "baseTimeToResolve": 90,
+    "category": "data_breach"
+  },
+  {
+    "id": "insider_threat",
+    "name": "Privilege Escalation Alert",
+    "description": "Employee account showing unusual access patterns and privilege requests.",
+    "baseSeverity": 6,
+    "baseTimeToResolve": 120,
+    "category": "insider_threat"
+  },
+  {
+    "id": "ransomware_detection",
+    "name": "Ransomware Activity Detected",
+    "description": "File encryption patterns and suspicious process activity indicating ransomware deployment.",
+    "baseSeverity": 9,
+    "baseTimeToResolve": 180,
+    "category": "malware"
+  },
+  {
+    "id": "sql_injection",
+    "name": "SQL Injection Attempt",
+    "description": "Database query manipulation attempts detected on web application endpoints.",
+    "baseSeverity": 4,
+    "baseTimeToResolve": 50,
+    "category": "web_attack"
+  },
+  {
+    "id": "brute_force",
+    "name": "Brute Force Login Attack",
+    "description": "Repeated authentication failures from multiple IP addresses targeting user accounts.",
+    "baseSeverity": 3,
+    "baseTimeToResolve": 25,
+    "category": "authentication_attack"
+  }
+]

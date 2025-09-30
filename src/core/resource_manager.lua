@@ -32,6 +32,11 @@ function ResourceManager:subscribeToEvents()
     self.eventBus:subscribe("resource_spend_request", function(data)
         self:handleSpendRequest(data)
     end)
+    
+    -- Threat resolution rewards and penalties
+    self.eventBus:subscribe("threat_resolved", function(data)
+        self:handleThreatResolution(data)
+    end)
 end
 
 function ResourceManager:addResources(resourcesToAdd)
@@ -87,6 +92,30 @@ function ResourceManager:handleSpendRequest(request)
         request.onSuccess()
     else
         request.onFailure()
+    end
+end
+
+function ResourceManager:handleThreatResolution(data)
+    if not data then return end
+    
+    if data.status == "success" and data.rewards then
+        -- Apply rewards for successful threat resolution
+        for resource, amount in pairs(data.rewards) do
+            if self.resources[resource] ~= nil then
+                self.resources[resource] = self.resources[resource] + amount
+                self.eventBus:publish("resource_changed", { resource = resource, newValue = self.resources[resource] })
+                print("✅ Threat reward: +" .. amount .. " " .. resource)
+            end
+        end
+    elseif data.status == "failure" and data.penalties then
+        -- Apply penalties for failed threat resolution
+        for resource, amount in pairs(data.penalties) do
+            if self.resources[resource] ~= nil then
+                self.resources[resource] = math.max(0, self.resources[resource] - amount)
+                self.eventBus:publish("resource_changed", { resource = resource, newValue = self.resources[resource] })
+                print("❌ Threat penalty: -" .. amount .. " " .. resource)
+            end
+        end
     end
 end
 
