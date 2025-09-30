@@ -3,13 +3,13 @@
 local EventSystem = {}
 EventSystem.__index = EventSystem
 
-function EventSystem.new(eventBus, dataManager)
+function EventSystem.new(eventBus, dataManager, eventInterval)
     local self = setmetatable({}, EventSystem)
     self.eventBus = eventBus
     self.dataManager = dataManager
     self.events = {}
     self.eventTimer = 0
-    self.eventInterval = 25 -- Time in seconds between events
+    self.eventInterval = eventInterval or 25 -- Time in seconds between events (default: 25)
     return self
 end
 
