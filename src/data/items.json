@@ -1,0 +1,56 @@
+{
+  "items": {
+    "firewall_upgrade": {
+      "id": "firewall_upgrade",
+      "name": "Firewall Upgrade",
+      "description": "Updated item",
+      "category": "equipment",
+      "rarity": "uncommon",
+      "cost": {
+        "money": 2500
+      },
+      "sellValue": 750,
+      "effects": {
+        "defense": 0.15
+      },
+      "stackable": false,
+      "consumable": false,
+      "maxStack": 1,
+      "available": true
+    },
+    "test_item": {
+      "id": "test_item",
+      "name": "Test Item",
+      "description": "A test item for API validation",
+      "category": "testing",
+      "rarity": "rare",
+      "cost": {
+        "money": 1000
+      },
+      "sellValue": 500,
+      "effects": {
+        "efficiency": 0.2,
+        "speed": 0.1
+      },
+      "stackable": true,
+      "consumable": false,
+      "maxStack": 10,
+      "available": true
+    }
+  },
+  "categories": [
+    "equipment",
+    "consumable",
+    "upgrade",
+    "tool",
+    "special"
+  ],
+  "rarities": [
+    "common",
+    "uncommon",
+    "rare",
+    "epic",
+    "legendary"
+  ],
+  "lastUpdated": "2025-09-30T04:01:46.300547"
+}

@@ -1,0 +1,43 @@
+{
+  "specialists": {
+    "junior_analyst": {
+      "name": "Junior Security Analyst",
+      "cost": {
+        "money": 5000
+      },
+      "efficiency": 2.0,
+      "speed": 1.1,
+      "trace": 1.0,
+      "defense": 1.1,
+      "description": "Updated specialist",
+      "abilities": [
+        "basic_scan",
+        "log_analysis"
+      ],
+      "tier": 1
+    },
+    "test_specialist": {
+      "name": "Test Specialist",
+      "cost": {
+        "money": 10000,
+        "reputation": 5
+      },
+      "efficiency": 1.5,
+      "speed": 1.2,
+      "trace": 1.1,
+      "defense": 1.3,
+      "description": "A test specialist for API validation",
+      "abilities": [
+        "test_ability",
+        "another_ability"
+      ],
+      "tier": 2
+    }
+  },
+  "tiers": {
+    "1": "Basic specialists with core competencies",
+    "2": "Advanced specialists with specialized skills",
+    "3": "Expert specialists with rare abilities"
+  },
+  "lastUpdated": "2025-09-30T04:01:46.274085"
+}

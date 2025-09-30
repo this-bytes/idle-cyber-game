@@ -1,0 +1,53 @@
+{
+  "skills": {
+    "basic_analysis": {
+      "id": "basic_analysis",
+      "name": "Basic Analysis",
+      "description": "Fundamental security analysis techniques",
+      "category": "analysis",
+      "maxLevel": 10,
+      "baseXpCost": 100,
+      "xpGrowth": 1.2,
+      "prerequisites": [],
+      "effects": {
+        "efficiency": 0.05,
+        "trace": 0.02
+      },
+      "unlockRequirements": {}
+    },
+    "incident_response": {
+      "id": "incident_response",
+      "name": "Incident Response",
+      "description": "Rapid response to security incidents and breaches",
+      "category": "specialized",
+      "maxLevel": 8,
+      "baseXpCost": 300,
+      "xpGrowth": 1.4,
+      "prerequisites": [],
+      "effects": {
+        "speed": 0.2,
+        "defense": 0.15
+      },
+      "unlockRequirements": {}
+    }
+  },
+  "categories": {
+    "analysis": {
+      "name": "Analysis & Intelligence",
+      "description": "Core analytical and investigation skills"
+    },
+    "network": {
+      "name": "Network Security",
+      "description": "Network infrastructure and monitoring"
+    },
+    "leadership": {
+      "name": "Leadership",
+      "description": "Team management and business development"
+    },
+    "specialized": {
+      "name": "Specialized",
+      "description": "Advanced specialized security skills"
+    }
+  },
+  "lastUpdated": "2025-09-30T04:01:46.259212"
+}

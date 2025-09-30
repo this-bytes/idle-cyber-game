@@ -581,6 +581,144 @@ def admin_ui():
 
 # ===== GAME MECHANICS CRUD ENDPOINTS =====
 
+# JSON-DB Synchronization Functions
+def sync_skills_to_json():
+    """Sync skills from database to JSON files for Lua game compatibility."""
+    try:
+        skills = Skill.query.all()
+        skills_data = {}
+        
+        for skill in skills:
+            skills_data[skill.id] = {
+                'id': skill.id,
+                'name': skill.name,
+                'description': skill.description,
+                'category': skill.category,
+                'maxLevel': skill.max_level,
+                'baseXpCost': skill.base_xp_cost,
+                'xpGrowth': skill.xp_growth,
+                'prerequisites': pyjson.loads(skill.prerequisites) if skill.prerequisites else [],
+                'effects': pyjson.loads(skill.effects) if skill.effects else {},
+                'unlockRequirements': pyjson.loads(skill.unlock_requirements) if skill.unlock_requirements else {}
+            }
+        
+        # Write to a skills.json file for frontend consumption
+        skills_json_path = safe_join(DATA_DIR, 'skills.json')
+        atomic_write(skills_json_path, pyjson.dumps({
+            'skills': skills_data,
+            'categories': {
+                'analysis': {'name': 'Analysis & Intelligence', 'description': 'Core analytical and investigation skills'},
+                'network': {'name': 'Network Security', 'description': 'Network infrastructure and monitoring'},
+                'leadership': {'name': 'Leadership', 'description': 'Team management and business development'},
+                'specialized': {'name': 'Specialized', 'description': 'Advanced specialized security skills'}
+            },
+            'lastUpdated': datetime.utcnow().isoformat()
+        }, indent=2))
+        
+        return True
+    except Exception as e:
+        print(f"Failed to sync skills to JSON: {e}")
+        return False
+
+def sync_specialists_to_json():
+    """Sync specialists from database to JSON files."""
+    try:
+        specialists = Specialist.query.all()
+        specialists_data = {}
+        
+        for specialist in specialists:
+            specialists_data[specialist.specialist_type] = {
+                'name': specialist.name,
+                'cost': pyjson.loads(specialist.cost) if specialist.cost else {},
+                'efficiency': specialist.efficiency,
+                'speed': specialist.speed,
+                'trace': specialist.trace,
+                'defense': specialist.defense,
+                'description': specialist.description,
+                'abilities': pyjson.loads(specialist.abilities) if specialist.abilities else [],
+                'tier': specialist.tier
+            }
+        
+        specialists_json_path = safe_join(DATA_DIR, 'specialists.json')
+        atomic_write(specialists_json_path, pyjson.dumps({
+            'specialists': specialists_data,
+            'tiers': {
+                1: 'Basic specialists with core competencies',
+                2: 'Advanced specialists with specialized skills',
+                3: 'Expert specialists with rare abilities'
+            },
+            'lastUpdated': datetime.utcnow().isoformat()
+        }, indent=2))
+        
+        return True
+    except Exception as e:
+        print(f"Failed to sync specialists to JSON: {e}")
+        return False
+
+def sync_achievements_to_json():
+    """Sync achievements from database to JSON files."""
+    try:
+        achievements = Achievement.query.all()
+        achievements_data = {}
+        
+        for achievement in achievements:
+            achievements_data[achievement.id] = {
+                'id': achievement.id,
+                'name': achievement.name,
+                'description': achievement.description,
+                'requirement': pyjson.loads(achievement.requirement) if achievement.requirement else {},
+                'reward': pyjson.loads(achievement.reward) if achievement.reward else {},
+                'unlocked': achievement.unlocked,
+                'hidden': achievement.hidden
+            }
+        
+        achievements_json_path = safe_join(DATA_DIR, 'achievements.json')
+        atomic_write(achievements_json_path, pyjson.dumps({
+            'achievements': achievements_data,
+            'categories': ['progression', 'combat', 'business', 'exploration', 'special'],
+            'lastUpdated': datetime.utcnow().isoformat()
+        }, indent=2))
+        
+        return True
+    except Exception as e:
+        print(f"Failed to sync achievements to JSON: {e}")
+        return False
+
+def sync_items_to_json():
+    """Sync items from database to JSON files."""
+    try:
+        items = Item.query.all()
+        items_data = {}
+        
+        for item in items:
+            items_data[item.item_id] = {
+                'id': item.item_id,
+                'name': item.name,
+                'description': item.description,
+                'category': item.category,
+                'rarity': item.rarity,
+                'cost': pyjson.loads(item.cost) if item.cost else {},
+                'sellValue': item.sell_value,
+                'effects': pyjson.loads(item.effects) if item.effects else {},
+                'stackable': item.stackable,
+                'consumable': item.consumable,
+                'maxStack': item.max_stack,
+                'available': item.available
+            }
+        
+        items_json_path = safe_join(DATA_DIR, 'items.json')
+        atomic_write(items_json_path, pyjson.dumps({
+            'items': items_data,
+            'categories': ['equipment', 'consumable', 'upgrade', 'tool', 'special'],
+            'rarities': ['common', 'uncommon', 'rare', 'epic', 'legendary'],
+            'lastUpdated': datetime.utcnow().isoformat()
+        }, indent=2))
+        
+        return True
+    except Exception as e:
+        print(f"Failed to sync items to JSON: {e}")
+        return False
+
 # Skills endpoints
 @app.route('/api/skills', methods=['GET'])
 def list_skills():
@@ -647,6 +785,9 @@ def create_skill():
         db.session.add(skill)
         db.session.commit()
         
+        # Sync to JSON
+        sync_skills_to_json()
+        
         return jsonify({
             'success': True,
             'skill': skill.to_dict()
@@ -691,6 +832,9 @@ def update_skill(skill_id):
         skill.updated_at = datetime.utcnow()
         db.session.commit()
         
+        # Sync to JSON
+        sync_skills_to_json()
+        
         return jsonify({
             'success': True,
             'skill': skill.to_dict()
@@ -710,6 +854,9 @@ def delete_skill(skill_id):
         
         db.session.delete(skill)
         db.session.commit()
+        
+        # Sync to JSON
+        sync_skills_to_json()
         
         return jsonify({
             'success': True,
@@ -783,6 +930,9 @@ def create_specialist():
         db.session.add(specialist)
         db.session.commit()
         
+        # Sync to JSON
+        sync_specialists_to_json()
+        
         return jsonify({
             'success': True,
             'specialist': specialist.to_dict()
@@ -831,6 +981,9 @@ def update_specialist(specialist_id):
         specialist.updated_at = datetime.utcnow()
         db.session.commit()
         
+        # Sync to JSON
+        sync_specialists_to_json()
+        
         return jsonify({
             'success': True,
             'specialist': specialist.to_dict()
@@ -850,6 +1003,9 @@ def delete_specialist(specialist_id):
         
         db.session.delete(specialist)
         db.session.commit()
+        
+        # Sync to JSON
+        sync_specialists_to_json()
         
         return jsonify({
             'success': True,
@@ -923,6 +1079,9 @@ def create_achievement():
         db.session.add(achievement)
         db.session.commit()
         
+        # Sync to JSON
+        sync_achievements_to_json()
+        
         return jsonify({
             'success': True,
             'achievement': achievement.to_dict()
@@ -961,6 +1120,9 @@ def update_achievement(achievement_id):
         achievement.updated_at = datetime.utcnow()
         db.session.commit()
         
+        # Sync to JSON
+        sync_achievements_to_json()
+        
         return jsonify({
             'success': True,
             'achievement': achievement.to_dict()
@@ -980,6 +1142,9 @@ def delete_achievement(achievement_id):
         
         db.session.delete(achievement)
         db.session.commit()
+        
+        # Sync to JSON
+        sync_achievements_to_json()
         
         return jsonify({
             'success': True,
@@ -1058,6 +1223,9 @@ def create_item():
         db.session.add(item)
         db.session.commit()
         
+        # Sync to JSON
+        sync_items_to_json()
+        
         return jsonify({
             'success': True,
             'item': item.to_dict()
@@ -1108,6 +1276,9 @@ def update_item(item_id):
         item.updated_at = datetime.utcnow()
         db.session.commit()
         
+        # Sync to JSON
+        sync_items_to_json()
+        
         return jsonify({
             'success': True,
             'item': item.to_dict()
@@ -1127,6 +1298,9 @@ def delete_item(item_id):
         
         db.session.delete(item)
         db.session.commit()
+        
+        # Sync to JSON
+        sync_items_to_json()
         
         return jsonify({
             'success': True,
