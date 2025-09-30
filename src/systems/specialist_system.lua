@@ -350,7 +350,6 @@ function SpecialistSystem:awardXpToAllSpecialists(amount)
     return specialistCount
 end
 
--- Award XP to a specialist
 function SpecialistSystem:awardXp(specialistId, amount)
     local specialist = self.specialists[specialistId]
     if not specialist then
