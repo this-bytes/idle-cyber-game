@@ -1,5 +1,180 @@
 # Technical Architecture Documentation
 
+## AWESOME Backend Architecture 🚀
+
+The game now features the **AWESOME (Adaptive Workflow Engine for Self-Organizing Mechanics and Emergence)** backend architecture - a revolutionary data-driven system that enables emergent gameplay through intelligent item interactions.
+
+### Core AWESOME Systems
+
+#### 1. ItemRegistry (`src/core/item_registry.lua`)
+
+**Purpose**: Universal item loading and validation system for all game entities.
+
+**Key Features**:
+- Loads all game items from JSON with unified schema
+- Type-based organization (contracts, specialists, upgrades, threats, synergies)
+- Tag-based indexing for fast queries
+- Support for filtering by type, rarity, tier, and tags
+
+**Usage**:
+```lua
+local itemRegistry = ItemRegistry.new(dataManager)
+itemRegistry:initialize()
+local contracts = itemRegistry:getItemsByType("contract")
+local fintechItems = itemRegistry:getItemsByTag("fintech")
+```
+
+#### 2. EffectProcessor (`src/core/effect_processor.lua`)
+
+**Purpose**: Universal effect calculation system for cross-system interactions.
+
+**Key Features**:
+- Processes passive and active effects from all items
+- Supports multipliers, additives, and special effects
+- Target-based effect application (tag matching)
+- Soft caps to prevent runaway growth
+- Extensible effect handler system
+
+**Effect Types**:
+- `income_multiplier` - Boosts contract income
+- `threat_reduction` - Reduces threat damage
+- `efficiency_boost` - Improves specialist performance
+- `xp_multiplier` - Increases experience gain
+- `reputation_multiplier` - Boosts reputation rewards
+- `duration_reduction` - Reduces contract/cooldown times
+
+**Usage**:
+```lua
+local effectProcessor = EffectProcessor.new(eventBus)
+local context = {
+    tags = {"fintech"},
+    activeItems = {upgrades, specialists, synergies}
+}
+local effectiveIncome = effectProcessor:calculateValue(
+    baseIncome,
+    "income_multiplier",
+    context
+)
+```
+
+#### 3. FormulaEngine (`src/core/formula_engine.lua`)
+
+**Purpose**: Safe evaluation of data-driven formulas from JSON.
+
+**Key Features**:
+- Sandboxed Lua environment (no file/network access)
+- Math functions: abs, ceil, floor, min, max, sqrt, log, exp, sin, cos
+- Game functions: pow, clamp, lerp
+- Variable injection from game state
+- Error handling and validation
+
+**Usage**:
+```lua
+local result = FormulaEngine.evaluate(
+    "base * pow(growth, level)",
+    {base = 100, growth = 1.15, level = 5}
+)
+```
+
+#### 4. ProcGen (`src/core/proc_gen.lua`)
+
+**Purpose**: Procedural content generation from templates.
+
+**Key Features**:
+- Generate unique contracts, specialists, and events
+- Name generation (company names, personal names)
+- Statistical distributions (normal, uniform)
+- Weighted random tables
+- Template-based variation system
+
+**Usage**:
+```lua
+local procGen = ProcGen.new(itemRegistry, FormulaEngine)
+local contract = procGen:generateContract(template, playerContext)
+local companyName = procGen:generateName("company")
+```
+
+#### 5. SynergyDetector (`src/core/synergy_detector.lua`)
+
+**Purpose**: Automatic detection of synergies between game items.
+
+**Key Features**:
+- Rule-based synergy conditions
+- Real-time synergy activation/deactivation
+- Event publishing for UI notifications
+- Support for tag, resource, stat, and achievement conditions
+
+**Synergy Types**:
+- Tag combinations (e.g., FinTech specialist + FinTech contract)
+- Resource thresholds (e.g., reach $1M)
+- Stat requirements (e.g., complete 10 crises)
+- Multi-condition logic (requires_all, requires_any)
+
+**Usage**:
+```lua
+local synergyDetector = SynergyDetector.new(eventBus, itemRegistry)
+synergyDetector:initialize()
+local activeSynergies = synergyDetector:detectActiveSynergies(gameState)
+```
+
+#### 6. AnalyticsCollector (`src/core/analytics_collector.lua`)
+
+**Purpose**: Privacy-respecting game analytics and progression tracking.
+
+**Key Features**:
+- Local-only analytics (never sent online)
+- Session tracking and aggregate statistics
+- Progression velocity analysis
+- Event recording with buffer management
+
+**Tracked Metrics**:
+- Contracts completed, money earned
+- Specialists hired, upgrades purchased
+- Threats mitigated, crises resolved
+- Progression milestones (first contract, first crisis, etc.)
+
+### AWESOME Backend Benefits
+
+✅ **Data-Driven Everything**: All content defined in JSON, no code changes needed  
+✅ **Emergent Gameplay**: Items combine automatically to create synergies  
+✅ **Procedural Generation**: Infinite unique content from templates  
+✅ **Cross-System Effects**: Upgrades affect all systems intelligently  
+✅ **No Server Required**: Runs entirely client-side with LÖVE 2D  
+✅ **Better Performance**: Native Lua, no HTTP overhead  
+
+### Universal Item Schema
+
+All game items use this unified JSON schema:
+
+```json
+{
+  "id": "unique_identifier",
+  "type": "contract|specialist|upgrade|threat|synergy",
+  "displayName": "Human-readable name",
+  "description": "Flavor text",
+  "rarity": "common|rare|epic|legendary",
+  "tier": 1,
+  "tags": ["fintech", "enterprise", "advanced"],
+  
+  "cost": {
+    "money": 1000,
+    "reputation": 10
+  },
+  
+  "effects": {
+    "passive": [
+      {
+        "type": "income_multiplier",
+        "value": 1.25,
+        "target": "fintech"
+      }
+    ]
+  }
+}
+```
+
+---
+
 ## Fortress Architecture Overview
 
 This document describes the comprehensive technical architecture of **Idle Sec Ops**, featuring the modern fortress architecture alongside the legacy location system with JSON-driven mechanics.
