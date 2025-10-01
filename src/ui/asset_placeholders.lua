@@ -1,5 +1,9 @@
--- Asset placeholders
--- Provides small embedded PNG placeholders (base64) and returns Love Image objects
+-- Not implemented: src/ui/asset_placeholders.lua
+-- ======================================================================
+-- This module provides small embedded PNG placeholders (base64) and returns Love Image objects.
+-- Useful for UI elements that need image assets but where actual images are not yet available.
+-- ======================================================================
+
 
 local M = {}
 

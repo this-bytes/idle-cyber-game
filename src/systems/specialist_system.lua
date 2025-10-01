@@ -1,4 +1,6 @@
--- src/systems/specialist_system.lua
+-- Core Specialist System
+-- Manages specialists, their stats, XP, leveling, and abilities
+-- Integral to gameplay and progression
 
 local SpecialistSystem = {}
 SpecialistSystem.__index = SpecialistSystem

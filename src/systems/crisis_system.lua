@@ -1,3 +1,5 @@
+-- Unsure if relevant, but here is the full file content you asked for:
+-- If in use core to the active game, ensure to merge any necessary changes.
 -- Crisis System - Dynamic Crisis Generation and Management
 -- Handles crisis lifecycle, specialist deployment, and outcomes
 

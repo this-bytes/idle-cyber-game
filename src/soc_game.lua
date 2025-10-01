@@ -16,7 +16,9 @@ local SkillSystem = require("src.systems.skill_system")
 
 -- Scene Dependencies
 local MainMenu = require("src.scenes.main_menu")
+local SmartMainMenu = require("src.scenes.smart_main_menu") -- NEW: Smart UI version
 local SOCView = require("src.scenes.soc_view")
+local SmartSOCView = require("src.scenes.smart_soc_view") -- NEW: Smart UI version with animations & simple mode!
 local UpgradeShop = require("src.scenes.upgrade_shop")
 local GameOver = require("src.scenes.game_over")
 local IncidentResponse = require("src.scenes.incident_response")
@@ -32,64 +34,11 @@ function SOCGame.new(eventBus)
     self.systems = {}
     self.sceneManager = nil
     self.isInitialized = false
-    -- Legacy test expects an `initialized` field
-    self.initialized = false
-    -- Minimal SOC operations state expected by tests
-    self.socOperations = {
-        operationalLevel = "STARTING",
-        totalThreatsHandled = 0,
-        totalIncidentsResolved = 0,
-        uptimeSeconds = 0
-    }
     return self
 end
 
--- Initialize core systems for test environment (lightweight)
-function SOCGame:initializeCore()
-    -- Create a simple event bus if none provided
-    if not self.eventBus then
-        local EventBus = require("src.utils.event_bus")
-        self.eventBus = EventBus.new()
-    end
-    -- Mark initialized for tests
-    self.isInitialized = true
-    self.initialized = true
-    return true
-end
-
-function SOCGame:updateOperationalLevel()
-    -- Simple progression logic used by tests
-    local ops = self.socOperations
-    if ops.totalThreatsHandled >= 5 or ops.totalIncidentsResolved >= 5 then
-        ops.operationalLevel = "BASIC"
-    end
-    if ops.totalThreatsHandled >= 20 then
-        ops.operationalLevel = "ADVANCED"
-    end
-end
-
-function SOCGame:getSOCStats()
-    local ops = self.socOperations or {}
-    return {
-        threatsHandled = ops.totalThreatsHandled or 0,
-        incidentsResolved = ops.totalIncidentsResolved or 0,
-        operationalLevel = ops.operationalLevel or "STARTING",
-        uptime = ops.uptimeSeconds or 0
-    }
-end
-
-function SOCGame:saveGame()
-    local data = { socOperations = self.socOperations }
-    if self.saveSystem and type(self.saveSystem.save) == "function" then
-        return self.saveSystem:save(data)
-    end
-    return true
-end
-
 function SOCGame:initialize()
-    local DebugLogger = require("src.utils.debug_logger")
-    local logger = DebugLogger.get()
-    logger:info("Initializing SOC Game Systems...")
+    print("🛡️ Initializing SOC Game Systems...")
     -- 1. Create Core Systems & Data Manager
     self.systems.dataManager = DataManager.new(self.eventBus)
     self.systems.dataManager:loadAllData()
@@ -116,8 +65,9 @@ function SOCGame:initialize()
     self.sceneManager:initialize()
 
     -- 4. Register Scenes
-    self.sceneManager:registerScene("main_menu", MainMenu.new(self.eventBus))
-    self.sceneManager:registerScene("soc_view", SOCView.new(self.eventBus))
+    -- Use Smart SOC View with animations and dual-mode support!
+    self.sceneManager:registerScene("main_menu", SmartMainMenu.new(self.eventBus))
+    self.sceneManager:registerScene("soc_view", SmartSOCView.new(self.eventBus))
     self.sceneManager:registerScene("upgrade_shop", UpgradeShop.new(self.eventBus))
     self.sceneManager:registerScene("game_over", GameOver.new(self.eventBus))
     self.sceneManager:registerScene("incident_response", IncidentResponse.new(self.eventBus))
@@ -126,7 +76,7 @@ function SOCGame:initialize()
     -- 5. Start Initial Scene (Main Menu)
     self.sceneManager:requestScene("main_menu")
 
-    logger:info("SOC Game Systems Initialized!")
+    print("✅ SOC Game Systems Initialized!")
     return true
 end
 
@@ -160,14 +110,12 @@ function SOCGame:keypressed(key)
 end
 
 function SOCGame:mousepressed(x, y, button)
-    -- Log at SOCGame layer to verify coordinate mapping after LÖVE dispatch (debug only)
-    local DebugLogger = require("src.utils.debug_logger")
-    local logger = DebugLogger.get()
-    logger:debug(string.format("[UI RAW] SOCGame:mousepressed x=%.1f y=%.1f button=%s", x, y, tostring(button)))
+    -- Log at SOCGame layer to verify coordinate mapping after LÖVE dispatch
+    print(string.format("[UI RAW] SOCGame:mousepressed x=%.1f y=%.1f button=%s", x, y, tostring(button)))
     if self.sceneManager then
         self.sceneManager:mousepressed(x, y, button)
     else
-        logger:warn("SOCGame: mousepressed but no sceneManager present")
+        print("[UI RAW] SOCGame:mousepressed but no sceneManager present")
     end
 end
 
@@ -196,9 +144,7 @@ function SOCGame:resize(w, h)
 end
 
 function SOCGame:shutdown()
-    local DebugLogger = require("src.utils.debug_logger")
-    local logger = DebugLogger.get()
-    logger:info("Shutting down SOC game...")
+    print("Shutting down SOC game...")
     -- Perform any cleanup here
 end
 

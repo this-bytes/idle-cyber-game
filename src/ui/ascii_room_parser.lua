@@ -1,3 +1,8 @@
+-- Not implemented: src/ui/ascii_room_parser.lua
+-- ======================================================================
+-- But the idea is decent so keeping around for future exploration.
+-- ======================================================================
+
 -- ASCII Room Parser - Dynamic Room Generation from locations.json
 -- Creates ASCII art representations of rooms, floors, and buildings
 -- Supports interactive navigation and visual room layouts

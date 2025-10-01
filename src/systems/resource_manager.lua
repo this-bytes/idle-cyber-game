@@ -1,6 +1,24 @@
--- Resource Manager System - Idle Sec Ops
--- Manages all player resources with proper initialization and state tracking
--- Makes numbers go UP and makes players feel PROGRESS
+-- Resource Manager System - Manages player resources and currencies
+-- ======================================================================
+-- Critical system that tracks money, reputation, XP, and mission tokens
+-- Supports passive generation, spending, and event-driven changes
+-- Integrates with event bus for UI updates and notifications
+-- ======================================================================
+-- Needs to be robust and flexible to support various game mechanics
+-- Should provide clear APIs for other systems to interact with resources
+-- Should support saving/loading state and be testable in isolation
+-- Should provide visual feedback for resource changes (e.g. floating text)
+-- Should handle edge cases like overspending, negative resources, and large numbers
+-- Should allow for dynamic generation rates and multipliers from upgrades/specialists
+-- Should track statistics like total earned/spent for player feedback and achievements
+-- Should be easy to extend with new resource types if needed in the future
+-- Should be efficient and not cause performance issues during frequent updates
+-- Should log important events for debugging and analytics
+-- Should be compatible with existing test suites and pass all relevant tests
+-- Should provide helper functions for formatting and displaying resources in the UI
+-- Should support both incremental and bulk resource changes
+-- Should allow for resource change notifications to be customized (e.g. source of change)
+
 
 local ResourceManager = {}
 ResourceManager.__index = ResourceManager
@@ -9,11 +27,11 @@ function ResourceManager.new(eventBus)
     local self = setmetatable({}, ResourceManager)
     self.eventBus = eventBus
     
-    -- Initialize resources with GENEROUS starting amounts
+    -- Initialize resources with starting amounts
     self.resources = {
-        money = 1000,           -- Start with baseline expected by tests
-        reputation = 0,          -- Build reputation through contracts
-        xp = 0,                  -- Experience for progression
+        money = 10000,           -- Start with enough to hire first specialist
+        reputation = 10,          -- Build reputation through contracts
+        xp = 1,                  -- Experience for progression
         missionTokens = 0,       -- Special currency from crises
         
         -- Tracking
@@ -25,13 +43,13 @@ function ResourceManager.new(eventBus)
     -- Generation rates (per second)
     self.generationRates = {
         money = 50,              -- Start at $50/sec from base operations
-        reputation = 0.1,        -- Slow reputation gain
+        reputation = 0.2,        -- Slow reputation gain
         xp = 1.0                 -- Steady XP gain
     }
     
     -- Multipliers from upgrades/specialists
     self.multipliers = {
-        money = 1.0,
+        money = 10.0,
         reputation = 1.0,
         xp = 1.0
     }
@@ -49,11 +67,9 @@ function ResourceManager.new(eventBus)
         end)
     end
     
-    local DebugLogger = require("src.utils.debug_logger")
-    local logger = DebugLogger.get()
-    logger:debug("ResourceManager initialized with starting resources:")
-    logger:debug(string.format("   Money: $%d", self.resources.money))
-    logger:debug(string.format("   Generation: $%.0f/sec", self.generationRates.money))
+    print("💰 ResourceManager initialized with starting resources:")
+    print(string.format("   Money: $%d", self.resources.money))
+    print(string.format("   Generation: $%.0f/sec", self.generationRates.money))
     
     return self
 end
@@ -215,11 +231,6 @@ function ResourceManager:setGenerationRate(resourceType, rate)
     return false
 end
 
--- Backwards-compatible alias used in tests
-function ResourceManager:setGeneration(resourceType, rate)
-    return self:setGenerationRate(resourceType, rate)
-end
-
 -- Add to generation rate (for incremental upgrades)
 function ResourceManager:addGenerationRate(resourceType, amount)
     if self.generationRates[resourceType] ~= nil then
@@ -298,34 +309,4 @@ function ResourceManager:loadSaveData(data)
     print("💰 Resources loaded from save")
 end
 
--- Backwards-compatible helper: initialize (legacy tests expect this)
-function ResourceManager:initialize()
-    -- No-op: constructor already initializes resources
-    return true
-end
-
--- Backwards-compatible hook: allow plugging in idle generators so ResourceManager can query their generation
-function ResourceManager:setIdleGenerators(idleGenerators)
-    self.idleGenerators = idleGenerators
-end
-
--- Backwards-compatible: get total generation including idle generators
-function ResourceManager:getTotalGeneration()
-    local total = {
-        money = self.generationRates.money * (self.multipliers.money or 1),
-        reputation = self.generationRates.reputation * (self.multipliers.reputation or 1),
-        xp = self.generationRates.xp * (self.multipliers.xp or 1)
-    }
-
-    if self.idleGenerators and type(self.idleGenerators.getCurrentGeneration) == "function" then
-        local ig = self.idleGenerators:getCurrentGeneration()
-        for k, v in pairs(ig) do
-            total[k] = (total[k] or 0) + v
-        end
-    end
-
-    return total
-end
-
 return ResourceManager
-

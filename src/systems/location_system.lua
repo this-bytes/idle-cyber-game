@@ -1,5 +1,12 @@
--- Location System
--- Manages hierarchical locations (buildings > floors > rooms) with JSON-driven configuration
+-- Not implemented: src/systems/location_system.lua
+-- ======================================================================
+-- This module manages hierarchical locations (buildings > floors > rooms) with JSON-driven configuration.
+-- It supports player movement, location-based bonuses, and event integration.
+-- ======================================================================   
+-- This is a idea im just starting to think through. It is not complete.
+-- Should not be used yet.
+-- It is a starting point for a location system that can be expanded upon.
+
 
 local LocationSystem = {}
 LocationSystem.__index = LocationSystem

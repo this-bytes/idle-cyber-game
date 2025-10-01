@@ -1,3 +1,5 @@
+-- Unsure of implementation details
+-- We have 2 save files, this is an important system so it should be done right.
 -- Save System
 -- Handles game persistence and loading
 

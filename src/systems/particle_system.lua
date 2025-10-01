@@ -1,5 +1,10 @@
--- Particle System - Advanced visual effects for enhanced game experience
--- Provides money particles, achievement bursts, crisis alerts, and ambient effects
+-- Not implemented: src/systems/particle_system.lua
+-- ======================================================================
+-- I like the idea of a particle system for visual effects. Keeping it here for later development.
+-- ======================================================================
+-- Particle system for visual effects like money particles, achievement bursts, crisis alerts, and ambient effects
+-- ======================================================================   
+
 
 local ParticleSystem = {}
 ParticleSystem.__index = ParticleSystem

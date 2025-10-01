@@ -1,60 +1,47 @@
--- SOC View - Main game view using Smart UI Framework
--- Replaces manual drawing with component-based UI
--- Phase 5 integration: Main game interface with Smart UI
-
-local ScrollContainer = require("src.ui.components.scroll_container")
-local Box = require("src.ui.components.box")
-local Panel = require("src.ui.components.panel")
-local Text = require("src.ui.components.text")
-local Button = require("src.ui.components.button")
-local Grid = require("src.ui.components.grid")
-local ToastManager = require("src.ui.toast_manager")
+-- SOC View Scene - Main Operational Interface
+-- Central command view for SOC operations: threat detection, incident response, and resource management
+-- Emulates real-life SOC workflow with continuous monitoring and response capabilities
 
 local SOCView = {}
 SOCView.__index = SOCView
 
+local NotificationPanel = require("src.ui.notification_panel")
+
+-- Create new SOC view scene
 function SOCView.new(eventBus)
     local self = setmetatable({}, SOCView)
     
     -- Dependencies
+    self.systems = {} -- Injected by SceneManager on enter
     self.eventBus = eventBus
-    self.systems = {}
-    
-    -- Data
+
+    -- Internal State
     self.resources = {}
     self.contracts = {}
     self.specialists = {}
     self.upgrades = {}
-    
+
+    -- UI Components
+    self.notificationPanel = NotificationPanel.new(eventBus)
+
     -- UI State
-    self.selectedPanel = "threats"
-    self.root = nil
-    self.needsRebuild = true
-    
-    -- Toast manager
-    self.toastManager = ToastManager.new()
-    
-    -- Animated resources for satisfying visual feedback (IMPROVED!)
-    self.displayedMoney = 0
-    self.targetMoney = 0
-    self.displayedReputation = 0
-    self.targetReputation = 0
-    
-    -- Floating numbers for income events (NEW!)
-    self.floatingNumbers = {}
-    
-    -- Animation timers (NEW!)
-    self.pulseTimer = 0
-    
-    -- Button tracking for simple mode (NEW!)
-    self.buttons = {}
-    self.mouseX = 0
-    self.mouseY = 0
-    
-    -- Simple mode toggle (can switch between Smart UI and simple rendering)
-    self.useSimpleMode = true -- Default to simple mode for better performance
-    
-    -- SOC Status
+    self.layout = {
+        headerHeight = 80,
+        sidebarWidth = 250,
+        panelSpacing = 10
+    }
+    self.selectedPanel = 1
+    self.panels = {
+        {name = "Threat Monitor", key = "threats"},
+        {name = "Incident Response", key = "incidents"},
+        {name = "Resource Status", key = "resources"},
+        {name = "Upgrades", key = "upgrades"},
+        {name = "Contracts", key = "contracts"},
+        {name = "Specialists", key = "specialists"},
+        {name = "Skills", key = "skills"}
+    }
+
+    -- Game Logic State
     self.socStatus = {
         alertLevel = "GREEN",
         activeIncidents = {},
@@ -63,91 +50,66 @@ function SOCView.new(eventBus)
         lastThreatScan = 0,
         scanInterval = 5.0
     }
-    
-    -- Subscribe to events
+
+    -- Event System State
+    self.currentEvent = nil
+    self.eventDisplayTime = 0
+    self.eventDisplayDuration = 5.0 -- How long to show simple events
+    self.showingChoiceEvent = false
+
+    -- Subscribe to long-lived events
     if self.eventBus then
         self.eventBus:subscribe("threat_detected", function(event)
             local threatObj = event and event.threat
-            if threatObj then
-                self:handleThreatDetected(threatObj)
-            end
+            if not threatObj then return end
+            if not threatObj.name and threatObj.id then threatObj.name = tostring(threatObj.id) end
+            self:handleThreatDetected(threatObj)
+        end)
+
+        self.eventBus:subscribe("incident_resolved", function(data) self:handleIncidentResolved(data) end)
+        self.eventBus:subscribe("security_upgrade_purchased", function(data) self:updateSOCCapabilities() end)
+        
+        -- Dynamic Event System integration
+        self.eventBus:subscribe("dynamic_event_triggered", function(data)
+            self:handleDynamicEvent(data.event)
+        end)
+        -- Specialist progression events
+        self.eventBus:subscribe("specialist_leveled_up", function(data)
+            self:handleSpecialistLevelUp(data)
         end)
         
-        self.eventBus:subscribe("resource_changed", function(event)
-            self:updateData()
-            self.needsRebuild = true
-            -- Add floating number feedback (NEW!)
-            if event and event.resourceType == "money" and event.change and event.change > 0 then
-                table.insert(self.floatingNumbers, {
-                    text = "+" .. self:formatMoney(event.change),
-                    x = 150 + math.random(-20, 20),
-                    y = 80,
-                    vy = -50,
-                    life = 2.0,
-                    color = {0.2, 1.0, 0.3, 1.0}
-                })
-                self.targetMoney = event.newValue
-            elseif event and event.resourceType == "reputation" and event.change and event.change > 0 then
-                table.insert(self.floatingNumbers, {
-                    text = "+" .. string.format("%.1f", event.change) .. " REP",
-                    x = 400 + math.random(-20, 20),
-                    y = 80,
-                    vy = -50,
-                    life = 2.0,
-                    color = {0.2, 0.8, 1.0, 1.0}
-                })
-                self.targetReputation = event.newValue
-            end
-        end)
-        
-        self.eventBus:subscribe("contract_accepted", function()
-            self:updateData()
-            self.needsRebuild = true
-        end)
-        
-        self.eventBus:subscribe("specialist_hired", function(data)
-            self:updateData()
-            self.needsRebuild = true
-            if data and data.specialist then
-                self.toastManager:show("Hired: " .. data.specialist.name, {type = "success"})
-            end
-        end)
-        
-        self.eventBus:subscribe("upgrade_purchased", function(data)
-            self:updateData()
-            self.needsRebuild = true
-            if data and data.upgrade then
-                self.toastManager:show("Purchased: " .. data.upgrade.name, {type = "success"})
-            end
-        end)
+        -- UI update events
+        self.eventBus:subscribe("resource_changed", function() self:updateData() end)
+        self.eventBus:subscribe("contract_accepted", function() self:updateData() end)
+        self.eventBus:subscribe("contract_completed", function() self:updateData() end)
+        self.eventBus:subscribe("specialist_hired", function() self:updateData() end)
+        self.eventBus:subscribe("upgrade_purchased", function() self:updateData() end)
     end
-    
-    print("🛡️ Smart SOCView initialized")
+
+    -- Initial data fetch is now done in :enter()
+    -- if self.systems.resourceManager then
+    --     self.resources = self.systems.resourceManager:getState()
+    -- end
+    -- self:updateSOCCapabilities()
+
+    print("🛡️ SOCView: Initialized SOC operational interface")
     return self
 end
 
--- Scene lifecycle
+-- Enter SOC view scene
 function SOCView:enter(data)
-    print("🛡️ Smart SOCView: SOC operations center activated")
+    print("🛡️ SOCView: SOC operations center activated")
+    -- Refresh data every time the scene is entered
     self:updateData()
     self:updateSOCCapabilities()
-    self.needsRebuild = true
-    
-    -- Initialize animated values (IMPROVED!)
-    if self.systems.resourceManager then
-        local state = self.systems.resourceManager:getState()
-        self.displayedMoney = state.money
-        self.targetMoney = state.money
-        self.displayedReputation = state.reputation
-        self.targetReputation = state.reputation
-    end
 end
 
+-- Exit SOC view scene
 function SOCView:exit()
-    print("🛡️ Smart SOCView: Exiting")
+    print("Exiting SOC View")
+    -- Unsubscribe from events if necessary in the future
 end
 
--- Update data from systems
 function SOCView:updateData()
     if self.systems.resourceManager then
         self.resources = self.systems.resourceManager:getState()
@@ -157,6 +119,7 @@ function SOCView:updateData()
     end
     if self.systems.specialistSystem then
         self.specialists = self.systems.specialistSystem:getAllSpecialists()
+        self.availableForHire = self.systems.specialistSystem:getAvailableForHire()
     end
     if self.systems.upgradeSystem then
         self.upgrades = self.systems.upgradeSystem:getPurchasedUpgrades()
@@ -178,551 +141,248 @@ function SOCView:updateSOCCapabilities()
     end
 end
 
--- Handle threat detection
-function SOCView:handleThreatDetected(threat)
-    local threatName = threat.name or "Unknown Threat"
-    self.toastManager:show("🚨 Threat Detected: " .. threatName, {
-        type = "error",
-        duration = 5.0
-    })
-    
-    table.insert(self.socStatus.activeIncidents, {
-        threat = threat,
-        timeRemaining = 30.0
-    })
-    
-    self.needsRebuild = true
-end
-
--- Build UI
-function SOCView:buildUI()
-    local screenWidth = love.graphics.getWidth()
-    local screenHeight = love.graphics.getHeight()
-    
-    -- Root scroll container
-    self.root = ScrollContainer.new({
-        backgroundColor = {0.05, 0.05, 0.1, 1},
-        showScrollbars = true,
-        scrollSpeed = 30
-    })
-    
-    -- Main content
-    local content = Box.new({
-        direction = "vertical",
-        gap = 10,
-        padding = {10, 10, 10, 10}
-    })
-    self.root:addChild(content)
-    
-    -- Header
-    content:addChild(self:createHeader())
-    
-    -- Main area
-    local mainArea = Box.new({
-        direction = "horizontal",
-        gap = 10,
-        flex = 1
-    })
-    
-    -- Sidebar
-    mainArea:addChild(self:createSidebar())
-    
-    -- Main panel
-    mainArea:addChild(self:createMainPanel())
-    
-    content:addChild(mainArea)
-    
-    self.needsRebuild = false
-end
-
--- Create header
-function SOCView:createHeader()
-    local header = Panel.new({
-        title = "🛡️ SOC Command Center - Alert: " .. self.socStatus.alertLevel,
-        cornerStyle = "cut",
-        glow = self.socStatus.alertLevel == "RED",
-        minHeight = 80,
-        flex = 0
-    })
-    
-    -- Resource display
-    local resourceBox = Box.new({
-        direction = "horizontal",
-        gap = 20,
-        padding = {10, 10, 10, 10}
-    })
-    
-    if self.resources and self.resources.resources then
-        local money = self.resources.resources.money or 0
-        local reputation = self.resources.resources.reputation or 0
-        local xp = self.resources.resources.xp or 0
-        
-        resourceBox:addChild(Text.new({
-            text = "💰 $" .. string.format("%.0f", money),
-            color = {0.2, 0.8, 0.3, 1.0}
-        }))
-        
-        resourceBox:addChild(Text.new({
-            text = "⭐ " .. string.format("%.0f", reputation),
-            color = {0.2, 0.8, 0.9, 1.0}
-        }))
-        
-        resourceBox:addChild(Text.new({
-            text = "📈 " .. string.format("%.0f", xp) .. " XP",
-            color = {0.9, 0.7, 0.2, 1.0}
-        }))
-    end
-    
-    header:addChild(resourceBox)
-    return header
-end
-
--- Create sidebar
-function SOCView:createSidebar()
-    local sidebar = Panel.new({
-        title = "Panels",
-        cornerStyle = "square",
-        minWidth = 200,
-        flex = 0
-    })
-    
-    local buttonBox = Box.new({
-        direction = "vertical",
-        gap = 5,
-        padding = {10, 10, 10, 10}
-    })
-    
-    local panels = {
-        {key = "threats", label = "Threat Monitor"},
-        {key = "incidents", label = "Incidents"},
-        {key = "resources", label = "Resources"},
-        {key = "contracts", label = "Contracts"},
-        {key = "specialists", label = "Specialists"},
-        {key = "upgrades", label = "Upgrades"}
-    }
-    
-    for _, panel in ipairs(panels) do
-        local isSelected = (self.selectedPanel == panel.key)
-        local btn = Button.new({
-            label = panel.label,
-            minWidth = 180,
-            onClick = function()
-                self.selectedPanel = panel.key
-                self.needsRebuild = true
-            end,
-            -- Use different colors for selected button
-            normalColor = isSelected and {0.3, 0.5, 0.8, 1} or {0.2, 0.2, 0.3, 1},
-            normalBorderColor = isSelected and {0, 1, 1, 1} or {0.5, 0.5, 0.6, 1}
-        })
-        buttonBox:addChild(btn)
-    end
-    
-    sidebar:addChild(buttonBox)
-    return sidebar
-end
-
--- Create main panel
-function SOCView:createMainPanel()
-    local panel = Panel.new({
-        title = self:getPanelTitle(),
-        cornerStyle = "rounded",
-        flex = 2
-    })
-    
-    local content = Box.new({
-        direction = "vertical",
-        gap = 10,
-        padding = {15, 15, 15, 15}
-    })
-    
-    -- Add panel-specific content
-    if self.selectedPanel == "threats" then
-        self:addThreatsContent(content)
-    elseif self.selectedPanel == "incidents" then
-        self:addIncidentsContent(content)
-    elseif self.selectedPanel == "resources" then
-        self:addResourcesContent(content)
-    elseif self.selectedPanel == "contracts" then
-        self:addContractsContent(content)
-    elseif self.selectedPanel == "specialists" then
-        self:addSpecialistsContent(content)
-    elseif self.selectedPanel == "upgrades" then
-        self:addUpgradesContent(content)
-    end
-    
-    panel:addChild(content)
-    return panel
-end
-
--- Get panel title
-function SOCView:getPanelTitle()
-    local titles = {
-        threats = "🚨 Threat Monitor",
-        incidents = "⚠️ Active Incidents",
-        resources = "📊 Resource Status",
-        contracts = "📄 Contracts",
-        specialists = "👥 Specialists",
-        upgrades = "🔧 Security Upgrades"
-    }
-    return titles[self.selectedPanel] or "Panel"
-end
-
--- Add threats content
-function SOCView:addThreatsContent(container)
-    container:addChild(Text.new({
-        text = "Detection Capability: " .. self.socStatus.detectionCapability,
-        color = {0.2, 0.8, 0.9, 1.0}
-    }))
-    
-    container:addChild(Text.new({
-        text = "Response Capability: " .. self.socStatus.responseCapability,
-        color = {0.2, 0.8, 0.3, 1.0}
-    }))
-    
-    if #self.socStatus.activeIncidents > 0 then
-        for i, incident in ipairs(self.socStatus.activeIncidents) do
-            local threatName = incident.threat and incident.threat.name or "Unknown"
-            container:addChild(Text.new({
-                text = string.format("⚠️ %s (%.1fs remaining)", threatName, incident.timeRemaining),
-                color = {1.0, 0.4, 0.2, 1.0}
-            }))
-        end
+function SOCView:updateAlertLevel()
+    if self.socStatus.activeIncidents and #self.socStatus.activeIncidents > 0 then
+        self.socStatus.alertLevel = "RED"
+    elseif self.socStatus.activeIncidents and #self.socStatus.activeIncidents > 2 then
+        self.socStatus.alertLevel = "ORANGE"
     else
-        container:addChild(Text.new({
-            text = "✓ No active threats",
-            color = {0.2, 0.8, 0.3, 1.0}
-        }))
+        self.socStatus.alertLevel = "GREEN"
     end
 end
 
--- Add incidents content
-function SOCView:addIncidentsContent(container)
-    if #self.socStatus.activeIncidents == 0 then
-        container:addChild(Text.new({
-            text = "No active incidents",
-            color = {0.6, 0.6, 0.6, 1.0}
-        }))
-    else
-        for i, incident in ipairs(self.socStatus.activeIncidents) do
-            local threatName = incident.threat and incident.threat.name or "Unknown Incident"
-            container:addChild(Text.new({
-                text = string.format("[%d] %s - %.1fs remaining", i, threatName, incident.timeRemaining),
-                color = {1.0, 0.4, 0.2, 1.0}
-            }))
-        end
-    end
-end
-
--- Add resources content
-function SOCView:addResourcesContent(container)
-    if self.resources and self.resources.resources then
-        for resourceName, amount in pairs(self.resources.resources) do
-            container:addChild(Text.new({
-                text = resourceName .. ": " .. string.format("%.2f", amount),
-                color = {0.9, 0.9, 0.9, 1.0}
-            }))
-        end
-    else
-        container:addChild(Text.new({
-            text = "No resource data available",
-            color = {0.6, 0.6, 0.6, 1.0}
-        }))
-    end
-end
-
--- Add contracts content
-function SOCView:addContractsContent(container)
-    if self.contracts and #self.contracts > 0 then
-        for i, contract in ipairs(self.contracts) do
-            local contractText = string.format("%s - $%.0f/mo", 
-                contract.client or "Unknown Client",
-                contract.revenue or 0)
-            container:addChild(Text.new({
-                text = contractText,
-                color = {0.2, 0.8, 0.9, 1.0}
-            }))
-        end
-    else
-        container:addChild(Text.new({
-            text = "No active contracts",
-            color = {0.6, 0.6, 0.6, 1.0}
-        }))
-    end
-end
-
--- Add specialists content
-function SOCView:addSpecialistsContent(container)
-    if self.specialists then
-        local count = 0
-        for _ in pairs(self.specialists) do
-            count = count + 1
-        end
-        
-        if count > 0 then
-            for id, specialist in pairs(self.specialists) do
-                local name = specialist.name or "Unknown"
-                local role = specialist.role or "Unknown Role"
-                container:addChild(Text.new({
-                    text = string.format("%s (%s)", name, role),
-                    color = {0.2, 0.8, 0.9, 1.0}
-                }))
-            end
-        else
-            container:addChild(Text.new({
-                text = "No specialists hired",
-                color = {0.6, 0.6, 0.6, 1.0}
-            }))
-        end
-    else
-        container:addChild(Text.new({
-            text = "Specialist system not available",
-            color = {0.6, 0.6, 0.6, 1.0}
-        }))
-    end
-end
-
--- Add upgrades content
-function SOCView:addUpgradesContent(container)
-    if self.upgrades and #self.upgrades > 0 then
-        for i, upgrade in ipairs(self.upgrades) do
-            container:addChild(Text.new({
-                text = upgrade.name or "Unknown Upgrade",
-                color = {0.2, 0.8, 0.3, 1.0}
-            }))
-        end
-    else
-        container:addChild(Text.new({
-            text = "No upgrades purchased",
-            color = {0.6, 0.6, 0.6, 1.0}
-        }))
-    end
-end
-
--- Update
+-- Update SOC view
 function SOCView:update(dt)
-    self.pulseTimer = (self.pulseTimer or 0) + dt
+    -- Update UI components
+    self.notificationPanel:update(dt)
+
+    -- Update alert level based on active incidents
+    self:updateAlertLevel()
     
-    -- Update mouse position
-    self.mouseX = love.mouse.getX()
-    self.mouseY = love.mouse.getY()
-    
-    -- Smooth animate displayed values (IMPROVED!)
-    if math.abs(self.displayedMoney - self.targetMoney) > 0.1 then
-        self.displayedMoney = self.displayedMoney + (self.targetMoney - self.displayedMoney) * dt * 5
-    end
-    
-    if math.abs(self.displayedReputation - self.targetReputation) > 0.01 then
-        self.displayedReputation = self.displayedReputation + (self.targetReputation - self.displayedReputation) * dt * 5
-    end
-    
-    -- Get current resources
-    if self.systems.resourceManager then
-        local state = self.systems.resourceManager:getState()
-        self.targetMoney = state.money
-        self.targetReputation = state.reputation
-    end
-    
-    -- Update floating numbers (NEW!)
-    for i = #self.floatingNumbers, 1, -1 do
-        local num = self.floatingNumbers[i]
-        num.y = num.y + num.vy * dt
-        num.life = num.life - dt
-        num.color[4] = num.life / 2.0 -- Fade out
-        
-        if num.life <= 0 then
-            table.remove(self.floatingNumbers, i)
-        end
-    end
-    
-    -- Update toast manager
-    self.toastManager:update(dt)
-    
-    -- Update active incidents
+    -- Update incident timers
     for i = #self.socStatus.activeIncidents, 1, -1 do
         local incident = self.socStatus.activeIncidents[i]
         incident.timeRemaining = incident.timeRemaining - dt
         
         if incident.timeRemaining <= 0 then
+            self:autoResolveIncident(incident)
             table.remove(self.socStatus.activeIncidents, i)
-            self.toastManager:show("Incident auto-resolved", {type = "info"})
-            self.needsRebuild = true
         end
     end
     
-    -- Rebuild if needed (only in Smart UI mode)
-    if not self.useSimpleMode and self.needsRebuild then
-        self:buildUI()
+    -- Update event display timer
+    if self.currentEvent and not self.showingChoiceEvent then
+        self.eventDisplayTime = self.eventDisplayTime + dt
+        if self.eventDisplayTime >= self.eventDisplayDuration then
+            self.currentEvent = nil
+            self.eventDisplayTime = 0
+        end
     end
 end
 
--- Draw
 function SOCView:draw()
-    local screenWidth = love.graphics.getWidth()
-    local screenHeight = love.graphics.getHeight()
-    
-    -- Use simple mode for better performance and immediate playability
-    if self.useSimpleMode then
-        self:drawSimpleMode(screenWidth, screenHeight)
-    else
-        -- Smart UI mode (component-based)
-        if not self.root then
-            self:buildUI()
+    love.graphics.setBackgroundColor(0.1, 0.1, 0.12)
+    love.graphics.clear()
+    love.graphics.setColor(1, 1, 1)
+
+    -- Draw Header
+    love.graphics.printf("SOC Command Center - Alert Level: " .. self.socStatus.alertLevel, 0, 10, love.graphics.getWidth(), "center")
+
+    -- Draw Sidebar with panel options
+    local y = 50
+    love.graphics.print("== Panels ==", 10, y)
+    y = y + 20
+    for i, panel in ipairs(self.panels) do
+        local color = {1, 1, 1}
+        if i == self.selectedPanel then
+            color = {0, 1, 0} -- Highlight selected panel
         end
-        
-        -- Measure and layout
-        self.root:measure(screenWidth, screenHeight)
-        self.root:layout(0, 0, screenWidth, screenHeight)
-        
-        -- Render
-        self.root:render()
+        love.graphics.setColor(unpack(color))
+        love.graphics.print(string.format("[%d] %s", i, panel.name), 20, y)
+        y = y + 15
     end
+    love.graphics.setColor(1, 1, 1)
+
+    -- Draw a vertical line to separate sidebar
+    love.graphics.line(self.layout.sidebarWidth - 5, 0, self.layout.sidebarWidth - 5, love.graphics.getHeight())
+
+    -- Draw the main content panel
+    self:drawMainPanel()
     
-    -- Always render floating numbers on top (NEW!)
-    love.graphics.setFont(love.graphics.newFont(24))
-    for _, num in ipairs(self.floatingNumbers) do
-        love.graphics.setColor(num.color)
-        love.graphics.print(num.text, num.x, num.y)
-    end
+    -- Draw current event at the bottom of the screen
+    self:drawEventDisplay()
     
-    -- Render toasts on top
-    self.toastManager:render()
+    -- Draw notification panel on top of everything
+    self.notificationPanel:draw()
 end
 
--- Mouse events
-function SOCView:mousepressed(x, y, button)
-    -- Check toasts first
-    if self.toastManager:mousepressed(x, y, button) then
-        return true
-    end
+function SOCView:drawMainPanel()
+    local panelKey = self.panels[self.selectedPanel].key
     
-    -- Pass to root component using correct method name
-    if self.root then
-        return self.root:onMousePress(x, y, button)
+    local panelDrawers = {
+        threats = function() self:drawThreatsPanel() end,
+        incidents = function() self:drawIncidentsPanel() end,
+        resources = function() self:drawResourcesPanel() end,
+        upgrades = function() self:drawUpgradesPanel() end,
+        contracts = function() self:drawContractsPanel() end,
+        specialists = function() self:drawSpecialistsPanel() end,
+        skills = function() self:drawSkillsPanel() end
+    }
+
+    if panelDrawers[panelKey] then
+        panelDrawers[panelKey]()
+    else
+        love.graphics.print("Panel not implemented: " .. panelKey, self.layout.sidebarWidth + 10, 50)
     end
+end
+
+function SOCView:drawThreatsPanel()
+    love.graphics.print("Threat Monitor Panel", self.layout.sidebarWidth + 10, 50)
+    -- Placeholder
+end
+
+function SOCView:drawIncidentsPanel()
+    love.graphics.print("Incident Response Panel", self.layout.sidebarWidth + 10, 50)
+    -- Placeholder
+end
+
+function SOCView:drawResourcesPanel()
+    love.graphics.print("Resource Status Panel", self.layout.sidebarWidth + 10, 50)
+    -- Placeholder
+end
+
+function SOCView:drawUpgradesPanel()
+    love.graphics.print("Upgrades Panel", self.layout.sidebarWidth + 10, 50)
+    local y = 80
+    if self.systems.upgradeSystem then
+        local availableUpgrades = self.systems.upgradeSystem:getAvailableUpgrades()
+        if availableUpgrades and #availableUpgrades > 0 then
+            for _, upgrade in ipairs(availableUpgrades) do
+                local cost = upgrade.cost.money or "N/A"
+                love.graphics.print(string.format("[%s] %s (Cost: %s)", upgrade.id, upgrade.name, cost), self.layout.sidebarWidth + 20, y)
+                y = y + 15
+            end
+        else
+            love.graphics.print("No new upgrades available.", self.layout.sidebarWidth + 20, y)
+        end
+    end
+end
+
+function SOCView:drawContractsPanel()
+    love.graphics.print("Contracts Panel", self.layout.sidebarWidth + 10, 50)
+    local y = 80
+    if self.contracts and next(self.contracts) then
+        for id, contract in pairs(self.contracts) do
+            love.graphics.print(string.format("[%s] %s - Time Left: %d", id, contract.clientName, contract.remainingTime), self.layout.sidebarWidth + 20, y)
+            y = y + 15
+        end
+    else
+        love.graphics.print("No active contracts.", self.layout.sidebarWidth + 20, y)
+    end
+end
+
+function SOCView:drawSpecialistsPanel()
+    love.graphics.print("Specialists Panel", self.layout.sidebarWidth + 10, 50)
+    local y = 80
+    if self.specialists and next(self.specialists) then
+        for id, specialist in pairs(self.specialists) do
+            local level = specialist.level or 1
+            local currentXp = specialist.xp or 0
+            local nextLevelXp = "MAX"
+            
+            if self.systems.specialistSystem and self.systems.specialistSystem.getXpForNextLevel then
+                local requiredXp = self.systems.specialistSystem:getXpForNextLevel(level)
+                if requiredXp then
+                    nextLevelXp = tostring(requiredXp)
+                end
+            end
+            
+            local xpDisplay = nextLevelXp == "MAX" and "[MAX LEVEL]" or "[" .. currentXp .. " / " .. nextLevelXp .. " XP]"
+            love.graphics.print(string.format("[%s] %s (Lvl %d) %s", id, specialist.name, level, xpDisplay), self.layout.sidebarWidth + 20, y)
+            y = y + 15
+        end
+    else
+        love.graphics.print("No specialists hired.", self.layout.sidebarWidth + 20, y)
+    end
+end
+
+function SOCView:drawEventDisplay()
+    -- Placeholder for drawing dynamic events
+    if self.currentEvent then
+        love.graphics.setColor(0, 0, 0, 0.7)
+        love.graphics.rectangle("fill", 50, love.graphics.getHeight() - 150, love.graphics.getWidth() - 100, 100)
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.printf(self.currentEvent.description, 60, love.graphics.getHeight() - 140, love.graphics.getWidth() - 120, "left")
+    end
+end
+
+function SOCView:drawSkillsPanel()
+    love.graphics.print("Skills Panel", self.layout.sidebarWidth + 10, 50)
     
-    return false
-end
-
-function SOCView:mousereleased(x, y, button)
-    if self.root then
-        return self.root:onMouseRelease(x, y, button)
+    local y = 80
+    if self.specialists and next(self.specialists) then
+        for _, specialist in pairs(self.specialists) do
+            love.graphics.print(specialist.name, self.layout.sidebarWidth + 20, y)
+            y = y + 20
+            if specialist.skills and next(specialist.skills) then
+                for skillId, skillData in pairs(specialist.skills) do
+                    local skillDef = self.systems.skillSystem:getSkillDefinition(skillId)
+                    if skillDef then
+                        local level = skillData.level or 1
+                        local xp = skillData.xp or 0
+                        local requiredXp = self.systems.skillSystem:getXpForNextLevel(level) or "MAX"
+                        
+                        -- Skill Name, Level, and XP
+                        love.graphics.print(string.format("- %s (Lvl %d) [%d/%s XP]", skillDef.name, level, xp, tostring(requiredXp)), self.layout.sidebarWidth + 30, y)
+                        y = y + 15
+                        
+                        -- Skill Description
+                        love.graphics.setColor(0.8, 0.8, 0.8)
+                        love.graphics.printf(skillDef.description, self.layout.sidebarWidth + 40, y, love.graphics.getWidth() - self.layout.sidebarWidth - 50, "left")
+                        y = y + 30 -- Add some space after description
+                        
+                        -- Skill Effects
+                        if skillDef.effects then
+                            love.graphics.setColor(0.7, 0.9, 1) -- Light blue for effects
+                            for _, effect in ipairs(skillDef.effects) do
+                                local effectValue = self.systems.skillSystem:getEffectValueForLevel(skillId, effect.type, level)
+                                love.graphics.print(string.format("  - %s: +%.2f%s", effect.description, effectValue, effect.isPercentage and "%" or ""), self.layout.sidebarWidth + 40, y)
+                                y = y + 15
+                            end
+                        end
+                        love.graphics.setColor(1, 1, 1)
+                        y = y + 10 -- Space between skills
+                    end
+                end
+            else
+                love.graphics.print("  No skills.", self.layout.sidebarWidth + 30, y)
+                y = y + 15
+            end
+            y = y + 20 -- Space between specialists
+        end
+    else
+        love.graphics.print("No specialists hired.", self.layout.sidebarWidth + 20, y)
     end
-    return false
-end
-
-function SOCView:mousemoved(x, y, dx, dy)
-    if self.root then
-        return self.root:onMouseMove(x, y)
-    end
-    return false
-end
-
-function SOCView:wheelmoved(x, y)
-    if self.root and self.root.onMouseWheel then
-        return self.root:onMouseWheel(x, y)
-    end
-    return false
 end
 
 function SOCView:keypressed(key)
-    -- Panel navigation with number keys
-    if tonumber(key) then
-        local panelKeys = {"threats", "incidents", "resources", "contracts", "specialists", "upgrades"}
-        local panelIndex = tonumber(key)
-        if panelIndex >= 1 and panelIndex <= #panelKeys then
-            self.selectedPanel = panelKeys[panelIndex]
-            self.needsRebuild = true
+    if self.showingChoiceEvent and self.currentEvent and self.currentEvent.choices then
+        local choiceIndex = tonumber(key)
+        if choiceIndex and choiceIndex > 0 and choiceIndex <= #self.currentEvent.choices then
+            self:handleEventChoice(choiceIndex)
+            return
         end
     end
-    
-    -- Toggle between Simple and Smart UI mode (F1 key)
-    if key == "f1" then
-        self.useSimpleMode = not self.useSimpleMode
-        print("🎨 UI Mode: " .. (self.useSimpleMode and "Simple" or "Smart"))
-    end
-    
-    -- ESC to return to menu
-    if key == "escape" and self.eventBus then
-        self.eventBus:publish("request_scene", {scene = "main_menu"})
-    end
-end
 
--- Simple Mode Drawing (Fast and immediate feedback!)
-function SOCView:drawSimpleMode(screenWidth, screenHeight)
-    -- Background
-    love.graphics.setColor(0.02, 0.05, 0.1, 1)
-    love.graphics.rectangle("fill", 0, 0, screenWidth, screenHeight)
-    
-    -- Grid pattern
-    love.graphics.setColor(0.1, 0.2, 0.3, 0.3)
-    for x = 0, screenWidth, 50 do
-        love.graphics.line(x, 0, x, screenHeight)
-    end
-    for y = 0, screenHeight, 50 do
-        love.graphics.line(0, y, screenWidth, y)
-    end
-    
-    -- Title
-    love.graphics.setColor(0.2, 0.8, 1.0, 1.0)
-    love.graphics.setFont(love.graphics.newFont(32))
-    love.graphics.print("🛡️ SOC COMMAND CENTER", 20, 20)
-    
-    -- Resources - BIG and VISIBLE
-    love.graphics.setFont(love.graphics.newFont(48))
-    local moneyGlow = math.sin((self.pulseTimer or 0) * 5) * 0.3 + 0.7
-    love.graphics.setColor(0.2 * moneyGlow, 1.0 * moneyGlow, 0.3 * moneyGlow, 1.0)
-    love.graphics.print(self:formatMoney(self.displayedMoney), 20, 80)
-    
-    -- Income per second
-    love.graphics.setFont(love.graphics.newFont(16))
-    love.graphics.setColor(0.3, 0.8, 0.4, 0.9)
-    if self.systems.resourceManager then
-        local state = self.systems.resourceManager:getState()
-        love.graphics.print(string.format("+%s/sec", self:formatMoney(state.moneyPerSecond or 0)), 20, 135)
-    end
-    
-    -- Reputation
-    love.graphics.setFont(love.graphics.newFont(48))
-    love.graphics.setColor(0.2, 0.8, 1.0, 1.0)
-    love.graphics.print(string.format("⭐ %.0f", self.displayedReputation), 350, 80)
-    love.graphics.setFont(love.graphics.newFont(16))
-    love.graphics.setColor(0.3, 0.7, 1.0, 0.9)
-    love.graphics.print("Reputation", 350, 135)
-    
-    -- Tutorial/Info Box
-    love.graphics.setColor(0.1, 0.3, 0.5, 0.9)
-    love.graphics.rectangle("fill", screenWidth - 420, 20, 400, 150, 5, 5)
-    love.graphics.setColor(0.2, 0.8, 1.0, 1.0)
-    love.graphics.rectangle("line", screenWidth - 420, 20, 400, 150, 5, 5)
-    
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.setFont(love.graphics.newFont(16))
-    local tutorialText = "🎮 WELCOME TO YOUR SOC!\n\n" ..
-                        "💰 Your money is growing automatically!\n" ..
-                        "👥 Hire specialists to earn faster\n" ..
-                        "📝 Accept contracts for bonuses\n" ..
-                        "Press F1 to toggle UI modes"
-    love.graphics.printf(tutorialText, screenWidth - 410, 30, 380, "left")
-    
-    -- Status info at bottom
-    love.graphics.setFont(love.graphics.newFont(14))
-    love.graphics.setColor(0.5, 0.7, 0.9, 0.8)
-    love.graphics.print("ESC: Menu", 20, screenHeight - 30)
-    love.graphics.print("F1: Toggle UI", screenWidth / 2 - 50, screenHeight - 30)
-    love.graphics.print(string.format("FPS: %.0f", love.timer.getFPS()), screenWidth - 100, screenHeight - 30)
-end
-
--- Helper: Format money for display
-function SOCView:formatMoney(amount)
-    if not amount or amount == 0 then return "$0" end
-    if amount >= 1000000 then
-        return string.format("$%.2fM", amount / 1000000)
-    elseif amount >= 10000 then
-        return string.format("$%.1fK", amount / 1000)
-    elseif amount >= 1000 then
-        return string.format("$%.2fK", amount / 1000)
-    else
-        return string.format("$%.0f", amount)
+    -- Panel navigation
+    if key == "left" then
+        self.selectedPanel = self.selectedPanel - 1
+        if self.selectedPanel < 1 then self.selectedPanel = #self.panels end
+    elseif key == "right" then
+        self.selectedPanel = self.selectedPanel + 1
+        if self.selectedPanel > #self.panels then self.selectedPanel = 1 end
+    elseif key == "escape" then
+        -- Could add a pause menu here later
     end
 end
 

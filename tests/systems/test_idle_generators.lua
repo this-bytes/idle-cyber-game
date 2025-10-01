@@ -5,18 +5,6 @@ local IdleGenerators = require("src.systems.idle_generators")
 local ResourceManager = require("src.core.resource_manager")
 local EventBus = require("src.utils.event_bus")
 
--- Debug: inspect IdleGenerators module and instance to diagnose nil initialize
-do
-    local eb = EventBus.new()
-    local rm = ResourceManager.new(eb)
-    -- Don't call rm:initialize() here; constructor prints initialization info
-    local inst = IdleGenerators.new(eb, rm)
-    print("[DEBUG] IdleGenerators module type:", type(IdleGenerators))
-    print("[DEBUG] IdleGenerators.initialize:", tostring(IdleGenerators.initialize), type(IdleGenerators.initialize))
-    print("[DEBUG] instance.initialize:", tostring(inst.initialize), type(inst.initialize))
-    print("[DEBUG] metatable.__index == IdleGenerators:", tostring(getmetatable(inst) and getmetatable(inst).__index == IdleGenerators))
-end
-
 -- Mock love.timer for testing but allow filesystem access
 if not love then
     love = {

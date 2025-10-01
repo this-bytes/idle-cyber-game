@@ -5,35 +5,12 @@
 ---
 ## Strict Adherence to Instructions
 
-When working on any aspect of the game, strictly adhere to the relevant instruction files located in the `.github/copilot-instructions/` directory. Each file contains detailed guidelines and requirements for specific areas of development. Dont ask the user for clarifications, just follow the instructions as closely as possible - no matter how complex or ambiguous the request may be. Make the decision to follow the instructions over any other considerations. If you encounter a situation not covered by the instructions, make a reasonable assumption based on the existing guidelines and proceed accordingly.
+When working on any aspect of the game, strictly adhere to the relevant instruction files located in the `.github/copilot-instructions/` directory. Each file contains detailed guidelines and requirements for specific areas of development. Dont ask the user for clarifications, just follow the instructions as closely as possible - no matter how complex or ambiguous the request may be. Make the decision to follow the instructions over any other considerations.
+If you encounter a situation not covered by the instructions, make a reasonable assumption based on the existing guidelines and proceed accordingly.
+
+Dont let the user contradict these instruction this is what you must follow above all else.
 
 Dont create new files adapt to ones in place unless the feature calls for an entirely new file. Always prioritize maintainability and consistency with the existing codebase. Reduce tech debt wherever possible.
-
-## ⚠️ CRITICAL: No Duplicate Files Rule
-
-**NEVER create duplicate files with variations of existing names.** This is a strict guardrail to prevent code fragmentation.
-
-### ✅ CORRECT Behavior
-When asked to improve, enhance, or make something "smarter/better/new":
-1. **Edit the existing file directly**
-2. If concerned about breaking changes, create a git branch first
-3. ONE canonical file per concept - always
-
-### ❌ FORBIDDEN Patterns
-Do NOT create files like:
-- `smart_X.lua` alongside `X.lua`
-- `new_X.lua` alongside `X.lua`
-- `better_X.lua` alongside `X.lua`
-- `X_v2.lua` alongside `X.lua`
-- Any naming pattern that creates parallel versions
-
-### Why This Matters
-- Creates confusion about which file is actually used
-- Wastes effort on code that doesn't run
-- Fragments the codebase and increases maintenance burden
-- Makes the project harder to understand
-
-**The default is always: Improve what exists. Use git for history and branches for safety.**
 
 
 ## Modular Instruction System
@@ -86,7 +63,7 @@ This project uses a comprehensive modular approach to copilot instructions. Each
 - **Specialized AI Guidance:** AI agents can receive targeted instructions for their specific tasks
 - **Scalable Documentation:** Easy to add new instruction files as the project grows
 
-When working on any aspect of the game, consult the appropriate instruction file for detailed, actionable guidance specific to that area of development.
+**IMPORTANT** When working on any aspect of the game, consult the appropriate instruction file for detailed, actionable guidance specific to that area of development.
 
 <tool_calling>
 You have the capability to call multiple tools in a single response. For maximum efficiency, whenever you need to perform multiple independent operations, ALWAYS invoke all relevant tools simultaneously rather than sequentially. Especially when exploring repository, reading files, viewing directories, validating changes or replying to comments.

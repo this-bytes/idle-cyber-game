@@ -1,5 +1,9 @@
--- Player System
--- Handles player position, movement, and interactions with office departments
+-- Not implemented: src/systems/player_system.lua
+-- ======================================================================
+-- We dont have a player system yet. This is a starting point that could be expanded upon.
+-- ======================================================================
+-- Player movement, position, and interaction with office departments.
+-- ======================================================================
 
 local PlayerSystem = {}
 PlayerSystem.__index = PlayerSystem

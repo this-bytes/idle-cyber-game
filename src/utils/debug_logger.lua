@@ -5,31 +5,13 @@ local DebugLogger = {}
 DebugLogger.__index = DebugLogger
 
 -- Create new debug logger
-local _singleton = nil
-
--- Create or return singleton debug logger
 function DebugLogger.new()
-    if _singleton then return _singleton end
     local self = setmetatable({}, DebugLogger)
-    -- Default to disabled so test output remains clean; enable in dev via env var
-    self.enabled = false
+    self.enabled = true
     self.debugFile = "debug.log"
     self.maxLogSize = 1000 -- Max lines to keep in memory
     self.logs = {}
-
-    -- Dev toggle: enable if environment variable is set (SOC_DEBUG or IDLE_CYBER_DEBUG)
-    local env = os.getenv("SOC_DEBUG") or os.getenv("IDLE_CYBER_DEBUG")
-    if env and (env == "1" or env:lower() == "true") then
-        self.enabled = true
-    end
-
-    _singleton = self
-    return _singleton
-end
-
--- Convenience to access singleton without calling .new()
-function DebugLogger.get()
-    return DebugLogger.new()
+    return self
 end
 
 -- Log debug message (for developers)
@@ -92,31 +74,6 @@ end
 -- Enable/disable debug logging
 function DebugLogger:setEnabled(enabled)
     self.enabled = enabled
-end
-
--- Module-level convenience wrappers
-function DebugLogger.setEnabled(enabled)
-    DebugLogger.new():setEnabled(enabled)
-end
-
-function DebugLogger.getRecentLogs(count)
-    return DebugLogger.new():getRecentLogs(count)
-end
-
-function DebugLogger.info(message, category)
-    DebugLogger.new():info(message, category)
-end
-
-function DebugLogger.warn(message, category)
-    DebugLogger.new():warn(message, category)
-end
-
-function DebugLogger.error(message, category)
-    DebugLogger.new():error(message, category)
-end
-
-function DebugLogger.debug(message, category)
-    DebugLogger.new():debug(message, category)
 end
 
 -- Convenience methods for different severity levels

@@ -1,3 +1,5 @@
+-- Unsure if this is implemented yet
+-- ======================================================================
 -- Progression System - Comprehensive player advancement and currency management
 -- Handles multiple currencies, progression tiers, prestige system, and milestones
 

@@ -1,234 +1,166 @@
--- Main Menu - Using Smart UI Framework
--- Clean, modern main menu with component-based rendering
-
-local ScrollContainer = require("src.ui.components.scroll_container")
-local Box = require("src.ui.components.box")
-local Panel = require("src.ui.components.panel")
-local Text = require("src.ui.components.text")
-local Button = require("src.ui.components.button")
+-- Main Menu Scene - SOC Game Entry Point
+-- Provides initial navigation for the SOC cybersecurity simulation
+-- Clean, professional interface matching SOC environment theme
 
 local MainMenu = {}
 MainMenu.__index = MainMenu
 
+-- Create new main menu scene
 function MainMenu.new(eventBus)
     local self = setmetatable({}, MainMenu)
     
+    -- Scene state
     self.eventBus = eventBus
-    self.root = nil
-    self.needsRebuild = true
-    
-    -- Menu configuration
     self.menuItems = {
         {text = "Start SOC Operations", action = "start_game"},
         {text = "Load Previous SOC", action = "load_game"},
         {text = "SOC Settings", action = "settings"},
-        {text = "Exit", action = "quit"}
+        {text = "Quit", action = "quit"}
     }
+    self.selectedItem = 1
     
-    print("🏠 Smart MainMenu: Initialized")
+    -- Visual elements
+    self.titleText = "🛡️ SOC Command Center"
+    self.subtitleText = "Cybersecurity Operations Management"
+    
+    print("🏠 MainMenu: Initialized SOC main menu")
     return self
 end
 
--- Scene lifecycle
+-- Enter the main menu scene
 function MainMenu:enter(data)
-    print("🏠 Smart MainMenu: Entered")
-    self.needsRebuild = true
-    -- Debug: perform a one-time layout and auto-click simulation to trace input
-    if not self._debug_autoclick_done then
-        -- Ensure UI built
-        if self.needsRebuild then
-            self:buildUI()
-        end
-        local screenWidth = love.graphics.getWidth()
-        local screenHeight = love.graphics.getHeight()
-        if self.root and self.root.measure and self.root.layout then
-            self.root:measure(screenWidth, screenHeight)
-            self.root:layout(0, 0, screenWidth, screenHeight)
-        end
-
-        -- Walk tree to find first button
-        local function findButton(component)
-            if not component then return nil end
-            if component.className == "MainMenuButton" or (component.id and tostring(component.id):match("^main_btn_")) then
-                return component
-            end
-            for _, c in ipairs(component.children or {}) do
-                local found = findButton(c)
-                if found then return found end
-            end
-            return nil
-        end
-
-        local target = findButton(self.root)
-        if target then
-            local cx = target.x + (target.width or 0) / 2
-            local cy = target.y + (target.height or 0) / 2
-            print(string.format("[UI DEBUG] Auto-clicking at x=%.1f y=%.1f (target id=%s class=%s)", cx, cy, tostring(target.id), tostring(target.className)))
-            local handled = self:mousepressed(cx, cy, 1)
-            print(string.format("[UI DEBUG] Auto-click handled=%s", tostring(handled)))
-        else
-            print("[UI DEBUG] Auto-click: target button not found in root tree")
-        end
-
-        self._debug_autoclick_done = true
-    end
+    print("🏠 Main Menu: Entered main menu")
 end
 
+-- Exit the main menu scene
 function MainMenu:exit()
-    print("🏠 Smart MainMenu: Exited")
+    print("🏠 MainMenu: Exited main menu")
 end
 
--- Build UI
-function MainMenu:buildUI()
-    local screenWidth = love.graphics.getWidth()
-    local screenHeight = love.graphics.getHeight()
-    
-    -- Root scroll container
-    self.root = ScrollContainer.new({
-        backgroundColor = {0.05, 0.1, 0.15, 1},
-        showScrollbars = false
-    })
-    
-    -- Main content container
-    local content = Box.new({
-        direction = "vertical",
-        align = "center",
-        justify = "center",
-        gap = 30,
-        padding = {50, 50, 50, 50}
-    })
-    self.root:addChild(content)
-    
-    -- Title panel
-    local titlePanel = Panel.new({
-        title = "🛡️ SOC Command Center",
-        cornerStyle = "cut",
-        glow = true,
-        minWidth = 600,
-        minHeight = 150
-    })
-    
-    local subtitle = Text.new({
-        text = "Cybersecurity Operations Management",
-        color = {0.7, 0.9, 1, 1},
-        align = "center",
-        fontSize = 16
-    })
-    titlePanel:addChild(subtitle)
-    
-    content:addChild(titlePanel)
-    
-    -- Menu buttons panel
-    local menuPanel = Panel.new({
-        title = "Main Menu",
-        cornerStyle = "rounded",
-        minWidth = 400
-    })
-    
-    local buttonBox = Box.new({
-        direction = "vertical",
-        gap = 10,
-        padding = {20, 20, 20, 20}
-    })
-    
-    for i, menuItem in ipairs(self.menuItems) do
-        local btn = Button.new({
-            id = "main_btn_" .. tostring(i),
-            className = "MainMenuButton",
-            label = menuItem.text,
-            minWidth = 360,
-            onClick = function()
-                self:handleMenuAction(menuItem.action)
-            end
-        })
-        buttonBox:addChild(btn)
-    end
-    
-    menuPanel:addChild(buttonBox)
-    content:addChild(menuPanel)
-    
-    -- Footer
-    local footer = Text.new({
-        text = "Idle Sec Ops - v1.0 - Made with LÖVE",
-        color = {0.5, 0.5, 0.6, 1},
-        align = "center",
-        fontSize = 12
-    })
-    content:addChild(footer)
-    
-    self.needsRebuild = false
-end
-
--- Handle menu action
-function MainMenu:handleMenuAction(action)
-    print("🏠 Smart MainMenu: Action selected:", action)
-    
-    if action == "start_game" then
-        -- Request SOC view scene
-        if self.eventBus then
-            self.eventBus:publish("request_scene_change", {scene = "soc_view"})
-        end
-    elseif action == "load_game" then
-        -- TODO: Implement load game
-        print("Load game not yet implemented")
-    elseif action == "settings" then
-        -- TODO: Implement settings
-        print("Settings not yet implemented")
-    elseif action == "quit" then
-        love.event.quit()
-    end
-end
-
--- Update
+-- Update main menu
 function MainMenu:update(dt)
-    if self.needsRebuild then
-        self:buildUI()
-    end
+    -- Menu animations or state updates can go here
 end
 
--- Draw
+-- Draw main menu
 function MainMenu:draw()
-    if not self.root then
-        self:buildUI()
-    end
-    
     local screenWidth = love.graphics.getWidth()
     local screenHeight = love.graphics.getHeight()
     
-    -- Measure and layout
-    self.root:measure(screenWidth, screenHeight)
-    self.root:layout(0, 0, screenWidth, screenHeight)
+    -- Background
+    love.graphics.setColor(0.05, 0.1, 0.15, 1) -- Dark blue SOC theme
+    love.graphics.rectangle("fill", 0, 0, screenWidth, screenHeight)
     
-    -- Render
-    self.root:render()
-end
-
--- Mouse events
-function MainMenu:mousepressed(x, y, button)
-    print(string.format("[UI DEBUG] MainMenu:mousepressed x=%.1f y=%.1f button=%s root=%s", x, y, tostring(button), tostring(self.root ~= nil)))
-    if self.root then
-        return self.root:onMousePress(x, y, button)
+    -- Title (nil-safe)
+    love.graphics.setColor(0.2, 0.8, 1, 1) -- Bright cyan
+    local titleFont = love.graphics.getFont()
+    local titleText = tostring(self.titleText or "")
+    local titleWidth = titleFont:getWidth(titleText)
+    love.graphics.print(titleText, (screenWidth - titleWidth) / 2, screenHeight * 0.2)
+    
+    -- Subtitle (nil-safe)
+    love.graphics.setColor(0.7, 0.9, 1, 1) -- Light cyan
+    local subtitleText = tostring(self.subtitleText or "")
+    local subtitleWidth = titleFont:getWidth(subtitleText)
+    love.graphics.print(subtitleText, (screenWidth - subtitleWidth) / 2, screenHeight * 0.25)
+    
+    -- Menu items
+    local startY = screenHeight * 0.4
+    local itemHeight = 40
+    
+    local menuItems = self.menuItems or {}
+    
+    for i, item in ipairs(menuItems) do
+        local y = startY + (i - 1) * itemHeight
+        local isSelected = (i == self.selectedItem)
+        
+        -- Highlight selected item
+        if isSelected then
+            love.graphics.setColor(0.1, 0.3, 0.5, 0.8)
+            love.graphics.rectangle("fill", screenWidth * 0.3, y - 5, screenWidth * 0.4, itemHeight - 10)
+        end
+        
+    -- Menu item text (nil-safe)
+    local textColor = isSelected and {1, 1, 1, 1} or {0.7, 0.7, 0.7, 1}
+    love.graphics.setColor(textColor)
+        
+    local itemText = tostring(item.text or "")
+    local itemWidth = titleFont:getWidth(itemText)
+    love.graphics.print(itemText, (screenWidth - itemWidth) / 2, y)
     end
-    return false
+    
+    -- Instructions
+    love.graphics.setColor(0.5, 0.5, 0.5, 1)
+    local instructionText = "Use ↑↓ to navigate, ENTER to select, ESC to quit"
+    local instrWidth = titleFont:getWidth(instructionText)
+    love.graphics.print(instructionText, (screenWidth - instrWidth) / 2, screenHeight * 0.8)
+    
+    -- SOC status indicator
+    love.graphics.setColor(0.2, 0.8, 0.2, 1) -- Green
+    love.graphics.print("SOC Status: READY", 20, screenHeight - 40)
+    
+    -- Reset color
+    love.graphics.setColor(1, 1, 1, 1)
 end
 
-function MainMenu:mousereleased(x, y, button)
-    if self.root then
-        return self.root:onMouseRelease(x, y, button)
-    end
-    return false
-end
-
-function MainMenu:mousemoved(x, y, dx, dy)
-    if self.root then
-        return self.root:onMouseMove(x, y)
-    end
-    return false
-end
-
--- Keyboard
+-- Handle key input
 function MainMenu:keypressed(key)
-    if key == "escape" then
+    if not self.menuItems or #self.menuItems == 0 then return end
+
+    if key == "up" then
+        self.selectedItem = math.max(1, self.selectedItem - 1)
+    elseif key == "down" then
+        self.selectedItem = math.min(#self.menuItems, self.selectedItem + 1)
+    elseif key == "return" or key == "enter" then
+        self:activateMenuItem()
+    elseif key == "escape" then
+        self:activateMenuItem(4) -- Quit
+    end
+end
+
+-- Handle mouse input
+function MainMenu:mousepressed(x, y, button)
+    if button == 1 then -- Left click
+        local screenHeight = love.graphics.getHeight()
+        local startY = screenHeight * 0.4
+        local itemHeight = 40
+        local menuItems = self.menuItems or {}
+
+        for i, item in ipairs(menuItems) do
+            local itemY = startY + (i - 1) * itemHeight
+            if y >= itemY and y <= itemY + itemHeight then
+                self.selectedItem = i
+                self:activateMenuItem()
+                break
+            end
+        end
+    end
+end
+
+-- Activate the selected menu item
+function MainMenu:activateMenuItem(itemIndex)
+    local index = itemIndex or self.selectedItem
+    local item = self.menuItems[index]
+    
+    if not item then return end
+    
+    if item.action == "start_game" then
+        if self.eventBus then
+            self.eventBus:publish("scene_request", {scene = "soc_view"})
+        else
+            print("scene_request: soc_view (eventBus missing)")
+        end
+    elseif item.action == "load_game" then
+        if self.eventBus then
+            self.eventBus:publish("load_game_request", {})
+            self.eventBus:publish("scene_request", {scene = "soc_view"})
+        else
+            print("load_game_request + scene_request: eventBus missing")
+        end
+    elseif item.action == "settings" then
+        -- TODO: Implement settings scene
+        print("⚙️ Settings menu not yet implemented")
+    elseif item.action == "quit" then
         love.event.quit()
     end
 end

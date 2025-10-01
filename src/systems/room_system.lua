@@ -1,3 +1,5 @@
+-- Not Implemented Yet
+-- Appart of a room system i was thinking of
 -- Room System
 -- Manages multiple room environments, transitions, and room-specific mechanics
 

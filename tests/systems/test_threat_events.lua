@@ -68,7 +68,8 @@ end)
 -- Test SOCView publishes canonical format
 runTest("SOCView: Publishes canonical threat_detected event", function()
     local eventBus = EventBus.new()
-    local socView = SOCView.new(eventBus)
+    local socView = SOCView.new()
+    socView:initialize(eventBus)
     
     -- Set up SOC view state for threat generation
     socView.socStatus.detectionCapability = 100 -- Force threat detection
@@ -191,7 +192,8 @@ end)
 -- Test SOCView consumes canonical format correctly  
 runTest("SOCView: Consumes canonical threat_detected event", function()
     local eventBus = EventBus.new()
-    local socView = SOCView.new(eventBus)
+    local socView = SOCView.new()
+    socView:initialize(eventBus)
     
     local initialIncidents = #socView.socStatus.activeIncidents
     

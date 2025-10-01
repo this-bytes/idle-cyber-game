@@ -1,4 +1,7 @@
--- src/systems/upgrade_system.lua
+-- Upgrade System
+-- Manages purchasable upgrades, their effects, and integration with resources
+-- Depends on EventBus for event-driven architecture and DataManager for loading upgrade data
+-- Integral to gameplay progression and strategy
 
 local UpgradeSystem = {}
 UpgradeSystem.__index = UpgradeSystem

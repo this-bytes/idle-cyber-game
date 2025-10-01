@@ -1,3 +1,6 @@
+-- Not implemented yet
+-- Was na idea for a room system but it fits better as a zone system
+-- Zones represent different business locations with unique attributes and challenges
 -- Zone Management System
 -- Handles zone progression, unlocking, and zone-specific bonuses
 

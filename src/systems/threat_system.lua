@@ -1,4 +1,5 @@
 -- Threat System - Dynamic Threat Generation and Management
+-- Integeral to gameplay loop
 -- Generates periodic security threats that require player intervention
 -- Integrates with existing CrisisGameSystem for interactive response
 
@@ -41,9 +42,7 @@ function ThreatSystem:initialize()
         self:handleAbilityUsage(data)
     end)
 
-    local DebugLogger = require("src.utils.debug_logger")
-    local logger = DebugLogger.get()
-    logger:info("ThreatSystem: Initialized with " .. #self.threatTemplates .. " threat templates")
+    print("🚨 ThreatSystem: Initialized with " .. #self.threatTemplates .. " threat templates")
 end
 
 function ThreatSystem:handleAbilityUsage(data)
@@ -82,14 +81,12 @@ end
 
 -- Load threat templates (embedded for now, can be moved to JSON later)
 function ThreatSystem:loadThreatTemplates()
-    -- Try to load from DataManager first (only if it exposes getData)
-    if self.dataManager and type(self.dataManager.getData) == "function" then
-        local ok, threatData = pcall(function() return self.dataManager:getData("threats") end)
-        if ok and threatData and #threatData > 0 then
+    -- Try to load from DataManager first
+    if self.dataManager then
+        local threatData = self.dataManager:getData("threats")
+        if threatData and #threatData > 0 then
             self.threatTemplates = threatData
-                local DebugLogger = require("src.utils.debug_logger")
-                local logger = DebugLogger.get()
-                logger:info("ThreatSystem: Loaded " .. #self.threatTemplates .. " threats from data file")
+            print("🚨 ThreatSystem: Loaded " .. #self.threatTemplates .. " threats from data file")
             return
         end
     end
@@ -142,9 +139,7 @@ function ThreatSystem:loadThreatTemplates()
             hp = 160
         }
     }
-    local DebugLogger = require("src.utils.debug_logger")
-    local logger = DebugLogger.get()
-    logger:info("ThreatSystem: Using embedded threat templates")
+    print("🚨 ThreatSystem: Using embedded threat templates")
 end
 
 -- Update threat system
@@ -168,9 +163,7 @@ function ThreatSystem:update(dt)
         -- Defensive: ensure timeRemaining is present and numeric
         if threat.timeRemaining == nil then
             threat.timeRemaining = threat.timeToResolve or 0
-            local DebugLogger = require("src.utils.debug_logger")
-            local logger = DebugLogger.get()
-            logger:debug(string.format("[THREAT DEBUG] Initialized missing timeRemaining for threat id=%s name=%s to %.1f", tostring(threatId), tostring(threat.name), tonumber(threat.timeRemaining) or 0))
+            print(string.format("[THREAT DEBUG] Initialized missing timeRemaining for threat id=%s name=%s to %.1f", tostring(threatId), tostring(threat.name), tonumber(threat.timeRemaining) or 0))
         end
         threat.timeRemaining = threat.timeRemaining - dt
 
@@ -210,11 +203,6 @@ function ThreatSystem:generateThreat()
     self.nextThreatId = self.nextThreatId + 1
     
     self.eventBus:publish("threat_generated", {threat = newThreat})
-
-    -- Also publish canonical threat_detected event for compatibility with consumers/tests
-    if self.eventBus then
-        self.eventBus:publish("threat_detected", { threat = newThreat, source = "threat_simulation" })
-    end
 
     -- If threat is critical, force switch to Admin Mode
     if newThreat.severity >= 7 then

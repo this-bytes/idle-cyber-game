@@ -17,27 +17,9 @@ function SkillSystem.new(eventBus, dataManager)
     -- Format: [entityId][skillId] = {level, xp, unlocked}
     self.skillProgress = {}
     
-    -- Load skill definitions from data file. Support tests that call SkillSystem.new(eventBus) without a DataManager
-    if self.dataManager and type(self.dataManager.getData) == "function" then
-        local ok, skillsData = pcall(function() return self.dataManager:getData("skills") end)
-        if ok and skillsData then
-            self.skills = skillsData.skills or {}
-            self.categories = skillsData.categories or {}
-        else
-            self.skills = {}
-            self.categories = {}
-        end
-    else
-        -- Fallback to bundled data module
-        local ok, SkillData = pcall(require, "src.data.skills")
-        if ok and SkillData then
-            self.skills = SkillData.skills or {}
-            self.categories = SkillData.categories or {}
-        else
-            self.skills = {}
-            self.categories = {}
-        end
-    end
+    -- Load skill definitions from data file
+    self.skills = self.dataManager:getData("skills").skills or {}
+    self.categories = self.dataManager:getData("skills").categories or {}
     
     local skillCount = 0
     if self.skills then
@@ -120,10 +102,6 @@ function SkillSystem:initializeEntity(entityId, entityType)
     -- Automatically unlock basic skills for now
     self:unlockSkill(entityId, "basic_analysis")
     self:unlockSkill(entityId, "network_fundamentals")
-    -- CEOs get leadership skills by default
-    if entityType == "ceo" or entityId == 0 then
-        self:unlockSkill(entityId, "team_coordination")
-    end
 end
 
 function SkillSystem:getSkillDefinition(skillId)
@@ -373,7 +351,7 @@ function SkillSystem:getSkillsByCategory(category)
     local categorizedSkills = {}
     for id, skill in pairs(self.skills) do
         if skill.category == category then
-            categorizedSkills[id] = skill
+            table.insert(categorizedSkills, skill)
         end
     end
     return categorizedSkills

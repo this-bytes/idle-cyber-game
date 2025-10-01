@@ -1,3 +1,6 @@
+-- Not implemented yet
+-- File: src/systems/room_event_system.lua
+-- Cool idea: room-specific dynamic events that can occur based on player actions, time spent, or random chance. Maybe it can be implemented
 -- Room Event System
 -- Handles dynamic events, encounters, and special situations that occur in different rooms
 

@@ -1,3 +1,5 @@
+-- Not Implemented Yet
+-- Appart of a room system i was thinking of
 -- Sound System - Advanced audio management for immersive experience
 -- Handles dynamic sound effects, ambient tracks, and reactive audio
 
