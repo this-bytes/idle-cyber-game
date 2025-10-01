@@ -1,7 +1,10 @@
 {
   "specialists": {
     "junior_analyst": {
+      "id": "junior_analyst",
+      "type": "specialist",
       "name": "Junior Security Analyst",
+      "displayName": "Junior Security Analyst",
       "cost": {
         "money": 5000
       },
@@ -9,15 +12,29 @@
       "speed": 1.1,
       "trace": 1.0,
       "defense": 1.1,
-      "description": "Updated specialist",
+      "description": "Entry-level analyst with basic security fundamentals",
       "abilities": [
         "basic_analysis",
         "network_fundamentals"
       ],
-      "tier": 1
+      "tier": 1,
+      "rarity": "common",
+      "tags": ["analyst", "junior", "network"],
+      "effects": {
+        "passive": [
+          {
+            "type": "efficiency_boost",
+            "value": 1.1,
+            "target": "all"
+          }
+        ]
+      }
     },
     "test_specialist": {
+      "id": "test_specialist",
+      "type": "specialist",
       "name": "Test Specialist",
+      "displayName": "Test Specialist",
       "cost": {
         "money": 10000,
         "reputation": 5
@@ -31,7 +48,146 @@
         "malware_analysis",
         "basic_response"
       ],
-      "tier": 2
+      "tier": 2,
+      "rarity": "common",
+      "tags": ["malware", "response"],
+      "effects": {
+        "passive": [
+          {
+            "type": "threat_reduction",
+            "value": 0.1,
+            "target": "malware"
+          }
+        ]
+      }
+    },
+    "network_specialist": {
+      "id": "network_specialist",
+      "type": "specialist",
+      "name": "Network Security Expert",
+      "displayName": "Network Security Expert",
+      "cost": {
+        "money": 15000,
+        "reputation": 10
+      },
+      "efficiency": 2.5,
+      "speed": 1.3,
+      "trace": 1.2,
+      "defense": 1.5,
+      "description": "Expert in network security and infrastructure protection",
+      "abilities": [
+        "firewall_config",
+        "intrusion_detection",
+        "network_analysis"
+      ],
+      "tier": 2,
+      "rarity": "rare",
+      "tags": ["network", "infrastructure", "expert"],
+      "effects": {
+        "passive": [
+          {
+            "type": "threat_reduction",
+            "value": 0.15,
+            "target": "network"
+          }
+        ]
+      }
+    },
+    "app_security_specialist": {
+      "id": "app_security_specialist",
+      "type": "specialist",
+      "name": "Application Security Specialist",
+      "displayName": "Application Security Specialist",
+      "cost": {
+        "money": 18000,
+        "reputation": 15
+      },
+      "efficiency": 2.8,
+      "speed": 1.4,
+      "trace": 1.3,
+      "defense": 1.4,
+      "description": "Specialized in securing web and mobile applications",
+      "abilities": [
+        "code_review",
+        "vulnerability_assessment",
+        "secure_coding"
+      ],
+      "tier": 2,
+      "rarity": "rare",
+      "tags": ["application", "web", "mobile", "expert"],
+      "effects": {
+        "passive": [
+          {
+            "type": "income_multiplier",
+            "value": 1.15,
+            "target": "startup"
+          }
+        ]
+      }
+    },
+    "cloud_specialist": {
+      "id": "cloud_specialist",
+      "type": "specialist",
+      "name": "Cloud Security Architect",
+      "displayName": "Cloud Security Architect",
+      "cost": {
+        "money": 25000,
+        "reputation": 20
+      },
+      "efficiency": 3.0,
+      "speed": 1.5,
+      "trace": 1.4,
+      "defense": 1.6,
+      "description": "Expert in cloud infrastructure and security architecture",
+      "abilities": [
+        "cloud_architecture",
+        "container_security",
+        "iam_management"
+      ],
+      "tier": 3,
+      "rarity": "epic",
+      "tags": ["cloud", "architecture", "expert"],
+      "effects": {
+        "passive": [
+          {
+            "type": "income_multiplier",
+            "value": 1.25,
+            "target": "cloud"
+          }
+        ]
+      }
+    },
+    "fintech_specialist": {
+      "id": "fintech_specialist",
+      "type": "specialist",
+      "name": "FinTech Security Consultant",
+      "displayName": "FinTech Security Consultant",
+      "cost": {
+        "money": 30000,
+        "reputation": 25
+      },
+      "efficiency": 3.5,
+      "speed": 1.6,
+      "trace": 1.5,
+      "defense": 1.7,
+      "description": "Specialized in financial technology security and compliance",
+      "abilities": [
+        "compliance_audit",
+        "fraud_detection",
+        "pci_dss"
+      ],
+      "tier": 3,
+      "rarity": "epic",
+      "tags": ["fintech", "compliance", "fraud", "expert"],
+      "effects": {
+        "passive": [
+          {
+            "type": "income_multiplier",
+            "value": 1.3,
+            "target": "fintech"
+          }
+        ]
+      }
     }
   },
   "tiers": {

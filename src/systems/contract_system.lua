@@ -1,17 +1,23 @@
 -- Contract Management System - Idle Sec Ops
 -- Handles client contracts, the primary idle gameplay loop
+-- AWESOME Backend Integration
 
 local ContractSystem = {}
 ContractSystem.__index = ContractSystem
 
 -- Create new contract system
-function ContractSystem.new(eventBus, dataManager, upgradeSystem, specialistSystem)
+function ContractSystem.new(eventBus, dataManager, upgradeSystem, specialistSystem, itemRegistry, effectProcessor)
     local self = setmetatable({}, ContractSystem)
     self.eventBus = eventBus
     self.dataManager = dataManager
     self.upgradeSystem = upgradeSystem
     self.specialistSystem = specialistSystem -- Store reference to specialist system
-    self.skillSystem = specialistSystem.skillSystem -- Get from specialist system
+    self.skillSystem = specialistSystem and specialistSystem.skillSystem or nil -- Get from specialist system
+    
+    -- AWESOME Backend systems
+    self.itemRegistry = itemRegistry
+    self.effectProcessor = effectProcessor
+    
     self.contracts = nil -- Will be loaded during initialize
     self.availableContracts = {}
     self.activeContracts = {}
@@ -25,17 +31,22 @@ function ContractSystem.new(eventBus, dataManager, upgradeSystem, specialistSyst
 end
 
 function ContractSystem:initialize()
-    -- Load contract definitions from the DataManager
-    local contractData = self.dataManager:getData("contracts")
-    -- The data from JSON is a direct array, not nested under a "contracts" key.
-    if not contractData or type(contractData) ~= "table" then
-        print("❌ ERROR: Contract data not found or malformed in DataManager. Contract system will not function.")
-        self.contracts = {} -- Prevent crashes
+    -- Load contract definitions from ItemRegistry if available
+    if self.itemRegistry then
+        self.contracts = self.itemRegistry:getItemsByType("contract")
+        print("📜 Contract system initialized with " .. #self.contracts .. " contract types (AWESOME Backend).")
     else
-        self.contracts = contractData
+        -- Fallback to old DataManager
+        local contractData = self.dataManager:getData("contracts")
+        -- The data from JSON is a direct array, not nested under a "contracts" key.
+        if not contractData or type(contractData) ~= "table" then
+            print("❌ ERROR: Contract data not found or malformed in DataManager. Contract system will not function.")
+            self.contracts = {} -- Prevent crashes
+        else
+            self.contracts = contractData
+        end
+        print("📜 Contract system initialized with " .. #self.contracts .. " contract types.")
     end
-    
-    print("📜 Contract system initialized with " .. #self.contracts .. " contract types.")
 
     -- Start with one active contract to get the ball rolling
     if #self.availableContracts == 0 and #self.activeContracts == 0 then
@@ -81,49 +92,113 @@ end
 
 function ContractSystem:generateIncome()
     local totalIncome = 0
-    local incomeModifier = 1.0
-
-    -- Check for income-boosting upgrades
-    if self.upgradeSystem then
-        local purchasedUpgrades = self.upgradeSystem:getPurchasedUpgrades()
-        for _, upgrade in ipairs(purchasedUpgrades) do
-            if upgrade.effects and upgrade.effects.income_multiplier then
-                incomeModifier = incomeModifier + (upgrade.effects.income_multiplier - 1)
-            end
-        end
-    end
-
-    -- Check for specialist efficiency bonuses
-    if self.specialistSystem then
-        local teamBonuses = self.specialistSystem:getTeamBonuses()
-        if teamBonuses and teamBonuses.efficiency then
-            incomeModifier = incomeModifier * teamBonuses.efficiency
-        end
-    end
-
+    
     if #self.activeContracts == 0 then
-        -- print("DEBUG: No active contracts to generate income from.")
         return
     end
 
-    for id, contract in pairs(self.activeContracts) do
-        -- DEBUG LOG: Check contract values
-        -- print(string.format("DEBUG: Calculating income for contract %s. Reward: %s, Duration: %s", id, tostring(contract.reward), tostring(contract.duration)))
-        
-        -- Income per second is the total reward divided by the duration
-        local incomePerSecond = contract.reward / contract.duration
-        totalIncome = totalIncome + incomePerSecond
+    -- Use AWESOME Backend if available
+    if self.effectProcessor and self.itemRegistry then
+        for id, contract in pairs(self.activeContracts) do
+            -- Get contract item definition
+            local contractItem = self.itemRegistry:getItem(contract.templateId or contract.id)
+            
+            if contractItem then
+                -- Build context for effect calculation
+                local context = {
+                    type = "contract",
+                    tags = contractItem.tags or {},
+                    activeItems = self:getActiveEffectItems(),
+                    soft_cap = 10.0 -- Prevent runaway growth
+                }
+                
+                -- Calculate income with all active effects
+                local baseIncome = contract.reward / contract.duration
+                local effectiveIncome = self.effectProcessor:calculateValue(
+                    baseIncome,
+                    "income_multiplier",
+                    context
+                )
+                
+                totalIncome = totalIncome + effectiveIncome
+            else
+                -- Fallback to basic calculation
+                local incomePerSecond = contract.reward / contract.duration
+                totalIncome = totalIncome + incomePerSecond
+            end
+        end
+    else
+        -- Legacy calculation
+        local incomeModifier = 1.0
+
+        -- Check for income-boosting upgrades
+        if self.upgradeSystem then
+            local purchasedUpgrades = self.upgradeSystem:getPurchasedUpgrades()
+            for _, upgrade in ipairs(purchasedUpgrades) do
+                if upgrade.effects and upgrade.effects.income_multiplier then
+                    incomeModifier = incomeModifier + (upgrade.effects.income_multiplier - 1)
+                end
+            end
+        end
+
+        -- Check for specialist efficiency bonuses
+        if self.specialistSystem then
+            local teamBonuses = self.specialistSystem:getTeamBonuses()
+            if teamBonuses and teamBonuses.efficiency then
+                incomeModifier = incomeModifier * teamBonuses.efficiency
+            end
+        end
+
+        for id, contract in pairs(self.activeContracts) do
+            local incomePerSecond = contract.reward / contract.duration
+            totalIncome = totalIncome + incomePerSecond
+        end
+
+        totalIncome = totalIncome * incomeModifier
     end
-
-    -- Apply the modifier
-    totalIncome = totalIncome * incomeModifier
-
-    -- DEBUG LOG: Check final income value
-    -- print(string.format("DEBUG: Total income this tick: %f", totalIncome))
 
     if totalIncome > 0 then
         self.eventBus:publish("resource_add", { money = totalIncome })
     end
+end
+
+function ContractSystem:getActiveEffectItems()
+    local items = {}
+    
+    -- Include all purchased upgrades
+    if self.upgradeSystem then
+        local upgrades = self.upgradeSystem:getPurchasedUpgrades()
+        for _, upgrade in ipairs(upgrades) do
+            if self.itemRegistry then
+                local item = self.itemRegistry:getItem(upgrade.id)
+                if item then
+                    table.insert(items, item)
+                end
+            else
+                -- Fallback: treat upgrade as effect item directly
+                table.insert(items, upgrade)
+            end
+        end
+    end
+    
+    -- Include all active specialists
+    if self.specialistSystem then
+        local specialists = self.specialistSystem:getActiveSpecialists()
+        if specialists then
+            for _, specialist in ipairs(specialists) do
+                if self.itemRegistry then
+                    local item = self.itemRegistry:getItem(specialist.id)
+                    if item then
+                        table.insert(items, item)
+                    end
+                else
+                    table.insert(items, specialist)
+                end
+            end
+        end
+    end
+    
+    return items
 end
 
 function ContractSystem:generateRandomContract()

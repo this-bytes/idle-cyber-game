@@ -1,32 +1,98 @@
 [
   {
     "id": "basic_small_business",
+    "type": "contract",
     "clientName": "Small Business",
+    "displayName": "Small Business Security",
     "description": "Provide basic security audit and recommendations.",
     "baseBudget": 100,
     "baseDuration": 30,
     "reputationReward": 1,
     "riskLevel": "LOW",
-    "requiredResources": []
+    "requiredResources": [],
+    "rarity": "common",
+    "tags": ["small_business", "audit", "basic"],
+    "tier": 1,
+    "effects": {
+      "passive": []
+    }
   },
   {
     "id": "tech_startup",
+    "type": "contract",
     "clientName": "Tech Startup",
+    "displayName": "Tech Startup Security",
     "description": "Implement a lightweight WAF and incident response plan.",
     "baseBudget": 400,
     "baseDuration": 60,
     "reputationReward": 2,
     "riskLevel": "MEDIUM",
-    "requiredResources": []
+    "requiredResources": [],
+    "rarity": "common",
+    "tags": ["startup", "waf", "incident_response"],
+    "tier": 2,
+    "effects": {
+      "passive": []
+    }
   },
   {
     "id": "enterprise_contract",
+    "type": "contract",
     "clientName": "Enterprise Corp",
+    "displayName": "Enterprise Security",
     "description": "Enterprise security overhaul with training and long-term monitoring.",
     "baseBudget": 5000,
     "baseDuration": 300,
     "reputationReward": 20,
     "riskLevel": "HIGH",
-    "requiredResources": []
+    "requiredResources": [],
+    "rarity": "rare",
+    "tags": ["enterprise", "training", "monitoring", "long_term"],
+    "tier": 3,
+    "effects": {
+      "passive": [
+        {
+          "type": "reputation_multiplier",
+          "value": 1.1,
+          "target": "all"
+        }
+      ]
+    }
+  },
+  {
+    "id": "fintech_compliance",
+    "type": "contract",
+    "clientName": "FinTech Solutions Inc",
+    "displayName": "FinTech Compliance",
+    "description": "Ensure compliance with financial regulations and implement fraud detection.",
+    "baseBudget": 2500,
+    "baseDuration": 180,
+    "reputationReward": 10,
+    "riskLevel": "HIGH",
+    "requiredResources": [],
+    "rarity": "rare",
+    "tags": ["fintech", "compliance", "fraud_detection"],
+    "tier": 3,
+    "effects": {
+      "passive": []
+    }
+  },
+  {
+    "id": "cloud_migration",
+    "type": "contract",
+    "clientName": "Cloud Infrastructure Ltd",
+    "displayName": "Cloud Migration Security",
+    "description": "Secure cloud migration and implement cloud-native security controls.",
+    "baseBudget": 3000,
+    "baseDuration": 240,
+    "reputationReward": 15,
+    "riskLevel": "HIGH",
+    "requiredResources": [],
+    "rarity": "rare",
+    "tags": ["cloud", "migration", "infrastructure"],
+    "tier": 3,
+    "effects": {
+      "passive": []
+    }
   }
 ]

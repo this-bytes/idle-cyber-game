@@ -2,35 +2,140 @@
     "upgrades": [
         {
             "id": "upgrade_001",
+            "type": "upgrade",
             "name": "Faster Routers",
+            "displayName": "Faster Routers",
             "description": "Increases income from all contracts by 10%.",
             "cost": {
                 "money": 50
             },
+            "rarity": "common",
+            "tier": 1,
+            "tags": ["infrastructure", "network", "passive_income"],
             "effects": {
-                "income_multiplier": 1.10
+                "passive": [
+                    {
+                        "type": "income_multiplier",
+                        "value": 1.10,
+                        "target": "all"
+                    }
+                ]
             }
         },
         {
             "id": "upgrade_002",
+            "type": "upgrade",
             "name": "Advanced Encryption",
+            "displayName": "Advanced Encryption",
             "description": "Increases income from all contracts by 20%.",
             "cost": {
                 "money": 250
             },
+            "rarity": "common",
+            "tier": 2,
+            "tags": ["encryption", "security", "passive_income"],
             "effects": {
-                "income_multiplier": 1.20
+                "passive": [
+                    {
+                        "type": "income_multiplier",
+                        "value": 1.20,
+                        "target": "all"
+                    }
+                ]
             }
         },
         {
             "id": "upgrade_003",
+            "type": "upgrade",
             "name": "AI-Powered Threat Intel",
+            "displayName": "AI-Powered Threat Intel",
             "description": "Increases income from all contracts by 50%.",
             "cost": {
                 "money": 1000
             },
+            "rarity": "rare",
+            "tier": 3,
+            "tags": ["ai", "threat_intelligence", "passive_income"],
             "effects": {
-                "income_multiplier": 1.50
+                "passive": [
+                    {
+                        "type": "income_multiplier",
+                        "value": 1.50,
+                        "target": "all"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "upgrade_004",
+            "type": "upgrade",
+            "name": "Threat Mitigation Suite",
+            "displayName": "Threat Mitigation Suite",
+            "description": "Reduces threat damage by 15%.",
+            "cost": {
+                "money": 500
+            },
+            "rarity": "rare",
+            "tier": 2,
+            "tags": ["threat_mitigation", "defense", "protection"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "threat_reduction",
+                        "value": 0.15,
+                        "target": "all"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "upgrade_005",
+            "type": "upgrade",
+            "name": "Advanced SIEM",
+            "displayName": "Advanced SIEM",
+            "description": "Reduces threat damage by 25% and increases XP gain by 10%.",
+            "cost": {
+                "money": 2000,
+                "reputation": 10
+            },
+            "rarity": "epic",
+            "tier": 3,
+            "tags": ["threat_mitigation", "siem", "monitoring"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "threat_reduction",
+                        "value": 0.25,
+                        "target": "all"
+                    },
+                    {
+                        "type": "xp_multiplier",
+                        "value": 1.10,
+                        "target": "all"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "upgrade_006",
+            "type": "upgrade",
+            "name": "Contract Efficiency Optimizer",
+            "displayName": "Contract Efficiency Optimizer",
+            "description": "Reduces contract duration by 10%.",
+            "cost": {
+                "money": 800
+            },
+            "rarity": "rare",
+            "tier": 2,
+            "tags": ["efficiency", "time_saver", "optimization"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "duration_reduction",
+                        "value": 0.10,
+                        "target": "contract"
+                    }
+                ]
             }
         }
     ]
