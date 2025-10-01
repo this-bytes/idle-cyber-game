@@ -173,6 +173,69 @@ function love.mousepressed(x, y, button)
 end
 ```
 
+### Pattern 5: Scene Mouse Event Integration
+**CRITICAL: When integrating Smart UI components in scenes, you MUST map LÖVE's mouse events to Component methods:**
+
+The Component base class uses these method names:
+- `onMouseMove(x, y)` - for mouse movement and hover detection
+- `onMousePress(x, y, button)` - for mouse button press
+- `onMouseRelease(x, y, button)` - for mouse button release
+- `onMouseWheel(x, y)` - for scroll wheel events
+
+**✅ CORRECT Scene Implementation:**
+```lua
+-- In your scene or UI manager class:
+function MyScene:mousepressed(x, y, button)
+    if self.root then
+        return self.root:onMousePress(x, y, button)  -- Note: onMousePress, not mousepressed
+    end
+    return false
+end
+
+function MyScene:mousereleased(x, y, button)
+    if self.root then
+        return self.root:onMouseRelease(x, y, button)  -- Note: onMouseRelease
+    end
+    return false
+end
+
+function MyScene:mousemoved(x, y, dx, dy)
+    if self.root then
+        return self.root:onMouseMove(x, y)  -- Note: onMouseMove (only x, y)
+    end
+    return false
+end
+
+function MyScene:wheelmoved(x, y)
+    if self.root and self.root.onMouseWheel then
+        return self.root:onMouseWheel(x, y)  -- Note: onMouseWheel
+    end
+    return false
+end
+```
+
+**❌ WRONG - Calling non-existent methods:**
+```lua
+-- DON'T do this - these methods don't exist on Component!
+function MyScene:mousemoved(x, y, dx, dy)
+    if self.root then
+        return self.root:mousemoved(x, y, dx, dy)  -- ❌ Wrong method name
+    end
+end
+
+function MyScene:wheelmoved(x, y)
+    if self.root then
+        return self.root:mouseWheel(x, y)  -- ❌ Wrong method name (also missing 'on' prefix)
+    end
+end
+```
+
+**Key Points:**
+1. LÖVE events use lowercase names: `mousepressed`, `mousereleased`, `mousemoved`, `wheelmoved`
+2. Component methods use camelCase with `on` prefix: `onMousePress`, `onMouseRelease`, `onMouseMove`, `onMouseWheel`
+3. `onMouseMove` only takes `(x, y)`, not `(x, y, dx, dy)`
+4. Always check if methods exist before calling (especially for optional ones like `onMouseWheel`)
+
 ---
 
 ## Viewport Management Rules

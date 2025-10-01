@@ -117,6 +117,36 @@ function SceneManager:mousepressed(x, y, button)
     end
 end
 
+--- Passes a mouse release event to the current scene.
+-- @param x Mouse x-coordinate.
+-- @param y Mouse y-coordinate.
+-- @param button Mouse button index.
+function SceneManager:mousereleased(x, y, button)
+    if self.currentScene and self.currentScene.mousereleased then
+        self.currentScene:mousereleased(x, y, button)
+    end
+end
+
+--- Passes a mouse move event to the current scene.
+-- @param x Mouse x-coordinate.
+-- @param y Mouse y-coordinate.
+-- @param dx Delta x.
+-- @param dy Delta y.
+function SceneManager:mousemoved(x, y, dx, dy)
+    if self.currentScene and self.currentScene.mousemoved then
+        self.currentScene:mousemoved(x, y, dx, dy)
+    end
+end
+
+--- Passes a mouse wheel event to the current scene.
+-- @param x Horizontal scroll amount.
+-- @param y Vertical scroll amount.
+function SceneManager:wheelmoved(x, y)
+    if self.currentScene and self.currentScene.wheelmoved then
+        self.currentScene:wheelmoved(x, y)
+    end
+end
+
 --- Passes a resize event to the current scene.
 -- @param w New window width.
 -- @param h New window height.
