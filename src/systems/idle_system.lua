@@ -303,7 +303,22 @@ end
 
 -- Helper function to get upgrade counts (with fallback for non-existent upgrades)
 function IdleSystem:getUpgradeCount(upgradeId)
-    return self.upgradeSystem.owned[upgradeId] or 0
+    if not self.upgradeSystem then return 0 end
+    if self.upgradeSystem.owned and self.upgradeSystem.owned[upgradeId] then
+        return self.upgradeSystem.owned[upgradeId]
+    end
+    -- Fallback: if upgradeSystem provides a getter, try that
+    if type(self.upgradeSystem.getOwnedUpgrades) == "function" then
+        local owned = self.upgradeSystem:getOwnedUpgrades()
+        if type(owned) == "table" then
+            for _, u in ipairs(owned) do
+                if u.id == upgradeId then
+                    return u.count or 0
+                end
+            end
+        end
+    end
+    return 0
 end
 
 -- Apply offline progress to game state
@@ -315,17 +330,23 @@ function IdleSystem:applyOfflineProgress(progress)
     -- Apply net resource change
     if progress.netGain > 0 then
         self.resourceSystem:addResource("money", progress.netGain)
-        print("💰 Net offline gain: $" .. progress.netGain)
+    local DebugLogger = require("src.utils.debug_logger")
+    local logger = DebugLogger.get()
+    logger:info("Net offline gain: $" .. progress.netGain)
     elseif progress.netGain < 0 then
         self.resourceSystem:spendResources({money = -progress.netGain})
-        print("⚠️ Net offline loss: $" .. (-progress.netGain))
+    local DebugLogger = require("src.utils.debug_logger")
+    local logger = DebugLogger.get()
+    logger:warn("Net offline loss: $" .. (-progress.netGain))
     end
     
     -- Award experience for surviving threats
     local xpGained = math.floor(#progress.events * 10)
     if xpGained > 0 then
         self.resourceSystem:addResource("xp", xpGained)
-        print("🎓 Experience gained from threat handling: " .. xpGained)
+    local DebugLogger = require("src.utils.debug_logger")
+    local logger = DebugLogger.get()
+    logger:info("Experience gained from threat handling: " .. xpGained)
     end
     
     -- Store event data for UI display

@@ -15,75 +15,112 @@ function SOCIdleOperations.new(eventBus, resourceManager, threatSimulation, secu
     self.threatSimulation = threatSimulation
     self.securityUpgrades = securityUpgrades
     
-    -- Idle tracking
-    self.lastUpdateTime = love.timer.getTime()
-    self.passiveOperations = {
-        threatMonitoring = {
-            enabled = false,
-            interval = 10.0, -- Check every 10 seconds
-            lastCheck = 0,
-            effectivenessRate = 0.1 -- Base 10% automation
-        },
-        incidentResponse = {
-            enabled = false,
-            interval = 15.0, -- Respond every 15 seconds
-            lastResponse = 0,
-            successRate = 0.05 -- Base 5% auto-resolve
-        },
-        resourceGeneration = {
-            enabled = true,
-            baseRate = 1.0, -- $1 per second base
-            reputationRate = 0.1, -- 0.1 reputation per 10 successful operations
-            lastGeneration = 0
-        },
-        skillImprovement = {
-            enabled = false,
-            interval = 60.0, -- Skill improvement every minute
-            lastImprovement = 0,
-            xpRate = 1.0 -- 1 XP per minute base
+    -- Idle tracking (load from data if available to be data-driven)
+    local ok, soc_ops = pcall(require, "src.data.soc_operations")
+    if ok and soc_ops then
+        -- Validate loaded data before using it
+        local Validator = require("src.utils.soc_operations_validator")
+        local valid, errors = Validator.validate(soc_ops)
+            if not valid then
+            local DebugLogger = require("src.utils.debug_logger")
+            local logger = DebugLogger.get()
+            logger:warn("Invalid soc_operations data detected; falling back to defaults. Errors:")
+            for _, msg in ipairs(errors) do
+                logger:warn(" - " .. msg)
+            end
+        else
+            -- Deep copy tables to avoid accidental shared mutation
+            local function deepcopy(orig)
+                local orig_type = type(orig)
+                if orig_type ~= 'table' then return orig end
+                local copy = {}
+                for k, v in pairs(orig) do copy[k] = deepcopy(v) end
+                return copy
+            end
+
+            self.lastUpdateTime = (love and love.timer and love.timer.getTime) and love.timer.getTime() or os.time()
+            self.passiveOperations = deepcopy(soc_ops.passiveOperations)
+            self.automationLevels = deepcopy(soc_ops.automationLevels)
+            self.currentAutomationLevel = "MANUAL"
+        end
+    else
+        -- Fallback to embedded defaults (preserve previous behavior)
+        self.lastUpdateTime = (love and love.timer and love.timer.getTime) and love.timer.getTime() or os.time()
+        self.passiveOperations = {
+            threatMonitoring = { enabled = false, interval = 10.0, lastCheck = 0, effectivenessRate = 0.1 },
+            incidentResponse = { enabled = false, interval = 15.0, lastResponse = 0, successRate = 0.05 },
+            resourceGeneration = { enabled = true, baseRate = 1.0, reputationRate = 0.1, lastGeneration = 0 },
+            skillImprovement = { enabled = false, interval = 60.0, lastImprovement = 0, xpRate = 1.0 }
         }
-    }
-    
-    -- SOC automation levels
-    self.automationLevels = {
-        MANUAL = {
-            name = "Manual Operations",
-            threatMonitoring = 0,
-            incidentResponse = 0,
-            resourceMultiplier = 1.0,
-            description = "All operations require manual intervention"
-        },
-        BASIC = {
-            name = "Basic Automation", 
-            threatMonitoring = 0.2,
-            incidentResponse = 0.1,
-            resourceMultiplier = 1.2,
-            description = "Simple alerts and basic response automation"
-        },
-        INTERMEDIATE = {
-            name = "Intermediate SOC",
-            threatMonitoring = 0.5,
-            incidentResponse = 0.3,
-            resourceMultiplier = 1.5,
-            description = "Advanced monitoring with partial incident automation"
-        },
-        ADVANCED = {
-            name = "Advanced SOC",
-            threatMonitoring = 0.8,
-            incidentResponse = 0.6,
-            resourceMultiplier = 2.0,
-            description = "Comprehensive automation with AI-assisted response"
-        },
-        ENTERPRISE = {
-            name = "Enterprise SOC",
-            threatMonitoring = 0.95,
-            incidentResponse = 0.85,
-            resourceMultiplier = 3.0,
-            description = "Fully automated SOC with predictive capabilities"
+        self.automationLevels = {
+            MANUAL = { name = "Manual Operations", threatMonitoring = 0, incidentResponse = 0, resourceMultiplier = 1.0, description = "All operations require manual intervention" },
+            BASIC = { name = "Basic Automation", threatMonitoring = 0.2, incidentResponse = 0.1, resourceMultiplier = 1.2, description = "Simple alerts and basic response automation" },
+            INTERMEDIATE = { name = "Intermediate SOC", threatMonitoring = 0.5, incidentResponse = 0.3, resourceMultiplier = 1.5, description = "Advanced monitoring with partial incident automation" },
+            ADVANCED = { name = "Advanced SOC", threatMonitoring = 0.8, incidentResponse = 0.6, resourceMultiplier = 2.0, description = "Comprehensive automation with AI-assisted response" },
+            ENTERPRISE = { name = "Enterprise SOC", threatMonitoring = 0.95, incidentResponse = 0.85, resourceMultiplier = 3.0, description = "Fully automated SOC with predictive capabilities" }
         }
-    }
-    
-    self.currentAutomationLevel = "MANUAL"
+        self.currentAutomationLevel = "MANUAL"
+    end
+
+    -- Optional dev 'fun mode' that makes the SOC more playful and generous for testing/demo
+    local function isFunMode()
+        local env = os.getenv("SOC_FUN_MODE") or os.getenv("MAKE_IT_FUN")
+        if not env then return false end
+        if env == "1" then return true end
+        if type(env) == "string" and env:lower() == "true" then return true end
+        return false
+    end
+
+    if isFunMode() then
+        local DebugLogger = require("src.utils.debug_logger")
+        local logger = DebugLogger.get()
+        logger:info("FUN MODE ENABLED: Applying playful SOC bonuses")
+
+        -- Make passive income more generous and operations faster/stronger
+        if self.passiveOperations and self.passiveOperations.resourceGeneration then
+            self.passiveOperations.resourceGeneration.baseRate = (self.passiveOperations.resourceGeneration.baseRate or 1.0) * 2.0
+            self.passiveOperations.resourceGeneration.reputationRate = (self.passiveOperations.resourceGeneration.reputationRate or 0.1) * 2.0
+        end
+
+        -- Speed up monitoring and responses
+        if self.passiveOperations and self.passiveOperations.threatMonitoring then
+            self.passiveOperations.threatMonitoring.interval = math.max(1.0, (self.passiveOperations.threatMonitoring.interval or 10.0) * 0.5)
+            self.passiveOperations.threatMonitoring.effectivenessRate = math.min(1.0, (self.passiveOperations.threatMonitoring.effectivenessRate or 0.1) + 0.25)
+        end
+        if self.passiveOperations and self.passiveOperations.incidentResponse then
+            self.passiveOperations.incidentResponse.interval = math.max(1.0, (self.passiveOperations.incidentResponse.interval or 15.0) * 0.5)
+            self.passiveOperations.incidentResponse.successRate = math.min(1.0, (self.passiveOperations.incidentResponse.successRate or 0.05) + 0.25)
+        end
+
+        -- Make learning faster and enable it if disabled
+        if self.passiveOperations and self.passiveOperations.skillImprovement then
+            self.passiveOperations.skillImprovement.interval = math.max(10.0, (self.passiveOperations.skillImprovement.interval or 60.0) * 0.25)
+            self.passiveOperations.skillImprovement.enabled = true
+            self.passiveOperations.skillImprovement.xpRate = (self.passiveOperations.skillImprovement.xpRate or 1.0) * 3.0
+        end
+
+        -- Boost automation level multipliers slightly for fun
+        for k, lvl in pairs(self.automationLevels or {}) do
+            if lvl and lvl.resourceMultiplier then
+                lvl.resourceMultiplier = lvl.resourceMultiplier + 0.5
+            end
+            if lvl and lvl.threatMonitoring then
+                lvl.threatMonitoring = math.min(1.0, lvl.threatMonitoring + 0.15)
+            end
+            if lvl and lvl.incidentResponse then
+                lvl.incidentResponse = math.min(1.0, lvl.incidentResponse + 0.15)
+            end
+        end
+    end
+
+    -- Provide runtime APIs for content authors to extend automation levels or passive operations
+    function self:registerAutomationLevel(key, definition)
+        self.automationLevels[key] = definition
+    end
+
+    function self:registerPassiveOperation(name, definition)
+        self.passiveOperations[name] = definition
+    end
     
     return self
 end
@@ -101,7 +138,9 @@ function SOCIdleOperations:initialize()
         self:updateAutomationCapabilities()
     end)
     
-    print("⚙️ SOCIdleOperations: Initialized SOC automation systems")
+    local DebugLogger = require("src.utils.debug_logger")
+    local logger = DebugLogger.get()
+    logger:info("SOCIdleOperations: Initialized SOC automation systems")
 end
 
 -- Update SOC idle operations
@@ -143,7 +182,9 @@ function SOCIdleOperations:updateThreatMonitoring(dt)
                 -- Award XP for automated detection
                 self.resourceManager:addResource("xp", 2)
                 
-                print("🤖 SOC Automation: Detected and catalogued " .. threat.name)
+                local DebugLogger = require("src.utils.debug_logger")
+                local logger = DebugLogger.get()
+                logger:info("SOC Automation: Detected and catalogued " .. threat.name)
             end
         end
     end
@@ -231,7 +272,9 @@ function SOCIdleOperations:updateSkillImprovement(dt)
         
         self.resourceManager:addResource("xp", math.floor(xpGain))
         
-        print("📚 SOC Learning: Gained " .. math.floor(xpGain) .. " XP from automated operations")
+    local DebugLogger = require("src.utils.debug_logger")
+    local logger = DebugLogger.get()
+    logger:info("SOC Learning: Gained " .. math.floor(xpGain) .. " XP from automated operations")
     end
 end
 
@@ -254,8 +297,10 @@ function SOCIdleOperations:updateAutomationLevel(level)
         self:enableAutomationFeatures(newAutomationLevel)
         
         local automationInfo = self.automationLevels[newAutomationLevel]
-        print("🤖 SOC Automation upgraded to: " .. automationInfo.name)
-        print("   " .. automationInfo.description)
+    local DebugLogger = require("src.utils.debug_logger")
+    local logger = DebugLogger.get()
+    logger:info("SOC Automation upgraded to: " .. automationInfo.name)
+    logger:info("   " .. automationInfo.description)
     end
 end
 
@@ -352,7 +397,9 @@ end
 
 -- Auto-resolve incident through automation
 function SOCIdleOperations:autoResolveIncident(incident)
-    print("✅ SOC Automation: Auto-resolved " .. incident.name)
+    local DebugLogger = require("src.utils.debug_logger")
+    local logger = DebugLogger.get()
+    logger:info("SOC Automation: Auto-resolved " .. incident.name)
     
     -- Award resources for successful automation
     self.resourceManager:addResource("xp", 3)
@@ -466,7 +513,9 @@ function SOCIdleOperations:loadState(state)
         -- Re-enable automation features
         self:enableAutomationFeatures(self.currentAutomationLevel)
         
-        print("⚙️ SOCIdleOperations: State loaded - Automation Level: " .. self.currentAutomationLevel)
+    local DebugLogger = require("src.utils.debug_logger")
+    local logger = DebugLogger.get()
+    logger:info("SOCIdleOperations: State loaded - Automation Level: " .. self.currentAutomationLevel)
     end
 end
 

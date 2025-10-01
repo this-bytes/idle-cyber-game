@@ -6,6 +6,8 @@ local IdleGenerators = {}
 IdleGenerators.__index = IdleGenerators
 
 local json = require("dkjson")
+local DebugLogger = require("src.utils.debug_logger")
+local logger = DebugLogger.get()
 
 -- Create new idle generators system
 function IdleGenerators.new(eventBus, resourceManager)
@@ -13,6 +15,12 @@ function IdleGenerators.new(eventBus, resourceManager)
     
     self.eventBus = eventBus
     self.resourceManager = resourceManager
+
+    -- Trace for debugging test runner issues (use debug logger)
+    local DebugLogger = require("src.utils.debug_logger")
+    local logger = DebugLogger.get()
+    logger:debug("IdleGenerators.new called. IdleGenerators.initialize type:" .. tostring(type(IdleGenerators.initialize)))
+    logger:debug("metatable set? " .. tostring(getmetatable(self) and getmetatable(self).__index == IdleGenerators))
     
     -- Generator definitions loaded from JSON
     self.generatorDefinitions = {}
@@ -29,7 +37,9 @@ end
 
 -- Initialize the system by loading generators from JSON
 function IdleGenerators:initialize()
-    print("⚙️ Initializing idle generators system...")
+    local DebugLogger = require("src.utils.debug_logger")
+    local logger = DebugLogger.get()
+    logger:info("Initializing idle generators system...")
     
     -- Load generator definitions from JSON
     self:loadGeneratorDefinitions()
@@ -40,7 +50,7 @@ function IdleGenerators:initialize()
     -- Subscribe to events
     self:subscribeToEvents()
     
-    print("⚙️ Idle generators system initialized with " .. self:getTotalDefinitions() .. " generator types")
+    logger:info("Idle generators system initialized with " .. self:getTotalDefinitions() .. " generator types")
     return true
 end
 
@@ -56,13 +66,13 @@ function IdleGenerators:loadGeneratorDefinitions()
             if data then
                 self.generatorDefinitions = data.generators or {}
                 self.categoryDefinitions = data.categories or {}
-                print("   ✅ Loaded idle generators from JSON")
+                logger:info("Loaded idle generators from JSON")
             else
-                print("   ❌ Failed to parse idle generators JSON: " .. tostring(err))
+                logger:warn("Failed to parse idle generators JSON: " .. tostring(err))
                 self:setDefaultGenerators()
             end
         else
-            print("   ⚠️ Idle generators JSON not found, using defaults")
+            logger:warn("Idle generators JSON not found, using defaults")
             self:setDefaultGenerators()
         end
     else
@@ -75,13 +85,13 @@ function IdleGenerators:loadGeneratorDefinitions()
             if data then
                 self.generatorDefinitions = data.generators or {}
                 self.categoryDefinitions = data.categories or {}
-                print("   ✅ Loaded idle generators from JSON")
+                logger:info("Loaded idle generators from JSON")
             else
-                print("   ❌ Failed to parse idle generators JSON: " .. tostring(err))
+                logger:warn("Failed to parse idle generators JSON: " .. tostring(err))
                 self:setDefaultGenerators()
             end
         else
-            print("   ⚠️ Idle generators JSON not found, using defaults")
+            logger:warn("Idle generators JSON not found, using defaults")
             self:setDefaultGenerators()
         end
     end
@@ -223,7 +233,7 @@ function IdleGenerators:purchaseGenerator(category, id, quantity)
             newQuantity = self.ownedGenerators[category][id]
         })
         
-        print("💰 Purchased " .. quantity .. "x " .. definition.name)
+    logger:info("Purchased " .. quantity .. "x " .. definition.name)
         return true, "Purchase successful"
     end
     
@@ -269,7 +279,7 @@ function IdleGenerators:sellGenerator(category, id, quantity)
         newQuantity = self.ownedGenerators[category][id]
     })
     
-    print("💸 Sold " .. quantity .. "x " .. definition.name)
+    logger:info("Sold " .. quantity .. "x " .. definition.name)
     return true, "Sale successful"
 end
 

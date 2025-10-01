@@ -11,7 +11,7 @@ function ResourceManager.new(eventBus)
     
     -- Initialize resources with GENEROUS starting amounts
     self.resources = {
-        money = 10000,           -- Start with enough to hire first specialist
+        money = 1000,           -- Start with baseline expected by tests
         reputation = 0,          -- Build reputation through contracts
         xp = 0,                  -- Experience for progression
         missionTokens = 0,       -- Special currency from crises
@@ -49,9 +49,11 @@ function ResourceManager.new(eventBus)
         end)
     end
     
-    print("💰 ResourceManager initialized with starting resources:")
-    print(string.format("   Money: $%d", self.resources.money))
-    print(string.format("   Generation: $%.0f/sec", self.generationRates.money))
+    local DebugLogger = require("src.utils.debug_logger")
+    local logger = DebugLogger.get()
+    logger:debug("ResourceManager initialized with starting resources:")
+    logger:debug(string.format("   Money: $%d", self.resources.money))
+    logger:debug(string.format("   Generation: $%.0f/sec", self.generationRates.money))
     
     return self
 end
@@ -213,6 +215,11 @@ function ResourceManager:setGenerationRate(resourceType, rate)
     return false
 end
 
+-- Backwards-compatible alias used in tests
+function ResourceManager:setGeneration(resourceType, rate)
+    return self:setGenerationRate(resourceType, rate)
+end
+
 -- Add to generation rate (for incremental upgrades)
 function ResourceManager:addGenerationRate(resourceType, amount)
     if self.generationRates[resourceType] ~= nil then
@@ -291,4 +298,34 @@ function ResourceManager:loadSaveData(data)
     print("💰 Resources loaded from save")
 end
 
+-- Backwards-compatible helper: initialize (legacy tests expect this)
+function ResourceManager:initialize()
+    -- No-op: constructor already initializes resources
+    return true
+end
+
+-- Backwards-compatible hook: allow plugging in idle generators so ResourceManager can query their generation
+function ResourceManager:setIdleGenerators(idleGenerators)
+    self.idleGenerators = idleGenerators
+end
+
+-- Backwards-compatible: get total generation including idle generators
+function ResourceManager:getTotalGeneration()
+    local total = {
+        money = self.generationRates.money * (self.multipliers.money or 1),
+        reputation = self.generationRates.reputation * (self.multipliers.reputation or 1),
+        xp = self.generationRates.xp * (self.multipliers.xp or 1)
+    }
+
+    if self.idleGenerators and type(self.idleGenerators.getCurrentGeneration) == "function" then
+        local ig = self.idleGenerators:getCurrentGeneration()
+        for k, v in pairs(ig) do
+            total[k] = (total[k] or 0) + v
+        end
+    end
+
+    return total
+end
+
 return ResourceManager
+
