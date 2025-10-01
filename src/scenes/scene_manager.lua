@@ -112,6 +112,8 @@ end
 -- @param y Mouse y-coordinate.
 -- @param button Mouse button index.
 function SceneManager:mousepressed(x, y, button)
+    -- Debug: report mousepressed entering SceneManager
+    print(string.format("[UI DEBUG] SceneManager:mousepressed x=%.1f y=%.1f button=%s currentScene=%s", x, y, tostring(button), tostring(self.currentSceneName)))
     if self.currentScene and self.currentScene.mousepressed then
         self.currentScene:mousepressed(x, y, button)
     end

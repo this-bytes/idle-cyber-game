@@ -202,7 +202,8 @@ function Text:render()
         local lineY = textY + (i - 1) * font:getHeight() * self.lineHeight
         local lineWidth = font:getWidth(line)
         local lineX = textX
-        
+        local rendered = false
+
         -- Apply horizontal alignment
         if self.textAlign == "center" then
             lineX = textX + (innerWidth - lineWidth) / 2
@@ -214,29 +215,29 @@ function Text:render()
             for word in line:gmatch("%S+") do
                 table.insert(words, word)
             end
-            
+
             if #words > 1 then
                 local totalWordWidth = 0
                 for _, word in ipairs(words) do
                     totalWordWidth = totalWordWidth + font:getWidth(word)
                 end
-                
+
                 local spaceWidth = (innerWidth - totalWordWidth) / (#words - 1)
                 local currentX = lineX
-                
-                for j, word in ipairs(words) do
+
+                for _, word in ipairs(words) do
                     love.graphics.print(word, currentX, lineY)
                     currentX = currentX + font:getWidth(word) + spaceWidth
                 end
-                
-                goto continue
+
+                rendered = true
             end
         end
-        
-        -- Regular rendering
-        love.graphics.print(line, lineX, lineY)
-        
-        ::continue::
+
+        -- Regular rendering if not already rendered by justify
+        if not rendered then
+            love.graphics.print(line, lineX, lineY)
+        end
     end
     
     -- Restore state

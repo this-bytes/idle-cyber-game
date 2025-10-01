@@ -17,7 +17,16 @@ function love.load()
     local EventBus = require("src.utils.event_bus"):new()
     local SOCGame = require("src.soc_game")
     game = SOCGame.new(EventBus)
-    
+
+    -- Enable UI debug overlay when environment variable IDLE_DEBUG_UI is set
+    local dbg = os.getenv("IDLE_DEBUG_UI")
+    if dbg == "1" or dbg == "true" then
+        DEBUG_UI = true
+        print("[UI DEBUG] DEBUG_UI overlay enabled")
+    else
+        DEBUG_UI = false
+    end
+
     local success, err = pcall(function() game:initialize() end)
     
     if success then
@@ -50,6 +59,8 @@ function love.keypressed(key)
 end
 
 function love.mousepressed(x, y, button)
+    -- Log raw coordinates at the engine entry point for diagnostics
+    print(string.format("[UI RAW] love.mousepressed raw x=%.1f y=%.1f button=%s", x, y, tostring(button)))
     if game then
         game:mousepressed(x, y, button)
     end

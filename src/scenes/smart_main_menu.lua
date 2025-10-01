@@ -33,6 +33,45 @@ end
 function SmartMainMenu:enter(data)
     print("🏠 Smart MainMenu: Entered")
     self.needsRebuild = true
+    -- Debug: perform a one-time layout and auto-click simulation to trace input
+    if not self._debug_autoclick_done then
+        -- Ensure UI built
+        if self.needsRebuild then
+            self:buildUI()
+        end
+        local screenWidth = love.graphics.getWidth()
+        local screenHeight = love.graphics.getHeight()
+        if self.root and self.root.measure and self.root.layout then
+            self.root:measure(screenWidth, screenHeight)
+            self.root:layout(0, 0, screenWidth, screenHeight)
+        end
+
+        -- Walk tree to find first button
+        local function findButton(component)
+            if not component then return nil end
+            if component.className == "MainMenuButton" or (component.id and tostring(component.id):match("^main_btn_")) then
+                return component
+            end
+            for _, c in ipairs(component.children or {}) do
+                local found = findButton(c)
+                if found then return found end
+            end
+            return nil
+        end
+
+        local target = findButton(self.root)
+        if target then
+            local cx = target.x + (target.width or 0) / 2
+            local cy = target.y + (target.height or 0) / 2
+            print(string.format("[UI DEBUG] Auto-clicking at x=%.1f y=%.1f (target id=%s class=%s)", cx, cy, tostring(target.id), tostring(target.className)))
+            local handled = self:mousepressed(cx, cy, 1)
+            print(string.format("[UI DEBUG] Auto-click handled=%s", tostring(handled)))
+        else
+            print("[UI DEBUG] Auto-click: target button not found in root tree")
+        end
+
+        self._debug_autoclick_done = true
+    end
 end
 
 function SmartMainMenu:exit()
@@ -94,6 +133,8 @@ function SmartMainMenu:buildUI()
     
     for i, menuItem in ipairs(self.menuItems) do
         local btn = Button.new({
+            id = "main_btn_" .. tostring(i),
+            className = "MainMenuButton",
             label = menuItem.text,
             minWidth = 360,
             onClick = function()
@@ -164,6 +205,7 @@ end
 
 -- Mouse events
 function SmartMainMenu:mousepressed(x, y, button)
+    print(string.format("[UI DEBUG] SmartMainMenu:mousepressed x=%.1f y=%.1f button=%s root=%s", x, y, tostring(button), tostring(self.root ~= nil)))
     if self.root then
         return self.root:onMousePress(x, y, button)
     end
