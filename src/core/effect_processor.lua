@@ -134,7 +134,7 @@ function EffectProcessor:calculateValue(baseValue, effectType, context)
     end
     
     -- Apply soft caps to prevent runaway growth
-    multipliers = self:applySoftCap(multipliers, context.soft_cap)
+    multipliers = self:applySoftCap(multipliers, context.soft_cap or 10.0)
     
     if overrides then return overrides end
     return (baseValue + additive) * multipliers
