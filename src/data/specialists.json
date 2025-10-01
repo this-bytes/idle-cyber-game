@@ -1,5 +1,34 @@
 {
   "specialists": {
+    "intern": {
+      "id": "intern",
+      "type": "specialist",
+      "name": "Security Intern",
+      "displayName": "Security Intern",
+      "cost": {
+        "money": 2000
+      },
+      "efficiency": 1.3,
+      "speed": 1.05,
+      "trace": 0.8,
+      "defense": 1.0,
+      "description": "Eager college student learning the ropes. Affordable and enthusiastic!",
+      "abilities": [
+        "basic_monitoring"
+      ],
+      "tier": 1,
+      "rarity": "common",
+      "tags": ["intern", "entry", "learning"],
+      "effects": {
+        "passive": [
+          {
+            "type": "efficiency_boost",
+            "value": 1.05,
+            "target": "all"
+          }
+        ]
+      }
+    },
     "junior_analyst": {
       "id": "junior_analyst",
       "type": "specialist",

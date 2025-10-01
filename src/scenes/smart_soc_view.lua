@@ -34,6 +34,26 @@ function SmartSOCView.new(eventBus)
     -- Toast manager
     self.toastManager = ToastManager.new()
     
+    -- Animated resources for satisfying visual feedback (IMPROVED!)
+    self.displayedMoney = 0
+    self.targetMoney = 0
+    self.displayedReputation = 0
+    self.targetReputation = 0
+    
+    -- Floating numbers for income events (NEW!)
+    self.floatingNumbers = {}
+    
+    -- Animation timers (NEW!)
+    self.pulseTimer = 0
+    
+    -- Button tracking for simple mode (NEW!)
+    self.buttons = {}
+    self.mouseX = 0
+    self.mouseY = 0
+    
+    -- Simple mode toggle (can switch between Smart UI and simple rendering)
+    self.useSimpleMode = true -- Default to simple mode for better performance
+    
     -- SOC Status
     self.socStatus = {
         alertLevel = "GREEN",
@@ -53,9 +73,31 @@ function SmartSOCView.new(eventBus)
             end
         end)
         
-        self.eventBus:subscribe("resource_changed", function()
+        self.eventBus:subscribe("resource_changed", function(event)
             self:updateData()
             self.needsRebuild = true
+            -- Add floating number feedback (NEW!)
+            if event and event.resourceType == "money" and event.change and event.change > 0 then
+                table.insert(self.floatingNumbers, {
+                    text = "+" .. self:formatMoney(event.change),
+                    x = 150 + math.random(-20, 20),
+                    y = 80,
+                    vy = -50,
+                    life = 2.0,
+                    color = {0.2, 1.0, 0.3, 1.0}
+                })
+                self.targetMoney = event.newValue
+            elseif event and event.resourceType == "reputation" and event.change and event.change > 0 then
+                table.insert(self.floatingNumbers, {
+                    text = "+" .. string.format("%.1f", event.change) .. " REP",
+                    x = 400 + math.random(-20, 20),
+                    y = 80,
+                    vy = -50,
+                    life = 2.0,
+                    color = {0.2, 0.8, 1.0, 1.0}
+                })
+                self.targetReputation = event.newValue
+            end
         end)
         
         self.eventBus:subscribe("contract_accepted", function()
@@ -90,6 +132,15 @@ function SmartSOCView:enter(data)
     self:updateData()
     self:updateSOCCapabilities()
     self.needsRebuild = true
+    
+    -- Initialize animated values (IMPROVED!)
+    if self.systems.resourceManager then
+        local state = self.systems.resourceManager:getState()
+        self.displayedMoney = state.money
+        self.targetMoney = state.money
+        self.displayedReputation = state.reputation
+        self.targetReputation = state.reputation
+    end
 end
 
 function SmartSOCView:exit()
@@ -449,6 +500,40 @@ end
 
 -- Update
 function SmartSOCView:update(dt)
+    self.pulseTimer = (self.pulseTimer or 0) + dt
+    
+    -- Update mouse position
+    self.mouseX = love.mouse.getX()
+    self.mouseY = love.mouse.getY()
+    
+    -- Smooth animate displayed values (IMPROVED!)
+    if math.abs(self.displayedMoney - self.targetMoney) > 0.1 then
+        self.displayedMoney = self.displayedMoney + (self.targetMoney - self.displayedMoney) * dt * 5
+    end
+    
+    if math.abs(self.displayedReputation - self.targetReputation) > 0.01 then
+        self.displayedReputation = self.displayedReputation + (self.targetReputation - self.displayedReputation) * dt * 5
+    end
+    
+    -- Get current resources
+    if self.systems.resourceManager then
+        local state = self.systems.resourceManager:getState()
+        self.targetMoney = state.money
+        self.targetReputation = state.reputation
+    end
+    
+    -- Update floating numbers (NEW!)
+    for i = #self.floatingNumbers, 1, -1 do
+        local num = self.floatingNumbers[i]
+        num.y = num.y + num.vy * dt
+        num.life = num.life - dt
+        num.color[4] = num.life / 2.0 -- Fade out
+        
+        if num.life <= 0 then
+            table.remove(self.floatingNumbers, i)
+        end
+    end
+    
     -- Update toast manager
     self.toastManager:update(dt)
     
@@ -464,28 +549,40 @@ function SmartSOCView:update(dt)
         end
     end
     
-    -- Rebuild if needed
-    if self.needsRebuild then
+    -- Rebuild if needed (only in Smart UI mode)
+    if not self.useSimpleMode and self.needsRebuild then
         self:buildUI()
     end
 end
 
 -- Draw
 function SmartSOCView:draw()
-    if not self.root then
-        self:buildUI()
-    end
-    
-    -- Get screen dimensions
     local screenWidth = love.graphics.getWidth()
     local screenHeight = love.graphics.getHeight()
     
-    -- Measure and layout
-    self.root:measure(screenWidth, screenHeight)
-    self.root:layout(0, 0, screenWidth, screenHeight)
+    -- Use simple mode for better performance and immediate playability
+    if self.useSimpleMode then
+        self:drawSimpleMode(screenWidth, screenHeight)
+    else
+        -- Smart UI mode (component-based)
+        if not self.root then
+            self:buildUI()
+        end
+        
+        -- Measure and layout
+        self.root:measure(screenWidth, screenHeight)
+        self.root:layout(0, 0, screenWidth, screenHeight)
+        
+        -- Render
+        self.root:render()
+    end
     
-    -- Render
-    self.root:render()
+    -- Always render floating numbers on top (NEW!)
+    love.graphics.setFont(love.graphics.newFont(24))
+    for _, num in ipairs(self.floatingNumbers) do
+        love.graphics.setColor(num.color)
+        love.graphics.print(num.text, num.x, num.y)
+    end
     
     -- Render toasts on top
     self.toastManager:render()
@@ -536,6 +633,96 @@ function SmartSOCView:keypressed(key)
             self.selectedPanel = panelKeys[panelIndex]
             self.needsRebuild = true
         end
+    end
+    
+    -- Toggle between Simple and Smart UI mode (F1 key)
+    if key == "f1" then
+        self.useSimpleMode = not self.useSimpleMode
+        print("🎨 UI Mode: " .. (self.useSimpleMode and "Simple" or "Smart"))
+    end
+    
+    -- ESC to return to menu
+    if key == "escape" and self.eventBus then
+        self.eventBus:publish("request_scene", {scene = "main_menu"})
+    end
+end
+
+-- Simple Mode Drawing (Fast and immediate feedback!)
+function SmartSOCView:drawSimpleMode(screenWidth, screenHeight)
+    -- Background
+    love.graphics.setColor(0.02, 0.05, 0.1, 1)
+    love.graphics.rectangle("fill", 0, 0, screenWidth, screenHeight)
+    
+    -- Grid pattern
+    love.graphics.setColor(0.1, 0.2, 0.3, 0.3)
+    for x = 0, screenWidth, 50 do
+        love.graphics.line(x, 0, x, screenHeight)
+    end
+    for y = 0, screenHeight, 50 do
+        love.graphics.line(0, y, screenWidth, y)
+    end
+    
+    -- Title
+    love.graphics.setColor(0.2, 0.8, 1.0, 1.0)
+    love.graphics.setFont(love.graphics.newFont(32))
+    love.graphics.print("🛡️ SOC COMMAND CENTER", 20, 20)
+    
+    -- Resources - BIG and VISIBLE
+    love.graphics.setFont(love.graphics.newFont(48))
+    local moneyGlow = math.sin((self.pulseTimer or 0) * 5) * 0.3 + 0.7
+    love.graphics.setColor(0.2 * moneyGlow, 1.0 * moneyGlow, 0.3 * moneyGlow, 1.0)
+    love.graphics.print(self:formatMoney(self.displayedMoney), 20, 80)
+    
+    -- Income per second
+    love.graphics.setFont(love.graphics.newFont(16))
+    love.graphics.setColor(0.3, 0.8, 0.4, 0.9)
+    if self.systems.resourceManager then
+        local state = self.systems.resourceManager:getState()
+        love.graphics.print(string.format("+%s/sec", self:formatMoney(state.moneyPerSecond or 0)), 20, 135)
+    end
+    
+    -- Reputation
+    love.graphics.setFont(love.graphics.newFont(48))
+    love.graphics.setColor(0.2, 0.8, 1.0, 1.0)
+    love.graphics.print(string.format("⭐ %.0f", self.displayedReputation), 350, 80)
+    love.graphics.setFont(love.graphics.newFont(16))
+    love.graphics.setColor(0.3, 0.7, 1.0, 0.9)
+    love.graphics.print("Reputation", 350, 135)
+    
+    -- Tutorial/Info Box
+    love.graphics.setColor(0.1, 0.3, 0.5, 0.9)
+    love.graphics.rectangle("fill", screenWidth - 420, 20, 400, 150, 5, 5)
+    love.graphics.setColor(0.2, 0.8, 1.0, 1.0)
+    love.graphics.rectangle("line", screenWidth - 420, 20, 400, 150, 5, 5)
+    
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.setFont(love.graphics.newFont(16))
+    local tutorialText = "🎮 WELCOME TO YOUR SOC!\n\n" ..
+                        "💰 Your money is growing automatically!\n" ..
+                        "👥 Hire specialists to earn faster\n" ..
+                        "📝 Accept contracts for bonuses\n" ..
+                        "Press F1 to toggle UI modes"
+    love.graphics.printf(tutorialText, screenWidth - 410, 30, 380, "left")
+    
+    -- Status info at bottom
+    love.graphics.setFont(love.graphics.newFont(14))
+    love.graphics.setColor(0.5, 0.7, 0.9, 0.8)
+    love.graphics.print("ESC: Menu", 20, screenHeight - 30)
+    love.graphics.print("F1: Toggle UI", screenWidth / 2 - 50, screenHeight - 30)
+    love.graphics.print(string.format("FPS: %.0f", love.timer.getFPS()), screenWidth - 100, screenHeight - 30)
+end
+
+-- Helper: Format money for display
+function SmartSOCView:formatMoney(amount)
+    if not amount or amount == 0 then return "$0" end
+    if amount >= 1000000 then
+        return string.format("$%.2fM", amount / 1000000)
+    elseif amount >= 10000 then
+        return string.format("$%.1fK", amount / 1000)
+    elseif amount >= 1000 then
+        return string.format("$%.2fK", amount / 1000)
+    else
+        return string.format("$%.0f", amount)
     end
 end
 

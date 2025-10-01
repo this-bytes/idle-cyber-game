@@ -5,6 +5,7 @@
 -- System Dependencies
 local EventBus = require("src.utils.event_bus")
 local DataManager = require("src.core.data_manager")
+local ResourceManager = require("src.systems.resource_manager")
 local SceneManager = require("src.scenes.scene_manager")
 local ContractSystem = require("src.systems.contract_system")
 local SpecialistSystem = require("src.systems.specialist_system")
@@ -17,7 +18,7 @@ local SkillSystem = require("src.systems.skill_system")
 local MainMenu = require("src.scenes.main_menu")
 local SmartMainMenu = require("src.scenes.smart_main_menu") -- NEW: Smart UI version
 local SOCView = require("src.scenes.soc_view")
-local SmartSOCView = require("src.scenes.smart_soc_view") -- NEW: Smart UI version
+local SmartSOCView = require("src.scenes.smart_soc_view") -- NEW: Smart UI version with animations & simple mode!
 local UpgradeShop = require("src.scenes.upgrade_shop")
 local GameOver = require("src.scenes.game_over")
 local IncidentResponse = require("src.scenes.incident_response")
@@ -41,8 +42,11 @@ function SOCGame:initialize()
     -- 1. Create Core Systems & Data Manager
     self.systems.dataManager = DataManager.new(self.eventBus)
     self.systems.dataManager:loadAllData()
+    
+    -- 2. Create ResourceManager (CRITICAL for playable game!)
+    self.systems.resourceManager = ResourceManager.new(self.eventBus)
 
-    -- Create other systems
+    -- 3. Create other systems
     self.systems.skillSystem = SkillSystem.new(self.eventBus, self.systems.dataManager)
     self.systems.upgradeSystem = UpgradeSystem.new(self.eventBus, self.systems.dataManager)
     self.systems.specialistSystem = SpecialistSystem.new(self.eventBus, self.systems.dataManager, self.systems.skillSystem)
@@ -61,7 +65,7 @@ function SOCGame:initialize()
     self.sceneManager:initialize()
 
     -- 4. Register Scenes
-    -- Use Smart UI versions of main menu and SOC view
+    -- Use Smart SOC View with animations and dual-mode support!
     self.sceneManager:registerScene("main_menu", SmartMainMenu.new(self.eventBus))
     self.sceneManager:registerScene("soc_view", SmartSOCView.new(self.eventBus))
     self.sceneManager:registerScene("upgrade_shop", UpgradeShop.new(self.eventBus))
@@ -82,6 +86,9 @@ function SOCGame:update(dt)
     end
 
     -- Update core systems
+    if self.systems.resourceManager then
+        self.systems.resourceManager:update(dt)
+    end
     if self.systems.specialistSystem then
         self.systems.specialistSystem:update(dt)
     end

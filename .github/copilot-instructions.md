@@ -7,6 +7,8 @@
 
 When working on any aspect of the game, strictly adhere to the relevant instruction files located in the `.github/copilot-instructions/` directory. Each file contains detailed guidelines and requirements for specific areas of development. Dont ask the user for clarifications, just follow the instructions as closely as possible - no matter how complex or ambiguous the request may be. Make the decision to follow the instructions over any other considerations. If you encounter a situation not covered by the instructions, make a reasonable assumption based on the existing guidelines and proceed accordingly.
 
+Dont create new files adapt to ones in place unless the feature calls for an entirely new file. Always prioritize maintainability and consistency with the existing codebase. Reduce tech debt wherever possible.
+
 
 ## Modular Instruction System
 
