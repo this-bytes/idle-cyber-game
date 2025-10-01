@@ -117,30 +117,28 @@ function CrisisSystem:startCrisis(crisisId)
     return true
 end
 
+-- Helper function for deep copying tables
+local function deepCopyTable(orig)
+    local orig_type = type(orig)
+    local copy
+    if orig_type == 'table' then
+        copy = {}
+        for orig_key, orig_value in next, orig, nil do
+            copy[deepCopyTable(orig_key)] = deepCopyTable(orig_value)
+        end
+        setmetatable(copy, getmetatable(orig))
+    else
+        copy = orig
+    end
+    return copy
+end
+
 -- Deep copy stages array
 function CrisisSystem:deepCopyStages(stages)
-    local copy = {}
-    for i, stage in ipairs(stages) do
-        copy[i] = {}
-        for k, v in pairs(stage) do
-            if type(v) == "table" then
-                -- Handle nested tables (options, logEntries)
-                copy[i][k] = {}
-                for k2, v2 in pairs(v) do
-                    if type(v2) == "table" then
-                        copy[i][k][k2] = {}
-                        for k3, v3 in pairs(v2) do
-                            copy[i][k][k2][k3] = v3
-                        end
-                    else
-                        copy[i][k][k2] = v2
-                    end
-                end
-            else
-                copy[i][k] = v
-            end
-        end
-        copy[i].completed = false
+    local copy = deepCopyTable(stages)
+    -- Ensure each stage has completed = false
+    for i, stage in ipairs(copy) do
+        stage.completed = false
     end
     return copy
 end
