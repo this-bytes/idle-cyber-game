@@ -1,0 +1,213 @@
+[
+  {
+    "id": "synergy_fintech_specialist",
+    "type": "synergy",
+    "displayName": "FinTech Expert",
+    "description": "+25% income when FinTech specialist works on FinTech contracts",
+    "rarity": "common",
+    "conditions": {
+      "requires_all": [
+        {
+          "item_tag": "fintech",
+          "item_type": "specialist",
+          "min_count": 1
+        },
+        {
+          "item_tag": "fintech",
+          "item_type": "contract",
+          "state": "active"
+        }
+      ]
+    },
+    "effects": {
+      "passive": [
+        {
+          "type": "income_multiplier",
+          "value": 1.25,
+          "target": "fintech"
+        }
+      ]
+    }
+  },
+  {
+    "id": "synergy_full_stack_security",
+    "type": "synergy",
+    "displayName": "Full Stack Security",
+    "description": "+50% defense when you have Network, App, and Cloud specialists",
+    "rarity": "rare",
+    "conditions": {
+      "requires_all": [
+        {
+          "item_tag": "network",
+          "item_type": "specialist",
+          "min_count": 1
+        },
+        {
+          "item_tag": "application",
+          "item_type": "specialist",
+          "min_count": 1
+        },
+        {
+          "item_tag": "cloud",
+          "item_type": "specialist",
+          "min_count": 1
+        }
+      ]
+    },
+    "effects": {
+      "passive": [
+        {
+          "type": "threat_reduction",
+          "value": 0.5,
+          "target": "all"
+        }
+      ]
+    }
+  },
+  {
+    "id": "synergy_corporate_espionage",
+    "type": "synergy",
+    "displayName": "Corporate Espionage",
+    "description": "Unlock shadow contracts with 3+ APT specialists",
+    "rarity": "epic",
+    "conditions": {
+      "requires_all": [
+        {
+          "item_tag": "apt",
+          "item_type": "specialist",
+          "min_count": 3
+        }
+      ]
+    },
+    "effects": {
+      "passive": [
+        {
+          "type": "unlock_content",
+          "value": "shadow_contracts",
+          "target": "all"
+        }
+      ]
+    }
+  },
+  {
+    "id": "synergy_crisis_veteran",
+    "type": "synergy",
+    "displayName": "Crisis Veteran",
+    "description": "Permanent +10% success rate after resolving 10 crises",
+    "rarity": "epic",
+    "conditions": {
+      "requires_all": [
+        {
+          "stat": "crises_resolved",
+          "min_value": 10
+        }
+      ]
+    },
+    "effects": {
+      "passive": [
+        {
+          "type": "success_rate_boost",
+          "value": 0.1,
+          "target": "all"
+        }
+      ]
+    }
+  },
+  {
+    "id": "synergy_startup_to_empire",
+    "type": "synergy",
+    "displayName": "From Garage to Empire",
+    "description": "Reach $1M net worth to unlock prestige system",
+    "rarity": "legendary",
+    "conditions": {
+      "requires_all": [
+        {
+          "resource": "money",
+          "min_amount": 1000000
+        }
+      ]
+    },
+    "effects": {
+      "passive": [
+        {
+          "type": "unlock_content",
+          "value": "prestige_system",
+          "target": "all"
+        }
+      ]
+    }
+  },
+  {
+    "id": "synergy_efficiency_master",
+    "type": "synergy",
+    "displayName": "Efficiency Master",
+    "description": "+20% efficiency with 5+ upgrades purchased",
+    "rarity": "rare",
+    "conditions": {
+      "requires_all": [
+        {
+          "stat": "upgrades_purchased",
+          "min_value": 5
+        }
+      ]
+    },
+    "effects": {
+      "passive": [
+        {
+          "type": "efficiency_boost",
+          "value": 1.2,
+          "target": "all"
+        }
+      ]
+    }
+  },
+  {
+    "id": "synergy_threat_hunter",
+    "type": "synergy",
+    "displayName": "Threat Hunter",
+    "description": "+15% XP when actively mitigating threats",
+    "rarity": "common",
+    "conditions": {
+      "requires_all": [
+        {
+          "item_tag": "threat_mitigation",
+          "item_type": "upgrade",
+          "min_count": 2
+        }
+      ]
+    },
+    "effects": {
+      "passive": [
+        {
+          "type": "xp_multiplier",
+          "value": 1.15,
+          "target": "all"
+        }
+      ]
+    }
+  },
+  {
+    "id": "synergy_reputation_magnate",
+    "type": "synergy",
+    "displayName": "Reputation Magnate",
+    "description": "+25% reputation from all sources with 100+ reputation",
+    "rarity": "rare",
+    "conditions": {
+      "requires_all": [
+        {
+          "resource": "reputation",
+          "min_amount": 100
+        }
+      ]
+    },
+    "effects": {
+      "passive": [
+        {
+          "type": "reputation_multiplier",
+          "value": 1.25,
+          "target": "all"
+        }
+      ]
+    }
+  }
+]
