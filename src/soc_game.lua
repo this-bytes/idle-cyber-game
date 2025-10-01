@@ -16,9 +16,7 @@ local SkillSystem = require("src.systems.skill_system")
 
 -- Scene Dependencies
 local MainMenu = require("src.scenes.main_menu")
-local SmartMainMenu = require("src.scenes.smart_main_menu") -- NEW: Smart UI version
 local SOCView = require("src.scenes.soc_view")
-local SmartSOCView = require("src.scenes.smart_soc_view") -- NEW: Smart UI version with animations & simple mode!
 local UpgradeShop = require("src.scenes.upgrade_shop")
 local GameOver = require("src.scenes.game_over")
 local IncidentResponse = require("src.scenes.incident_response")
@@ -118,9 +116,8 @@ function SOCGame:initialize()
     self.sceneManager:initialize()
 
     -- 4. Register Scenes
-    -- Use Smart SOC View with animations and dual-mode support!
-    self.sceneManager:registerScene("main_menu", SmartMainMenu.new(self.eventBus))
-    self.sceneManager:registerScene("soc_view", SmartSOCView.new(self.eventBus))
+    self.sceneManager:registerScene("main_menu", MainMenu.new(self.eventBus))
+    self.sceneManager:registerScene("soc_view", SOCView.new(self.eventBus))
     self.sceneManager:registerScene("upgrade_shop", UpgradeShop.new(self.eventBus))
     self.sceneManager:registerScene("game_over", GameOver.new(self.eventBus))
     self.sceneManager:registerScene("incident_response", IncidentResponse.new(self.eventBus))
