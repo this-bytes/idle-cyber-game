@@ -12,6 +12,28 @@ function AdminMode.new(systems)
     -- Crisis Mode state
     self.responseLog = {}
     
+    -- Subscribe to specialist level-up events
+    if self.systems.eventBus then
+        self.systems.eventBus:subscribe("specialist_leveled_up", function(data)
+            local message = string.format("⭐ %s leveled up to Level %d!", 
+                data.specialist.name, data.newLevel)
+            table.insert(self.responseLog, message)
+        end)
+        
+        -- Subscribe to crisis completion events
+        self.systems.eventBus:subscribe("crisis_completed", function(data)
+            local outcomeText = {
+                success = "✅ CRISIS RESOLVED SUCCESSFULLY",
+                partial = "⚠️ CRISIS PARTIALLY RESOLVED",
+                failure = "❌ CRISIS RESPONSE FAILED",
+                timeout = "⏰ CRISIS TIMEOUT - RESPONSE FAILED"
+            }
+            table.insert(self.responseLog, outcomeText[data.outcome] or "CRISIS ENDED")
+            table.insert(self.responseLog, string.format("💰 Rewards: $%d | 🌟 Reputation: %+d | 📈 XP: %d",
+                data.moneyAwarded or 0, data.reputationChange or 0, data.xpAwarded or 0))
+        end)
+    end
+    
     return self
 end
 
@@ -163,6 +185,60 @@ function AdminMode:draw()
         riskY = riskY + 20
         theme:drawText("Press [C] to simulate crisis scenario", 540, riskY, theme:getColor("primary"))
         
+        -- Specialist roster panel with XP bars
+        y = y + 270
+        theme:drawPanel(20, y, 980, 180, "👥 SPECIALIST ROSTER")
+        local rosterY = y + 25
+        
+        local allSpecialists = self.systems.specialists:getAllSpecialists()
+        local specialistCount = 0
+        for specialistId, specialist in pairs(allSpecialists) do
+            if specialistCount < 4 then -- Show first 4 specialists
+                -- Draw specialist info
+                theme:drawText(specialist.name, 30, rosterY, theme:getColor("primary"))
+                
+                -- Draw level
+                theme:drawText("Lv." .. (specialist.level or 1), 250, rosterY, theme:getColor("accent"))
+                
+                -- Draw XP bar
+                local xp = specialist.xp or 0
+                local nextLevelXp = self.systems.specialists:getXpForNextLevel(specialist.level or 1)
+                
+                if nextLevelXp then
+                    local xpPercent = math.min(1.0, xp / nextLevelXp)
+                    local barWidth = 150
+                    local barHeight = 10
+                    
+                    -- Background
+                    love.graphics.setColor(0.2, 0.2, 0.2, 1)
+                    love.graphics.rectangle("fill", 320, rosterY + 3, barWidth, barHeight)
+                    
+                    -- Filled portion
+                    love.graphics.setColor(0.3, 0.8, 0.3, 1)
+                    love.graphics.rectangle("fill", 320, rosterY + 3, barWidth * xpPercent, barHeight)
+                    
+                    -- Border
+                    love.graphics.setColor(0.5, 0.5, 0.5, 1)
+                    love.graphics.rectangle("line", 320, rosterY + 3, barWidth, barHeight)
+                    
+                    -- XP text
+                    theme:drawText(xp .. "/" .. nextLevelXp .. " XP", 480, rosterY, theme:getColor("dimmed"))
+                else
+                    theme:drawText("MAX LEVEL", 320, rosterY, theme:getColor("success"))
+                end
+                
+                -- Status
+                local statusText = specialist.status == "available" and "✓ Ready" or "⏳ Busy"
+                local statusColor = specialist.status == "available" and theme:getColor("success") or theme:getColor("warning")
+                theme:drawText(statusText, 650, rosterY, statusColor)
+                
+                rosterY = rosterY + 18
+                specialistCount = specialistCount + 1
+            end
+        end
+        
+        y = y + 200
+    else
         y = y + 270
     end
     
