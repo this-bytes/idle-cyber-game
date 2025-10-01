@@ -16,6 +16,7 @@ local SkillSystem = require("src.systems.skill_system")
 -- Scene Dependencies
 local MainMenu = require("src.scenes.main_menu")
 local SOCView = require("src.scenes.soc_view")
+local SmartSOCView = require("src.scenes.smart_soc_view") -- NEW: Smart UI version
 local UpgradeShop = require("src.scenes.upgrade_shop")
 local GameOver = require("src.scenes.game_over")
 local IncidentResponse = require("src.scenes.incident_response")
@@ -60,7 +61,8 @@ function SOCGame:initialize()
 
     -- 4. Register Scenes
     self.sceneManager:registerScene("main_menu", MainMenu.new(self.eventBus))
-    self.sceneManager:registerScene("soc_view", SOCView.new(self.eventBus))
+    -- Use Smart UI version of SOC View
+    self.sceneManager:registerScene("soc_view", SmartSOCView.new(self.eventBus))
     self.sceneManager:registerScene("upgrade_shop", UpgradeShop.new(self.eventBus))
     self.sceneManager:registerScene("game_over", GameOver.new(self.eventBus))
     self.sceneManager:registerScene("incident_response", IncidentResponse.new(self.eventBus))
@@ -105,8 +107,28 @@ function SOCGame:mousepressed(x, y, button)
     end
 end
 
+function SOCGame:mousereleased(x, y, button)
+    if self.sceneManager and self.sceneManager.mousereleased then
+        self.sceneManager:mousereleased(x, y, button)
+    end
+end
+
+function SOCGame:mousemoved(x, y, dx, dy)
+    if self.sceneManager and self.sceneManager.mousemoved then
+        self.sceneManager:mousemoved(x, y, dx, dy)
+    end
+end
+
+function SOCGame:wheelmoved(x, y)
+    if self.sceneManager and self.sceneManager.wheelmoved then
+        self.sceneManager:wheelmoved(x, y)
+    end
+end
+
 function SOCGame:resize(w, h)
-    -- Handle window resizing if needed
+    if self.sceneManager and self.sceneManager.resize then
+        self.sceneManager:resize(w, h)
+    end
 end
 
 function SOCGame:shutdown()

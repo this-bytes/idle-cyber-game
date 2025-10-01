@@ -55,6 +55,24 @@ function love.mousepressed(x, y, button)
     end
 end
 
+function love.mousereleased(x, y, button)
+    if game and game.mousereleased then
+        game:mousereleased(x, y, button)
+    end
+end
+
+function love.mousemoved(x, y, dx, dy)
+    if game and game.mousemoved then
+        game:mousemoved(x, y, dx, dy)
+    end
+end
+
+function love.wheelmoved(x, y)
+    if game and game.wheelmoved then
+        game:wheelmoved(x, y)
+    end
+end
+
 function love.resize(w, h)
     if game then
         game:resize(w, h)

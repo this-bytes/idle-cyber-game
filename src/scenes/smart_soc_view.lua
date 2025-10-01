@@ -251,6 +251,7 @@ function SmartSOCView:createSidebar()
     }
     
     for _, panel in ipairs(panels) do
+        local isSelected = (self.selectedPanel == panel.key)
         local btn = Button.new({
             label = panel.label,
             minWidth = 180,
@@ -258,7 +259,9 @@ function SmartSOCView:createSidebar()
                 self.selectedPanel = panel.key
                 self.needsRebuild = true
             end,
-            state = (self.selectedPanel == panel.key) and "hover" or "normal"
+            -- Use different colors for selected button
+            normalColor = isSelected and {0.3, 0.5, 0.8, 1} or {0.2, 0.2, 0.3, 1},
+            normalBorderColor = isSelected and {0, 1, 1, 1} or {0.5, 0.5, 0.6, 1}
         })
         buttonBox:addChild(btn)
     end
