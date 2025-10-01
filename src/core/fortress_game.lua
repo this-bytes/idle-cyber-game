@@ -12,6 +12,7 @@ local SecurityUpgrades = require("src.core.security_upgrades")
 local ThreatSimulation = require("src.core.threat_simulation")
 local UIManager = require("src.core.ui_manager")
 local SOCStats = require("src.core.soc_stats")  -- SOC REFACTOR: Statistical backbone
+local DataManager = require("src.core.data_manager")
 local EventBus = require("src.utils.event_bus")
 
 -- Import legacy systems for integration
@@ -23,6 +24,7 @@ local SpecialistSystem = require("src.systems.specialist_system")
 local IdleSystem = require("src.systems.idle_system")
 local FactionSystem = require("src.systems.faction_system")
 local AchievementSystem = require("src.systems.achievement_system")
+local CrisisSystem = require("src.systems.crisis_system")
 
 -- Import game modes
 local IdleMode = require("src.modes.idle_mode")
@@ -89,6 +91,10 @@ end
 function FortressGame:initializeFortressSystems()
     print("🔧 Initializing Fortress Core Systems...")
     
+    -- Create data manager first
+    self.systems.dataManager = DataManager.new(self.eventBus)
+    self.systems.dataManager:loadAllData()
+    
     -- Create fortress systems
     self.systems.resourceManager = ResourceManager.new(self.eventBus)
     self.systems.securityUpgrades = SecurityUpgrades.new(self.eventBus, self.systems.resourceManager)
@@ -117,13 +123,18 @@ function FortressGame:initializeLegacySystems()
     print("🔗 Integrating Legacy Systems with Fortress Architecture...")
     
     -- Initialize legacy systems
-    self.systems.skills = SkillSystem.new(self.eventBus)
+    self.systems.skills = SkillSystem.new(self.eventBus, self.systems.dataManager)
     self.systems.progression = ProgressionSystem.new(self.eventBus)
     self.systems.locations = LocationSystem.new(self.eventBus)
     self.systems.contracts = ContractSystem.new(self.eventBus, self.systems.resourceManager) -- Use fortress ResourceManager
-    self.systems.specialists = SpecialistSystem.new(self.eventBus, self.systems.resourceManager) -- Use fortress ResourceManager
+    self.systems.specialists = SpecialistSystem.new(self.eventBus, self.systems.dataManager, self.systems.skills) -- Pass dataManager and skills
+    self.systems.specialists:initialize()
     self.systems.factions = FactionSystem.new(self.eventBus)
     self.systems.achievements = AchievementSystem.new(self.eventBus)
+    
+    -- Initialize crisis system
+    self.systems.crisis = CrisisSystem.new(self.eventBus, self.systems.dataManager)
+    self.systems.crisis:initialize()
     
     -- Initialize idle system with fortress dependencies
     self.systems.idle = IdleSystem.new(self.eventBus, self.systems.resourceManager, self.systems.threatSimulation, self.systems.securityUpgrades)
@@ -134,6 +145,7 @@ function FortressGame:initializeLegacySystems()
     self.gameLoop:registerSystem("locations", self.systems.locations, 50)
     self.gameLoop:registerSystem("contracts", self.systems.contracts, 55)
     self.gameLoop:registerSystem("specialists", self.systems.specialists, 60)
+    self.gameLoop:registerSystem("crisis", self.systems.crisis, 62)
     self.gameLoop:registerSystem("idle", self.systems.idle, 65)
     self.gameLoop:registerSystem("factions", self.systems.factions, 70)
     self.gameLoop:registerSystem("achievements", self.systems.achievements, 75)
