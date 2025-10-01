@@ -19,7 +19,11 @@ local function createMockDataManager()
         end
         local content = file:read("*all")
         file:close()
-        local data = dkjson.decode(content)
+        local data, pos, err = dkjson.decode(content)
+        if not data then
+            print("❌ Failed to parse JSON in file: " .. filename .. "\nError: " .. tostring(err))
+            return nil
+        end
         return data
     end
     
