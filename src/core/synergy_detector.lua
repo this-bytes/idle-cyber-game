@@ -32,7 +32,7 @@ function SynergyDetector:detectActiveSynergies(gameState)
     local active = {}
     
     for _, synergy in ipairs(self.allSynergies) do
-        if self:checkConditions(synergy.conditions, gameState) then
+        if self:checkConditions(synergy.conditions or {}, gameState) then
             table.insert(active, synergy)
             
             -- Publish event for newly activated synergies
