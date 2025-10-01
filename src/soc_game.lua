@@ -15,7 +15,9 @@ local SkillSystem = require("src.systems.skill_system")
 
 -- Scene Dependencies
 local MainMenu = require("src.scenes.main_menu")
+local SmartMainMenu = require("src.scenes.smart_main_menu") -- NEW: Smart UI version
 local SOCView = require("src.scenes.soc_view")
+local SmartSOCView = require("src.scenes.smart_soc_view") -- NEW: Smart UI version
 local UpgradeShop = require("src.scenes.upgrade_shop")
 local GameOver = require("src.scenes.game_over")
 local IncidentResponse = require("src.scenes.incident_response")
@@ -59,15 +61,16 @@ function SOCGame:initialize()
     self.sceneManager:initialize()
 
     -- 4. Register Scenes
-    self.sceneManager:registerScene("main_menu", MainMenu.new(self.eventBus))
-    self.sceneManager:registerScene("soc_view", SOCView.new(self.eventBus))
+    -- Use Smart UI versions of main menu and SOC view
+    self.sceneManager:registerScene("main_menu", SmartMainMenu.new(self.eventBus))
+    self.sceneManager:registerScene("soc_view", SmartSOCView.new(self.eventBus))
     self.sceneManager:registerScene("upgrade_shop", UpgradeShop.new(self.eventBus))
     self.sceneManager:registerScene("game_over", GameOver.new(self.eventBus))
     self.sceneManager:registerScene("incident_response", IncidentResponse.new(self.eventBus))
     self.sceneManager:registerScene("admin_mode", AdminMode.new(self.eventBus))
     
-    -- 5. Start Initial Scene
-    self.sceneManager:requestScene("soc_view")
+    -- 5. Start Initial Scene (Main Menu)
+    self.sceneManager:requestScene("main_menu")
 
     print("✅ SOC Game Systems Initialized!")
     return true
@@ -100,13 +103,37 @@ function SOCGame:keypressed(key)
 end
 
 function SOCGame:mousepressed(x, y, button)
+    -- Log at SOCGame layer to verify coordinate mapping after LÖVE dispatch
+    print(string.format("[UI RAW] SOCGame:mousepressed x=%.1f y=%.1f button=%s", x, y, tostring(button)))
     if self.sceneManager then
         self.sceneManager:mousepressed(x, y, button)
+    else
+        print("[UI RAW] SOCGame:mousepressed but no sceneManager present")
+    end
+end
+
+function SOCGame:mousereleased(x, y, button)
+    if self.sceneManager and self.sceneManager.mousereleased then
+        self.sceneManager:mousereleased(x, y, button)
+    end
+end
+
+function SOCGame:mousemoved(x, y, dx, dy)
+    if self.sceneManager and self.sceneManager.mousemoved then
+        self.sceneManager:mousemoved(x, y, dx, dy)
+    end
+end
+
+function SOCGame:wheelmoved(x, y)
+    if self.sceneManager and self.sceneManager.wheelmoved then
+        self.sceneManager:wheelmoved(x, y)
     end
 end
 
 function SOCGame:resize(w, h)
-    -- Handle window resizing if needed
+    if self.sceneManager and self.sceneManager.resize then
+        self.sceneManager:resize(w, h)
+    end
 end
 
 function SOCGame:shutdown()

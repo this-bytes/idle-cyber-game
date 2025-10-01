@@ -1,44 +1,57 @@
 # Idle Sec Ops - Idle Cybersecurity Game
 
-A comprehensive idle cybersecurity simulation built with Lua and LÖVE 2D, featuring modern fortress architecture, authentic threat modeling, and a production-ready Smart UI Framework.
+A comprehensive idle cybersecurity simulation built with Lua and LÖVE 2D, featuring modern game architecture, authentic threat modeling, and a production-ready Smart UI Framework.
 
-## 🎨 NEW: Smart UI Framework
+## 📚 Documentation
 
-**Phase 1 Complete! ✅** We've built a production-ready component-based UI system with:
+**The canonical project documentation is located in `.github/copilot-instructions/`**
 
-- **Automatic Layout**: Flexbox and Grid containers with intelligent sizing
-- **Component Library**: Panel, Box, Grid, Text, Button, and more
-- **Cyberpunk Styling**: Neon borders, glow effects, cut corners
-- **Event System**: Mouse interactions with automatic propagation
-- **Full Documentation**: Comprehensive guides and quick references
+This modular instruction system provides comprehensive guidance for all aspects of development:
 
-**Try the Demo:**
+- **[01-project-overview](. /copilot-instructions/01-project-overview.instructions.md)** - Core principles and workflow
+- **[02-game-story-narrative](.github/copilot-instructions/02-game-story-narrative.instructions.md)** - World setting and narrative
+- **[03-core-mechanics](.github/copilot-instructions/03-core-mechanics.instructions.md)** - Game systems and mechanics
+- **[04-defense-threat-systems](.github/copilot-instructions/04-defense-threat-systems.instructions.md)** - Threat classification and defense
+- **[05-progression-prestige](.github/copilot-instructions/05-progression-prestige.instructions.md)** - Character advancement
+- **[06-events-encounters](.github/copilot-instructions/06-events-encounters.instructions.md)** - Dynamic events
+- **[07-endgame-meta](.github/copilot-instructions/07-endgame-meta.instructions.md)** - Endgame content
+- **[08-quality-accessibility](.github/copilot-instructions/08-quality-accessibility.instructions.md)** - QoL features
+- **[09-balancing-math](.github/copilot-instructions/09-balancing-math.instructions.md)** - Game balance formulas
+- **[10-ui-design](.github/copilot-instructions/10-ui-design.instructions.md)** - Visual design
+- **[11-technical-architecture](.github/copilot-instructions/11-technical-architecture.instructions.md)** - System architecture
+- **[12-development-roadmap](.github/copilot-instructions/12-development-roadmap.instructions.md)** - Development phases
+
+## 🎨 Smart UI Framework - INTEGRATED! ✅
+
+**The Smart UI Framework is fully integrated into the game!** 🎉
+
+- ✅ **Component-Based Architecture** - Automatic layout with flexbox/grid
+- ✅ **Toast Notifications** - Animated notifications with auto-dismiss
+- ✅ **Cyberpunk Styling** - Neon borders, glow effects, cut corners
+
+**See It In Action:**
 ```bash
-love ui_demo  # Interactive showcase of all components
+love .           # Main game with Smart UI
+love ui_demo     # UI component showcase
 ```
 
 **Documentation:**
-- [Smart UI Framework Guide](docs/SMART_UI_FRAMEWORK.md) - Complete API reference and patterns
-- [Quick Reference](docs/SMART_UI_QUICK_REFERENCE.md) - Cheat sheets and common snippets
-- [Implementation Summary](docs/UI_IMPLEMENTATION_SUMMARY.md) - What we built and why
+- [Smart UI Framework Guide](docs/SMART_UI_FRAMEWORK.md) - Complete API reference
+- [Quick Reference](docs/SMART_UI_QUICK_REFERENCE.md) - Cheat sheets
 
 ## Architecture Overview
 
-### Fortress Architecture (Recommended)
-Modern, production-ready architecture with industry-standard SOLID design principles:
+### Modern Game Architecture (Current)
+Production-ready architecture implementing industry-standard SOLID design principles:
 
 - **GameLoop**: Central system orchestration with priority-based updates
 - **ResourceManager**: Unified resource handling (money, reputation, XP, mission tokens)
 - **SecurityUpgrades**: Authentic cybersecurity infrastructure with 4 categories
 - **ThreatSimulation**: Realistic threat engine with 8 threat types
 - **UIManager**: Modern reactive UI with cybersecurity theming
-- **FortressGame**: Clean controller replacing monolithic game.lua
+- **SOCGame**: Main game controller integrating all systems
 
-### Legacy Systems (Maintained)
-Original systems maintained for backward compatibility:
-- Location-based progression with JSON configuration
-- Contract and specialist management systems
-- Achievement and skill progression systems
+See [11-technical-architecture.instructions.md](.github/copilot-instructions/11-technical-architecture.instructions.md) for complete details.
 
 ## Running the Game
 

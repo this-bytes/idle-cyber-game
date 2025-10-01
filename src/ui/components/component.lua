@@ -153,7 +153,24 @@ end
 -- Render (override in subclasses)
 function Component:render()
     if not self.visible then return end
-    
+    -- Draw debug overlay for this component when DEBUG_UI is enabled
+    if DEBUG_UI then
+        local r, g, b, a = love.graphics.getColor()
+        -- pressed: red, hovered: yellow, normal: green (translucent)
+        if self.pressed then
+            love.graphics.setColor(1, 0, 0, 0.15)
+        elseif self.hovered then
+            love.graphics.setColor(1, 1, 0, 0.12)
+        else
+            love.graphics.setColor(0, 1, 0, 0.06)
+        end
+        love.graphics.rectangle("fill", self.x, self.y, self.width, self.height)
+
+        love.graphics.setColor(1, 1, 1, 0.15)
+        love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
+        love.graphics.setColor(r, g, b, a)
+    end
+
     -- Render children (back to front)
     for _, child in ipairs(self.children) do
         child:render()
@@ -223,10 +240,28 @@ end
 
 function Component:onMousePress(x, y, button)
     if not self.visible or not self.enabled then return false end
+    -- Defensive: ensure layout is up-to-date for the whole tree to avoid stale bounds
+    local root = self
+    while root.parent do root = root.parent end
+    if root and root.layoutDirty and root.measure then
+        -- Re-measure and layout root to current window size
+        local w = love.graphics.getWidth()
+        local h = love.graphics.getHeight()
+        root:measure(w, h)
+        root:layout(0, 0, w, h)
+        print("[UI DEBUG] Forced re-layout of root component before hit testing")
+    end
     
     -- Check children first
     for i = #self.children, 1, -1 do
         if self.children[i]:onMousePress(x, y, button) then
+            -- Child handled the press
+            -- Debug: report which child handled it
+            if self.children[i].id or self.children[i].className then
+                print(string.format("[UI DEBUG] onMousePress handled by child id=%s class=%s", tostring(self.children[i].id), tostring(self.children[i].className)))
+            else
+                print("[UI DEBUG] onMousePress handled by unnamed child")
+            end
             return true
         end
     end
@@ -237,6 +272,8 @@ function Component:onMousePress(x, y, button)
         if self.props.onPress then
             self.props.onPress(self, button)
         end
+        -- Debug: report press on this component
+        print(string.format("[UI DEBUG] onMousePress on component id=%s class=%s x=%.1f y=%.1f w=%.1f h=%.1f -> pressed=true", tostring(self.id), tostring(self.className), self.x, self.y, self.width, self.height))
         return true
     end
     
@@ -258,9 +295,16 @@ function Component:onMouseRelease(x, y, button)
     
     -- Check self
     if wasPressed and self:containsPoint(x, y) then
+        -- Prefer explicit onRelease, but also trigger onClick for convenience
         if self.props.onRelease then
             self.props.onRelease(self, button)
         end
+        if self.props.onClick then
+            -- onClick is a higher-level convenience callback (press+release)
+            self.props.onClick(self, button)
+        end
+        -- Debug: report release and click
+        print(string.format("[UI DEBUG] onMouseRelease on component id=%s class=%s x=%.1f y=%.1f w=%.1f h=%.1f -> wasPressed=%s", tostring(self.id), tostring(self.className), self.x, self.y, self.width, self.height, tostring(wasPressed)))
         return true
     end
     
