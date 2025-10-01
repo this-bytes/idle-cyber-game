@@ -379,25 +379,25 @@ function IntegrationDemo:mousepressed(x, y, button)
     end
     
     if self.root then
-        return self.root:mousepressed(x, y, button)
+        return self.root:onMousePress(x, y, button)
     end
 end
 
 function IntegrationDemo:mousereleased(x, y, button)
     if self.root then
-        return self.root:mousereleased(x, y, button)
+        return self.root:onMouseRelease(x, y, button)
     end
 end
 
 function IntegrationDemo:mousemoved(x, y, dx, dy)
     if self.root then
-        return self.root:mousemoved(x, y, dx, dy)
+        return self.root:onMouseMove(x, y)
     end
 end
 
 function IntegrationDemo:wheelmoved(x, y)
-    if self.root and self.root.mouseWheel then
-        return self.root:mouseWheel(x, y)
+    if self.root and self.root.onMouseWheel then
+        return self.root:onMouseWheel(x, y)
     end
 end
 

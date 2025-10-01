@@ -165,21 +165,21 @@ end
 -- Mouse events
 function SmartMainMenu:mousepressed(x, y, button)
     if self.root then
-        return self.root:mousepressed(x, y, button)
+        return self.root:onMousePress(x, y, button)
     end
     return false
 end
 
 function SmartMainMenu:mousereleased(x, y, button)
     if self.root then
-        return self.root:mousereleased(x, y, button)
+        return self.root:onMouseRelease(x, y, button)
     end
     return false
 end
 
 function SmartMainMenu:mousemoved(x, y, dx, dy)
     if self.root then
-        return self.root:mousemoved(x, y, dx, dy)
+        return self.root:onMouseMove(x, y)
     end
     return false
 end

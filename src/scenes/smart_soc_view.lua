@@ -498,9 +498,9 @@ function SmartSOCView:mousepressed(x, y, button)
         return true
     end
     
-    -- Pass to root component
+    -- Pass to root component using correct method name
     if self.root then
-        return self.root:mousepressed(x, y, button)
+        return self.root:onMousePress(x, y, button)
     end
     
     return false
@@ -508,21 +508,21 @@ end
 
 function SmartSOCView:mousereleased(x, y, button)
     if self.root then
-        return self.root:mousereleased(x, y, button)
+        return self.root:onMouseRelease(x, y, button)
     end
     return false
 end
 
 function SmartSOCView:mousemoved(x, y, dx, dy)
     if self.root then
-        return self.root:mousemoved(x, y, dx, dy)
+        return self.root:onMouseMove(x, y)
     end
     return false
 end
 
 function SmartSOCView:wheelmoved(x, y)
-    if self.root and self.root.mouseWheel then
-        return self.root:mouseWheel(x, y)
+    if self.root and self.root.onMouseWheel then
+        return self.root:onMouseWheel(x, y)
     end
     return false
 end
