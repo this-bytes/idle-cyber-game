@@ -9,6 +9,32 @@ When working on any aspect of the game, strictly adhere to the relevant instruct
 
 Dont create new files adapt to ones in place unless the feature calls for an entirely new file. Always prioritize maintainability and consistency with the existing codebase. Reduce tech debt wherever possible.
 
+## ⚠️ CRITICAL: No Duplicate Files Rule
+
+**NEVER create duplicate files with variations of existing names.** This is a strict guardrail to prevent code fragmentation.
+
+### ✅ CORRECT Behavior
+When asked to improve, enhance, or make something "smarter/better/new":
+1. **Edit the existing file directly**
+2. If concerned about breaking changes, create a git branch first
+3. ONE canonical file per concept - always
+
+### ❌ FORBIDDEN Patterns
+Do NOT create files like:
+- `smart_X.lua` alongside `X.lua`
+- `new_X.lua` alongside `X.lua`
+- `better_X.lua` alongside `X.lua`
+- `X_v2.lua` alongside `X.lua`
+- Any naming pattern that creates parallel versions
+
+### Why This Matters
+- Creates confusion about which file is actually used
+- Wastes effort on code that doesn't run
+- Fragments the codebase and increases maintenance burden
+- Makes the project harder to understand
+
+**The default is always: Improve what exists. Use git for history and branches for safety.**
+
 
 ## Modular Instruction System
 
