@@ -48,6 +48,9 @@ luac.out
 
 # Backend artifacts
 backend/database.db
+
+# Screenshots (for UI development - privacy)
+screenshots/
 backend/__pycache__/
 backend/*.pyc
 backend/.env
