@@ -10,78 +10,66 @@ function AdminMode.new(systems)
     self.systems = systems
     
     -- Crisis Mode state
-    self.currentCrisis = nil
-    self.crisisTimer = 0
     self.responseLog = {}
     
-    -- Sample crisis scenario (TODO: Move to dedicated Crisis System)
-    self.sampleCrisis = {
-        id = "phishing_campaign_001",
-        title = "PHISHING CAMPAIGN DETECTED",
-        description = "Targeted phishing emails detected across client network",
-        severity = "HIGH",
-        timeLimit = 300, -- 5 minutes to respond
-        threatSignature = "MD5: e3b0c44298fc1c149afbf4c8996fb924",
-        affectedSystems = 47,
-        stages = {
-            {
-                name = "Initial Detection",
-                description = "Unusual email traffic patterns detected",
-                complete = true,
-                logEntry = "[12:34:56] ALERT: Email volume spike +340% from baseline"
-            },
-            {
-                name = "Analysis Required", 
-                description = "Determine scope and impact of phishing campaign",
-                complete = false,
-                logEntry = "[12:35:12] ANALYSIS: Scanning email headers for IOCs...",
-                options = {
-                    {key = "1", action = "Deploy Incident Responder", cost = "specialist_time", description = "Human analysis (High accuracy)"},
-                    {key = "2", action = "Run Automated Analysis", cost = "processing_power", description = "AI scan (Fast results)"},
-                    {key = "3", action = "Manual Investigation", cost = "time", description = "Deep dive (Thorough)"}
-                }
-            },
-            {
-                name = "Containment",
-                description = "Block malicious emails and quarantine affected systems",
-                complete = false,
-                logEntry = "[12:36:00] PENDING: Awaiting containment protocol execution"
-            },
-            {
-                name = "Eradication",
-                description = "Remove malicious content and patch vulnerabilities",
-                complete = false,
-                logEntry = "[12:37:00] PENDING: Malware removal and system hardening"
+    -- Subscribe to specialist level-up events
+    if self.systems.eventBus then
+        self.systems.eventBus:subscribe("specialist_leveled_up", function(data)
+            local message = string.format("⭐ %s leveled up to Level %d!", 
+                data.specialist.name, data.newLevel)
+            table.insert(self.responseLog, message)
+        end)
+        
+        -- Subscribe to crisis completion events
+        self.systems.eventBus:subscribe("crisis_completed", function(data)
+            local outcomeText = {
+                success = "✅ CRISIS RESOLVED SUCCESSFULLY",
+                partial = "⚠️ CRISIS PARTIALLY RESOLVED",
+                failure = "❌ CRISIS RESPONSE FAILED",
+                timeout = "⏰ CRISIS TIMEOUT - RESPONSE FAILED"
             }
-        }
-    }
+            table.insert(self.responseLog, outcomeText[data.outcome] or "CRISIS ENDED")
+            table.insert(self.responseLog, string.format("💰 Rewards: $%d | 🌟 Reputation: %+d | 📈 XP: %d",
+                data.moneyAwarded or 0, data.reputationChange or 0, data.xpAwarded or 0))
+        end)
+    end
     
     return self
 end
 
 function AdminMode:update(dt)
-    -- Update crisis timer if in crisis
-    if self.currentCrisis then
-        self.crisisTimer = self.crisisTimer + dt
-        
-        -- Check for crisis timeout
-        if self.crisisTimer >= self.currentCrisis.timeLimit then
-            self:resolveCrisis("timeout")
+    -- Update crisis system timer
+    if self.systems.crisis then
+        -- Crisis system handles its own timing
+        -- We just need to check if crisis ended
+        local activeCrisis = self.systems.crisis:getActiveCrisis()
+        if activeCrisis ~= self.lastActiveCrisis then
+            if activeCrisis and not self.lastActiveCrisis then
+                -- New crisis started
+                table.insert(self.responseLog, "🚨 CRISIS INITIATED: " .. activeCrisis.name)
+            elseif not activeCrisis and self.lastActiveCrisis then
+                -- Crisis ended
+                table.insert(self.responseLog, "✅ CRISIS RESOLVED")
+            end
+            self.lastActiveCrisis = activeCrisis
         end
     end
 end
 
 function AdminMode:draw()
     -- Get terminal theme from UI manager
-    local theme = self.systems.ui.theme
+    local theme = self.systems.uiManager.theme
     
     -- Draw crisis mode header with special styling
     local contentY = theme:drawHeader("🚨 CRISIS RESPONSE CENTER 🚨", "Real-time Incident Management System")
     
     local y = contentY + 20
     
+    -- Get current crisis from crisis system
+    local currentCrisis = self.systems.crisis and self.systems.crisis:getActiveCrisis() or nil
+    
     -- Show current crisis or status
-    if self.currentCrisis then
+    if currentCrisis then
         -- Active crisis display with high alert styling
         theme:drawPanel(20, y, 980, 350, "🚨 ACTIVE INCIDENT - CODE RED")
         local crisisY = y + 25
@@ -90,27 +78,22 @@ function AdminMode:draw()
         theme:drawText("╔═══════════════════════════════════════════════════════════════════╗", 30, crisisY, theme:getColor("danger"))
         crisisY = crisisY + 15
         theme:drawText("║ INCIDENT:", 30, crisisY, theme:getColor("danger"))
-        theme:drawText(self.currentCrisis.title, 150, crisisY, theme:getColor("warning"))
+        theme:drawText(currentCrisis.name, 150, crisisY, theme:getColor("warning"))
         theme:drawText("║", 680, crisisY, theme:getColor("danger"))
         crisisY = crisisY + 15
         
         theme:drawText("║ SEVERITY:", 30, crisisY, theme:getColor("danger"))
-        theme:drawText(self.currentCrisis.severity, 150, crisisY, theme:getColor("danger"))
+        theme:drawText(string.upper(currentCrisis.severity), 150, crisisY, theme:getColor("danger"))
         theme:drawText("║", 680, crisisY, theme:getColor("danger"))
         crisisY = crisisY + 15
         
         theme:drawText("║ THREAT ID:", 30, crisisY, theme:getColor("secondary"))
-        theme:drawText(self.currentCrisis.threatSignature or "N/A", 150, crisisY, theme:getColor("dimmed"))
-        theme:drawText("║", 680, crisisY, theme:getColor("danger"))
-        crisisY = crisisY + 15
-        
-        theme:drawText("║ AFFECTED:", 30, crisisY, theme:getColor("secondary"))
-        theme:drawText(tostring(self.currentCrisis.affectedSystems or 0) .. " systems", 150, crisisY, theme:getColor("warning"))
+        theme:drawText(currentCrisis.id or "N/A", 150, crisisY, theme:getColor("dimmed"))
         theme:drawText("║", 680, crisisY, theme:getColor("danger"))
         crisisY = crisisY + 15
         
         -- Time remaining with urgent styling
-        local timeRemaining = math.max(0, self.currentCrisis.timeLimit - self.crisisTimer)
+        local timeRemaining = self.systems.crisis:getTimeRemaining()
         local minutes = math.floor(timeRemaining / 60)
         local seconds = math.floor(timeRemaining % 60)
         local timeColor = timeRemaining < 60 and theme:getColor("danger") or theme:getColor("warning")
@@ -126,30 +109,25 @@ function AdminMode:draw()
         theme:drawPanel(20, y, 980, 250, "📋 INCIDENT RESPONSE PROTOCOL")
         local stageY = y + 25
         
-        for i, stage in ipairs(self.currentCrisis.stages) do
-            local statusIcon = stage.complete and "[✓]" or "[○]"
-            local statusColor = stage.complete and theme:getColor("success") or theme:getColor("warning")
+        for i, stage in ipairs(currentCrisis.stages) do
+            local statusIcon = stage.completed and "[✓]" or "[○]"
+            local statusColor = stage.completed and theme:getColor("success") or theme:getColor("warning")
             
             theme:drawText(statusIcon, 30, stageY, statusColor)
             theme:drawText(string.format("%d. %s", i, stage.name), 60, stageY, theme:getColor("secondary"))
             stageY = stageY + 15
             
-            -- Show log entry if available
-            if stage.logEntry then
-                theme:drawText("   " .. stage.logEntry, 60, stageY, theme:getColor("dimmed"))
-                stageY = stageY + 15
-            else
-                theme:drawText("   " .. stage.description, 60, stageY, theme:getColor("dimmed"))
-                stageY = stageY + 15
-            end
+            -- Show description
+            theme:drawText("   " .. stage.description, 60, stageY, theme:getColor("dimmed"))
+            stageY = stageY + 15
             
             -- Show options for current stage
-            if not stage.complete and stage.options then
+            if not stage.completed and stage.options then
                 theme:drawText("   ┌─ RESPONSE OPTIONS:", 60, stageY, theme:getColor("accent"))
                 stageY = stageY + 15
-                for _, option in ipairs(stage.options) do
-                    theme:drawText("   │ [" .. option.key .. "]", 70, stageY, theme:getColor("warning"))
-                    theme:drawText(option.action, 110, stageY, theme:getColor("primary"))
+                for optIdx, option in ipairs(stage.options) do
+                    theme:drawText("   │ [" .. optIdx .. "]", 70, stageY, theme:getColor("warning"))
+                    theme:drawText(option.text, 110, stageY, theme:getColor("primary"))
                     if option.description then
                         theme:drawText("(" .. option.description .. ")", 320, stageY, theme:getColor("dimmed"))
                     end
@@ -207,6 +185,60 @@ function AdminMode:draw()
         riskY = riskY + 20
         theme:drawText("Press [C] to simulate crisis scenario", 540, riskY, theme:getColor("primary"))
         
+        -- Specialist roster panel with XP bars
+        y = y + 270
+        theme:drawPanel(20, y, 980, 180, "👥 SPECIALIST ROSTER")
+        local rosterY = y + 25
+        
+        local allSpecialists = self.systems.specialists:getAllSpecialists()
+        local specialistCount = 0
+        for specialistId, specialist in pairs(allSpecialists) do
+            if specialistCount < 4 then -- Show first 4 specialists
+                -- Draw specialist info
+                theme:drawText(specialist.name, 30, rosterY, theme:getColor("primary"))
+                
+                -- Draw level
+                theme:drawText("Lv." .. (specialist.level or 1), 250, rosterY, theme:getColor("accent"))
+                
+                -- Draw XP bar
+                local xp = specialist.xp or 0
+                local nextLevelXp = self.systems.specialists:getXpForNextLevel(specialist.level or 1)
+                
+                if nextLevelXp then
+                    local xpPercent = math.min(1.0, xp / nextLevelXp)
+                    local barWidth = 150
+                    local barHeight = 10
+                    
+                    -- Background
+                    love.graphics.setColor(0.2, 0.2, 0.2, 1)
+                    love.graphics.rectangle("fill", 320, rosterY + 3, barWidth, barHeight)
+                    
+                    -- Filled portion
+                    love.graphics.setColor(0.3, 0.8, 0.3, 1)
+                    love.graphics.rectangle("fill", 320, rosterY + 3, barWidth * xpPercent, barHeight)
+                    
+                    -- Border
+                    love.graphics.setColor(0.5, 0.5, 0.5, 1)
+                    love.graphics.rectangle("line", 320, rosterY + 3, barWidth, barHeight)
+                    
+                    -- XP text
+                    theme:drawText(xp .. "/" .. nextLevelXp .. " XP", 480, rosterY, theme:getColor("dimmed"))
+                else
+                    theme:drawText("MAX LEVEL", 320, rosterY, theme:getColor("success"))
+                end
+                
+                -- Status
+                local statusText = specialist.status == "available" and "✓ Ready" or "⏳ Busy"
+                local statusColor = specialist.status == "available" and theme:getColor("success") or theme:getColor("warning")
+                theme:drawText(statusText, 650, rosterY, statusColor)
+                
+                rosterY = rosterY + 18
+                specialistCount = specialistCount + 1
+            end
+        end
+        
+        y = y + 200
+    else
         y = y + 270
     end
     
@@ -241,7 +273,8 @@ function AdminMode:draw()
     end
     
     -- Status bar with crisis mode controls
-    local statusText = self.currentCrisis and 
+    local currentCrisis = self.systems.crisis and self.systems.crisis:getActiveCrisis() or nil
+    local statusText = currentCrisis and 
         "CRISIS ACTIVE | [1-3] Response Options | [A] Return to Idle Mode" or
         "MONITORING | [C] Simulate Crisis | [H] Help | [A] Return to Idle Mode | [TAB] Toggle Modes"
     theme:drawStatusBar(statusText)
@@ -266,8 +299,11 @@ function AdminMode:mousepressed(x, y, button)
 end
 
 function AdminMode:keypressed(key)
+    -- Get current crisis status
+    local currentCrisis = self.systems.crisis and self.systems.crisis:getActiveCrisis() or nil
+    
     -- Handle crisis mode specific keys
-    if self.currentCrisis then
+    if currentCrisis then
         -- Handle response options during crisis
         if key == "1" or key == "2" or key == "3" then
             self:handleCrisisResponse(key)
@@ -341,150 +377,84 @@ end
 function AdminMode:exit()
     table.insert(self.responseLog, "👋 EXITING ADMIN MODE")
     -- Reset crisis if leaving mid-crisis (optional)
-    if self.currentCrisis then
+    local currentCrisis = self.systems.crisis:getActiveCrisis()
+    if currentCrisis then
         table.insert(self.responseLog, "⚠️ Crisis abandoned - returning to monitoring")
-        self.currentCrisis = nil
-        self.crisisTimer = 0
+        self.systems.crisis:resolveCrisis("failure")
     end
     print("👋 Exiting Admin Mode")
 end
 
 -- Start a crisis scenario
 function AdminMode:startCrisis()
-    if self.currentCrisis then return end
+    local currentCrisis = self.systems.crisis:getActiveCrisis()
+    if currentCrisis then return end
     
-    self.currentCrisis = {}
-    for k, v in pairs(self.sampleCrisis) do
-        self.currentCrisis[k] = v
+    -- Start a random crisis from available definitions
+    local crisisDefinitions = self.systems.crisis:getAllCrisisDefinitions()
+    local crisisIds = {}
+    for id, _ in pairs(crisisDefinitions) do
+        table.insert(crisisIds, id)
     end
     
-    -- Deep copy stages
-    self.currentCrisis.stages = {}
-    for i, stage in ipairs(self.sampleCrisis.stages) do
-        self.currentCrisis.stages[i] = {}
-        for k, v in pairs(stage) do
-            self.currentCrisis.stages[i][k] = v
-        end
+    if #crisisIds > 0 then
+        local randomId = crisisIds[math.random(#crisisIds)]
+        self.systems.crisis:startCrisis(randomId)
+    else
+        table.insert(self.responseLog, "⚠️ No crisis definitions available")
     end
-    
-    self.crisisTimer = 0
-    local timestamp = os.date("[%H:%M:%S]")
-    
-    table.insert(self.responseLog, "╔══════════════════════════════════════════════════════════════════╗")
-    table.insert(self.responseLog, "║ " .. timestamp .. " CRISIS INITIATED: " .. self.currentCrisis.title)
-    table.insert(self.responseLog, "║ Severity: " .. self.currentCrisis.severity .. " | Systems affected: " .. (self.currentCrisis.affectedSystems or "Unknown"))
-    table.insert(self.responseLog, "║ All hands on deck - immediate response required")
-    table.insert(self.responseLog, "╚══════════════════════════════════════════════════════════════════╝")
-    
-    print("🚨 Crisis started: " .. self.currentCrisis.title)
 end
 
 -- Handle crisis response
 function AdminMode:handleCrisisResponse(key)
-    if not self.currentCrisis then return end
+    local currentCrisis = self.systems.crisis:getActiveCrisis()
+    if not currentCrisis then return end
     
-    -- Find current stage
-    local currentStage = nil
-    local stageIndex = nil
-    
-    for i, stage in ipairs(self.currentCrisis.stages) do
-        if not stage.complete then
-            currentStage = stage
-            stageIndex = i
-            break
-        end
-    end
-    
+    -- Get current stage
+    local currentStage = self.systems.crisis:getCurrentStage()
     if not currentStage or not currentStage.options then return end
     
-    -- Find selected option
-    local selectedOption = nil
-    for _, option in ipairs(currentStage.options) do
-        if option.key == key then
-            selectedOption = option
-            break
-        end
+    -- Convert key to number (1, 2, 3 -> 1, 2, 3)
+    local optionIndex = tonumber(key)
+    if not optionIndex or optionIndex < 1 or optionIndex > #currentStage.options then
+        return
     end
     
+    local selectedOption = currentStage.options[optionIndex]
     if selectedOption then
-        -- Execute response with terminal-style logging
+        -- Execute response
         local timestamp = os.date("[%H:%M:%S]")
-        table.insert(self.responseLog, timestamp .. " EXECUTING: " .. selectedOption.action)
+        table.insert(self.responseLog, timestamp .. " EXECUTING: " .. selectedOption.text)
         
-        -- Mark current stage as complete
-        currentStage.complete = true
-        
-        -- Update log entry for completed stage
-        if currentStage.logEntry then
-            currentStage.logEntry = currentStage.logEntry:gsub("PENDING", "COMPLETE")
+        -- Get CEO to deploy
+        local ceo = self.systems.specialists:getSpecialist(0)
+        if ceo then
+            -- Use ability through crisis system
+            local success, effectiveness = self.systems.crisis:useAbility(
+                0, -- CEO id
+                selectedOption.requiredAbility or "basic_analysis",
+                currentStage.id,
+                ceo.abilities or {}
+            )
+            
+            if success then
+                table.insert(self.responseLog, timestamp .. " STAGE COMPLETE - Effectiveness: " .. string.format("%.0f%%", effectiveness * 100))
+            end
         end
         
-        -- Award mission tokens for successful response
+        -- Award mission tokens for response
         self.systems.eventBus:publish("add_resource", {
             resource = "missionTokens",
             amount = 1
         })
-        
-        -- Activate next stage if available
-        local nextStage = self.currentCrisis.stages[stageIndex + 1]
-        if nextStage and nextStage.logEntry then
-            nextStage.logEntry = nextStage.logEntry:gsub("PENDING", "ACTIVE")
-        end
-        
-        -- Check if all stages complete
-        local allComplete = true
-        for _, stage in ipairs(self.currentCrisis.stages) do
-            if not stage.complete then
-                allComplete = false
-                break
-            end
-        end
-        
-        if allComplete then
-            self:resolveCrisis("success")
-        else
-            -- Add progress log entry
-            table.insert(self.responseLog, timestamp .. " STAGE " .. stageIndex .. " COMPLETE - Proceeding to next phase")
-        end
     end
 end
 
--- Resolve crisis
+-- Resolve crisis (now handled by CrisisSystem, this is just for UI logging)
 function AdminMode:resolveCrisis(outcome)
-    if not self.currentCrisis then return end
-    
-    local timestamp = os.date("[%H:%M:%S]")
-    local timeBonus = 1.0
-    
-    if outcome == "success" then
-        -- Calculate time bonus (faster resolution = better rewards)
-        local timeUsed = self.crisisTimer
-        local timeLimit = self.currentCrisis.timeLimit
-        timeBonus = math.max(0.5, (timeLimit - timeUsed) / timeLimit + 0.5)
-        
-        local baseReward = {
-            reputation = 15,
-            money = 8000,
-            missionTokens = 2
-        }
-        
-        -- Apply time bonus
-        local reputationGain = math.floor(baseReward.reputation * timeBonus)
-        local moneyGain = math.floor(baseReward.money * timeBonus)
-        local tokenGain = baseReward.missionTokens
-        
-        table.insert(self.responseLog, "╔══════════════════════════════════════════════════════════════════╗")
-        table.insert(self.responseLog, "║ " .. timestamp .. " CRISIS RESOLVED SUCCESSFULLY")
-        table.insert(self.responseLog, "║ Response Time: " .. string.format("%.1fs (%.0f%% efficiency)", timeUsed, timeBonus * 100))
-        table.insert(self.responseLog, "║ Rewards: $" .. moneyGain .. ", +" .. reputationGain .. " reputation, +" .. tokenGain .. " tokens")
-        table.insert(self.responseLog, "║ All affected systems secured and operational")
-        table.insert(self.responseLog, "╚══════════════════════════════════════════════════════════════════╝")
-        
-        -- Award scaled rewards
-        self.systems.eventBus:publish("add_resource", {
-            resource = "reputation",
-            amount = reputationGain
-        })
+    -- Crisis system handles the actual resolution
+    -- This method is kept for potential UI-specific logic
+end
         
         self.systems.eventBus:publish("add_resource", {
             resource = "money", 

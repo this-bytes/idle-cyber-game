@@ -72,6 +72,22 @@ function SpecialistSystem:initialize()
             self:awardXpToAllSpecialists(data.xpAwarded or 25)
         end)
         
+        -- Subscribe to crisis completion events for XP awards
+        self.eventBus:subscribe("crisis_completed", function(data)
+            -- Award XP to deployed specialists
+            if data.specialistsDeployed then
+                for _, deployment in ipairs(data.specialistsDeployed) do
+                    local specialistId = deployment.specialistId
+                    local baseXp = data.xpAwarded or 50
+                    
+                    -- Bonus XP for using abilities
+                    local abilityBonus = deployment.abilityId and 10 or 0
+                    
+                    self:awardXp(specialistId, baseXp + abilityBonus)
+                end
+            end
+        end)
+        
         -- Subscribe to admin commands
         self.eventBus:subscribe("admin_command_deploy_specialist", function(data)
             self:handleAdminDeploy(data)
@@ -518,8 +534,14 @@ function SpecialistSystem:levelUp(specialistId)
     -- Level up the specialist
     specialist.level = newLevel
     
-    -- Apply stat boost (10% increase to efficiency)
-    specialist.efficiency = (specialist.efficiency or 1.0) * 1.1
+    -- Apply stat boost (10% increase per level to all stats)
+    local statMultiplier = 1.1
+    specialist.efficiency = (specialist.efficiency or 1.0) * statMultiplier
+    specialist.speed = (specialist.speed or 1.0) * statMultiplier
+    specialist.trace = (specialist.trace or 1.0) * statMultiplier
+    specialist.defense = (specialist.defense or 1.0) * statMultiplier
+    
+    print(string.format("⭐ %s leveled up to Level %d! Stats increased by 10%%", specialist.name, newLevel))
     
     -- Publish level up event
     self.eventBus:publish("specialist_leveled_up", {
@@ -535,6 +557,114 @@ end
 -- Get XP required for next level
 function SpecialistSystem:getXpForNextLevel(currentLevel)
     return self.levelUpThresholds[currentLevel + 1]
+end
+
+-- Learn a new skill
+function SpecialistSystem:learnSkill(specialistId, skillId)
+    local specialist = self.specialists[specialistId]
+    if not specialist then
+        return false, "Specialist not found"
+    end
+    
+    -- Check if skill system is available
+    if not self.skillSystem then
+        return false, "Skill system not available"
+    end
+    
+    -- Check if already has the skill
+    if specialist.abilities then
+        for _, abilityId in ipairs(specialist.abilities) do
+            if abilityId == skillId then
+                return false, "Already knows this skill"
+            end
+        end
+    end
+    
+    -- Validate skill requirements
+    local canLearn, reason = self:canLearnSkill(specialist, skillId)
+    if not canLearn then
+        return false, reason
+    end
+    
+    -- Get skill data to check XP cost
+    local skills = self.skillSystem:getAllSkills()
+    local skill = skills[skillId]
+    if not skill then
+        return false, "Skill not found"
+    end
+    
+    local xpCost = skill.baseXpCost or 0
+    if specialist.xp < xpCost then
+        return false, string.format("Not enough XP (need %d, have %d)", xpCost, specialist.xp)
+    end
+    
+    -- Deduct XP
+    specialist.xp = specialist.xp - xpCost
+    
+    -- Add skill to abilities
+    if not specialist.abilities then
+        specialist.abilities = {}
+    end
+    table.insert(specialist.abilities, skillId)
+    
+    -- Fire event
+    if self.eventBus then
+        self.eventBus:publish("specialist_learned_skill", {
+            specialistId = specialistId,
+            skillId = skillId,
+            specialistName = specialist.name
+        })
+    end
+    
+    print(string.format("✨ %s learned new skill: %s", specialist.name, skill.name))
+    
+    return true
+end
+
+-- Check if specialist can learn a skill
+function SpecialistSystem:canLearnSkill(specialist, skillId)
+    if not self.skillSystem then
+        return false, "Skill system not available"
+    end
+    
+    -- Get skill data
+    local skills = self.skillSystem:getAllSkills()
+    local skill = skills[skillId]
+    if not skill then
+        return false, "Skill not found"
+    end
+    
+    -- Check level requirement (if any)
+    if skill.levelRequirement and (specialist.level or 1) < skill.levelRequirement then
+        return false, string.format("Requires level %d", skill.levelRequirement)
+    end
+    
+    -- Check prerequisite skills
+    if skill.requirements then
+        for reqSkillId, reqLevel in pairs(skill.requirements) do
+            local hasSkill = false
+            if specialist.abilities then
+                for _, abilityId in ipairs(specialist.abilities) do
+                    if abilityId == reqSkillId then
+                        hasSkill = true
+                        break
+                    end
+                end
+            end
+            
+            if not hasSkill then
+                return false, string.format("Requires skill: %s", reqSkillId)
+            end
+        end
+    end
+    
+    -- Check XP cost
+    local xpCost = skill.baseXpCost or 0
+    if specialist.xp < xpCost then
+        return false, string.format("Not enough XP (need %d, have %d)", xpCost, specialist.xp)
+    end
+    
+    return true
 end
 
 -- Award XP to a specialist (skill system integration)

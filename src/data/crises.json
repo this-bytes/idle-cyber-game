@@ -1,0 +1,229 @@
+{
+  "crises": {
+    "phishing_crisis": {
+      "id": "phishing_crisis",
+      "name": "Phishing Campaign Detected",
+      "threatType": "phishing_attempt",
+      "description": "Coordinated phishing emails targeting client employees",
+      "severity": "medium",
+      "timeLimit": 180,
+      "xpReward": 50,
+      "moneyReward": 2000,
+      "reputationImpact": {
+        "success": 5,
+        "partial": 2,
+        "failure": -10
+      },
+      "stages": [
+        {
+          "id": "detection",
+          "name": "Initial Detection",
+          "description": "Unusual email traffic patterns detected",
+          "autoComplete": true,
+          "logEntries": [
+            "[12:34:56] ALERT: Email volume spike +340% from baseline",
+            "[12:35:02] Pattern analysis: Coordinated campaign detected"
+          ]
+        },
+        {
+          "id": "analysis",
+          "name": "Analysis Required",
+          "description": "Determine scope and impact",
+          "requiredAbilities": ["basic_analysis", "network_fundamentals"],
+          "options": [
+            {
+              "id": "deploy_specialist",
+              "text": "Deploy Incident Responder",
+              "requiredAbility": "basic_response",
+              "effectiveness": 0.9,
+              "description": "Human analysis (High accuracy)"
+            },
+            {
+              "id": "automated_scan",
+              "text": "Run Automated Analysis",
+              "effectiveness": 0.6,
+              "description": "AI scan (Fast but less thorough)"
+            }
+          ]
+        },
+        {
+          "id": "containment",
+          "name": "Containment",
+          "description": "Block malicious emails and quarantine affected systems",
+          "requiredProgress": 0.5
+        },
+        {
+          "id": "eradication",
+          "name": "Eradication",
+          "description": "Remove threats and patch vulnerabilities",
+          "requiredProgress": 1.0
+        }
+      ]
+    },
+    "ransomware_crisis": {
+      "id": "ransomware_crisis",
+      "name": "Ransomware Attack",
+      "threatType": "ransomware_detection",
+      "description": "File encryption patterns detected - ransomware deployment in progress",
+      "severity": "high",
+      "timeLimit": 240,
+      "xpReward": 100,
+      "moneyReward": 5000,
+      "reputationImpact": {
+        "success": 15,
+        "partial": 5,
+        "failure": -25
+      },
+      "stages": [
+        {
+          "id": "detection",
+          "name": "Encryption Activity Detected",
+          "description": "Suspicious file encryption patterns identified",
+          "autoComplete": true,
+          "logEntries": [
+            "[14:21:33] CRITICAL: Mass file encryption detected on 23 systems",
+            "[14:21:45] Ransomware signature match: Variant unknown"
+          ]
+        },
+        {
+          "id": "isolation",
+          "name": "Network Isolation",
+          "description": "Isolate infected systems to prevent spread",
+          "requiredAbilities": ["network_fundamentals"],
+          "options": [
+            {
+              "id": "network_isolation",
+              "text": "Emergency Network Segmentation",
+              "requiredAbility": "network_fundamentals",
+              "effectiveness": 0.85,
+              "description": "Quarantine affected network segments"
+            },
+            {
+              "id": "manual_disconnect",
+              "text": "Manual System Disconnect",
+              "effectiveness": 0.7,
+              "description": "Physical isolation (slower)"
+            }
+          ]
+        },
+        {
+          "id": "analysis",
+          "name": "Malware Analysis",
+          "description": "Identify ransomware variant and encryption method",
+          "requiredAbilities": ["malware_analysis"],
+          "options": [
+            {
+              "id": "deep_analysis",
+              "text": "Advanced Malware Analysis",
+              "requiredAbility": "malware_analysis",
+              "effectiveness": 0.95,
+              "description": "Identify decryption vectors"
+            },
+            {
+              "id": "signature_match",
+              "text": "Signature Database Lookup",
+              "effectiveness": 0.65,
+              "description": "Check known variants"
+            }
+          ]
+        },
+        {
+          "id": "recovery",
+          "name": "System Recovery",
+          "description": "Restore from backups or attempt decryption",
+          "requiredProgress": 1.0,
+          "options": [
+            {
+              "id": "restore_backups",
+              "text": "Restore from Backups",
+              "effectiveness": 0.9,
+              "description": "Clean restore from backup systems"
+            },
+            {
+              "id": "attempt_decryption",
+              "text": "Attempt Decryption",
+              "effectiveness": 0.5,
+              "description": "Try to decrypt files (risky)"
+            }
+          ]
+        }
+      ]
+    },
+    "ddos_crisis": {
+      "id": "ddos_crisis",
+      "name": "DDoS Attack",
+      "threatType": "ddos_attack",
+      "description": "Massive traffic surge overwhelming client infrastructure",
+      "severity": "high",
+      "timeLimit": 120,
+      "xpReward": 75,
+      "moneyReward": 3000,
+      "reputationImpact": {
+        "success": 10,
+        "partial": 3,
+        "failure": -15
+      },
+      "stages": [
+        {
+          "id": "detection",
+          "name": "Traffic Spike Detected",
+          "description": "Abnormal traffic volume from multiple sources",
+          "autoComplete": true,
+          "logEntries": [
+            "[09:15:22] ALERT: Traffic volume exceeded 500% of normal baseline",
+            "[09:15:28] Source IPs: 2,847 unique addresses detected",
+            "[09:15:35] Botnet signature detected"
+          ]
+        },
+        {
+          "id": "mitigation",
+          "name": "Traffic Filtering",
+          "description": "Deploy rate limiting and filtering",
+          "requiredAbilities": ["network_fundamentals"],
+          "options": [
+            {
+              "id": "deploy_waf",
+              "text": "Activate WAF Rules",
+              "requiredAbility": "network_fundamentals",
+              "effectiveness": 0.85,
+              "description": "Deploy web application firewall"
+            },
+            {
+              "id": "rate_limiting",
+              "text": "Emergency Rate Limiting",
+              "effectiveness": 0.7,
+              "description": "Throttle incoming connections"
+            },
+            {
+              "id": "blackhole_routing",
+              "text": "Blackhole Route Attack Traffic",
+              "effectiveness": 0.6,
+              "description": "Drop malicious traffic (may affect legitimate users)"
+            }
+          ]
+        },
+        {
+          "id": "source_trace",
+          "name": "Attack Source Tracing",
+          "description": "Identify botnet sources and C&C servers",
+          "requiredProgress": 1.0,
+          "options": [
+            {
+              "id": "traffic_analysis",
+              "text": "Deep Packet Inspection",
+              "requiredAbility": "network_fundamentals",
+              "effectiveness": 0.8,
+              "description": "Analyze traffic patterns"
+            },
+            {
+              "id": "contact_isp",
+              "text": "Contact ISP for Upstream Filtering",
+              "effectiveness": 0.9,
+              "description": "Leverage ISP's filtering capacity"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

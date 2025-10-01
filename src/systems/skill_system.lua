@@ -341,6 +341,11 @@ function SkillSystem:getAvailableSkills()
     return self.skills
 end
 
+-- Get all skills
+function SkillSystem:getAllSkills()
+    return self.skills
+end
+
 -- Get skills by category (for UI organization)
 function SkillSystem:getSkillsByCategory(category)
     local categorizedSkills = {}
