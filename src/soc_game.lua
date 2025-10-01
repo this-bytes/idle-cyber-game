@@ -15,6 +15,7 @@ local SkillSystem = require("src.systems.skill_system")
 
 -- Scene Dependencies
 local MainMenu = require("src.scenes.main_menu")
+local SmartMainMenu = require("src.scenes.smart_main_menu") -- NEW: Smart UI version
 local SOCView = require("src.scenes.soc_view")
 local SmartSOCView = require("src.scenes.smart_soc_view") -- NEW: Smart UI version
 local UpgradeShop = require("src.scenes.upgrade_shop")
@@ -60,16 +61,16 @@ function SOCGame:initialize()
     self.sceneManager:initialize()
 
     -- 4. Register Scenes
-    self.sceneManager:registerScene("main_menu", MainMenu.new(self.eventBus))
-    -- Use Smart UI version of SOC View
+    -- Use Smart UI versions of main menu and SOC view
+    self.sceneManager:registerScene("main_menu", SmartMainMenu.new(self.eventBus))
     self.sceneManager:registerScene("soc_view", SmartSOCView.new(self.eventBus))
     self.sceneManager:registerScene("upgrade_shop", UpgradeShop.new(self.eventBus))
     self.sceneManager:registerScene("game_over", GameOver.new(self.eventBus))
     self.sceneManager:registerScene("incident_response", IncidentResponse.new(self.eventBus))
     self.sceneManager:registerScene("admin_mode", AdminMode.new(self.eventBus))
     
-    -- 5. Start Initial Scene
-    self.sceneManager:requestScene("soc_view")
+    -- 5. Start Initial Scene (Main Menu)
+    self.sceneManager:requestScene("main_menu")
 
     print("✅ SOC Game Systems Initialized!")
     return true
