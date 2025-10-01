@@ -6,8 +6,21 @@ echo "==========================================="
 
 case "$1" in
     "test")
-        echo "🧪 Running test suite..."
-        lua5.3 tests/test_runner.lua
+        echo "🧪 Running unit tests..."
+        lua tests/test_runner.lua
+        ;;
+    "behavior")
+        echo "� Running behavior tests..."
+        lua tests/test_behavior.lua
+        ;;
+    "test-all")
+        echo "🚀 Running all tests..."
+        echo ""
+        echo "📦 Unit Tests:"
+        lua tests/test_runner.lua
+        echo ""
+        echo "� Behavior Tests:"
+        lua tests/test_behavior.lua
         ;;
     "syntax")
         echo "🔍 Checking Lua syntax..."
@@ -26,10 +39,12 @@ case "$1" in
         ;;
     *)
         echo "Available commands:"
-        echo "  ./dev.sh test    - Run test suite"
-        echo "  ./dev.sh syntax  - Check Lua syntax"
-        echo "  ./dev.sh run     - Instructions to run game"
-        echo "  ./dev.sh clean   - Clean temporary files"
+        echo "  ./dev.sh test        - Run unit tests"
+        echo "  ./dev.sh behavior    - Run behavior/logic tests"
+        echo "  ./dev.sh test-all    - Run all tests"
+        echo "  ./dev.sh syntax      - Check Lua syntax"
+        echo "  ./dev.sh run         - Instructions to run game"
+        echo "  ./dev.sh clean       - Clean temporary files"
         echo ""
         echo "Current status:"
         echo "  📁 Source files: $(find src -name "*.lua" | wc -l)"
