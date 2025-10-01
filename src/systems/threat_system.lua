@@ -159,8 +159,13 @@ function ThreatSystem:update(dt)
     
     -- Update active threats (countdown timers)
     for threatId, threat in pairs(self.activeThreats) do
+        -- Defensive: ensure timeRemaining is present and numeric
+        if threat.timeRemaining == nil then
+            threat.timeRemaining = threat.timeToResolve or 0
+            print(string.format("[THREAT DEBUG] Initialized missing timeRemaining for threat id=%s name=%s to %.1f", tostring(threatId), tostring(threat.name), tonumber(threat.timeRemaining) or 0))
+        end
         threat.timeRemaining = threat.timeRemaining - dt
-        
+
         -- Check for automatic failure
         if threat.timeRemaining <= 0 then
             self:failThreat(threatId)
@@ -183,6 +188,8 @@ function ThreatSystem:generateThreat()
         description = template.description,
         severity = template.baseSeverity,
         timeToResolve = template.baseTimeToResolve,
+        -- countdown timer for automatic failure; initialize to full timeToResolve
+        timeRemaining = template.baseTimeToResolve,
         category = template.category,
         hp = template.hp,
         baseHp = template.hp, -- Store original HP
@@ -300,6 +307,16 @@ function ThreatSystem:resolveThreat(threatId, status)
 end
 
 function ThreatSystem:calculateRewards(threat, status)
+    -- Defensive defaults
+    if not threat.timeToResolve or threat.timeToResolve == 0 then
+        threat.timeToResolve = threat.timeToResolve or 1
+        print(string.format("[THREAT DEBUG] calculateRewards: defaulted timeToResolve for threat '%s' to %.1f", tostring(threat.name), threat.timeToResolve))
+    end
+    if threat.timeRemaining == nil then
+        threat.timeRemaining = threat.timeToResolve
+        print(string.format("[THREAT DEBUG] calculateRewards: defaulted timeRemaining for threat '%s' to %.1f", tostring(threat.name), threat.timeRemaining))
+    end
+
     local responseTime = threat.timeToResolve - threat.timeRemaining
     local efficiency = math.max(0.1, threat.timeRemaining / threat.timeToResolve)
     
@@ -367,6 +384,79 @@ function ThreatSystem:getStatus()
         activeThreats = self:getActiveThreats(),
         nextThreatIn = self.threatGenerationInterval - self.threatGenerationTimer
     }
+end
+
+-- Return serializable state for saves
+function ThreatSystem:getState()
+    local copy = {
+        threatGenerationTimer = self.threatGenerationTimer,
+        threatGenerationInterval = self.threatGenerationInterval,
+        nextThreatId = self.nextThreatId,
+        activeThreats = {}
+    }
+    for id, threat in pairs(self.activeThreats) do
+        copy.activeThreats[id] = {
+            id = threat.id,
+            templateId = threat.templateId,
+            name = threat.name,
+            description = threat.description,
+            severity = threat.severity,
+            timeToResolve = threat.timeToResolve,
+            timeRemaining = threat.timeRemaining,
+            category = threat.category,
+            hp = threat.hp,
+            baseHp = threat.baseHp,
+            status = threat.status,
+            assignedSpecialist = threat.assignedSpecialist,
+            spawnTime = threat.spawnTime
+        }
+    end
+    return copy
+end
+
+-- Load saved state (with migration/sanitization)
+function ThreatSystem:loadState(state)
+    if not state then return end
+    -- Restore basic timers/ids
+    self.threatGenerationTimer = state.threatGenerationTimer or 0
+    self.threatGenerationInterval = state.threatGenerationInterval or self.threatGenerationInterval
+    self.nextThreatId = state.nextThreatId or self.nextThreatId
+
+    -- Restore active threats, sanitizing fields
+    self.activeThreats = {}
+    if state.activeThreats and type(state.activeThreats) == "table" then
+        for id, threat in pairs(state.activeThreats) do
+            -- Ensure numeric id key
+            local numericId = tonumber(id) or threat.id or self.nextThreatId
+            local t = {
+                id = numericId,
+                templateId = threat.templateId,
+                name = threat.name,
+                description = threat.description,
+                severity = threat.severity or 1,
+                timeToResolve = threat.timeToResolve or threat.baseTimeToResolve or 30,
+                timeRemaining = threat.timeRemaining,
+                category = threat.category,
+                hp = threat.hp or threat.baseHp or 100,
+                baseHp = threat.baseHp or threat.hp or 100,
+                status = threat.status or "active",
+                assignedSpecialist = threat.assignedSpecialist,
+                spawnTime = threat.spawnTime or love.timer.getTime()
+            }
+
+            -- Sanitize timeRemaining
+            if t.timeRemaining == nil then
+                t.timeRemaining = t.timeToResolve
+                print(string.format("[THREAT MIGRATE] Initialized missing timeRemaining for restored threat id=%s name=%s to %.1f", tostring(numericId), tostring(t.name), t.timeRemaining))
+            end
+
+            self.activeThreats[numericId] = t
+            -- Ensure nextThreatId is above restored ids
+            if numericId >= self.nextThreatId then
+                self.nextThreatId = numericId + 1
+            end
+        end
+    end
 end
 
 return ThreatSystem

@@ -103,8 +103,12 @@ function SOCGame:keypressed(key)
 end
 
 function SOCGame:mousepressed(x, y, button)
+    -- Log at SOCGame layer to verify coordinate mapping after LÖVE dispatch
+    print(string.format("[UI RAW] SOCGame:mousepressed x=%.1f y=%.1f button=%s", x, y, tostring(button)))
     if self.sceneManager then
         self.sceneManager:mousepressed(x, y, button)
+    else
+        print("[UI RAW] SOCGame:mousepressed but no sceneManager present")
     end
 end
 
