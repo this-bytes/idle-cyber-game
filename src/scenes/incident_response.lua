@@ -10,7 +10,7 @@ function IncidentResponse.new(eventBus)
     self.eventBus = eventBus
     self.systems = {} -- Injected by SceneManager on enter
     
-    -- Crisis state
+    -- Incident state
     self.activeThreat = nil
     self.availableSpecialists = {}
     self.selectedSpecialistIndex = 1

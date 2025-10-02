@@ -184,7 +184,7 @@ TestRunner.test("SkillSystem: Extended skill effects", function()
     
     -- Get initial effects
     local initialEffects = skillSystem:getSkillEffects(0)
-    TestRunner.assertEqual(0, initialEffects.crisisSuccessRate, "Initial crisis success rate should be 0")
+    TestRunner.assertEqual(0, initialEffects.IncidentSuccessRate, "Initial Incident success rate should be 0")
     TestRunner.assertEqual(0, initialEffects.contractGenerationRate, "Initial contract generation rate should be 0")
     
     -- Level up a skill with advanced effects (if we had one unlocked)

@@ -2,7 +2,7 @@
 -- ======================================================================
 -- I like the idea of a particle system for visual effects. Keeping it here for later development.
 -- ======================================================================
--- Particle system for visual effects like money particles, achievement bursts, crisis alerts, and ambient effects
+-- Particle system for visual effects like money particles, achievement bursts, Incident alerts, and ambient effects
 -- ======================================================================   
 
 
@@ -54,8 +54,8 @@ function ParticleSystem:initializeParticleTypes()
             count = 15
         },
         
-        -- Crisis alert particles
-        crisis_alert = {
+        -- Incident alert particles
+        Incident_alert = {
             lifetime = 3.0,
             speed = {min = 30, max = 60},
             gravity = 0,
@@ -144,13 +144,13 @@ function ParticleSystem:subscribeToEvents()
         })
     end)
     
-    -- Crisis effects
-    self.eventBus:subscribe("crisis_started", function(data)
+    -- Incident effects
+    self.eventBus:subscribe("Incident_started", function(data)
         local w, h = 800, 600 -- Default dimensions
         if love and love.graphics and love.graphics.getDimensions then
             w, h = love.graphics.getDimensions()
         end
-        self:emitParticles("crisis_alert", w / 2, 100, {
+        self:emitParticles("Incident_alert", w / 2, 100, {
             count = 8
         })
     end)

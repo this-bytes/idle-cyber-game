@@ -24,7 +24,7 @@ function SoundSystem.new(eventBus)
         ui = {},
         gameplay = {},
         ambient = {},
-        crisis = {},
+        Incident = {},
         success = {}
     }
     
@@ -55,10 +55,10 @@ function SoundSystem:loadSoundAssets()
         level_up = {type = "levelup", frequency = 1600, duration = 1.0, volume = 0.9},
         achievement_unlock = {type = "achievement", frequency = 1500, duration = 1.2, volume = 1.0},
         
-        -- Crisis Sounds
-        crisis_alert = {type = "alert", frequency = 400, duration = 2.0, volume = 1.0, urgent = true},
-        crisis_resolved = {type = "resolved", frequency = 1300, duration = 0.8, volume = 0.8},
-        crisis_failed = {type = "failed", frequency = 200, duration = 1.5, volume = 0.9},
+        -- Incident Sounds
+        Incident_alert = {type = "alert", frequency = 400, duration = 2.0, volume = 1.0, urgent = true},
+        Incident_resolved = {type = "resolved", frequency = 1300, duration = 0.8, volume = 0.8},
+        Incident_failed = {type = "failed", frequency = 200, duration = 1.5, volume = 0.9},
         
         -- Ambient Sounds
         office_ambient = {type = "ambient", frequency = 100, duration = -1, volume = 0.3, loop = true},
@@ -152,19 +152,19 @@ function SoundSystem:subscribeToEvents()
         self:playSound("level_up")
     end)
     
-    -- Crisis Events
-    self.eventBus:subscribe("crisis_started", function(data)
-        self:playSound("crisis_alert")
-        self:setAmbientTrack("crisis_ambient")
+    -- Incident Events
+    self.eventBus:subscribe("Incident_started", function(data)
+        self:playSound("Incident_alert")
+        self:setAmbientTrack("Incident_ambient")
     end)
     
-    self.eventBus:subscribe("crisis_resolved", function(data)
-        self:playSound("crisis_resolved")
+    self.eventBus:subscribe("Incident_resolved", function(data)
+        self:playSound("Incident_resolved")
         self:setAmbientTrack("office_ambient")
     end)
     
-    self.eventBus:subscribe("crisis_failed", function(data)
-        self:playSound("crisis_failed")
+    self.eventBus:subscribe("Incident_failed", function(data)
+        self:playSound("Incident_failed")
         self:setAmbientTrack("office_ambient")
     end)
     

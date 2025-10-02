@@ -2,7 +2,7 @@
 
 Core Goals
 - Make the game approachable for a wide audience while preserving depth for experienced players.
-- Ensure crisis interactions are accessible (clear visuals, keyboard or touch controls, adjustable timing options).
+- Ensure Incident interactions are accessible (clear visuals, keyboard or touch controls, adjustable timing options).
 
 Accessibility Features
 - High-contrast mode and colorblind palettes built from the neon palette.
@@ -17,8 +17,8 @@ Quality of Life
 - Save slots and cloud sync hooks (when implemented).
 
 Tutorial & Onboarding
-- Progressive, interactive tutorial covering idle basics and the first Crisis Mode.
-- Contextual hints and optional "training wheels" for Crisis Mode.
+- Progressive, interactive tutorial covering idle basics and the first Incident Mode.
+- Contextual hints and optional "training wheels" for Incident Mode.
 - Clear indicators of action cost and cooldowns.
 
 Testing & Metrics

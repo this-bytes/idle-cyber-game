@@ -1,5 +1,5 @@
--- Tests for Crisis System and Specialist XP Progression
--- Tests crisis generation, lifecycle, specialist deployment, and XP/leveling
+-- Tests for Incident System and Specialist XP Progression
+-- Tests Incident generation, lifecycle, specialist deployment, and XP/leveling
 
 -- Add src to package path for testing
 package.path = package.path .. ";src/?.lua;src/systems/?.lua;src/utils/?.lua;src/core/?.lua;./?.lua"
@@ -45,7 +45,7 @@ function MockDataManager:getData(key)
     return self.data[key]
 end
 
-local CrisisSystem = require("crisis_system")
+local IncidentSystem = require("Incident_system")
 local SpecialistSystem = require("specialist_system")
 local EventBus = require("event_bus")
 local SkillSystem = require("skill_system")
@@ -81,7 +81,7 @@ end
 
 function TestRunner.run()
     print("============================================================")
-    print("🚀 CRISIS PROGRESSION BEHAVIOR TESTS")
+    print("🚀 Incident PROGRESSION BEHAVIOR TESTS")
     print("============================================================\n")
     
     for _, test in ipairs(TestRunner.tests) do
@@ -104,154 +104,154 @@ function TestRunner.run()
 end
 
 -- ============================================================
--- CRISIS SYSTEM TESTS
+-- Incident SYSTEM TESTS
 -- ============================================================
 
-TestRunner.test("CrisisSystem: Initialize and load crisis definitions", function()
+TestRunner.test("IncidentSystem: Initialize and load Incident definitions", function()
     local eventBus = EventBus.new()
     local dataManager = MockDataManager.new()
     dataManager:loadFile("crises", "src/data/crises.json")
     dataManager:loadFile("specialists", "src/data/specialists.json")
     
     
-    local crisisSystem = CrisisSystem.new(eventBus, dataManager)
-    crisisSystem:initialize()
+    local IncidentSystem = IncidentSystem.new(eventBus, dataManager)
+    IncidentSystem:initialize()
     
-    local crises = crisisSystem:getAllCrisisDefinitions()
-    TestRunner.assert(crises ~= nil, "Crisis definitions should be loaded")
-    TestRunner.assert(crises.phishing_crisis ~= nil, "Should have phishing_crisis definition")
-    TestRunner.assert(crises.ransomware_crisis ~= nil, "Should have ransomware_crisis definition")
-    TestRunner.assert(crises.ddos_crisis ~= nil, "Should have ddos_crisis definition")
+    local crises = IncidentSystem:getAllIncidentDefinitions()
+    TestRunner.assert(crises ~= nil, "Incident definitions should be loaded")
+    TestRunner.assert(crises.phishing_Incident ~= nil, "Should have phishing_Incident definition")
+    TestRunner.assert(crises.ransomware_Incident ~= nil, "Should have ransomware_Incident definition")
+    TestRunner.assert(crises.ddos_Incident ~= nil, "Should have ddos_Incident definition")
 end)
 
-TestRunner.test("CrisisSystem: Generate crisis from threat type", function()
+TestRunner.test("IncidentSystem: Generate Incident from threat type", function()
     local eventBus = EventBus.new()
     local dataManager = MockDataManager.new()
     dataManager:loadFile("crises", "src/data/crises.json")
     dataManager:loadFile("specialists", "src/data/specialists.json")
     
     
-    local crisisSystem = CrisisSystem.new(eventBus, dataManager)
-    crisisSystem:initialize()
+    local IncidentSystem = IncidentSystem.new(eventBus, dataManager)
+    IncidentSystem:initialize()
     
-    local crisisId = crisisSystem:generateCrisis("phishing_attempt")
-    TestRunner.assertEqual("phishing_crisis", crisisId, "Should generate phishing_crisis from phishing_attempt threat")
+    local IncidentId = IncidentSystem:generateIncident("phishing_attempt")
+    TestRunner.assertEqual("phishing_Incident", IncidentId, "Should generate phishing_Incident from phishing_attempt threat")
     
-    local crisisId2 = crisisSystem:generateCrisis("ransomware_detection")
-    TestRunner.assertEqual("ransomware_crisis", crisisId2, "Should generate ransomware_crisis from ransomware_detection threat")
+    local IncidentId2 = IncidentSystem:generateIncident("ransomware_detection")
+    TestRunner.assertEqual("ransomware_Incident", IncidentId2, "Should generate ransomware_Incident from ransomware_detection threat")
 end)
 
-TestRunner.test("CrisisSystem: Start crisis and initialize state", function()
+TestRunner.test("IncidentSystem: Start Incident and initialize state", function()
     local eventBus = EventBus.new()
     local dataManager = MockDataManager.new()
     dataManager:loadFile("crises", "src/data/crises.json")
     dataManager:loadFile("specialists", "src/data/specialists.json")
     
     
-    local crisisSystem = CrisisSystem.new(eventBus, dataManager)
-    crisisSystem:initialize()
+    local IncidentSystem = IncidentSystem.new(eventBus, dataManager)
+    IncidentSystem:initialize()
     
-    local success = crisisSystem:startCrisis("phishing_crisis")
-    TestRunner.assert(success, "Should successfully start crisis")
+    local success = IncidentSystem:startIncident("phishing_Incident")
+    TestRunner.assert(success, "Should successfully start Incident")
     
-    local activeCrisis = crisisSystem:getActiveCrisis()
-    TestRunner.assertNotNil(activeCrisis, "Should have active crisis")
-    TestRunner.assertEqual("phishing_crisis", activeCrisis.id, "Active crisis should be phishing_crisis")
-    TestRunner.assertEqual(180, activeCrisis.timeLimit, "Should have correct time limit")
-    TestRunner.assertNotNil(activeCrisis.stages, "Should have stages")
+    local activeIncident = IncidentSystem:getActiveIncident()
+    TestRunner.assertNotNil(activeIncident, "Should have active Incident")
+    TestRunner.assertEqual("phishing_Incident", activeIncident.id, "Active Incident should be phishing_Incident")
+    TestRunner.assertEqual(180, activeIncident.timeLimit, "Should have correct time limit")
+    TestRunner.assertNotNil(activeIncident.stages, "Should have stages")
 end)
 
-TestRunner.test("CrisisSystem: Stage progression and auto-complete", function()
+TestRunner.test("IncidentSystem: Stage progression and auto-complete", function()
     local eventBus = EventBus.new()
     local dataManager = MockDataManager.new()
     dataManager:loadFile("crises", "src/data/crises.json")
     dataManager:loadFile("specialists", "src/data/specialists.json")
     
     
-    local crisisSystem = CrisisSystem.new(eventBus, dataManager)
-    crisisSystem:initialize()
+    local IncidentSystem = IncidentSystem.new(eventBus, dataManager)
+    IncidentSystem:initialize()
     
-    crisisSystem:startCrisis("phishing_crisis")
-    local activeCrisis = crisisSystem:getActiveCrisis()
+    IncidentSystem:startIncident("phishing_Incident")
+    local activeIncident = IncidentSystem:getActiveIncident()
     
     -- First stage should auto-complete
-    TestRunner.assert(activeCrisis.stages[1].completed, "First stage should be auto-completed")
+    TestRunner.assert(activeIncident.stages[1].completed, "First stage should be auto-completed")
     
     -- Current stage should be second stage
-    local currentStage = crisisSystem:getCurrentStage()
+    local currentStage = IncidentSystem:getCurrentStage()
     TestRunner.assertEqual("analysis", currentStage.id, "Current stage should be analysis")
 end)
 
-TestRunner.test("CrisisSystem: Deploy specialist to crisis", function()
+TestRunner.test("IncidentSystem: Deploy specialist to Incident", function()
     local eventBus = EventBus.new()
     local dataManager = MockDataManager.new()
     dataManager:loadFile("crises", "src/data/crises.json")
     dataManager:loadFile("specialists", "src/data/specialists.json")
     
     
-    local crisisSystem = CrisisSystem.new(eventBus, dataManager)
-    crisisSystem:initialize()
+    local IncidentSystem = IncidentSystem.new(eventBus, dataManager)
+    IncidentSystem:initialize()
     
-    crisisSystem:startCrisis("phishing_crisis")
+    IncidentSystem:startIncident("phishing_Incident")
     
-    local deployed = crisisSystem:deploySpecialist(0, "phishing_crisis", "basic_analysis")
+    local deployed = IncidentSystem:deploySpecialist(0, "phishing_Incident", "basic_analysis")
     TestRunner.assert(deployed, "Should successfully deploy specialist")
 end)
 
-TestRunner.test("CrisisSystem: Calculate effectiveness based on abilities", function()
+TestRunner.test("IncidentSystem: Calculate effectiveness based on abilities", function()
     local eventBus = EventBus.new()
     local dataManager = MockDataManager.new()
     dataManager:loadFile("crises", "src/data/crises.json")
     dataManager:loadFile("specialists", "src/data/specialists.json")
     
     
-    local crisisSystem = CrisisSystem.new(eventBus, dataManager)
-    crisisSystem:initialize()
+    local IncidentSystem = IncidentSystem.new(eventBus, dataManager)
+    IncidentSystem:initialize()
     
     -- Test with matching abilities
-    local effectiveness = crisisSystem:calculateEffectiveness(
+    local effectiveness = IncidentSystem:calculateEffectiveness(
         {"basic_analysis", "network_fundamentals"},
         {"basic_analysis", "network_fundamentals"}
     )
     TestRunner.assertEqual(1.0, effectiveness, "Should have full effectiveness with all matching abilities")
     
     -- Test with partial match
-    local effectiveness2 = crisisSystem:calculateEffectiveness(
+    local effectiveness2 = IncidentSystem:calculateEffectiveness(
         {"basic_analysis"},
         {"basic_analysis", "network_fundamentals"}
     )
     TestRunner.assertEqual(0.75, effectiveness2, "Should have 0.75 effectiveness with one matching ability")
     
     -- Test with no match
-    local effectiveness3 = crisisSystem:calculateEffectiveness(
+    local effectiveness3 = IncidentSystem:calculateEffectiveness(
         {"leadership"},
         {"basic_analysis", "network_fundamentals"}
     )
     TestRunner.assertEqual(0.5, effectiveness3, "Should have 0.5 effectiveness with no matching abilities")
 end)
 
-TestRunner.test("CrisisSystem: Complete crisis successfully", function()
+TestRunner.test("IncidentSystem: Complete Incident successfully", function()
     local eventBus = EventBus.new()
     local dataManager = MockDataManager.new()
     dataManager:loadFile("crises", "src/data/crises.json")
     dataManager:loadFile("specialists", "src/data/specialists.json")
     
     
-    local crisisSystem = CrisisSystem.new(eventBus, dataManager)
-    crisisSystem:initialize()
+    local IncidentSystem = IncidentSystem.new(eventBus, dataManager)
+    IncidentSystem:initialize()
     
-    local crisisCompletedFired = false
-    eventBus:subscribe("crisis_completed", function(data)
-        crisisCompletedFired = true
-        TestRunner.assertEqual("phishing_crisis", data.crisisId, "Event should have correct crisis ID")
+    local IncidentCompletedFired = false
+    eventBus:subscribe("Incident_completed", function(data)
+        IncidentCompletedFired = true
+        TestRunner.assertEqual("phishing_Incident", data.IncidentId, "Event should have correct Incident ID")
         TestRunner.assertEqual("success", data.outcome, "Event should show success outcome")
     end)
     
-    crisisSystem:startCrisis("phishing_crisis")
-    crisisSystem:resolveCrisis("success")
+    IncidentSystem:startIncident("phishing_Incident")
+    IncidentSystem:resolveIncident("success")
     
-    TestRunner.assert(crisisCompletedFired, "crisis_completed event should fire")
-    TestRunner.assert(crisisSystem:getActiveCrisis() == nil, "Active crisis should be cleared after resolution")
+    TestRunner.assert(IncidentCompletedFired, "Incident_completed event should fire")
+    TestRunner.assert(IncidentSystem:getActiveIncident() == nil, "Active Incident should be cleared after resolution")
 end)
 
 -- ============================================================
@@ -334,7 +334,7 @@ TestRunner.test("SpecialistSystem: Apply stat bonuses on level up", function()
     TestRunner.assert(ceo.defense >= initialDefense * 1.09, "Defense should increase by ~10%")
 end)
 
-TestRunner.test("SpecialistSystem: Award XP from crisis completion", function()
+TestRunner.test("SpecialistSystem: Award XP from Incident completion", function()
     local eventBus = EventBus.new()
     local dataManager = MockDataManager.new()
     dataManager:loadFile("crises", "src/data/crises.json")
@@ -348,9 +348,9 @@ TestRunner.test("SpecialistSystem: Award XP from crisis completion", function()
     local ceo = specialistSystem:getSpecialist(0)
     local initialXp = ceo.xp or 0
     
-    -- Simulate crisis completion event
-    eventBus:publish("crisis_completed", {
-        crisisId = "phishing_crisis",
+    -- Simulate Incident completion event
+    eventBus:publish("Incident_completed", {
+        IncidentId = "phishing_Incident",
         outcome = "success",
         xpAwarded = 50,
         specialistsDeployed = {
@@ -359,7 +359,7 @@ TestRunner.test("SpecialistSystem: Award XP from crisis completion", function()
     })
     
     -- XP should be base (50) + ability bonus (10)
-    TestRunner.assertEqual(initialXp + 60, ceo.xp, "CEO should have 60 XP from crisis (50 base + 10 ability bonus)")
+    TestRunner.assertEqual(initialXp + 60, ceo.xp, "CEO should have 60 XP from Incident (50 base + 10 ability bonus)")
 end)
 
 TestRunner.test("SpecialistSystem: Check skill requirements", function()
@@ -387,7 +387,7 @@ end)
 -- INTEGRATION TESTS
 -- ============================================================
 
-TestRunner.test("Integration: Full crisis lifecycle with XP reward", function()
+TestRunner.test("Integration: Full Incident lifecycle with XP reward", function()
     local eventBus = EventBus.new()
     local dataManager = MockDataManager.new()
     dataManager:loadFile("crises", "src/data/crises.json")
@@ -395,8 +395,8 @@ TestRunner.test("Integration: Full crisis lifecycle with XP reward", function()
     dataManager:loadFile("skills", "src/data/skills.json")
     local skillSystem = SkillSystem.new(eventBus, dataManager)
     
-    local crisisSystem = CrisisSystem.new(eventBus, dataManager)
-    crisisSystem:initialize()
+    local IncidentSystem = IncidentSystem.new(eventBus, dataManager)
+    IncidentSystem:initialize()
     
     local specialistSystem = SpecialistSystem.new(eventBus, dataManager, skillSystem)
     specialistSystem:initialize()
@@ -404,45 +404,45 @@ TestRunner.test("Integration: Full crisis lifecycle with XP reward", function()
     local ceo = specialistSystem:getSpecialist(0)
     local initialXp = ceo.xp or 0
     
-    -- Start crisis
-    crisisSystem:startCrisis("phishing_crisis")
+    -- Start Incident
+    IncidentSystem:startIncident("phishing_Incident")
     
     -- Deploy specialist
-    crisisSystem:deploySpecialist(0, "phishing_crisis", "basic_analysis")
+    IncidentSystem:deploySpecialist(0, "phishing_Incident", "basic_analysis")
     
-    -- Complete crisis
-    crisisSystem:resolveCrisis("success")
+    -- Complete Incident
+    IncidentSystem:resolveIncident("success")
     
     -- Check XP was awarded
-    TestRunner.assert(ceo.xp > initialXp, "CEO should have gained XP from crisis")
+    TestRunner.assert(ceo.xp > initialXp, "CEO should have gained XP from Incident")
 end)
 
-TestRunner.test("Integration: Crisis timeout handling", function()
+TestRunner.test("Integration: Incident timeout handling", function()
     local eventBus = EventBus.new()
     local dataManager = MockDataManager.new()
     dataManager:loadFile("crises", "src/data/crises.json")
     dataManager:loadFile("specialists", "src/data/specialists.json")
     
     
-    local crisisSystem = CrisisSystem.new(eventBus, dataManager)
-    crisisSystem:initialize()
+    local IncidentSystem = IncidentSystem.new(eventBus, dataManager)
+    IncidentSystem:initialize()
     
     local timeoutEventFired = false
-    eventBus:subscribe("crisis_completed", function(data)
+    eventBus:subscribe("Incident_completed", function(data)
         if data.outcome == "timeout" then
             timeoutEventFired = true
         end
     end)
     
-    crisisSystem:startCrisis("phishing_crisis")
+    IncidentSystem:startIncident("phishing_Incident")
     
     -- Simulate time passing beyond limit
     for i = 1, 200 do
-        crisisSystem:update(1) -- 200 seconds, more than 180 second limit
+        IncidentSystem:update(1) -- 200 seconds, more than 180 second limit
     end
     
     TestRunner.assert(timeoutEventFired, "Timeout event should fire when time limit exceeded")
-    TestRunner.assert(crisisSystem:getActiveCrisis() == nil, "Crisis should be resolved after timeout")
+    TestRunner.assert(IncidentSystem:getActiveIncident() == nil, "Incident should be resolved after timeout")
 end)
 
 -- Run all tests

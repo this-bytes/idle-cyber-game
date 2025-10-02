@@ -237,7 +237,7 @@ function RoomSystem.new(eventBus)
         emergency_response_center = {
             id = "emergency_response_center",
             name = "🚨 Emergency Response Center",
-            description = "24/7 crisis management and incident response headquarters",
+            description = "24/7 Incident management and incident response headquarters",
             width = 700,
             height = 450,
             
@@ -247,7 +247,7 @@ function RoomSystem.new(eventBus)
             
             areas = {
                 { id = "command_center", name = "Incident Command Center", x = 350, y = 225, radius = 70,
-                  action = "crisis_management", icon = "⚡" },
+                  action = "Incident_management", icon = "⚡" },
                 { id = "threat_monitoring", name = "Threat Intelligence Station", x = 150, y = 150, radius = 40,
                   action = "threat_hunting", icon = "🎯" },
                 { id = "communication_hub", name = "Emergency Communications", x = 550, y = 150, radius = 35,
@@ -259,13 +259,13 @@ function RoomSystem.new(eventBus)
             },
             
             bonuses = {
-                crisisResponseSpeed = 4.0,
+                IncidentResponseSpeed = 4.0,
                 threatMitigationEfficiency = 3.5,
                 emergencyCoordinationBonus = 2.8,
                 reputationDamageReduction = 0.6
             },
             
-            atmosphere = "High-intensity command center optimized for rapid crisis response",
+            atmosphere = "High-intensity command center optimized for rapid Incident response",
             unlocked = false,
             unlockRequirements = { reputation = 60, threatLevel = "High", completedContracts = 15 },
             maxOccupancy = 6
@@ -440,10 +440,10 @@ function RoomSystem:executeAreaAction(area, room)
         self.eventBus:publish("client_meeting_success", { impression = impressionBonus })
         print("🤝 Client meeting: Exceptional impression, contract value increased by " .. math.floor((impressionBonus - 1) * 100) .. "%")
         
-    elseif action == "crisis_management" then
-        local crisisBonus = room.bonuses.crisisResponseSpeed or 1
-        self.eventBus:publish("crisis_management_drill", { speed = crisisBonus })
-        print("⚡ Crisis management: Response protocols optimized, speed increased by " .. math.floor((crisisBonus - 1) * 100) .. "%")
+    elseif action == "Incident_management" then
+        local IncidentBonus = room.bonuses.IncidentResponseSpeed or 1
+        self.eventBus:publish("Incident_management_drill", { speed = IncidentBonus })
+        print("⚡ Incident management: Response protocols optimized, speed increased by " .. math.floor((IncidentBonus - 1) * 100) .. "%")
         
     else
         -- Generic action

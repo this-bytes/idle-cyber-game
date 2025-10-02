@@ -1,4 +1,4 @@
--- Crisis Response Mode - Real-time Incident Management
+-- Incident Response Mode - Real-time Incident Management
 -- Real-time operations mode for handling security incidents
 
 local AdminMode = {}
@@ -9,7 +9,7 @@ function AdminMode.new(systems)
     local self = setmetatable({}, AdminMode)
     self.systems = systems
     
-    -- Crisis Mode state
+    -- Incident Mode state
     self.responseLog = {}
     
     -- Subscribe to specialist level-up events
@@ -20,15 +20,15 @@ function AdminMode.new(systems)
             table.insert(self.responseLog, message)
         end)
         
-        -- Subscribe to crisis completion events
-        self.systems.eventBus:subscribe("crisis_completed", function(data)
+        -- Subscribe to Incident completion events
+        self.systems.eventBus:subscribe("Incident_completed", function(data)
             local outcomeText = {
-                success = "✅ CRISIS RESOLVED SUCCESSFULLY",
-                partial = "⚠️ CRISIS PARTIALLY RESOLVED",
-                failure = "❌ CRISIS RESPONSE FAILED",
-                timeout = "⏰ CRISIS TIMEOUT - RESPONSE FAILED"
+                success = "✅ Incident RESOLVED SUCCESSFULLY",
+                partial = "⚠️ Incident PARTIALLY RESOLVED",
+                failure = "❌ Incident RESPONSE FAILED",
+                timeout = "⏰ Incident TIMEOUT - RESPONSE FAILED"
             }
-            table.insert(self.responseLog, outcomeText[data.outcome] or "CRISIS ENDED")
+            table.insert(self.responseLog, outcomeText[data.outcome] or "Incident ENDED")
             table.insert(self.responseLog, string.format("💰 Rewards: $%d | 🌟 Reputation: %+d | 📈 XP: %d",
                 data.moneyAwarded or 0, data.reputationChange or 0, data.xpAwarded or 0))
         end)
@@ -38,20 +38,20 @@ function AdminMode.new(systems)
 end
 
 function AdminMode:update(dt)
-    -- Update crisis system timer
-    if self.systems.crisis then
-        -- Crisis system handles its own timing
-        -- We just need to check if crisis ended
-        local activeCrisis = self.systems.crisis:getActiveCrisis()
-        if activeCrisis ~= self.lastActiveCrisis then
-            if activeCrisis and not self.lastActiveCrisis then
-                -- New crisis started
-                table.insert(self.responseLog, "🚨 CRISIS INITIATED: " .. activeCrisis.name)
-            elseif not activeCrisis and self.lastActiveCrisis then
-                -- Crisis ended
-                table.insert(self.responseLog, "✅ CRISIS RESOLVED")
+    -- Update Incident system timer
+    if self.systems.Incident then
+        -- Incident system handles its own timing
+        -- We just need to check if Incident ended
+        local activeIncident = self.systems.Incident:getActiveIncident()
+        if activeIncident ~= self.lastActiveIncident then
+            if activeIncident and not self.lastActiveIncident then
+                -- New Incident started
+                table.insert(self.responseLog, "🚨 Incident INITIATED: " .. activeIncident.name)
+            elseif not activeIncident and self.lastActiveIncident then
+                -- Incident ended
+                table.insert(self.responseLog, "✅ Incident RESOLVED")
             end
-            self.lastActiveCrisis = activeCrisis
+            self.lastActiveIncident = activeIncident
         end
     end
 end
@@ -60,56 +60,56 @@ function AdminMode:draw()
     -- Get terminal theme from UI manager
     local theme = self.systems.uiManager.theme
     
-    -- Draw crisis mode header with special styling
-    local contentY = theme:drawHeader("🚨 CRISIS RESPONSE CENTER 🚨", "Real-time Incident Management System")
+    -- Draw Incident mode header with special styling
+    local contentY = theme:drawHeader("🚨 Incident RESPONSE CENTER 🚨", "Real-time Incident Management System")
     
     local y = contentY + 20
     
-    -- Get current crisis from crisis system
-    local currentCrisis = self.systems.crisis and self.systems.crisis:getActiveCrisis() or nil
+    -- Get current Incident from Incident system
+    local currentIncident = self.systems.Incident and self.systems.Incident:getActiveIncident() or nil
     
-    -- Show current crisis or status
-    if currentCrisis then
-        -- Active crisis display with high alert styling
+    -- Show current Incident or status
+    if currentIncident then
+        -- Active Incident display with high alert styling
         theme:drawPanel(20, y, 980, 350, "🚨 ACTIVE INCIDENT - CODE RED")
-        local crisisY = y + 25
+        local IncidentY = y + 25
         
-        -- Crisis header info in terminal style
-        theme:drawText("╔═══════════════════════════════════════════════════════════════════╗", 30, crisisY, theme:getColor("danger"))
-        crisisY = crisisY + 15
-        theme:drawText("║ INCIDENT:", 30, crisisY, theme:getColor("danger"))
-        theme:drawText(currentCrisis.name, 150, crisisY, theme:getColor("warning"))
-        theme:drawText("║", 680, crisisY, theme:getColor("danger"))
-        crisisY = crisisY + 15
+        -- Incident header info in terminal style
+        theme:drawText("╔═══════════════════════════════════════════════════════════════════╗", 30, IncidentY, theme:getColor("danger"))
+        IncidentY = IncidentY + 15
+        theme:drawText("║ INCIDENT:", 30, IncidentY, theme:getColor("danger"))
+        theme:drawText(currentIncident.name, 150, IncidentY, theme:getColor("warning"))
+        theme:drawText("║", 680, IncidentY, theme:getColor("danger"))
+        IncidentY = IncidentY + 15
         
-        theme:drawText("║ SEVERITY:", 30, crisisY, theme:getColor("danger"))
-        theme:drawText(string.upper(currentCrisis.severity), 150, crisisY, theme:getColor("danger"))
-        theme:drawText("║", 680, crisisY, theme:getColor("danger"))
-        crisisY = crisisY + 15
+        theme:drawText("║ SEVERITY:", 30, IncidentY, theme:getColor("danger"))
+        theme:drawText(string.upper(currentIncident.severity), 150, IncidentY, theme:getColor("danger"))
+        theme:drawText("║", 680, IncidentY, theme:getColor("danger"))
+        IncidentY = IncidentY + 15
         
-        theme:drawText("║ THREAT ID:", 30, crisisY, theme:getColor("secondary"))
-        theme:drawText(currentCrisis.id or "N/A", 150, crisisY, theme:getColor("dimmed"))
-        theme:drawText("║", 680, crisisY, theme:getColor("danger"))
-        crisisY = crisisY + 15
+        theme:drawText("║ THREAT ID:", 30, IncidentY, theme:getColor("secondary"))
+        theme:drawText(currentIncident.id or "N/A", 150, IncidentY, theme:getColor("dimmed"))
+        theme:drawText("║", 680, IncidentY, theme:getColor("danger"))
+        IncidentY = IncidentY + 15
         
         -- Time remaining with urgent styling
-        local timeRemaining = self.systems.crisis:getTimeRemaining()
+        local timeRemaining = self.systems.Incident:getTimeRemaining()
         local minutes = math.floor(timeRemaining / 60)
         local seconds = math.floor(timeRemaining % 60)
         local timeColor = timeRemaining < 60 and theme:getColor("danger") or theme:getColor("warning")
         
-        theme:drawText("║ TIME LEFT:", 30, crisisY, theme:getColor("secondary"))
-        theme:drawText(minutes .. ":" .. string.format("%02d", seconds), 150, crisisY, timeColor)
-        theme:drawText("║", 680, crisisY, theme:getColor("danger"))
-        crisisY = crisisY + 15
-        theme:drawText("╚═══════════════════════════════════════════════════════════════════╝", 30, crisisY, theme:getColor("danger"))
+        theme:drawText("║ TIME LEFT:", 30, IncidentY, theme:getColor("secondary"))
+        theme:drawText(minutes .. ":" .. string.format("%02d", seconds), 150, IncidentY, timeColor)
+        theme:drawText("║", 680, IncidentY, theme:getColor("danger"))
+        IncidentY = IncidentY + 15
+        theme:drawText("╚═══════════════════════════════════════════════════════════════════╝", 30, IncidentY, theme:getColor("danger"))
         
-        -- Show crisis stages
+        -- Show Incident stages
         y = y + 370
         theme:drawPanel(20, y, 980, 250, "📋 INCIDENT RESPONSE PROTOCOL")
         local stageY = y + 25
         
-        for i, stage in ipairs(currentCrisis.stages) do
+        for i, stage in ipairs(currentIncident.stages) do
             local statusIcon = stage.completed and "[✓]" or "[○]"
             local statusColor = stage.completed and theme:getColor("success") or theme:getColor("warning")
             
@@ -186,7 +186,7 @@ function AdminMode:draw()
         
         theme:drawText("SIMULATION:", 530, riskY, theme:getColor("accent"))
         riskY = riskY + 20
-        theme:drawText("Press [C] to simulate crisis scenario", 540, riskY, theme:getColor("primary"))
+        theme:drawText("Press [C] to simulate Incident scenario", 540, riskY, theme:getColor("primary"))
         
         -- Specialist roster panel with XP bars
         y = y + 270
@@ -249,7 +249,7 @@ function AdminMode:draw()
         theme:drawText("SYSTEM STATUS:", 30, monitorY, theme:getColor("secondary"))
         theme:drawText("ALL SYSTEMS OPERATIONAL", 200, monitorY, theme:getColor("success"))
         monitorY = monitorY + 30
-        theme:drawText("Press [C] to simulate crisis scenario", 30, monitorY, theme:getColor("primary"))
+        theme:drawText("Press [C] to simulate Incident scenario", 30, monitorY, theme:getColor("primary"))
         
         y = y + 270
     end
@@ -272,7 +272,7 @@ function AdminMode:draw()
             elseif string.find(self.responseLog[i], "SUCCESS") or string.find(self.responseLog[i], "✅") then
                 logColor = theme:getColor("success")
                 prefix = "│ [OK]  "
-            elseif string.find(self.responseLog[i], "🚨") or string.find(self.responseLog[i], "CRISIS") then
+            elseif string.find(self.responseLog[i], "🚨") or string.find(self.responseLog[i], "Incident") then
                 logColor = theme:getColor("warning")
                 prefix = "│ [!!!] "
             end
@@ -284,11 +284,11 @@ function AdminMode:draw()
         theme:drawText("└───────────────────────────────────────────────────────────────────┘", 30, logY, theme:getColor("border"))
     end
     
-    -- Status bar with crisis mode controls
-    local currentCrisis = self.systems.crisis and self.systems.crisis:getActiveCrisis() or nil
-    local statusText = currentCrisis and 
-        "CRISIS ACTIVE | [1-3] Response Options | [A] Return to Idle Mode" or
-        "MONITORING | [C] Simulate Crisis | [H] Help | [A] Return to Idle Mode | [TAB] Toggle Modes"
+    -- Status bar with Incident mode controls
+    local currentIncident = self.systems.Incident and self.systems.Incident:getActiveIncident() or nil
+    local statusText = currentIncident and 
+        "Incident ACTIVE | [1-3] Response Options | [A] Return to Idle Mode" or
+        "MONITORING | [C] Simulate Incident | [H] Help | [A] Return to Idle Mode | [TAB] Toggle Modes"
     theme:drawStatusBar(statusText)
 
     -- Admin editor quick-controls (visible in Admin Mode)
@@ -305,25 +305,25 @@ function AdminMode:draw()
 end
 
 function AdminMode:mousepressed(x, y, button)
-    -- Crisis mode focuses on keyboard interactions
+    -- Incident mode focuses on keyboard interactions
     -- Mouse clicking could be used for specialist deployment in future
     return false
 end
 
 function AdminMode:keypressed(key)
-    -- Get current crisis status
-    local currentCrisis = self.systems.crisis and self.systems.crisis:getActiveCrisis() or nil
+    -- Get current Incident status
+    local currentIncident = self.systems.Incident and self.systems.Incident:getActiveIncident() or nil
     
-    -- Handle crisis mode specific keys
-    if currentCrisis then
-        -- Handle response options during crisis
+    -- Handle Incident mode specific keys
+    if currentIncident then
+        -- Handle response options during Incident
         if key == "1" or key == "2" or key == "3" then
-            self:handleCrisisResponse(key)
+            self:handleIncidentResponse(key)
         end
     else
-        -- No active crisis
+        -- No active Incident
         if key == "c" then
-            self:startCrisis()
+            self:startIncident()
         elseif key == "h" then
             -- Show help information
             self:showHelp()
@@ -361,7 +361,7 @@ function AdminMode:showHelp()
     table.insert(self.responseLog, "║ ADMIN MODE HELP SYSTEM")
     table.insert(self.responseLog, "║")
     table.insert(self.responseLog, "║ KEY BINDINGS:")
-    table.insert(self.responseLog, "║ [C] - Start crisis simulation")
+    table.insert(self.responseLog, "║ [C] - Start Incident simulation")
     table.insert(self.responseLog, "║ [H] - Show this help")
     table.insert(self.responseLog, "║ [A] - Return to Idle Mode")
     table.insert(self.responseLog, "║ [TAB] - Toggle between modes")
@@ -370,8 +370,8 @@ function AdminMode:showHelp()
     table.insert(self.responseLog, "║ [R] - Reload JSON data")
     table.insert(self.responseLog, "║ [S] - Save data to JSON")
     table.insert(self.responseLog, "║")
-    table.insert(self.responseLog, "║ CRISIS RESPONSE:")
-    table.insert(self.responseLog, "║ [1-3] - Select response options during crisis")
+    table.insert(self.responseLog, "║ Incident RESPONSE:")
+    table.insert(self.responseLog, "║ [1-3] - Select response options during Incident")
     table.insert(self.responseLog, "║")
     table.insert(self.responseLog, "║ For web admin interface: open /admin in browser")
     table.insert(self.responseLog, "╚══════════════════════════════════════════════════════════════════╝")
@@ -382,48 +382,48 @@ end
 function AdminMode:enter()
     table.insert(self.responseLog, "🚨 ADMIN MODE ACTIVATED")
     table.insert(self.responseLog, "🔍 SOC monitoring systems online")
-    table.insert(self.responseLog, "📚 Press [H] for help or [C] to start crisis simulation")
-    print("🚨 Entering Admin Mode - Crisis Response Center")
+    table.insert(self.responseLog, "📚 Press [H] for help or [C] to start Incident simulation")
+    print("🚨 Entering Admin Mode - Incident Response Center")
 end
 
 function AdminMode:exit()
     table.insert(self.responseLog, "👋 EXITING ADMIN MODE")
-    -- Reset crisis if leaving mid-crisis (optional)
-    local currentCrisis = self.systems.crisis:getActiveCrisis()
-    if currentCrisis then
-        table.insert(self.responseLog, "⚠️ Crisis abandoned - returning to monitoring")
-        self.systems.crisis:resolveCrisis("failure")
+    -- Reset Incident if leaving mid-Incident (optional)
+    local currentIncident = self.systems.Incident:getActiveIncident()
+    if currentIncident then
+        table.insert(self.responseLog, "⚠️ Incident abandoned - returning to monitoring")
+        self.systems.Incident:resolveIncident("failure")
     end
     print("👋 Exiting Admin Mode")
 end
 
--- Start a crisis scenario
-function AdminMode:startCrisis()
-    local currentCrisis = self.systems.crisis:getActiveCrisis()
-    if currentCrisis then return end
+-- Start a Incident scenario
+function AdminMode:startIncident()
+    local currentIncident = self.systems.Incident:getActiveIncident()
+    if currentIncident then return end
     
-    -- Start a random crisis from available definitions
-    local crisisDefinitions = self.systems.crisis:getAllCrisisDefinitions()
-    local crisisIds = {}
-    for id, _ in pairs(crisisDefinitions) do
-        table.insert(crisisIds, id)
+    -- Start a random Incident from available definitions
+    local IncidentDefinitions = self.systems.Incident:getAllIncidentDefinitions()
+    local IncidentIds = {}
+    for id, _ in pairs(IncidentDefinitions) do
+        table.insert(IncidentIds, id)
     end
     
-    if #crisisIds > 0 then
-        local randomId = crisisIds[math.random(#crisisIds)]
-        self.systems.crisis:startCrisis(randomId)
+    if #IncidentIds > 0 then
+        local randomId = IncidentIds[math.random(#IncidentIds)]
+        self.systems.Incident:startIncident(randomId)
     else
-        table.insert(self.responseLog, "⚠️ No crisis definitions available")
+        table.insert(self.responseLog, "⚠️ No Incident definitions available")
     end
 end
 
--- Handle crisis response
-function AdminMode:handleCrisisResponse(key)
-    local currentCrisis = self.systems.crisis:getActiveCrisis()
-    if not currentCrisis then return end
+-- Handle Incident response
+function AdminMode:handleIncidentResponse(key)
+    local currentIncident = self.systems.Incident:getActiveIncident()
+    if not currentIncident then return end
     
     -- Get current stage
-    local currentStage = self.systems.crisis:getCurrentStage()
+    local currentStage = self.systems.Incident:getCurrentStage()
     if not currentStage or not currentStage.options then return end
     
     -- Convert key to number (1, 2, 3 -> 1, 2, 3)
@@ -441,8 +441,8 @@ function AdminMode:handleCrisisResponse(key)
         -- Get CEO to deploy
         local ceo = self.systems.specialists:getSpecialist(0)
         if ceo then
-            -- Use ability through crisis system
-            local success, effectiveness = self.systems.crisis:useAbility(
+            -- Use ability through Incident system
+            local success, effectiveness = self.systems.Incident:useAbility(
                 0, -- CEO id
                 selectedOption.requiredAbility or "basic_analysis",
                 currentStage.id,

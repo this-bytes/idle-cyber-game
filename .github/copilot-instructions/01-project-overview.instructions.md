@@ -26,7 +26,7 @@ High-Level Deliverables
     - Progression framework (staff skill trees, contract tiers, tool upgrades, prestige).
 - Assets & Presentation
     - Pixel art set: 3 specialists, SOC HQ background, terminal interface.
-    - Minimal audio: one crisis loop, three SFX.
+    - Minimal audio: one Incident loop, three SFX.
     - Basic UI/UX wireframes (idle dashboards, contracts, upgrade trees, skills).
 - Documentation
     - Instruction set (this file).
@@ -35,8 +35,8 @@ High-Level Deliverables
     - Thematic flavor guide with pun-based names (e.g., False Positive Filter, Phish Tank, Patch Pipeline).
 
 Workflow & Branching
-- Branch naming: `feature/<system>-<short>` (e.g., `feature/crisis-mode-v1`).
-- Commit style: `type(scope): short description` (e.g., `feat(crisis): add terminal UI skeleton`).
+- Branch naming: `feature/<system>-<short>` (e.g., `feature/Incident-mode-v1`).
+- Commit style: `type(scope): short description` (e.g., `feat(Incident): add terminal UI skeleton`).
 - Pull requests: PRs must include checklist of acceptance criteria tied to the instructions and link to the instruction section implementing the change.
 
 Acceptance Criteria (for merges)

@@ -1,7 +1,7 @@
 -- Threat System - Dynamic Threat Generation and Management
 -- Integeral to gameplay loop
 -- Generates periodic security threats that require player intervention
--- Integrates with existing CrisisGameSystem for interactive response
+-- Integrates with existing IncidentGameSystem for interactive response
 
 local ThreatSystem = {}
 ThreatSystem.__index = ThreatSystem

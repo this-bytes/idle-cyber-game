@@ -1,11 +1,11 @@
 # Balancing & Mathematical Framework — Idle Sec Ops
 
 Purpose
-Provide balancing formulas, constants, and testing guidance so designers can tune progression and keep Crisis Mode relevant.
+Provide balancing formulas, constants, and testing guidance so designers can tune progression and keep Incident Mode relevant.
 
 Core Concepts
 - Growth factors: use configurable multipliers for upgrade costs and income scaling (data-driven).
-- Diminishing returns: apply soft caps to passive boosts so active Crisis rewards remain valuable.
+- Diminishing returns: apply soft caps to passive boosts so active Incident rewards remain valuable.
 - Threat scaling: threat frequency and severity scale with company net worth and contracts.
 
 Example formulas (data-driven)
@@ -20,7 +20,7 @@ Active Mode calculations
 
 Balance testing
 - Simulation harness: run thousands of simulated days with randomized contract mix to detect runaway growth.
-- Edge case tests: simulate no-player-interaction (pure idle) vs high-activity players (frequent Crisis engagements).
+- Edge case tests: simulate no-player-interaction (pure idle) vs high-activity players (frequent Incident engagements).
 - Target pacing: first prestige available within targeted timeframe (e.g., 1–2 weeks of active play for committed players).
 
 Data & Config

@@ -361,11 +361,11 @@ function DifficultyAdapter:update(dt)
                          math.max(1, self.metrics.contracts_completed + 
                                     self.metrics.contracts_failed)
     
-    local crisis_success_rate = self.metrics.crises_resolved /
+    local Incident_success_rate = self.metrics.crises_resolved /
                                 math.max(1, self.metrics.crises_resolved + 
                                            self.metrics.crises_failed)
     
-    local mastery = (success_rate * 0.5 + crisis_success_rate * 0.5)
+    local mastery = (success_rate * 0.5 + Incident_success_rate * 0.5)
     
     -- Adapt difficulty smoothly
     local target_difficulty = 0.5 + (mastery * 0.5) -- Range: 0.5 to 1.0
@@ -459,7 +459,7 @@ end
 **Example Synergies**:
 - 🎭 **"Corporate Espionage"**: 3+ APT specialists → Unlock shadow contracts
 - 🎭 **"Full Stack Security"**: Network + App + Cloud specialists → +50% defense
-- 🎭 **"Crisis Veteran"**: Complete 10 crises without failing → Permanent +10% success rate
+- 🎭 **"Incident Veteran"**: Complete 10 crises without failing → Permanent +10% success rate
 - 🎭 **"Garage Startup to Empire"**: Reach $1M net worth → Unlock prestige system
 
 ---
@@ -492,7 +492,7 @@ function AnalyticsCollector.new(eventBus, saveSystem)
         
         -- Progression checkpoints
         first_contract = nil,
-        first_crisis = nil,
+        first_Incident = nil,
         first_specialist = nil,
         progression_velocity = {}
     }
@@ -530,14 +530,14 @@ function AnalyticsCollector:detectPlaystyle()
     for _, event in ipairs(self.session.events) do
         if event.type:match("^contract_") then
             idle_events = idle_events + 1
-        elseif event.type:match("^crisis_") then
+        elseif event.type:match("^Incident_") then
             active_events = active_events + 1
         end
     end
     
     local ratio = active_events / math.max(1, idle_events + active_events)
     
-    if ratio > 0.7 then return "crisis_hunter" end
+    if ratio > 0.7 then return "Incident_hunter" end
     if ratio > 0.3 then return "balanced" end
     return "idle_optimizer"
 end

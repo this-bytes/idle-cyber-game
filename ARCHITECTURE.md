@@ -131,7 +131,7 @@ local activeSynergies = synergyDetector:detectActiveSynergies(gameState)
 - Contracts completed, money earned
 - Specialists hired, upgrades purchased
 - Threats mitigated, crises resolved
-- Progression milestones (first contract, first crisis, etc.)
+- Progression milestones (first contract, first Incident, etc.)
 
 ### AWESOME Backend Benefits
 

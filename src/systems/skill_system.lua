@@ -55,9 +55,9 @@ function SkillSystem:subscribeToEvents()
         end
     end)
     
-    -- Award XP for crisis mode activities
-    self.eventBus:subscribe("crisis_resolved", function(data)
-        local xpGain = data.difficulty * 50 -- Base XP based on crisis difficulty
+    -- Award XP for Incident mode activities
+    self.eventBus:subscribe("Incident_resolved", function(data)
+        local xpGain = data.difficulty * 50 -- Base XP based on Incident difficulty
         if data.specialistId then
             self:awardXp(data.specialistId, "basic_response", xpGain)
         end
@@ -300,11 +300,11 @@ function SkillSystem:getSkillEffects(entityId)
         contractValueBonus = 0,
         
         -- Advanced effects
-        crisisSuccessRate = 0,
+        IncidentSuccessRate = 0,
         automaticThreatDetection = 0,
         evidenceQuality = 0,
         containmentSpeed = 0,
-        crisisLeadershipBonus = 0,
+        IncidentLeadershipBonus = 0,
         recoveryBonus = 0,
         reputationProtection = 0,
         contractGenerationRate = 0,

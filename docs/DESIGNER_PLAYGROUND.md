@@ -43,25 +43,25 @@ This document showcases the incredible design space unlocked by the data-driven,
 
 ---
 
-### 2. **"Crisis Veteran"** 🎖️
+### 2. **"Incident Veteran"** 🎖️
 **Concept**: Specialists who survive many crises become hardened veterans
 
 ```json
 {
-  "id": "trait_crisis_veteran",
+  "id": "trait_Incident_veteran",
   "type": "dynamic_trait",
-  "displayName": "Crisis Veteran",
-  "description": "Has survived 10+ crises. +25% effectiveness in crisis mode.",
+  "displayName": "Incident Veteran",
+  "description": "Has survived 10+ crises. +25% effectiveness in Incident mode.",
   
   "acquisition": {
-    "event": "crisis_resolved",
+    "event": "Incident_resolved",
     "counter": "crises_survived",
     "threshold": 10
   },
   
   "effects": {
     "passive": [
-      {"type": "crisis_effectiveness", "value": 1.25, "target": "self"}
+      {"type": "Incident_effectiveness", "value": 1.25, "target": "self"}
     ],
     "visual": [
       {"type": "badge", "icon": "veteran_star.png"}
@@ -600,9 +600,9 @@ This document showcases the incredible design space unlocked by the data-driven,
 
 ```json
 {
-  "id": "achievement_crisis_master",
+  "id": "achievement_Incident_master",
   "type": "achievement",
-  "displayName": "Crisis Master",
+  "displayName": "Incident Master",
   "description": "Resolve 100 crises without a single failure",
   
   "requirements": {
@@ -618,8 +618,8 @@ This document showcases the incredible design space unlocked by the data-driven,
   
   "effects": {
     "permanent": [
-      {"type": "crisis_effectiveness", "value": 1.15, "target": "all_specialists"},
-      {"type": "unlock_item", "item_id": "legendary_specialist_crisis_veteran"}
+      {"type": "Incident_effectiveness", "value": 1.15, "target": "all_specialists"},
+      {"type": "unlock_item", "item_id": "legendary_specialist_Incident_veteran"}
     ]
   }
 }

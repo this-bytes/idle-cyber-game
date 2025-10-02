@@ -893,7 +893,7 @@ function ToastManager:getDefaultIcon(type)
         warning = "⚠",
         info = "ℹ",
         level_up = "⚡",
-        crisis = "🚨",
+        Incident = "🚨",
         money = "💰",
         xp = "🎯"
     }
@@ -907,7 +907,7 @@ function ToastManager:getColor(type)
         warning = {1.0, 0.8, 0.0},
         info = {0.0, 0.9, 0.9},
         level_up = {1.0, 0.0, 0.8},
-        crisis = {1.0, 0.4, 0.0},
+        Incident = {1.0, 0.4, 0.0},
         money = {0.0, 1.0, 0.4},
         xp = {0.5, 0.5, 1.0}
     }
@@ -1129,7 +1129,7 @@ dashboard:render()
 local toastManager = ToastManager.new()
 
 -- Show success toast
-toastManager:show("Crisis resolved! +50 XP", {type = "success", duration = 3.0})
+toastManager:show("Incident resolved! +50 XP", {type = "success", duration = 3.0})
 
 -- Show level up toast
 toastManager:show("LEVEL UP! Alex reached Level 8", {type = "level_up", icon = "⚡", duration = 5.0})

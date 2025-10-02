@@ -5,9 +5,9 @@ High-Level Vision
 - Long-term goals: create a resilient, diversified Managed SOC that can handle the toughest multi-stage crises.
 
 Endgame Features
-- Global Contracts: simultaneous multi-client crisis coordination for massive rewards.
+- Global Contracts: simultaneous multi-client Incident coordination for massive rewards.
 - Seasonal/Timed Global Events: community-driven megathreats or cooperative defense projects.
-- Leaderboards & Achievements: track firm value, successful crisis defenses, and time-to-resolution metrics.
+- Leaderboards & Achievements: track firm value, successful Incident defenses, and time-to-resolution metrics.
 
 Longevity & Replayability
 - Multiple firm archetypes (e.g., Forensics-first, Offensive Consultancy) with unique progression trees.

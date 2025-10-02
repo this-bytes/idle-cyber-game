@@ -1,11 +1,11 @@
-# Crisis Design System — Idle Sec Ops
+# Incident Design System — Idle Sec Ops
 
 ## Overview
-This document defines the crisis system design based on SLA-driven contracts, reputation scaling, and unique victory conditions for each threat type.
+This document defines the Incident system design based on SLA-driven contracts, reputation scaling, and unique victory conditions for each threat type.
 
 ## Core Design Principles
 
-### 1. SLA-Driven Crisis Generation (Contract Focus)
+### 1. SLA-Driven Incident Generation (Contract Focus)
 **Philosophy:** More contracts = more attack surface = more crises
 
 **Mechanics:**
@@ -13,11 +13,11 @@ This document defines the crisis system design based on SLA-driven contracts, re
   - **Uptime Guarantee**: 99.9%, 99.99%, etc.
   - **Response Time**: Time to detect and respond to incidents
   - **Threat Coverage**: Which threat types the contract protects against
-  - **Crisis Frequency**: Base rate of crisis generation per contract
+  - **Incident Frequency**: Base rate of Incident generation per contract
 
-**Crisis Generation Formula:**
+**Incident Generation Formula:**
 ```
-Crisis Chance per Minute = 
+Incident Chance per Minute = 
     Σ(Active Contracts × Contract Risk Factor) 
     × Global Threat Level 
     × (1 - Defense Effectiveness)
@@ -30,14 +30,14 @@ Where:
 
 **Example:**
 ```
-Startup Contract: 1 × 0.5 = 0.5% chance/min (crisis every ~200 min)
-FinTech Contract: 1 × 1.2 = 1.2% chance/min (crisis every ~83 min)
-Gov Contract: 1 × 2.0 = 2.0% chance/min (crisis every ~50 min)
+Startup Contract: 1 × 0.5 = 0.5% chance/min (Incident every ~200 min)
+FinTech Contract: 1 × 1.2 = 1.2% chance/min (Incident every ~83 min)
+Gov Contract: 1 × 2.0 = 2.0% chance/min (Incident every ~50 min)
 
-3 Active Contracts = Combined 3.7% chance/min (crisis every ~27 min)
+3 Active Contracts = Combined 3.7% chance/min (Incident every ~27 min)
 ```
 
-**SLA Impact on Crisis Severity:**
+**SLA Impact on Incident Severity:**
 - Breaking SLA = Reputation damage
 - Maintaining SLA = Reputation bonus
 - Perfect response (under time limit) = Contract renewal bonus
@@ -78,10 +78,10 @@ Rep 100: Data Exfiltration unlocked
 Rep 150: Insider Threat, Supply Chain unlocked
 Rep 250: APT unlocked
 Rep 400: Zero-Day unlocked
-Rep 500: Crisis Combos (multiple simultaneous) unlocked
+Rep 500: Incident Combos (multiple simultaneous) unlocked
 ```
 
-### 3. Crisis Combo Events (The "OH SH*T" Moments)
+### 3. Incident Combo Events (The "OH SH*T" Moments)
 
 **Combo Triggers:**
 - 10% chance when reputation > 200
@@ -121,9 +121,9 @@ Requires: Team management, specialist allocation
 - Rare "Mission Token" rewards
 - Unlock special achievements
 
-## Crisis Type Design
+## Incident Type Design
 
-### Crisis Type: Phishing Campaign
+### Incident Type: Phishing Campaign
 
 **Flavor:** Social engineering attack targeting client employees
 
@@ -163,7 +163,7 @@ Requires: Team management, specialist allocation
 
 ---
 
-### Crisis Type: Ransomware Attack
+### Incident Type: Ransomware Attack
 
 **Flavor:** Encryption malware spreading through client network
 
@@ -204,7 +204,7 @@ Requires: Team management, specialist allocation
 
 ---
 
-### Crisis Type: DDoS Attack
+### Incident Type: DDoS Attack
 
 **Flavor:** Distributed botnet flooding client services
 
@@ -244,7 +244,7 @@ Requires: Team management, specialist allocation
 
 ---
 
-### Crisis Type: Data Exfiltration
+### Incident Type: Data Exfiltration
 
 **Flavor:** Sensitive data being stolen from client systems
 
@@ -282,7 +282,7 @@ Requires: Team management, specialist allocation
 
 ---
 
-### Crisis Type: Insider Threat
+### Incident Type: Insider Threat
 
 **Flavor:** Employee or contractor acting maliciously
 
@@ -322,7 +322,7 @@ Requires: Team management, specialist allocation
 
 ---
 
-### Crisis Type: APT (Advanced Persistent Threat)
+### Incident Type: APT (Advanced Persistent Threat)
 
 **Flavor:** Nation-state actor establishing long-term presence
 
@@ -366,7 +366,7 @@ Requires: Team management, specialist allocation
 
 ---
 
-### Crisis Type: Zero-Day Exploit
+### Incident Type: Zero-Day Exploit
 
 **Flavor:** Unknown vulnerability being actively exploited
 
@@ -406,7 +406,7 @@ Requires: Team management, specialist allocation
 
 ---
 
-## Crisis Scaling Mechanics
+## Incident Scaling Mechanics
 
 ### Time Pressure Scaling
 ```
@@ -437,14 +437,14 @@ Contract Tier Multiplier:
 
 Active Contract Count:
 - 1-2 contracts: Normal frequency
-- 3-5 contracts: +50% crisis frequency
-- 6+ contracts: +100% crisis frequency, +20% combo chance
+- 3-5 contracts: +50% Incident frequency
+- 6+ contracts: +100% Incident frequency, +20% combo chance
 
 Facility Level:
 - Garage: No defensive bonuses
-- Office: -10% crisis frequency (basic automation)
-- Corporate HQ: -25% crisis frequency, +10% success chance
-- Global Center: -40% crisis frequency, +20% success chance, early warnings
+- Office: -10% Incident frequency (basic automation)
+- Corporate HQ: -25% Incident frequency, +10% success chance
+- Global Center: -40% Incident frequency, +20% success chance, early warnings
 ```
 
 ## SLA System Integration
@@ -457,7 +457,7 @@ SLA Terms:
 - Uptime: 99% (lenient)
 - Response Time: <5 minutes
 - Coverage: Tier 1 threats only
-- Crisis Frequency: Low (0.5% per min)
+- Incident Frequency: Low (0.5% per min)
 - Penalty for SLA breach: -5 Rep
 - Bonus for perfect month: +10 Rep
 ```
@@ -468,7 +468,7 @@ SLA Terms:
 - Uptime: 99.9% (strict)
 - Response Time: <2 minutes
 - Coverage: Tier 1 & 2 threats
-- Crisis Frequency: Medium (1.2% per min)
+- Incident Frequency: Medium (1.2% per min)
 - Penalty for SLA breach: -20 Rep, -$5000
 - Bonus for perfect month: +30 Rep, +$10000
 ```
@@ -479,8 +479,8 @@ SLA Terms:
 - Uptime: 99.99% (critical)
 - Response Time: <60 seconds
 - Coverage: All threat tiers including APT
-- Crisis Frequency: High (2.0% per min)
-- Crisis Difficulty: +60%
+- Incident Frequency: High (2.0% per min)
+- Incident Difficulty: +60%
 - Penalty for SLA breach: -50 Rep, contract termination risk
 - Bonus for perfect month: +75 Rep, +$25000, Mission Tokens
 ```
@@ -500,11 +500,11 @@ Player Dashboard:
 - Next SLA review dates
 ```
 
-## Crisis Rewards
+## Incident Rewards
 
 ### XP Distribution
 ```
-Crisis Base XP:
+Incident Base XP:
 - Phishing: 50 XP
 - DDoS: 75 XP
 - Malware: 60 XP
@@ -518,8 +518,8 @@ Multipliers:
 - Perfect resolution: 1.5x XP
 - Under time pressure: 1.3x XP
 - Using correct abilities: 1.2x XP
-- First time solving crisis type: 2.0x XP
-- Combo event: 2.0x XP per crisis
+- First time solving Incident type: 2.0x XP
+- Combo event: 2.0x XP per Incident
 
 Distribution:
 - Deployed specialists: Share 80% of XP equally
@@ -528,7 +528,7 @@ Distribution:
 
 ### Reputation Impact
 ```
-Success: +Rep based on crisis tier and client importance
+Success: +Rep based on Incident tier and client importance
 Partial: Small +Rep, SLA may be affected
 Failure: -Rep, SLA breach, possible contract loss
 
@@ -545,7 +545,7 @@ Reputation Milestones:
 ### Mission Tokens
 ```
 Earned From:
-- Perfect crisis resolution (random chance)
+- Perfect Incident resolution (random chance)
 - APT/Zero-Day successful hunts (guaranteed)
 - Combo event resolution (guaranteed)
 - Monthly SLA bonus (government contracts)
@@ -560,13 +560,13 @@ Used For:
 ## Player Experience Goals
 
 ### Early Game (0-2 hours)
-- Learn crisis mechanics with simple phishing/malware
+- Learn Incident mechanics with simple phishing/malware
 - Understand SLA system through starter contracts
-- Feel tension: "Oh no, crisis! But I can handle this."
+- Feel tension: "Oh no, Incident! But I can handle this."
 - Build confidence through successful resolutions
 
 ### Mid Game (2-8 hours)
-- Juggle multiple contracts and crisis types
+- Juggle multiple contracts and Incident types
 - Strategic specialist deployment decisions
 - Experience first combo event ("OH SH*T moment")
 - Build specialized team roles
@@ -586,19 +586,19 @@ Used For:
 ## Implementation Notes for Coding Agent
 
 When implementing crises:
-1. Each crisis type should be data-driven (crises.json)
+1. Each Incident type should be data-driven (crises.json)
 2. Stage progression should fire events for UI updates
 3. Timer system should respect pause/slow-mo for accessibility
 4. SLA tracking should be persistent (save/load)
 5. Reputation changes should fire through ResourceManager
 6. XP distribution should use SpecialistSystem methods
-7. All crisis mechanics should be testable without UI
+7. All Incident mechanics should be testable without UI
 
 ## Future Expansion Ideas
 
-- **Dynamic Crisis Generation:** Procedurally generate crisis variations
-- **Crisis History Log:** Review past crises for learning
-- **Crisis Simulator:** Practice mode for learning mechanics
-- **Weekly/Monthly Challenges:** Special crisis events with leaderboards
-- **Client-Specific Crises:** Each client type has unique crisis flavors
-- **Crisis Chains:** Resolving one crisis prevents/triggers follow-up crises
+- **Dynamic Incident Generation:** Procedurally generate Incident variations
+- **Incident History Log:** Review past crises for learning
+- **Incident Simulator:** Practice mode for learning mechanics
+- **Weekly/Monthly Challenges:** Special Incident events with leaderboards
+- **Client-Specific Crises:** Each client type has unique Incident flavors
+- **Incident Chains:** Resolving one Incident prevents/triggers follow-up crises

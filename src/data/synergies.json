@@ -90,9 +90,9 @@
     }
   },
   {
-    "id": "synergy_crisis_veteran",
+    "id": "synergy_Incident_veteran",
     "type": "synergy",
-    "displayName": "Crisis Veteran",
+    "displayName": "Incident Veteran",
     "description": "Permanent +10% success rate after resolving 10 crises",
     "rarity": "epic",
     "conditions": {

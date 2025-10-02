@@ -1,5 +1,5 @@
 -- Admin Mode Scene - Active Incident Response
--- A focused, terminal-style interface for hands-on crisis management.
+-- A focused, terminal-style interface for hands-on Incident management.
 
 local CommandParser = require("src.utils.command_parser")
 

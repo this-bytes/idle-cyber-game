@@ -221,8 +221,8 @@ RoomAmbiance.profiles = {
     },
     
     emergency_response_center = {
-        name = "Crisis Command",
-        description = "High-intensity command center for rapid crisis response",
+        name = "Incident Command",
+        description = "High-intensity command center for rapid Incident response",
         
         lighting = {
             ambient = {1.0, 0.3, 0.3, 0.4},

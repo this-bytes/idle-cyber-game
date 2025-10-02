@@ -2,7 +2,7 @@
 
 Design Goals
 - Clear, readable HUD that shows Budget, Reputation, Revenue/sec, Active Teams, and pending Contracts.
-- Strong visual contrast during Crisis Mode: neon terminal overlay with readable logs and action buttons.
+- Strong visual contrast during Incident Mode: neon terminal overlay with readable logs and action buttons.
 - Pixel-perfect assets and consistent spacing for a retro-pixel feel.
 
 HUD (Idle)
@@ -28,5 +28,5 @@ Accessibility & Interaction
 - High-contrast toggle and reduced-motion options.
 
 Deliverables
-- UI mockups for HQ and Crisis Mode.
+- UI mockups for HQ and Incident Mode.
 - Sprite/UI asset spec describing sizes, anchor points, and layer order.

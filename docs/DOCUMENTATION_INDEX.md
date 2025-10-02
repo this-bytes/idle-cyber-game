@@ -262,7 +262,7 @@ docs/
 
 ### Synergy Systems
 - **Full Stack Security** → Designer Playground §1.1
-- **Crisis Veteran** → Designer Playground §1.2
+- **Incident Veteran** → Designer Playground §1.2
 - **The Mentor Effect** → Designer Playground §1.3
 - **Market Volatility** → Designer Playground §1.4
 - **Specialized Contracts** → Designer Playground §1.5

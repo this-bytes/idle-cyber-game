@@ -399,7 +399,7 @@ local deployBtn = Button.new({
         eventBus:publish("deploy_specialist", {id = specialistId})
     end,
     onHoverEnter = function(btn)
-        statusText:setText("Deploy specialist to active crisis")
+        statusText:setText("Deploy specialist to active Incident")
     end
 })
 
@@ -527,13 +527,13 @@ function AdminMode:createUI()
     
     -- Terminal header
     self.content:addChild(Panel.new({
-        title = ">> ADMIN TERMINAL - CRISIS RESPONSE",
+        title = ">> ADMIN TERMINAL - Incident RESPONSE",
         titleAlign = "center",
         cornerStyle = "square",
         borderColor = {0, 1, 0, 1}  -- Green terminal
     }))
     
-    -- Crisis log (scrollable)
+    -- Incident log (scrollable)
     self.logPanel = self:createLogPanel()
     self.content:addChild(self.logPanel)
     

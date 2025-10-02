@@ -73,7 +73,7 @@ SkillData.skills = {
         effects = {
             trace = 0.15,
             efficiency = 0.08,
-            crisisSuccessRate = 0.05 -- +5% crisis resolution success per level
+            IncidentSuccessRate = 0.05 -- +5% Incident resolution success per level
         },
         unlockRequirements = {
             skills = {threat_hunting = 6},
@@ -148,7 +148,7 @@ SkillData.skills = {
         effects = {
             trace = 0.2,
             efficiency = 0.1,
-            evidenceQuality = 0.15 -- Better crisis resolution evidence
+            evidenceQuality = 0.15 -- Better Incident resolution evidence
         },
         unlockRequirements = {
             skills = {intrusion_detection = 6},
@@ -185,17 +185,17 @@ SkillData.skills = {
         effects = {
             speed = 0.1,
             defense = 0.08,
-            containmentSpeed = 0.2 -- Faster crisis containment
+            containmentSpeed = 0.2 -- Faster Incident containment
         },
         unlockRequirements = {
             skills = {basic_response = 4}
         }
     },
     
-    ["crisis_management"] = {
-        id = "crisis_management",
-        name = "Crisis Management",
-        description = "Advanced crisis handling and coordination",
+    ["Incident_management"] = {
+        id = "Incident_management",
+        name = "Incident Management",
+        description = "Advanced Incident handling and coordination",
         category = "incident",
         maxLevel = 8,
         baseXpCost = 400,
@@ -205,7 +205,7 @@ SkillData.skills = {
             efficiency = 0.1,
             speed = 0.08,
             defense = 0.05,
-            crisisLeadershipBonus = 0.1 -- Boosts team performance during crisis
+            IncidentLeadershipBonus = 0.1 -- Boosts team performance during Incident
         },
         unlockRequirements = {
             skills = {containment_procedures = 6},
@@ -221,7 +221,7 @@ SkillData.skills = {
         maxLevel = 10,
         baseXpCost = 600,
         xpGrowth = 1.3,
-        prerequisites = {"crisis_management"},
+        prerequisites = {"Incident_management"},
         effects = {
             efficiency = 0.15,
             speed = 0.12,
@@ -229,7 +229,7 @@ SkillData.skills = {
             reputationProtection = 0.05 -- Reduces reputation loss during crises
         },
         unlockRequirements = {
-            skills = {crisis_management = 5},
+            skills = {Incident_management = 5},
             reputation = 75
         }
     },
@@ -391,7 +391,7 @@ SkillData.categories = {
     },
     incident = {
         name = "Incident Response",
-        description = "Crisis management and recovery procedures",
+        description = "Incident management and recovery procedures",
         color = "#FF5722"
     },
     leadership = {

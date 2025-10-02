@@ -2,8 +2,8 @@
 Tone & Setting
 - Style: Light cyberpunk/neo-noir with a retro-pixel hacker aesthetic.
 - Presentation: Snappy text, short bursts of narrative, flavored with SOC humor (punny upgrades, playful cybersecurity jargon).
-- Atmosphere: Players feel like a decisive Chief Security Officer running a growing SOC consultancy, handling both idle operations and sudden crisis bursts.
-- Flavor Delivery: Crisis Mode uses ASCII/terminal-style logs for immersion, while Idle HQ features quick one-liners, notifications, and playful flavor text.
+- Atmosphere: Players feel like a decisive Chief Security Officer running a growing SOC consultancy, handling both idle operations and sudden Incident bursts.
+- Flavor Delivery: Incident Mode uses ASCII/terminal-style logs for immersion, while Idle HQ features quick one-liners, notifications, and playful flavor text.
 Player Role & Arc
 - Role: Player is Lead Security Principal / CEO of a boutique managed SOC.
 - Progression Arc:
@@ -23,7 +23,7 @@ Clients & Faction
 Narrative Usage
 - Minimal / Punchy: Story is not cutscene-heavy; it’s short bursts tied to progression.
 Key Narrative Hooks:
-- Onboarding: Tutorial in the garage SOC (simple intro to contracts, specialists, and first crisis).
+- Onboarding: Tutorial in the garage SOC (simple intro to contracts, specialists, and first Incident).
 - Client Intros: One-liners describing contract context.
 - Active Mode Flavor: ASCII-style logs (escalation snippets, attacker signatures, resolution messages).
 - Milestones: Celebratory text when hitting major goals (“First Fortune 500 secured,” “Global threat intel unlocked”).
@@ -34,9 +34,9 @@ Accessibility & Localization
 - Narrative delivered in small data files for flexible iteration.
 Deliverables for Writer
 - Clients: 1-line description for the first 10 (blurb-sized, mixing humor with SOC theme).
-- Crisis Events: 2–3 templates with detection, escalation snippets, and resolution text.
+- Incident Events: 2–3 templates with detection, escalation snippets, and resolution text.
 - Onboarding Script: A tight intro that:
     - Sets the garage SOC scene.
     - Introduces the HQ interface.
-    - Walks through the first crisis event.
+    - Walks through the first Incident event.
     - Unlocks the first contract client.

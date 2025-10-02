@@ -51,7 +51,7 @@ function RoomEventSystem.new(eventBus, roomSystem)
         },
         emergency_response_center = {
             "threat_detected", "incident_resolved", "security_drill", "threat_intelligence",
-            "crisis_averted", "response_optimization", "forensic_discovery"
+            "Incident_averted", "response_optimization", "forensic_discovery"
         }
     }
     
@@ -202,7 +202,7 @@ function RoomEventSystem.new(eventBus, roomSystem)
         },
         
         incident_resolved = {
-            title = "✅ Crisis Successfully Managed",
+            title = "✅ Incident Successfully Managed",
             description = "Your team has successfully contained and resolved a major security incident.",
             choices = {
                 { text = "Celebrate success", effect = { team_morale = 8, confidence = 1.2, reputation = 4 } },

@@ -105,7 +105,7 @@ function IdleMode:enter()
         if self.systems.ui and self.systems.ui.showTutorial then
             print("📘 Showing tutorial modal (first run)")
             local title = "Welcome to Idle Sec Ops"
-            local body = "Walk around the office with WASD or arrow keys. Press E to interact with departments. Accept contracts to earn money and reputation. Press A for Crisis Mode."
+            local body = "Walk around the office with WASD or arrow keys. Press E to interact with departments. Accept contracts to earn money and reputation. Press A for Incident Mode."
             local function onTutorialClose()
                 -- Mark tutorial as seen and persist a save immediately
                 self.systems.gameState.tutorialSeen = true

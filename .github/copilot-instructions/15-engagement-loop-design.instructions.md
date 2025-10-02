@@ -18,7 +18,7 @@ This document maps the complete feedback loop between **Contracts → Crises →
             │                  │ Crises
             │                  ↓
     ┌───────────────┐    ┌──────────────┐
-    │  Better       │    │   Crisis     │
+    │  Better       │    │   Incident     │
     │  Contracts    │    │   Events     │
     │  Available    │    │   Trigger    │
     └───────────────┘    └──────────────┘
@@ -28,14 +28,14 @@ This document maps the complete feedback loop between **Contracts → Crises →
     │  Reputation   │    ┌──────────────┐
     │   Increases   │←───│  Specialists │
     │  (Perfect     │    │   Respond    │
-    │   SLA!)       │    │   to Crisis  │
+    │   SLA!)       │    │   to Incident  │
     └───────────────┘    └──────────────┘
             ↑                  │
             │                  │ Earn XP
             │                  │ & Rewards
             │                  ↓
     ┌───────────────┐    ┌──────────────┐
-    │  Crisis       │    │  Specialists │
+    │  Incident       │    │  Specialists │
     │  Resolved!    │────│  Level Up &  │
     │  Rewards!     │    │  Learn Skills│
     └───────────────┘    └──────────────┘
@@ -43,32 +43,32 @@ This document maps the complete feedback loop between **Contracts → Crises →
 
 ## System Integration Details
 
-### 1. Contract System → Crisis Generation
+### 1. Contract System → Incident Generation
 
 **How Contracts Create Crises:**
 
 ```lua
--- Pseudo-code for crisis generation
+-- Pseudo-code for Incident generation
 
-function updateCrisisGeneration(deltaTime)
-    local crisisChance = 0
+function updateIncidentGeneration(deltaTime)
+    local IncidentChance = 0
     
-    -- Sum crisis chance from all active contracts
+    -- Sum Incident chance from all active contracts
     for _, contract in ipairs(activeContracts) do
         local contractRisk = contract.riskFactor -- 0.5 to 2.0
         local threatModifier = getThreatModifierForContract(contract)
-        crisisChance = crisisChance + (contractRisk * threatModifier)
+        IncidentChance = IncidentChance + (contractRisk * threatModifier)
     end
     
     -- Apply global modifiers
     local reputationMultiplier = getReputationThreatMultiplier() -- 1.0 to 2.5
     local defensiveReduction = getDefensiveUpgradeReduction() -- 0.0 to 0.7
     
-    crisisChance = crisisChance * reputationMultiplier * (1 - defensiveReduction)
+    IncidentChance = IncidentChance * reputationMultiplier * (1 - defensiveReduction)
     
-    -- Roll for crisis
-    if randomChance() < (crisisChance * deltaTime / 60) then
-        generateCrisis(selectContractForCrisis())
+    -- Roll for Incident
+    if randomChance() < (IncidentChance * deltaTime / 60) then
+        generateIncident(selectContractForIncident())
     end
 end
 ```
@@ -79,56 +79,56 @@ end
 Contract: StartupCo (Tier 1)
 ├─ Risk Factor: 0.5 (low-value, simple infrastructure)
 ├─ Threat Types: Tier 1 only (Phishing, Basic Malware)
-├─ Crisis Frequency: ~0.5% per minute
-└─ Crisis Severity: -20% (easier crises)
+├─ Incident Frequency: ~0.5% per minute
+└─ Incident Severity: -20% (easier crises)
 
 Contract: FinTech Inc (Tier 2)
 ├─ Risk Factor: 1.2 (high-value target, financial data)
 ├─ Threat Types: Tier 1-2 (+ Ransomware, DDoS)
-├─ Crisis Frequency: ~1.2% per minute
-└─ Crisis Severity: +10% (harder crises)
+├─ Incident Frequency: ~1.2% per minute
+└─ Incident Severity: +10% (harder crises)
 
 Contract: DOD Cyber Command (Tier 4)
 ├─ Risk Factor: 2.0 (critical infrastructure, nation-state targets)
 ├─ Threat Types: All tiers (+ APT, Zero-Day)
-├─ Crisis Frequency: ~2.0% per minute
-└─ Crisis Severity: +60% (hardest crises)
+├─ Incident Frequency: ~2.0% per minute
+└─ Incident Severity: +60% (hardest crises)
 ```
 
 **Multi-Contract Synergy:**
 
 ```
 Single Contract (StartupCo):
-├─ Crisis every ~200 minutes
+├─ Incident every ~200 minutes
 ├─ Always Tier 1 threats
 └─ Manageable idle experience
 
 Three Contracts (Startup + FinTech + HealthTech):
 ├─ Combined risk: 0.5 + 1.2 + 1.0 = 2.7
-├─ Crisis every ~37 minutes
+├─ Incident every ~37 minutes
 ├─ Threat variety increases
 └─ Need team coordination
 
 Five+ Contracts (Mixed tiers):
 ├─ Combined risk: 5.5+
-├─ Crisis every ~18 minutes
+├─ Incident every ~18 minutes
 ├─ Combo events possible (20% chance)
 └─ Requires elite team management
 ```
 
-### 2. Crisis Events → Specialist Deployment
+### 2. Incident Events → Specialist Deployment
 
-**Crisis Detection & Alert Flow:**
+**Incident Detection & Alert Flow:**
 
 ```
-Crisis Generated
+Incident Generated
     ↓
-EventBus fires: "crisis_detected"
+EventBus fires: "Incident_detected"
     ↓
-UI displays: "🚨 CRISIS ALERT: [Client] - [Threat Type]"
+UI displays: "🚨 Incident ALERT: [Client] - [Threat Type]"
     ↓
 Player sees:
-├─ Crisis type and severity
+├─ Incident type and severity
 ├─ Affected contract
 ├─ Time limit
 ├─ Required abilities (if known)
@@ -139,9 +139,9 @@ Player Decision:
 ├─ Use automated response (if unlocked)
 └─ Prioritize (if multiple crises active)
 
-EventBus fires: "specialists_deployed" → {crisisId, specialistIds[]}
+EventBus fires: "specialists_deployed" → {IncidentId, specialistIds[]}
     ↓
-Crisis system begins resolution
+Incident system begins resolution
 ```
 
 **Specialist Selection Strategy:**
@@ -149,29 +149,29 @@ Crisis system begins resolution
 ```
 Player Considerations:
 ├─ Does specialist have required abilities?
-│   └─ Match abilities to crisis type
+│   └─ Match abilities to Incident type
 ├─ Is specialist available (not on cooldown)?
 │   └─ Recent deployments = cooldown
 ├─ What's the specialist's level/effectiveness?
 │   └─ Higher level = better outcomes
-├─ Does specialist have bonus traits for this crisis?
+├─ Does specialist have bonus traits for this Incident?
 │   └─ "Malware Specialist" trait for ransomware
 └─ Can I spare them from other contracts?
     └─ Managing multiple simultaneous crises
 
 Optimal Strategy Emerges:
-├─ Build diverse team (cover all crisis types)
+├─ Build diverse team (cover all Incident types)
 ├─ Specialize individuals (max out key abilities)
 ├─ Rotate specialists (avoid cooldown bottlenecks)
 └─ Save elite specialists for Tier 4 crises
 ```
 
-### 3. Specialist Response → Crisis Resolution
+### 3. Specialist Response → Incident Resolution
 
-**Crisis Resolution Mechanics:**
+**Incident Resolution Mechanics:**
 
 ```
-During Crisis:
+During Incident:
 ├─ Specialists use abilities (consume cooldowns)
 ├─ Threat integrity (HP) decreases
 ├─ Stages progress based on actions
@@ -223,27 +223,27 @@ Failure:
 └─ Reputation loss, possible contract termination
 ```
 
-### 4. Crisis Resolution → Rewards & Progression
+### 4. Incident Resolution → Rewards & Progression
 
-**Immediate Rewards (End of Crisis):**
+**Immediate Rewards (End of Incident):**
 
 ```
 XP Distribution:
-├─ Base XP (based on crisis tier and difficulty)
+├─ Base XP (based on Incident tier and difficulty)
 ├─ × Outcome multiplier (1.5x perfect, 1.0x success, 0.5x partial)
-├─ × First-time bonus (2.0x if first time resolving this crisis type)
+├─ × First-time bonus (2.0x if first time resolving this Incident type)
 ├─ Split among deployed specialists (80%)
 ├─ Shared with non-deployed specialists (20%)
 └─ Bonus XP for ability usage
 
 Money Rewards:
-├─ Base crisis reward ($1,000 - $10,000)
+├─ Base Incident reward ($1,000 - $10,000)
 ├─ × Outcome multiplier
 ├─ + Contract SLA bonus (if maintained)
 └─ Added to player budget
 
 Reputation Changes:
-├─ Base reputation (based on crisis tier)
+├─ Base reputation (based on Incident tier)
 ├─ × Outcome multiplier
 ├─ SLA compliance bonus/penalty
 └─ Client satisfaction modifier
@@ -258,7 +258,7 @@ Mission Tokens (Rare):
 **Specialist Progression:**
 
 ```
-Specialists gain XP from crisis:
+Specialists gain XP from Incident:
     ↓
 Check level-up thresholds
     ↓
@@ -280,7 +280,7 @@ XP can also be spent directly:
 └─ Useful for cheap Tier 1/2 skills
 ```
 
-### 5. Specialist Progression → Better Crisis Outcomes
+### 5. Specialist Progression → Better Incident Outcomes
 
 **How Progression Improves Performance:**
 
@@ -291,7 +291,7 @@ Level 1:
 ├─ Base stats: 1.0x
 ├─ basic_analysis Lvl 1: 40 damage
 ├─ No advanced skills
-├─ Total crisis effectiveness: ~50 damage
+├─ Total Incident effectiveness: ~50 damage
 └─ Can handle Tier 1 crises
 
 Level 10:
@@ -299,7 +299,7 @@ Level 10:
 ├─ basic_analysis Lvl 10: 40 damage × 2.0 stats = 80 damage
 ├─ malware_analysis Lvl 7: 120 damage × 2.0 = 240 damage
 ├─ threat_intelligence Lvl 5: Reveals APT patterns
-├─ Total crisis effectiveness: ~350+ damage
+├─ Total Incident effectiveness: ~350+ damage
 └─ Can handle Tier 3-4 crises effortlessly
 
 Result:
@@ -340,7 +340,7 @@ Level 15 - Master Skills:
 **Reputation Sources:**
 
 ```
-Crisis Resolution:
+Incident Resolution:
 ├─ Perfect: +50 to +200 Rep (based on tier)
 ├─ Success: +25 to +100 Rep
 ├─ Partial: +5 to +30 Rep
@@ -451,13 +451,13 @@ Early Game (Rep < 100):
 
 Mid Game (Rep 100-300):
 ├─ Mix of Tier 1 and Tier 2
-├─ Balance income vs crisis frequency
+├─ Balance income vs Incident frequency
 ├─ Specialize in certain industries
 └─ Goal: Build elite team
 
 Late Game (Rep 300+):
 ├─ High-value Tier 3-4 contracts
-├─ Accept crisis frequency (you're ready!)
+├─ Accept Incident frequency (you're ready!)
 ├─ Focus on SLA perfection
 └─ Goal: Maximize reputation for prestige
 ```
@@ -470,20 +470,20 @@ Late Game (Rep 300+):
 Contract Tier Progression Creates Challenge Spiral:
 
 Phase 1: Comfortable (2-3 Tier 1 contracts)
-├─ Crisis every ~3-5 minutes
+├─ Incident every ~3-5 minutes
 ├─ Tier 1 threats only
 ├─ Easy to maintain perfect SLA
 └─ Reputation grows steadily
 
 Phase 2: Busy (4-5 mixed contracts)
-├─ Crisis every ~2-3 minutes
+├─ Incident every ~2-3 minutes
 ├─ Tier 1-2 threats
 ├─ Some multitasking required
 ├─ Specialists leveling up
 └─ Reputation accelerating
 
 Phase 3: Intense (6+ contracts, some Tier 3)
-├─ Crisis every ~1-2 minutes
+├─ Incident every ~1-2 minutes
 ├─ Tier 2-3 threats
 ├─ Frequent multitasking
 ├─ Combo events appearing
@@ -507,7 +507,7 @@ Phase 4: Elite Endgame (8+ contracts, Tier 4)
 0:00 - Tutorial
 ├─ Learn basic UI
 ├─ Understand contracts
-├─ Experience first crisis (guided)
+├─ Experience first Incident (guided)
 └─ Hire first specialist
 
 0:15 - Building Roster
@@ -518,7 +518,7 @@ Phase 4: Elite Endgame (8+ contracts, Tier 4)
 
 0:30 - First Challenge
 ├─ Sign 3rd contract (FinTech)
-├─ Face first Tier 2 crisis (DDoS)
+├─ Face first Tier 2 Incident (DDoS)
 ├─ Deploy multiple specialists
 └─ Perfect resolution! Big XP reward
 
@@ -602,7 +602,7 @@ While not actively playing:
 Offline Progress:
 ├─ Calculate time away
 ├─ Generate passive income
-├─ Roll for crisis events (auto-resolved by automation)
+├─ Roll for Incident events (auto-resolved by automation)
 ├─ Award passive XP (20% of normal rate)
 └─ Display summary on return
 
@@ -636,7 +636,7 @@ Note: Tier 4 crises (APT, Zero-Day) always require player involvement
 
 **Why Active Play is Better:**
 ```
-Active Crisis Resolution:
+Active Incident Resolution:
 ├─ 2.5x XP compared to automated
 ├─ Perfect resolutions possible (automation always "success" at best)
 ├─ Mission Token chances (automation never earns these)
@@ -658,9 +658,9 @@ Strategic Decision-Making:
 
 ## Feedback Loops Summary
 
-### Short Loop (Per Crisis)
+### Short Loop (Per Incident)
 ```
-Crisis Alert → Deploy Specialists → Use Abilities → Resolve Crisis
+Incident Alert → Deploy Specialists → Use Abilities → Resolve Incident
 → Earn XP → Specialists Level → Better Performance → Harder Crises
 (~3-5 minutes per loop)
 ```
@@ -668,14 +668,14 @@ Crisis Alert → Deploy Specialists → Use Abilities → Resolve Crisis
 ### Medium Loop (Per Session)
 ```
 Sign Contracts → Multiple Crises → Specialist Progression
-→ Unlock New Skills → Better Crisis Outcomes → Reputation Increase
+→ Unlock New Skills → Better Incident Outcomes → Reputation Increase
 → New Contracts Available
 (~30-60 minutes per loop)
 ```
 
 ### Long Loop (Prestige Cycle)
 ```
-Build SOC → Master All Crisis Types → Max Reputation
+Build SOC → Master All Incident Types → Max Reputation
 → Unlock Prestige → Start Fresh with Bonuses → Build Stronger SOC
 (~20-40 hours per loop)
 ```
@@ -707,7 +707,7 @@ Goal: Deepen engagement with specialization
 **Late Game (Hours 20+):**
 ```
 Goal: Mastery and preparation for prestige
-├─ Elite crisis management
+├─ Elite Incident management
 ├─ Perfect SLA maintenance
 ├─ Legendary specialists
 ├─ Efficient resource optimization
@@ -720,8 +720,8 @@ Goal: Mastery and preparation for prestige
 
 ```
 Break Point 1: 3rd Contract (Hour 1-2)
-├─ Crisis frequency increases noticeably
-├─ Forces learning crisis prioritization
+├─ Incident frequency increases noticeably
+├─ Forces learning Incident prioritization
 └─ Reward: Rep 50 unlock (Tier 2 threats)
 
 Break Point 2: First Tier 3 Contract (Hour 8-12)
@@ -742,8 +742,8 @@ Break Point 3: First Tier 4 Contract (Hour 18-25)
 ### Achievement-Based Milestones
 
 ```
-"First Crisis Resolved"
-├─ Complete first guided crisis
+"First Incident Resolved"
+├─ Complete first guided Incident
 └─ Unlock: Free specialist hire
 
 "Team of Five"
@@ -755,14 +755,14 @@ Break Point 3: First Tier 4 Contract (Hour 18-25)
 └─ Unlock: Corporate HQ facility
 
 "APT Hunter"
-├─ Successfully resolve first APT crisis
+├─ Successfully resolve first APT Incident
 └─ Unlock: Elite specialist hiring pool
 
 "Perfect SLA Month"
 ├─ Maintain 100% SLA for 1 month across all contracts
 └─ Unlock: Prestige system
 
-"Crisis Master"
+"Incident Master"
 ├─ Resolve 100 crises with perfect outcomes
 └─ Unlock: Special legendary specialist
 ```
@@ -774,7 +774,7 @@ Break Point 3: First Tier 4 Contract (Hour 18-25)
 ```
 After Prestige:
 ├─ Keep: Reputation milestones (% bonus for fresh start)
-├─ Keep: Unlocked crisis types (knowledge)
+├─ Keep: Unlocked Incident types (knowledge)
 ├─ Reset: Specialists (start fresh)
 ├─ Reset: Contracts (rebuild SOC)
 ├─ Bonus: Legacy perks (permanent buffs)
@@ -783,7 +783,7 @@ After Prestige:
 Legacy Perks (Choose 1-3):
 ├─ "Seasoned Negotiator": +20% contract income
 ├─ "Veteran Trainer": Specialists gain XP 15% faster
-├─ "Crisis Veteran": Start with +50 Reputation
+├─ "Incident Veteran": Start with +50 Reputation
 ├─ "Industry Legend": Start with 1 legendary specialist
 └─ "Efficient Operations": -20% specialist cooldowns
 ```
@@ -791,7 +791,7 @@ Legacy Perks (Choose 1-3):
 ## Implementation Checklist
 
 **Phase 1: Core Loop (Coding Agent Currently Building)**
-- [In Progress] Crisis generation from contracts
+- [In Progress] Incident generation from contracts
 - [In Progress] Specialist deployment mechanics
 - [In Progress] XP earning and distribution
 - [In Progress] Level-up system
@@ -805,7 +805,7 @@ Legacy Perks (Choose 1-3):
 - [ ] Automation upgrades
 
 **Phase 3: Advanced Features (Future)**
-- [ ] Combo crisis events
+- [ ] Combo Incident events
 - [ ] Offline/idle progress
 - [ ] Achievement system
 - [ ] Prestige system
@@ -818,13 +818,13 @@ Legacy Perks (Choose 1-3):
 ```
 Daily Incentives:
 ├─ Daily specialist recruit refresh (new random specialists)
-├─ Daily crisis bonus (first crisis of day = 2x XP)
+├─ Daily Incident bonus (first Incident of day = 2x XP)
 ├─ Daily contract (special high-reward one-off)
 └─ Daily login bonus (Mission Tokens)
 
 Weekly Incentives:
-├─ Weekly challenge (special crisis scenario)
-├─ Weekly leaderboard (fastest crisis resolution)
+├─ Weekly challenge (special Incident scenario)
+├─ Weekly leaderboard (fastest Incident resolution)
 ├─ Weekly reputation milestone rewards
 └─ Weekly specialist sale (discounted hire costs)
 ```
@@ -840,34 +840,34 @@ Progression Goals:
 
 Collection Goals:
 ├─ Collect all legendary trait specialists
-├─ Master all crisis types (achievement)
+├─ Master all Incident types (achievement)
 ├─ Unlock all facility upgrades
 └─ Complete all prestige legacy perks
 
 Social Goals (Future):
 ├─ Leaderboard ranking
 ├─ Guild/team features
-├─ Share legendary crisis resolutions
-└─ Collaborative crisis events
+├─ Share legendary Incident resolutions
+└─ Collaborative Incident events
 ```
 
 ## Summary: Why This Loop is Addictive
 
 ```
-✅ Clear short-term goals (next crisis, next level-up)
+✅ Clear short-term goals (next Incident, next level-up)
 ✅ Satisfying medium-term progression (unlocking skills, contracts)
 ✅ Meaningful long-term goals (prestige, legendary team)
 ✅ Multiple progression paths (specialists, facilities, contracts)
 ✅ Strategic depth (team building, specialist specialization)
 ✅ Risk/reward decisions (harder contracts = better rewards)
-✅ "One more crisis" hook (always something to do)
+✅ "One more Incident" hook (always something to do)
 ✅ Visible power growth (going from struggling to dominating)
 ✅ Replayability (prestige system, random traits)
 ✅ Idle-friendly but rewards active play
 ```
 
 **The engagement loop creates a natural gameplay rhythm:**
-1. **Tension**: Crisis alert!
+1. **Tension**: Incident alert!
 2. **Agency**: Deploy your specialists
 3. **Skill**: Use abilities strategically
 4. **Reward**: XP, money, reputation

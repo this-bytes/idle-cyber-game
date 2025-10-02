@@ -35,7 +35,7 @@ function ProgressionSystem.new(eventBus)
         totalSpent = 0,
         contractsCompleted = 0,
         specialistsHired = 0,
-        crisisMissionsCompleted = 0
+        IncidentMissionsCompleted = 0
     }
     
     -- Daily conversion tracking
@@ -124,8 +124,8 @@ function ProgressionSystem:subscribeToEvents()
             self.totalStats.specialistsHired = self.totalStats.specialistsHired + 1
         end)
         
-        self.eventBus:subscribe("crisis_completed", function(data)
-            self.totalStats.crisisMissionsCompleted = self.totalStats.crisisMissionsCompleted + 1
+        self.eventBus:subscribe("Incident_completed", function(data)
+            self.totalStats.IncidentMissionsCompleted = self.totalStats.IncidentMissionsCompleted + 1
         end)
         -- Track location changes for statistics
         self.eventBus:subscribe("location_changed", function(data)
@@ -443,7 +443,7 @@ function ProgressionSystem:performPrestige()
         totalSpent = 0,
         contractsCompleted = 0,
         specialistsHired = 0,
-        crisisMissionsCompleted = 0
+        IncidentMissionsCompleted = 0
     }
     
     -- Re-initialize starting currencies
@@ -519,7 +519,7 @@ function ProgressionSystem:loadState(state)
         totalSpent = 0,
         contractsCompleted = 0,
         specialistsHired = 0,
-        crisisMissionsCompleted = 0
+        IncidentMissionsCompleted = 0
     }
     self.dailyConversions = state.dailyConversions or {}
 end

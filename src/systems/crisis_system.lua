@@ -1,121 +1,121 @@
 -- Unsure if relevant, but here is the full file content you asked for:
 -- If in use core to the active game, ensure to merge any necessary changes.
--- Crisis System - Dynamic Crisis Generation and Management
--- Handles crisis lifecycle, specialist deployment, and outcomes
+-- Incident System - Dynamic Incident Generation and Management
+-- Handles Incident lifecycle, specialist deployment, and outcomes
 
-local CrisisSystem = {}
-CrisisSystem.__index = CrisisSystem
+local IncidentSystem = {}
+IncidentSystem.__index = IncidentSystem
 
--- Create new crisis system
-function CrisisSystem.new(eventBus, dataManager)
-    local self = setmetatable({}, CrisisSystem)
+-- Create new Incident system
+function IncidentSystem.new(eventBus, dataManager)
+    local self = setmetatable({}, IncidentSystem)
     self.eventBus = eventBus
     self.dataManager = dataManager
     
-    -- Crisis definitions loaded from data
-    self.crisisDefinitions = {}
+    -- Incident definitions loaded from data
+    self.IncidentDefinitions = {}
     
-    -- Active crisis state
-    self.activeCrisis = nil
+    -- Active Incident state
+    self.activeIncident = nil
     self.currentStageIndex = 1
-    self.crisisProgress = 0
+    self.IncidentProgress = 0
     self.deployedSpecialists = {}
-    self.crisisStartTime = 0
+    self.IncidentStartTime = 0
     self.elapsedTime = 0
     
     return self
 end
 
-function CrisisSystem:initialize()
-    -- Load crisis definitions from JSON
-    local crisisData = self.dataManager:getData("crises")
-    if crisisData and crisisData.crises then
-        self.crisisDefinitions = crisisData.crises
-        print("✅ Crisis System: Loaded " .. self:countCrises() .. " crisis definitions")
+function IncidentSystem:initialize()
+    -- Load Incident definitions from JSON
+    local IncidentData = self.dataManager:getData("crises")
+    if IncidentData and IncidentData.crises then
+        self.IncidentDefinitions = IncidentData.crises
+        print("✅ Incident System: Loaded " .. self:countCrises() .. " Incident definitions")
     else
-        print("⚠️  Crisis System: No crisis definitions found")
+        print("⚠️  Incident System: No Incident definitions found")
     end
 end
 
-function CrisisSystem:countCrises()
+function IncidentSystem:countCrises()
     local count = 0
-    for _ in pairs(self.crisisDefinitions) do
+    for _ in pairs(self.IncidentDefinitions) do
         count = count + 1
     end
     return count
 end
 
--- Generate a crisis from a threat type
-function CrisisSystem:generateCrisis(threatType, difficultyModifier)
+-- Generate a Incident from a threat type
+function IncidentSystem:generateIncident(threatType, difficultyModifier)
     difficultyModifier = difficultyModifier or 1.0
     
-    -- Find crisis definition matching threat type
-    local crisisId = nil
-    for id, crisis in pairs(self.crisisDefinitions) do
-        if crisis.threatType == threatType then
-            crisisId = id
+    -- Find Incident definition matching threat type
+    local IncidentId = nil
+    for id, Incident in pairs(self.IncidentDefinitions) do
+        if Incident.threatType == threatType then
+            IncidentId = id
             break
         end
     end
     
-    if not crisisId then
-        print("⚠️  No crisis definition found for threat type: " .. threatType)
+    if not IncidentId then
+        print("⚠️  No Incident definition found for threat type: " .. threatType)
         return nil
     end
     
-    return crisisId
+    return IncidentId
 end
 
--- Start a crisis by ID
-function CrisisSystem:startCrisis(crisisId)
-    if self.activeCrisis then
-        print("⚠️  Crisis already active: " .. self.activeCrisis.id)
+-- Start a Incident by ID
+function IncidentSystem:startIncident(IncidentId)
+    if self.activeIncident then
+        print("⚠️  Incident already active: " .. self.activeIncident.id)
         return false
     end
     
-    local crisisDef = self.crisisDefinitions[crisisId]
-    if not crisisDef then
-        print("❌ Crisis definition not found: " .. crisisId)
+    local IncidentDef = self.IncidentDefinitions[IncidentId]
+    if not IncidentDef then
+        print("❌ Incident definition not found: " .. IncidentId)
         return false
     end
     
-    -- Create active crisis instance from definition
-    self.activeCrisis = {
-        id = crisisDef.id,
-        name = crisisDef.name,
-        description = crisisDef.description,
-        threatType = crisisDef.threatType,
-        severity = crisisDef.severity,
-        timeLimit = crisisDef.timeLimit,
-        xpReward = crisisDef.xpReward,
-        moneyReward = crisisDef.moneyReward,
-        reputationImpact = crisisDef.reputationImpact,
-        stages = self:deepCopyStages(crisisDef.stages)
+    -- Create active Incident instance from definition
+    self.activeIncident = {
+        id = IncidentDef.id,
+        name = IncidentDef.name,
+        description = IncidentDef.description,
+        threatType = IncidentDef.threatType,
+        severity = IncidentDef.severity,
+        timeLimit = IncidentDef.timeLimit,
+        xpReward = IncidentDef.xpReward,
+        moneyReward = IncidentDef.moneyReward,
+        reputationImpact = IncidentDef.reputationImpact,
+        stages = self:deepCopyStages(IncidentDef.stages)
     }
     
     self.currentStageIndex = 1
-    self.crisisProgress = 0
+    self.IncidentProgress = 0
     self.deployedSpecialists = {}
-    self.crisisStartTime = love and love.timer and love.timer.getTime() or os.clock()
+    self.IncidentStartTime = love and love.timer and love.timer.getTime() or os.clock()
     self.elapsedTime = 0
     
     -- Auto-complete first stage if marked
-    if self.activeCrisis.stages[1] and self.activeCrisis.stages[1].autoComplete then
-        self.activeCrisis.stages[1].completed = true
+    if self.activeIncident.stages[1] and self.activeIncident.stages[1].autoComplete then
+        self.activeIncident.stages[1].completed = true
         self.currentStageIndex = 2
     end
     
     -- Fire event
     if self.eventBus then
-        self.eventBus:publish("crisis_started", {
-            crisisId = crisisId,
-            threatType = crisisDef.threatType,
-            severity = crisisDef.severity,
-            name = crisisDef.name
+        self.eventBus:publish("Incident_started", {
+            IncidentId = IncidentId,
+            threatType = IncidentDef.threatType,
+            severity = IncidentDef.severity,
+            name = IncidentDef.name
         })
     end
     
-    print("🚨 Crisis started: " .. crisisDef.name)
+    print("🚨 Incident started: " .. IncidentDef.name)
     return true
 end
 
@@ -136,7 +136,7 @@ local function deepCopyTable(orig)
 end
 
 -- Deep copy stages array
-function CrisisSystem:deepCopyStages(stages)
+function IncidentSystem:deepCopyStages(stages)
     local copy = deepCopyTable(stages)
     -- Ensure each stage has completed = false
     for i, stage in ipairs(copy) do
@@ -145,10 +145,10 @@ function CrisisSystem:deepCopyStages(stages)
     return copy
 end
 
--- Deploy a specialist to the active crisis
-function CrisisSystem:deploySpecialist(specialistId, crisisId, abilityId)
-    if not self.activeCrisis or self.activeCrisis.id ~= crisisId then
-        print("❌ No active crisis or crisis mismatch")
+-- Deploy a specialist to the active Incident
+function IncidentSystem:deploySpecialist(specialistId, IncidentId, abilityId)
+    if not self.activeIncident or self.activeIncident.id ~= IncidentId then
+        print("❌ No active Incident or Incident mismatch")
         return false
     end
     
@@ -161,8 +161,8 @@ function CrisisSystem:deploySpecialist(specialistId, crisisId, abilityId)
     
     -- Fire event
     if self.eventBus then
-        self.eventBus:publish("specialist_deployed_to_crisis", {
-            crisisId = crisisId,
+        self.eventBus:publish("specialist_deployed_to_Incident", {
+            IncidentId = IncidentId,
             specialistId = specialistId,
             abilityId = abilityId
         })
@@ -171,10 +171,10 @@ function CrisisSystem:deploySpecialist(specialistId, crisisId, abilityId)
     return true
 end
 
--- Use an ability on a crisis stage
-function CrisisSystem:useAbility(specialistId, abilityId, stageId, specialistAbilities)
-    if not self.activeCrisis then
-        return false, "No active crisis"
+-- Use an ability on a Incident stage
+function IncidentSystem:useAbility(specialistId, abilityId, stageId, specialistAbilities)
+    if not self.activeIncident then
+        return false, "No active Incident"
     end
     
     -- Find the stage
@@ -192,18 +192,18 @@ function CrisisSystem:useAbility(specialistId, abilityId, stageId, specialistAbi
     
     -- Apply ability effect
     local progressGain = 0.3 * effectiveness -- Base progress gain
-    self.crisisProgress = math.min(1.0, self.crisisProgress + progressGain)
+    self.IncidentProgress = math.min(1.0, self.IncidentProgress + progressGain)
     
     -- Check if stage requirements are met
     local requiredProgress = stage.requiredProgress or 0
-    if self.crisisProgress >= requiredProgress then
+    if self.IncidentProgress >= requiredProgress then
         stage.completed = true
         self:advanceStage()
         
         -- Fire event
         if self.eventBus then
-            self.eventBus:publish("crisis_stage_completed", {
-                crisisId = self.activeCrisis.id,
+            self.eventBus:publish("Incident_stage_completed", {
+                IncidentId = self.activeIncident.id,
                 stageId = stageId,
                 effectiveness = effectiveness
             })
@@ -215,7 +215,7 @@ function CrisisSystem:useAbility(specialistId, abilityId, stageId, specialistAbi
         self.eventBus:publish("specialist_ability_used", {
             specialistId = specialistId,
             abilityId = abilityId,
-            crisisId = self.activeCrisis.id,
+            IncidentId = self.activeIncident.id,
             effectiveness = effectiveness
         })
     end
@@ -224,10 +224,10 @@ function CrisisSystem:useAbility(specialistId, abilityId, stageId, specialistAbi
 end
 
 -- Find stage by ID
-function CrisisSystem:findStage(stageId)
-    if not self.activeCrisis then return nil end
+function IncidentSystem:findStage(stageId)
+    if not self.activeIncident then return nil end
     
-    for _, stage in ipairs(self.activeCrisis.stages) do
+    for _, stage in ipairs(self.activeIncident.stages) do
         if stage.id == stageId then
             return stage
         end
@@ -236,12 +236,12 @@ function CrisisSystem:findStage(stageId)
 end
 
 -- Advance to next stage
-function CrisisSystem:advanceStage()
-    if not self.activeCrisis then return false end
+function IncidentSystem:advanceStage()
+    if not self.activeIncident then return false end
     
     -- Check if all stages completed
     local allCompleted = true
-    for _, stage in ipairs(self.activeCrisis.stages) do
+    for _, stage in ipairs(self.activeIncident.stages) do
         if not stage.completed then
             allCompleted = false
             break
@@ -249,18 +249,18 @@ function CrisisSystem:advanceStage()
     end
     
     if allCompleted then
-        self:resolveCrisis("success")
+        self:resolveIncident("success")
         return true
     end
     
     -- Move to next incomplete stage
-    for i = self.currentStageIndex + 1, #self.activeCrisis.stages do
-        if not self.activeCrisis.stages[i].completed then
+    for i = self.currentStageIndex + 1, #self.activeIncident.stages do
+        if not self.activeIncident.stages[i].completed then
             self.currentStageIndex = i
             
             -- Auto-complete if marked
-            if self.activeCrisis.stages[i].autoComplete then
-                self.activeCrisis.stages[i].completed = true
+            if self.activeIncident.stages[i].autoComplete then
+                self.activeIncident.stages[i].completed = true
                 return self:advanceStage()
             end
             
@@ -272,7 +272,7 @@ function CrisisSystem:advanceStage()
 end
 
 -- Calculate effectiveness based on specialist abilities vs required abilities
-function CrisisSystem:calculateEffectiveness(specialistAbilities, requiredAbilities)
+function IncidentSystem:calculateEffectiveness(specialistAbilities, requiredAbilities)
     if not requiredAbilities or #requiredAbilities == 0 then
         return 1.0 -- No specific requirements, full effectiveness
     end
@@ -292,38 +292,38 @@ function CrisisSystem:calculateEffectiveness(specialistAbilities, requiredAbilit
     return math.min(1.0, effectiveness)
 end
 
--- Resolve crisis with outcome
-function CrisisSystem:resolveCrisis(outcome)
-    if not self.activeCrisis then
+-- Resolve Incident with outcome
+function IncidentSystem:resolveIncident(outcome)
+    if not self.activeIncident then
         return false
     end
     
-    local crisis = self.activeCrisis
+    local Incident = self.activeIncident
     local xpAwarded = 0
     local moneyAwarded = 0
     local reputationChange = 0
     
     -- Calculate rewards based on outcome
     if outcome == "success" then
-        xpAwarded = crisis.xpReward
-        moneyAwarded = crisis.moneyReward
-        reputationChange = crisis.reputationImpact.success
+        xpAwarded = Incident.xpReward
+        moneyAwarded = Incident.moneyReward
+        reputationChange = Incident.reputationImpact.success
         
-        -- Bonus for perfect crisis (all stages completed quickly)
-        if self.elapsedTime < crisis.timeLimit * 0.5 then
+        -- Bonus for perfect Incident (all stages completed quickly)
+        if self.elapsedTime < Incident.timeLimit * 0.5 then
             xpAwarded = math.floor(xpAwarded * 1.5)
-            print("⭐ Perfect crisis resolution! +50% XP bonus")
+            print("⭐ Perfect Incident resolution! +50% XP bonus")
         end
     elseif outcome == "partial" then
         -- Partial completion
         local completionRate = self:getCompletionRate()
-        xpAwarded = math.floor(crisis.xpReward * completionRate)
-        moneyAwarded = math.floor(crisis.moneyReward * completionRate)
-        reputationChange = crisis.reputationImpact.partial
+        xpAwarded = math.floor(Incident.xpReward * completionRate)
+        moneyAwarded = math.floor(Incident.moneyReward * completionRate)
+        reputationChange = Incident.reputationImpact.partial
     elseif outcome == "failure" or outcome == "timeout" then
-        xpAwarded = math.floor(crisis.xpReward * 0.1) -- Small consolation XP
+        xpAwarded = math.floor(Incident.xpReward * 0.1) -- Small consolation XP
         moneyAwarded = 0
-        reputationChange = crisis.reputationImpact.failure
+        reputationChange = Incident.reputationImpact.failure
     end
     
     -- Award resources
@@ -342,9 +342,9 @@ function CrisisSystem:resolveCrisis(outcome)
             })
         end
         
-        -- Fire crisis completed event (SpecialistSystem will handle XP distribution)
-        self.eventBus:publish("crisis_completed", {
-            crisisId = crisis.id,
+        -- Fire Incident completed event (SpecialistSystem will handle XP distribution)
+        self.eventBus:publish("Incident_completed", {
+            IncidentId = Incident.id,
             outcome = outcome,
             xpAwarded = xpAwarded,
             moneyAwarded = moneyAwarded,
@@ -353,87 +353,87 @@ function CrisisSystem:resolveCrisis(outcome)
         })
     end
     
-    print(string.format("✅ Crisis resolved: %s | Outcome: %s | XP: %d | Money: $%d | Reputation: %+d",
-        crisis.name, outcome, xpAwarded, moneyAwarded, reputationChange))
+    print(string.format("✅ Incident resolved: %s | Outcome: %s | XP: %d | Money: $%d | Reputation: %+d",
+        Incident.name, outcome, xpAwarded, moneyAwarded, reputationChange))
     
-    -- Clear active crisis
-    self.activeCrisis = nil
+    -- Clear active Incident
+    self.activeIncident = nil
     self.currentStageIndex = 1
-    self.crisisProgress = 0
+    self.IncidentProgress = 0
     self.deployedSpecialists = {}
     
     return true
 end
 
 -- Get completion rate (0.0 to 1.0)
-function CrisisSystem:getCompletionRate()
-    if not self.activeCrisis then return 0 end
+function IncidentSystem:getCompletionRate()
+    if not self.activeIncident then return 0 end
     
     local completed = 0
-    for _, stage in ipairs(self.activeCrisis.stages) do
+    for _, stage in ipairs(self.activeIncident.stages) do
         if stage.completed then
             completed = completed + 1
         end
     end
     
-    return completed / #self.activeCrisis.stages
+    return completed / #self.activeIncident.stages
 end
 
--- Update crisis timer
-function CrisisSystem:update(dt)
-    if not self.activeCrisis then return end
+-- Update Incident timer
+function IncidentSystem:update(dt)
+    if not self.activeIncident then return end
     
     self.elapsedTime = self.elapsedTime + dt
     
     -- Check for timeout
-    if self.elapsedTime >= self.activeCrisis.timeLimit then
-        print("⏰ Crisis timeout!")
-        self:resolveCrisis("timeout")
+    if self.elapsedTime >= self.activeIncident.timeLimit then
+        print("⏰ Incident timeout!")
+        self:resolveIncident("timeout")
     end
 end
 
--- Get active crisis
-function CrisisSystem:getActiveCrisis()
-    return self.activeCrisis
+-- Get active Incident
+function IncidentSystem:getActiveIncident()
+    return self.activeIncident
 end
 
 -- Get current stage
-function CrisisSystem:getCurrentStage()
-    if not self.activeCrisis then return nil end
-    return self.activeCrisis.stages[self.currentStageIndex]
+function IncidentSystem:getCurrentStage()
+    if not self.activeIncident then return nil end
+    return self.activeIncident.stages[self.currentStageIndex]
 end
 
 -- Get time remaining
-function CrisisSystem:getTimeRemaining()
-    if not self.activeCrisis then return 0 end
-    return math.max(0, self.activeCrisis.timeLimit - self.elapsedTime)
+function IncidentSystem:getTimeRemaining()
+    if not self.activeIncident then return 0 end
+    return math.max(0, self.activeIncident.timeLimit - self.elapsedTime)
 end
 
--- Get all crisis definitions
-function CrisisSystem:getAllCrisisDefinitions()
-    return self.crisisDefinitions
+-- Get all Incident definitions
+function IncidentSystem:getAllIncidentDefinitions()
+    return self.IncidentDefinitions
 end
 
 -- Get state for saving
-function CrisisSystem:getState()
+function IncidentSystem:getState()
     return {
-        activeCrisis = self.activeCrisis,
+        activeIncident = self.activeIncident,
         currentStageIndex = self.currentStageIndex,
-        crisisProgress = self.crisisProgress,
+        IncidentProgress = self.IncidentProgress,
         deployedSpecialists = self.deployedSpecialists,
         elapsedTime = self.elapsedTime
     }
 end
 
 -- Load state from save
-function CrisisSystem:loadState(state)
+function IncidentSystem:loadState(state)
     if state then
-        self.activeCrisis = state.activeCrisis
+        self.activeIncident = state.activeIncident
         self.currentStageIndex = state.currentStageIndex or 1
-        self.crisisProgress = state.crisisProgress or 0
+        self.IncidentProgress = state.IncidentProgress or 0
         self.deployedSpecialists = state.deployedSpecialists or {}
         self.elapsedTime = state.elapsedTime or 0
     end
 end
 
-return CrisisSystem
+return IncidentSystem

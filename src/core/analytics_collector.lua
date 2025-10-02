@@ -27,7 +27,7 @@ function AnalyticsCollector.new(eventBus, saveSystem)
         
         -- Progression checkpoints
         first_contract = nil,
-        first_crisis = nil,
+        first_Incident = nil,
         first_specialist = nil,
         first_upgrade = nil,
         progression_velocity = {}
@@ -57,8 +57,8 @@ function AnalyticsCollector:initialize()
             self:trackEvent("threat_mitigated", data)
         end)
         
-        self.eventBus:subscribe("crisis_resolved", function(data)
-            self:trackEvent("crisis_resolved", data)
+        self.eventBus:subscribe("Incident_resolved", function(data)
+            self:trackEvent("Incident_resolved", data)
         end)
         
         self.eventBus:subscribe("synergy_activated", function(data)
@@ -99,10 +99,10 @@ function AnalyticsCollector:trackEvent(eventType, data)
         end
     elseif eventType == "threat_mitigated" then
         self.session.threats_mitigated = self.session.threats_mitigated + 1
-    elseif eventType == "crisis_resolved" then
+    elseif eventType == "Incident_resolved" then
         self.session.crises_resolved = self.session.crises_resolved + 1
-        if not self.session.first_crisis then
-            self.session.first_crisis = os.time()
+        if not self.session.first_Incident then
+            self.session.first_Incident = os.time()
         end
     end
     
@@ -139,7 +139,7 @@ function AnalyticsCollector:getStats()
             first_contract = self.session.first_contract,
             first_specialist = self.session.first_specialist,
             first_upgrade = self.session.first_upgrade,
-            first_crisis = self.session.first_crisis
+            first_Incident = self.session.first_Incident
         },
         
         rates = {
@@ -173,7 +173,7 @@ function AnalyticsCollector:saveState()
         threats_mitigated = self.session.threats_mitigated,
         crises_resolved = self.session.crises_resolved,
         first_contract = self.session.first_contract,
-        first_crisis = self.session.first_crisis,
+        first_Incident = self.session.first_Incident,
         first_specialist = self.session.first_specialist,
         first_upgrade = self.session.first_upgrade
     }
@@ -190,7 +190,7 @@ function AnalyticsCollector:loadState(state)
     self.session.threats_mitigated = state.threats_mitigated or 0
     self.session.crises_resolved = state.crises_resolved or 0
     self.session.first_contract = state.first_contract
-    self.session.first_crisis = state.first_crisis
+    self.session.first_Incident = state.first_Incident
     self.session.first_specialist = state.first_specialist
     self.session.first_upgrade = state.first_upgrade
 end

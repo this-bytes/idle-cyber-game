@@ -83,14 +83,14 @@ This document defines the specialist progression system using **Role-Based Skill
 
 **Starting Abilities:**
 - basic_response (Level 1)
-- Choose 1: malware_analysis OR crisis_management
+- Choose 1: malware_analysis OR Incident_management
 
 **Role Fantasy:** The firefighter who handles active threats
 
 **Best For:**
 - Ransomware containment
 - Malware removal
-- Quick crisis resolution
+- Quick Incident resolution
 - Emergency response
 
 ---
@@ -114,10 +114,10 @@ This document defines the specialist progression system using **Role-Based Skill
 **Role Fantasy:** The leader who makes everyone better
 
 **Best For:**
-- Multi-crisis management
+- Multi-Incident management
 - Contract negotiations
 - Team buffs
-- Crisis combos
+- Incident combos
 
 **Special:** Manager bonuses affect entire active team (multiplicative)
 
@@ -171,7 +171,7 @@ This document defines the specialist progression system using **Role-Based Skill
 **Legendary Traits:**
 - **Prodigy**: -50% XP required for ALL skills, starts at level 3
 - **Natural Leader**: Provides SOC Manager bonuses even if not Manager role
-- **Crisis Magnet**: Attracted to crisis work, +50% XP from all sources
+- **Incident Magnet**: Attracted to Incident work, +50% XP from all sources
 - **Unshakeable**: Immune to pressure penalties, always performs at peak
 - **Cyberpunk Legend**: +20% to ALL stats, +25% hiring cost
 
@@ -227,7 +227,7 @@ TIER 2 (Intermediate):
 
 TIER 3 (Advanced):
 ├─ threat_intelligence (Requires: malware_analysis Lvl 7, behavioral_analysis Lvl 5)
-│  ├─ Effect: +15% crisis prediction, +20% trace
+│  ├─ Effect: +15% Incident prediction, +20% trace
 │  ├─ Active: Predict next stage of APT attack
 │  └─ Max Level: 10
 │
@@ -274,7 +274,7 @@ TIER 2 (Intermediate):
 
 TIER 3 (Advanced):
 ├─ infrastructure_hardening (Requires: network_segmentation Lvl 6, intrusion_detection Lvl 5)
-│  ├─ Effect: -15% crisis frequency (passive!)
+│  ├─ Effect: -15% Incident frequency (passive!)
 │  ├─ Active: Harden defenses (reduce future damage)
 │  └─ Max Level: 10
 │
@@ -284,12 +284,12 @@ TIER 3 (Advanced):
 │  └─ Max Level: 8
 │
 └─ zero_trust_architecture (Requires: infrastructure_hardening Lvl 7)
-   ├─ Effect: +30% all defenses, -20% crisis severity
-   ├─ Passive: Reduces crisis severity before they start
+   ├─ Effect: +30% all defenses, -20% Incident severity
+   ├─ Passive: Reduces Incident severity before they start
    └─ Max Level: 5 (Master skill)
 ```
 
-### Tree 3: Incident Response & Crisis Management
+### Tree 3: Incident Response & Incident Management
 
 ```
 TIER 1 (Beginner):
@@ -304,7 +304,7 @@ TIER 1 (Beginner):
    └─ Max Level: 10
 
 TIER 2 (Intermediate):
-├─ crisis_management (Requires: basic_response Lvl 5)
+├─ Incident_management (Requires: basic_response Lvl 5)
 │  ├─ Effect: +15% effectiveness in multi-stage crises
 │  ├─ Active: Prioritize actions (optimize stage order)
 │  └─ Max Level: 10
@@ -320,7 +320,7 @@ TIER 2 (Intermediate):
    └─ Max Level: 8
 
 TIER 3 (Advanced):
-├─ emergency_coordination (Requires: crisis_management Lvl 7, rapid_containment Lvl 7)
+├─ emergency_coordination (Requires: Incident_management Lvl 7, rapid_containment Lvl 7)
 │  ├─ Effect: Can deploy to multiple crises (no penalty!)
 │  ├─ Active: Coordinate team (boost all specialists)
 │  └─ Max Level: 8
@@ -332,7 +332,7 @@ TIER 3 (Advanced):
 │
 └─ disaster_recovery_expert (Requires: emergency_coordination Lvl 5, backup_recovery Lvl 7)
    ├─ Effect: Can recover from "failed" crises
-   ├─ Active: Second chance (retry failed crisis stage)
+   ├─ Active: Second chance (retry failed Incident stage)
    └─ Max Level: 5 (Master skill)
 ```
 
@@ -347,12 +347,12 @@ TIER 1 (Beginner):
 │
 └─ negotiation
    ├─ Effect: +5% contract payouts per level
-   ├─ Active: Negotiate crisis outcome (reduce penalties)
+   ├─ Active: Negotiate Incident outcome (reduce penalties)
    └─ Max Level: 10
 
 TIER 2 (Intermediate):
 ├─ strategic_planning (Requires: team_coordination Lvl 3)
-│  ├─ Effect: +10% crisis preparation (see incoming threats earlier)
+│  ├─ Effect: +10% Incident preparation (see incoming threats earlier)
 │  ├─ Active: Plan response (pre-deploy specialists)
 │  └─ Max Level: 8
 │
@@ -372,12 +372,12 @@ TIER 3 (Advanced):
 │  ├─ Active: Inspire team (double effectiveness temporarily)
 │  └─ Max Level: 10
 │
-├─ crisis_prediction (Requires: strategic_planning Lvl 7)
+├─ Incident_prediction (Requires: strategic_planning Lvl 7)
 │  ├─ Effect: +30% warning time before crises
-│  ├─ Active: Predict crisis (reveals next crisis details)
+│  ├─ Active: Predict Incident (reveals next Incident details)
 │  └─ Max Level: 8
 │
-└─ legendary_SOC_director (Requires: executive_leadership Lvl 8, crisis_prediction Lvl 6)
+└─ legendary_SOC_director (Requires: executive_leadership Lvl 8, Incident_prediction Lvl 6)
    ├─ Effect: Company-wide bonuses, prestige unlocks
    ├─ Passive: Your SOC is legendary (reputation grows passively)
    └─ Max Level: 5 (Master skill)
@@ -409,12 +409,12 @@ Level 15: 230,000 XP (Legendary)
 Each level grants:
 ├─ +10% to all base stats (multiplicative)
 ├─ +1 skill point
-└─ +5% crisis effectiveness
+└─ +5% Incident effectiveness
 
 Example: Level 5 specialist
 ├─ Stats = Base × 1.4 (140% of hiring stats)
 ├─ 5 skill points to spend
-└─ +25% crisis effectiveness
+└─ +25% Incident effectiveness
 ```
 
 ### Skill Leveling
@@ -460,9 +460,9 @@ Strategy:
 
 ## XP Sources & Distribution
 
-### Crisis XP Awards
+### Incident XP Awards
 ```
-Base XP per crisis:
+Base XP per Incident:
 ├─ Tier 1 (Phishing, Basic Malware): 50 XP
 ├─ Tier 2 (DDoS, Ransomware): 75-100 XP
 ├─ Tier 3 (Data Exfil, Insider): 90-110 XP
@@ -594,7 +594,7 @@ Typical Progression:
 ```
 ├─ 2× Security Analysts (Investigation, APT hunting)
 ├─ 2× Network Engineers (DDoS, containment)
-├─ 2× Incident Responders (Crisis resolution)
+├─ 2× Incident Responders (Incident resolution)
 ├─ 1× SOC Manager (Team buffs)
 └─ 1× Specialist with rare trait
 ```
@@ -618,7 +618,7 @@ Network Engineer + Security Analyst:
 └─ "Coordinated Analysis": +30% trace effectiveness
 
 Incident Responder + SOC Manager:
-└─ "Crisis Leadership": +25% response speed
+└─ "Incident Leadership": +25% response speed
 
 Multiple Responders:
 └─ "Response Team": +15% per additional responder
@@ -682,7 +682,7 @@ Hover over skill shows:
 │ ┌─────────────────────────────────┐ │
 │ │ +10% All Stats                  │ │
 │ │ +1 Skill Point (Total: 2)       │ │
-│ │ +5% Crisis Effectiveness        │ │
+│ │ +5% Incident Effectiveness        │ │
 │ └─────────────────────────────────┘ │
 │                                     │
 │    [Spend Skill Point] [Later]     │
@@ -699,7 +699,7 @@ Target pace:
 ├─ Level 15: 60-80 hours of play
 
 If too fast:
-├─ Reduce crisis XP rewards
+├─ Reduce Incident XP rewards
 ├─ Increase level thresholds
 ├─ Reduce passive contract XP
 
@@ -720,7 +720,7 @@ Power curve should feel:
 
 Tier 3 skills should be:
 ├─ 3-5x more powerful than Tier 1
-├─ Noticeable impact on crisis outcomes
+├─ Noticeable impact on Incident outcomes
 └─ Worth the investment to unlock
 ```
 

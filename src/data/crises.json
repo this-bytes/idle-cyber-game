@@ -1,7 +1,7 @@
 {
   "crises": {
-    "phishing_crisis": {
-      "id": "phishing_crisis",
+    "phishing_Incident": {
+      "id": "phishing_Incident",
       "name": "Phishing Campaign Detected",
       "threatType": "phishing_attempt",
       "description": "Coordinated phishing emails targeting client employees",
@@ -60,8 +60,8 @@
         }
       ]
     },
-    "ransomware_crisis": {
-      "id": "ransomware_crisis",
+    "ransomware_Incident": {
+      "id": "ransomware_Incident",
       "name": "Ransomware Attack",
       "threatType": "ransomware_detection",
       "description": "File encryption patterns detected - ransomware deployment in progress",
@@ -149,8 +149,8 @@
         }
       ]
     },
-    "ddos_crisis": {
-      "id": "ddos_crisis",
+    "ddos_Incident": {
+      "id": "ddos_Incident",
       "name": "DDoS Attack",
       "threatType": "ddos_attack",
       "description": "Massive traffic surge overwhelming client infrastructure",

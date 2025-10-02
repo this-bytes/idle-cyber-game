@@ -43,7 +43,7 @@
         "id": "missionTokens",
         "name": "🎖️ Mission Tokens",
         "symbol": "MT",
-        "description": "Rare currency from Crisis Mode for elite upgrades",
+        "description": "Rare currency from Incident Mode for elite upgrades",
         "startingAmount": 0,
         "maxStorage": -1,
         "canGenerate": false,
@@ -336,7 +336,7 @@
     "missionComplete": {
       "id": "missionComplete",
       "name": "🎖️ Mission Accomplished",
-      "description": "Complete your first crisis mission",
+      "description": "Complete your first Incident mission",
       "requirements": {
         "missionTokens": 1
       },

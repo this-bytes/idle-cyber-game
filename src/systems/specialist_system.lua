@@ -74,8 +74,8 @@ function SpecialistSystem:initialize()
             self:awardXpToAllSpecialists(data.xpAwarded or 25)
         end)
         
-        -- Subscribe to crisis completion events for XP awards
-        self.eventBus:subscribe("crisis_completed", function(data)
+        -- Subscribe to Incident completion events for XP awards
+        self.eventBus:subscribe("Incident_completed", function(data)
             -- Award XP to deployed specialists
             if data.specialistsDeployed then
                 for _, deployment in ipairs(data.specialistsDeployed) do
