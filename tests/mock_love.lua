@@ -34,6 +34,21 @@ MockLove.filesystem = {
             handle:close()
         end
         return items
+    end,
+    
+    write = function(path, content)
+        local handle = io.open(path, "w")
+        if handle then
+            handle:write(content)
+            handle:close()
+            return true
+        end
+        return false, "Failed to write file"
+    end,
+    
+    remove = function(path)
+        local success = os.remove(path)
+        return success ~= nil
     end
 }
 

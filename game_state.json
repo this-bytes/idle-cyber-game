@@ -1,0 +1,12 @@
+{
+  "totalPlayTime":0.15,
+  "lastSaveTime":1759413437,
+  "version":"1.0.0",
+  "timestamp":1759413437,
+  "systems":{
+    "testSystem":{
+      "counter":0,
+      "value":100
+    }
+  }
+}
