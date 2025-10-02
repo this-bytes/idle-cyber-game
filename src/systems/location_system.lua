@@ -11,7 +11,7 @@
 local LocationSystem = {}
 LocationSystem.__index = LocationSystem
 
-local json = require("dkjson")
+local json = require("src.utils.dkjson")
 
 -- Create new location system
 function LocationSystem.new(eventBus)

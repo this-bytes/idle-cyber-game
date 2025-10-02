@@ -1,10 +1,10 @@
 -- src/core/data_manager.lua
 -- Manages loading and accessing all game data from JSON files.
 
-local dkjson = require("dkjson")
-
 local DataManager = {}
 DataManager.__index = DataManager
+
+local dkjson = require("dkjson")
 
 function DataManager.new(eventBus)
     local self = setmetatable({}, DataManager)

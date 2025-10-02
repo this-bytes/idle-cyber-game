@@ -9,7 +9,7 @@ local SynergyDetector = require("src.core.synergy_detector")
 
 -- Mock DataManager for testing
 local function createMockDataManager()
-    local dkjson = require("dkjson")
+    local dkjson = require("src.utils.dkjson")
     
     local function loadJSON(filename)
         local file = io.open(filename, "r")

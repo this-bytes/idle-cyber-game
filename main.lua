@@ -103,12 +103,14 @@ function love.load()
             print("📸 Screenshot mode scheduled: will capture main_menu then soc_view")
         end
         -- Start the game normally; captures will be triggered from love.draw
+        --[[ REMOVED to allow main_menu to render first for screenshot
         if SCREENSHOT_MODE and not SCREENSHOT_AGENT then
             -- For automated screenshot mode (non-agent) we still start the game
             -- so the SOC view can be reached automatically.
             game:startGame()
             game.sceneManager:requestScene("soc_view")
         end
+        ]]
     else
         print("❌❌❌ FATAL ERROR DURING INITIALIZATION ❌❌❌")
         print(err)

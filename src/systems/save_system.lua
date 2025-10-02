@@ -6,7 +6,7 @@
 local SaveSystem = {}
 SaveSystem.__index = SaveSystem
 
-local json = require("dkjson") -- Use robust dkjson bundled in repo
+local json = require("src.utils.dkjson") -- Use robust dkjson bundled in repo
 
 -- Create new save system
 function SaveSystem.new()

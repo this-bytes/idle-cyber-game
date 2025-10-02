@@ -4,7 +4,7 @@
 -- Add src to package path for testing
 package.path = package.path .. ";src/?.lua;src/systems/?.lua;src/utils/?.lua;src/core/?.lua;./?.lua"
 
-local dkjson = require("dkjson")
+local dkjson = require("src.utils.dkjson")
 
 -- Mock love.timer for testing
 love = love or {}

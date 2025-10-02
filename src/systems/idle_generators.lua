@@ -5,7 +5,7 @@
 local IdleGenerators = {}
 IdleGenerators.__index = IdleGenerators
 
-local json = require("dkjson")
+local json = require("src.utils.dkjson")
 
 -- Create new idle generators system
 function IdleGenerators.new(eventBus, resourceManager)

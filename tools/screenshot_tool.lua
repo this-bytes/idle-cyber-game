@@ -50,7 +50,7 @@ function ScreenshotTool.takeScreenshot(filename)
     -- because the environment running the game should provide LÖVE.
     -- If LÖVE isn't available in this execution environment, fall back to
     -- writing a small PNG file so CI and tests can assert on a real image.
-    if not (love and love.graphics and love.graphics.newScreenshot) then
+    if not (love and love.graphics and love.graphics.captureScreenshot) or forceFallback then
         -- Ensure screenshots directory exists (mkdir -p semantics)
         ensure_dir_for_path(defaultName)
         -- Only clear old screenshots automatically if explicitly requested

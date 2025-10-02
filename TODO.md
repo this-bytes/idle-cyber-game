@@ -15,7 +15,7 @@
 - Performance monitoring for complex simulations
 
 ### Design Philosophy
-- Maintain cybersecurity SOC theme authenticity althought the content can be tongue in check puns etc
+- Maintain cybersecurity SOC theme authenticity althought the content can be tongue in cheek puns etc
 - COre idle engine needs to be robust to allow for multiplcation through stat/skill tree and other scable factors
 - Balanced idle progression with incident engagement
 - Player agency in business growth strategy

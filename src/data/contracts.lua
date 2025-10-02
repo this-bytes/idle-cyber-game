@@ -6,7 +6,7 @@ local Contracts = {}
 -- Internal templates table (populated from JSON or defaults)
 local templates = {}
 
-local json = require("dkjson")
+local json = require("src.utils.dkjson")
 
 local dataPath = "src/data/contracts.json"
 

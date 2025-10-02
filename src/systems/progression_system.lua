@@ -3,7 +3,7 @@
 -- Progression System - Comprehensive player advancement and currency management
 -- Handles multiple currencies, progression tiers, prestige system, and milestones
 
-local json = require("dkjson")
+local json = require("src.utils.dkjson")
 local ProgressionSystem = {}
 ProgressionSystem.__index = ProgressionSystem
 

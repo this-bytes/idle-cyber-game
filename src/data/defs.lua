@@ -1,5 +1,5 @@
 -- Core definitions and enums for the game (centralized)
-local json = require("dkjson")
+local json = require("")
 
 local defs = {}
 local dataPath = "src/data/defs.json"

@@ -54,7 +54,7 @@ end
 
 -- Load specialists from specialists.json
 function IncidentSpecialistSystem:loadSpecialistsData()
-    local json = require("dkjson")
+    local json = require("src.utils.dkjson")
     
     -- Try to load from LÖVE filesystem
     if love and love.filesystem and love.filesystem.getInfo("src/data/specialists.json") then
@@ -114,7 +114,7 @@ end
 
 -- Load threats from threats.json
 function IncidentSpecialistSystem:loadThreatsData()
-    local json = require("dkjson")
+    local json = require("src.utils.dkjson")
     
     -- Try to load from LÖVE filesystem
     if love and love.filesystem and love.filesystem.getInfo("src/data/threats.json") then
