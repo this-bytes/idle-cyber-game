@@ -37,6 +37,7 @@ function DebugOverlay.new(eventBus, systems)
         idle = {},
         progression = {},
         achievements = {},
+        events = {},
         rng = {}
     }
     
@@ -112,6 +113,11 @@ function DebugOverlay:updateCachedData()
     -- Update achievement data
     if self.systems.achievementSystem then
         self.cachedData.achievements = self:getAchievementData()
+    end
+    
+    -- Update event system data
+    if self.systems.eventSystem then
+        self.cachedData.events = self:getEventData()
     end
     
     -- Update RNG data
@@ -249,6 +255,18 @@ function DebugOverlay:getAchievementData()
     return data
 end
 
+function DebugOverlay:getEventData()
+    local es = self.systems.eventSystem
+    local data = {
+        total = #(es.events or {}),
+        active = self:countTable(es.activeEvents or {}),
+        timer = es.eventTimer or 0,
+        baseInterval = es.baseInterval or 0,
+        totalWeight = es.totalWeight or 0
+    }
+    return data
+end
+
 function DebugOverlay:getRNGData()
     -- Track RNG state - Lua uses a global random seed
     local data = {
@@ -271,7 +289,7 @@ function DebugOverlay:draw()
     -- Draw header
     self:drawHeader()
     
-    -- Draw panels in a grid layout (3 columns)
+    -- Draw panels in a grid layout (3 columns, 4 rows)
     local startY = self.layout.headerHeight
     local col1X = self.layout.margin
     local col2X = col1X + self.layout.panelWidth + self.layout.columnSpacing
@@ -280,21 +298,25 @@ function DebugOverlay:draw()
     local row1Y = startY + self.layout.margin
     local row2Y = row1Y + self.layout.panelHeight + self.layout.rowSpacing
     local row3Y = row2Y + self.layout.panelHeight + self.layout.rowSpacing
+    local row4Y = row3Y + self.layout.panelHeight + self.layout.rowSpacing
     
     -- Column 1 - Core Economy
     self:drawResourcePanel(col1X, row1Y)
     self:drawContractPanel(col1X, row2Y)
     self:drawThreatPanel(col1X, row3Y)
+    self:drawEventPanel(col1X, row4Y)
     
     -- Column 2 - Systems
     self:drawSpecialistPanel(col2X, row1Y)
     self:drawUpgradePanel(col2X, row2Y)
     self:drawSkillPanel(col2X, row3Y)
+    self:drawRNGPanel(col2X, row4Y)
     
     -- Column 3 - Meta
     self:drawIdlePanel(col3X, row1Y)
     self:drawProgressionPanel(col3X, row2Y)
     self:drawAchievementPanel(col3X, row3Y)
+    self:drawSummaryPanel(col3X, row4Y)
     
     -- Draw controls footer
     self:drawFooter()
@@ -468,6 +490,46 @@ function DebugOverlay:drawAchievementPanel(x, y)
         {text = string.format("Completion: %.1f%%", ach.total > 0 and (ach.unlocked / ach.total * 100) or 0), color = {0.7, 0.7, 0.7, 1}}
     }
     self:drawPanel("ACHIEVEMENTS", "🏆", x, y, content)
+end
+
+function DebugOverlay:drawEventPanel(x, y)
+    local evt = self.cachedData.events
+    local content = {
+        {text = string.format("Total Events: %d", evt.total), color = {1, 1, 1, 1}},
+        {text = string.format("Active: %d", evt.active), color = {0.2, 1, 0.2, 1}},
+        {text = string.format("Timer: %.1fs / %.1fs", evt.timer, evt.baseInterval), color = {0.8, 0.8, 1, 1}},
+        {text = string.format("Total Weight: %.2f", evt.totalWeight), color = {0.7, 0.7, 0.7, 1}}
+    }
+    self:drawPanel("EVENTS", "🎲", x, y, content)
+end
+
+function DebugOverlay:drawRNGPanel(x, y)
+    local rng = self.cachedData.rng
+    local content = {
+        {text = string.format("Sample 1: %.6f", rng.sample1), color = {0.8, 0.8, 1, 1}},
+        {text = string.format("Sample 2: %.6f", rng.sample2), color = {0.8, 0.8, 1, 1}},
+        {text = string.format("Sample 3: %.6f", rng.sample3), color = {0.8, 0.8, 1, 1}},
+        {text = string.format("Time: %.2fs", rng.timestamp), color = {0.7, 0.7, 0.7, 1}}
+    }
+    self:drawPanel("RNG STATE", "🎰", x, y, content)
+end
+
+function DebugOverlay:drawSummaryPanel(x, y)
+    local res = self.cachedData.resources
+    local con = self.cachedData.contracts
+    local spec = self.cachedData.specialists
+    local thr = self.cachedData.threats
+    
+    local netIncome = res.moneyRate
+    local systemsActive = (con.active > 0 and 1 or 0) + (thr.enabled and 1 or 0) + (spec.total > 0 and 1 or 0)
+    
+    local content = {
+        {text = string.format("Net Income: $%.1f/s", netIncome), color = netIncome >= 0 and {0.2, 1, 0.2, 1} or {1, 0.3, 0.3, 1}},
+        {text = string.format("Active Systems: %d", systemsActive), color = {0.8, 0.8, 1, 1}},
+        {text = string.format("Economy Health: %s", netIncome > 0 and "GOOD" or "POOR"), color = netIncome > 0 and {0.2, 1, 0.2, 1} or {1, 0.8, 0.2, 1}},
+        {text = string.format("Uptime: %.0fs", love.timer and love.timer.getTime() or 0), color = {0.7, 0.7, 0.7, 1}}
+    }
+    self:drawPanel("SUMMARY", "📈", x, y, content)
 end
 
 function DebugOverlay:countTable(tbl)
