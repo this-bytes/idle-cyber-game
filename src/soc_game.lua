@@ -28,6 +28,9 @@ local IncidentResponse = require("src.scenes.incident_response")
 local AdminMode = require("src.modes.admin_mode")
 local IdleDebugScene = require("src.scenes.idle_debug")
 
+-- UI Components
+local DebugOverlay = require("src.ui.debug_overlay")
+
 
 local SOCGame = {}
 SOCGame.__index = SOCGame
@@ -37,6 +40,7 @@ function SOCGame.new(eventBus)
     self.eventBus = eventBus
     self.systems = {}
     self.sceneManager = nil
+    self.debugOverlay = nil
     self.isInitialized = false
     self.isGameStarted = false -- Track if player has started the game
     self.lastExitTime = nil -- Track when player last exited
@@ -104,7 +108,11 @@ function SOCGame:initialize()
     -- 5. Start Initial Scene (Main Menu)
     self.sceneManager:requestScene("main_menu")
     
-    -- 6. Load last exit time for offline earnings calculation
+    -- 6. Initialize Debug Overlay (overlays on top of any scene)
+    self.debugOverlay = DebugOverlay.new(self.eventBus, self.systems)
+    print("🔍 Debug Overlay initialized (Toggle with F3)")
+    
+    -- 7. Load last exit time for offline earnings calculation
     self:loadExitTime()
 
     print("✅ SOC Game Systems Initialized!")
@@ -118,6 +126,11 @@ function SOCGame:update(dt)
     
     -- Update scene manager (always active for menus)
     self.sceneManager:update(dt)
+    
+    -- Update debug overlay (always active when visible)
+    if self.debugOverlay then
+        self.debugOverlay:update(dt)
+    end
     
     -- Only update game systems after game has started
     if not self.isGameStarted then
@@ -165,9 +178,22 @@ function SOCGame:draw()
     if self.systems.particleSystem then
         self.systems.particleSystem:draw()
     end
+    
+    -- Draw debug overlay on top of everything (if visible)
+    if self.debugOverlay then
+        self.debugOverlay:draw()
+    end
 end
 
 function SOCGame:keypressed(key, scancode, isrepeat)
+    -- Handle global debug overlay toggle (F3)
+    if key == "f3" then
+        if self.debugOverlay then
+            self.debugOverlay:toggle()
+        end
+        return -- Don't pass F3 to other systems
+    end
+    
     -- Handle input system first (for global actions)
     if self.systems.inputSystem then
         self.systems.inputSystem:keypressed(key, scancode, isrepeat)

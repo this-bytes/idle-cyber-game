@@ -24,6 +24,7 @@ This modular instruction system provides comprehensive guidance for all aspects 
 **Documentation:**
 - [Smart UI Framework Guide](docs/SMART_UI_FRAMEWORK.md) - Complete API reference
 - [Quick Reference](docs/SMART_UI_QUICK_REFERENCE.md) - Cheat sheets
+- [Debug Overlay](docs/DEBUG_OVERLAY.md) - Comprehensive game state inspector
 
 ## Architecture Overview
 
@@ -43,8 +44,18 @@ See [11-technical-architecture.instructions.md](.github/copilot-instructions/11-
 
 ### Main Edition  
 ```bash
-lua5.3 main.lua          # Original monolithic version
+love .                     # Run with LÖVE 2D
 ```
+
+### Debug Mode
+Press **F3** in-game to toggle the comprehensive debug overlay which shows:
+- Real-time resource generation and economy state
+- All system statistics (contracts, specialists, threats, etc.)
+- RNG state monitoring
+- Achievement progress
+- Economy health summary
+
+See [docs/DEBUG_OVERLAY.md](docs/DEBUG_OVERLAY.md) for full documentation.
 
 ## Testing
 
