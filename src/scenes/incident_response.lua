@@ -14,6 +14,16 @@ function IncidentResponse.new(eventBus)
     self.activeThreat = nil
     self.availableSpecialists = {}
     self.selectedSpecialistIndex = 1
+    self.incidentStartTime = 0
+    self.incidentLog = {}
+    self.threatIntegrity = 100
+    self.responseProgress = 0
+    self.autoResponseEnabled = true
+    
+    -- Terminal-style UI
+    self.terminalLines = {}
+    self.maxTerminalLines = 20
+    self.terminalScroll = 0
     
     print("🚨 IncidentResponse: Initialized incident response scene")
     return self
@@ -25,6 +35,22 @@ function IncidentResponse:enter(data)
     -- Get the active threat from the data
     if data and data.threat then
         self.activeThreat = data.threat
+        self.threatIntegrity = 100 -- Start with full integrity
+        self.responseProgress = 0
+        self.incidentStartTime = love.timer.getTime()
+        
+        -- Initialize terminal
+        self.terminalLines = {}
+        self:addTerminalLine("╔══════════════════════════════════════════════════════════════╗")
+        self:addTerminalLine("║                    INCIDENT RESPONSE TERMINAL                    ║")
+        self:addTerminalLine("╚══════════════════════════════════════════════════════════════╝")
+        self:addTerminalLine("")
+        self:addTerminalLine("🚨 ALERT: " .. self.activeThreat.name .. " detected!")
+        self:addTerminalLine("📝 " .. self.activeThreat.description)
+        self:addTerminalLine("")
+        self:addTerminalLine("Initializing response protocols...")
+        self:addTerminalLine("Loading specialist team...")
+        
         print("🚨 Responding to threat: " .. self.activeThreat.name)
     end
     
@@ -39,8 +65,84 @@ function IncidentResponse:enter(data)
                 table.insert(self.availableSpecialists, specialist)
             end
         end
+        
+        self:addTerminalLine("Found " .. #self.availableSpecialists .. " available specialists")
+        self:addTerminalLine("Auto-response protocol: " .. (self.autoResponseEnabled and "ENABLED" or "DISABLED"))
+        self:addTerminalLine("")
+        self:addTerminalLine("Type 'help' for available commands")
     else
         print("Warning: specialistSystem not found in IncidentResponse:enter")
+        self:addTerminalLine("⚠️  Warning: Specialist system unavailable")
+    end
+end
+
+function IncidentResponse:addTerminalLine(text)
+    table.insert(self.terminalLines, text)
+    if #self.terminalLines > self.maxTerminalLines then
+        table.remove(self.terminalLines, 1)
+    end
+end
+
+function IncidentResponse:update(dt)
+    if not self.activeThreat then return end
+    
+    -- Simulate threat progression and response
+    local currentTime = love.timer.getTime()
+    local elapsed = currentTime - self.incidentStartTime
+    
+    -- Auto-response logic
+    if self.autoResponseEnabled and #self.availableSpecialists > 0 then
+        -- Specialists automatically work on the threat
+        local damagePerSecond = 0
+        for _, specialist in ipairs(self.availableSpecialists) do
+            -- Calculate damage based on specialist skills (simplified)
+            local skillBonus = specialist.level or 1
+            damagePerSecond = damagePerSecond + (skillBonus * 2) -- 2 damage per level per second
+        end
+        
+        self.threatIntegrity = self.threatIntegrity - (damagePerSecond * dt)
+        self.responseProgress = self.responseProgress + (damagePerSecond * dt * 0.5) -- Progress slower than damage
+        
+        -- Add occasional status updates
+        if math.random() < 0.02 then -- 2% chance per frame
+            local messages = {
+                "Specialist analyzing threat patterns...",
+                "Deploying countermeasures...",
+                "Isolating affected systems...",
+                "Gathering forensic evidence...",
+                "Coordinating with external teams...",
+                "Updating incident playbook..."
+            }
+            self:addTerminalLine("⚡ " .. messages[math.random(#messages)])
+        end
+    end
+    
+    -- Check for incident completion
+    if self.threatIntegrity <= 0 then
+        self:addTerminalLine("")
+        self:addTerminalLine("✅ THREAT NEUTRALIZED!")
+        self:addTerminalLine("� Incident Summary:")
+        self:addTerminalLine("   Duration: " .. string.format("%.1f", elapsed) .. " seconds")
+        self:addTerminalLine("   Specialists Deployed: " .. #self.availableSpecialists)
+        self:addTerminalLine("   Response Effectiveness: " .. string.format("%.1f%%", self.responseProgress))
+        
+        -- Award XP and reputation
+        local xpReward = math.floor(self.activeThreat.baseDamage * 0.1)
+        local repReward = math.floor(self.activeThreat.baseDamage * 0.05)
+        
+        self:addTerminalLine("   XP Gained: " .. xpReward)
+        self:addTerminalLine("   Reputation Gained: " .. repReward)
+        
+        if self.systems.resourceManager then
+            self.systems.resourceManager:addResource("xp", xpReward)
+            self.systems.resourceManager:addResource("reputation", repReward)
+        end
+        
+        self:addTerminalLine("")
+        self:addTerminalLine("Press ESC to return to SOC View")
+        
+        -- Mark threat as resolved
+        self.activeThreat = nil
     end
 end
 
@@ -48,73 +150,73 @@ function IncidentResponse:exit()
     print("🚨 IncidentResponse: Exiting incident response mode")
 end
 
-function IncidentResponse:update(dt)
-    -- Update threat timer if we have an active threat
-    if self.activeThreat then
-        self.activeThreat.timeRemaining = self.activeThreat.timeRemaining - dt
-        
-        -- Check if time expired
-        if self.activeThreat.timeRemaining <= 0 then
-            -- Return to SOC view - threat will be failed by ThreatSystem
-            self.eventBus:publish("scene_request", {scene = "soc_view"})
-        end
-    end
-end
-
 function IncidentResponse:draw()
-    love.graphics.setColor(1, 1, 1, 1)
+    -- Set up terminal-style appearance
+    love.graphics.setColor(0, 0.8, 0) -- Green terminal text
+    love.graphics.setFont(love.graphics.newFont(14))
     
-    if not self.activeThreat then
-        love.graphics.print("🚨 No active threat", 50, 50)
-        love.graphics.print("Press [ESC] to return to SOC", 50, 100)
-        return
+    local screenWidth = love.graphics.getWidth()
+    local screenHeight = love.graphics.getHeight()
+    local lineHeight = 20
+    local y = 20
+    
+    -- Draw terminal border
+    love.graphics.setColor(0, 0.8, 0, 0.3)
+    love.graphics.rectangle("line", 10, 10, screenWidth - 20, screenHeight - 20)
+    love.graphics.setColor(0, 0.8, 0)
+    
+    -- Draw terminal lines
+    for i, line in ipairs(self.terminalLines) do
+        love.graphics.print(line, 20, y)
+        y = y + lineHeight
     end
     
-    -- Draw threat information
-    love.graphics.setColor(1, 0.2, 0.2, 1)
-    love.graphics.print("🚨 ACTIVE THREAT", 50, 50)
-    
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.print("Threat: " .. self.activeThreat.name, 50, 80)
-    love.graphics.print("Severity: " .. self.activeThreat.severity .. "/10", 50, 100)
-    love.graphics.print("Time Remaining: " .. math.ceil(self.activeThreat.timeRemaining) .. "s", 50, 120)
-    love.graphics.print("Category: " .. (self.activeThreat.category or "unknown"), 50, 140)
-    
-    -- Draw description
-    love.graphics.setColor(0.8, 0.8, 0.8, 1)
-    love.graphics.printf(self.activeThreat.description, 50, 170, 700)
-    
-    -- Draw specialist assignment section
-    love.graphics.setColor(0.2, 0.8, 0.2, 1)
-    love.graphics.print("🛡️ ASSIGN SPECIALIST", 50, 220)
-    
-    love.graphics.setColor(1, 1, 1, 1)
-    if #self.availableSpecialists == 0 then
-        love.graphics.setColor(1, 1, 0, 1)
-        love.graphics.print("No specialists available!", 50, 250)
-        love.graphics.setColor(0.7, 0.7, 0.7, 1)
-        love.graphics.print("Hire specialists to respond to threats effectively.", 50, 270)
-    else
-        love.graphics.print("Available Specialists:", 50, 250)
+    -- Draw threat status if active
+    if self.activeThreat then
+        y = screenHeight - 120
         
-        -- List specialists
-        for i, specialist in ipairs(self.availableSpecialists) do
-            local y = 270 + (i - 1) * 25
-            local color = (i == self.selectedSpecialistIndex) and {1, 1, 0, 1} or {1, 1, 1, 1}
-            love.graphics.setColor(color[1], color[2], color[3], color[4])
-            
-            local prefix = (i == self.selectedSpecialistIndex) and "> " or "  "
-            love.graphics.print(prefix .. i .. ". " .. specialist.name, 50, y)
-            love.graphics.print("Defense: " .. specialist.defense .. " | Efficiency: " .. specialist.efficiency, 200, y)
-        end
+        -- Threat integrity bar
+        love.graphics.print("Threat Integrity:", 20, y)
+        y = y + lineHeight
+        
+        local barWidth = 300
+        local barHeight = 20
+        love.graphics.setColor(0.8, 0.2, 0.2, 0.5)
+        love.graphics.rectangle("fill", 20, y, barWidth, barHeight)
+        love.graphics.setColor(0.8, 0.2, 0.2)
+        love.graphics.rectangle("fill", 20, y, barWidth * (self.threatIntegrity / 100), barHeight)
+        love.graphics.setColor(0, 0.8, 0)
+        love.graphics.rectangle("line", 20, y, barWidth, barHeight)
+        love.graphics.print(string.format("%.1f%%", self.threatIntegrity), 20 + barWidth + 10, y)
+        
+        y = y + lineHeight + 10
+        
+        -- Response progress
+        love.graphics.print("Response Progress:", 20, y)
+        y = y + lineHeight
+        
+        love.graphics.setColor(0.2, 0.8, 0.2, 0.5)
+        love.graphics.rectangle("fill", 20, y, barWidth, barHeight)
+        love.graphics.setColor(0.2, 0.8, 0.2)
+        love.graphics.rectangle("fill", 20, y, barWidth * math.min(self.responseProgress / 100, 1), barHeight)
+        love.graphics.setColor(0, 0.8, 0)
+        love.graphics.rectangle("line", 20, y, barWidth, barHeight)
+        love.graphics.print(string.format("%.1f%%", math.min(self.responseProgress, 100)), 20 + barWidth + 10, y)
+        
+        y = y + lineHeight + 10
+        
+        -- Specialists deployed
+        love.graphics.print("Specialists Deployed: " .. #self.availableSpecialists, 20, y)
+        y = y + lineHeight
+        
+        -- Auto-response status
+        local autoStatus = self.autoResponseEnabled and "ENABLED" or "DISABLED"
+        love.graphics.print("Auto-Response: " .. autoStatus, 20, y)
     end
     
-    -- Draw controls
-    love.graphics.setColor(0.7, 0.7, 0.7, 1)
-    love.graphics.print("Controls:", 50, 400)
-    love.graphics.print("↑/↓ - Select specialist", 50, 420)
-    love.graphics.print("[ENTER] - Assign specialist to threat", 50, 440)
-    love.graphics.print("[ESC] - Return to SOC (abandon threat)", 50, 460)
+    -- Draw help text
+    love.graphics.setColor(0.7, 0.7, 0.7)
+    love.graphics.print("ESC: Return to SOC View", screenWidth - 200, screenHeight - 30)
 end
 
 function IncidentResponse:keypressed(key)

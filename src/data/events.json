@@ -1,61 +1,791 @@
 [
   {
-    "id": "event_001",
+    "id": "client_bonus_payment",
+    "name": "Client Bonus Payment",
     "type": "positive",
-    "description": "A grateful client sent a bonus for your team's excellent passive monitoring!",
+    "category": "economic",
+    "description": "A satisfied client sends an unexpected bonus for your proactive threat detection.",
+    "rarity": "common",
+    "frequency": 0.15,
     "effects": {
-      "money": 250
-    }
+      "money": 500,
+      "reputation": 1
+    },
+    "duration": 0
   },
   {
-    "id": "event_002",
+    "id": "server_overheat",
+    "name": "Server Overheat Incident",
     "type": "negative",
-    "description": "A server rack has overheated, requiring immediate replacement.",
+    "category": "infrastructure",
+    "description": "A server rack overheated due to poor ventilation, requiring emergency replacement.",
+    "rarity": "common",
+    "frequency": 0.12,
     "effects": {
-      "money": -75
-    }
+      "money": -300,
+      "income_rate_multiplier": -0.1,
+      "duration": 3600
+    },
+    "duration": 3600
   },
   {
-    "id": "event_003",
+    "id": "industry_conference",
+    "name": "Security Conference Inspiration",
     "type": "neutral",
-    "description": "Industry conference highlights new trends in threat intelligence. Your team feels inspired.",
-    "effects": {}
+    "category": "education",
+    "description": "Your team attended a security conference and learned cutting-edge techniques.",
+    "rarity": "uncommon",
+    "frequency": 0.08,
+    "effects": {
+      "specialist_xp_multiplier": 1.25,
+      "duration": 7200
+    },
+    "duration": 7200
   },
   {
-    "id": "event_004",
+    "id": "experimental_patch",
+    "name": "Experimental Security Patch",
     "type": "choice",
-    "description": "A new, experimental security patch is available. It could boost efficiency, but it's unstable. Install it?",
+    "category": "technology",
+    "description": "A promising but untested security patch is available. It could significantly boost defenses but might cause instability.",
+    "rarity": "rare",
+    "frequency": 0.05,
     "choices": [
       {
-        "text": "Install the patch",
+        "text": "Deploy the experimental patch",
         "effects": {
           "chance": [
-            { "probability": 0.7, "effect": { "money": 500, "reputation": 1 } },
-            { "probability": 0.3, "effect": { "money": -200, "reputation": -1 } }
+            {
+              "probability": 0.75,
+              "effect": {
+                "threat_reduction": 0.2,
+                "income_rate_multiplier": 0.15,
+                "duration": 14400
+              }
+            },
+            {
+              "probability": 0.25,
+              "effect": {
+                "threat_increase": 0.3,
+                "income_rate_multiplier": -0.1,
+                "duration": 7200
+              }
+            }
           ]
         }
       },
       {
-        "text": "Wait for a stable release",
+        "text": "Wait for official release",
+        "effects": {
+          "reputation": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "client_referral_bonus",
+    "name": "Client Referral Program",
+    "type": "positive",
+    "category": "business",
+    "description": "Impressed clients have referred three new potential contracts to your firm.",
+    "rarity": "uncommon",
+    "frequency": 0.1,
+    "effects": {
+      "contract_slots": 3,
+      "reputation": 3
+    },
+    "duration": 0
+  },
+  {
+    "id": "power_outage",
+    "name": "Regional Power Outage",
+    "type": "negative",
+    "category": "infrastructure",
+    "description": "A widespread power outage has affected your data center operations.",
+    "rarity": "rare",
+    "frequency": 0.03,
+    "effects": {
+      "income_rate_multiplier": -0.5,
+      "threat_reduction": -0.3,
+      "duration": 1800
+    },
+    "duration": 1800
+  },
+  {
+    "id": "talent_scout",
+    "name": "Elite Talent Scout",
+    "type": "positive",
+    "category": "recruitment",
+    "description": "A headhunter contacts you about an exceptional cybersecurity specialist looking for new opportunities.",
+    "rarity": "epic",
+    "frequency": 0.02,
+    "effects": {
+      "unlock_specialist": "elite_specialist",
+      "reputation": 5
+    },
+    "duration": 0
+  },
+  {
+    "id": "regulatory_audit",
+    "name": "Regulatory Compliance Audit",
+    "type": "choice",
+    "category": "compliance",
+    "description": "Regulators are conducting a surprise audit. You can either cooperate fully or attempt to minimize findings.",
+    "rarity": "uncommon",
+    "frequency": 0.07,
+    "choices": [
+      {
+        "text": "Full cooperation and transparency",
+        "effects": {
+          "reputation": 5,
+          "money": -1000
+        }
+      },
+      {
+        "text": "Strategic compliance approach",
+        "effects": {
+          "chance": [
+            {
+              "probability": 0.6,
+              "effect": {
+                "reputation": 2,
+                "money": -500
+              }
+            },
+            {
+              "probability": 0.4,
+              "effect": {
+                "reputation": -3,
+                "money": -2000,
+                "contract_penalty": 0.2,
+                "duration": 86400
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "market_boom",
+    "name": "Cybersecurity Market Boom",
+    "type": "positive",
+    "category": "economic",
+    "description": "Increased cyber threats have created high demand for security services.",
+    "rarity": "rare",
+    "frequency": 0.04,
+    "effects": {
+      "income_rate_multiplier": 0.5,
+      "contract_value_multiplier": 0.3,
+      "duration": 28800
+    },
+    "duration": 28800
+  },
+  {
+    "id": "supply_chain_disruption",
+    "name": "Supply Chain Disruption",
+    "type": "negative",
+    "category": "business",
+    "description": "A key vendor's systems were compromised, delaying your security tool deployments.",
+    "rarity": "uncommon",
+    "frequency": 0.08,
+    "effects": {
+      "upgrade_cost_multiplier": 0.25,
+      "threat_reduction": -0.15,
+      "duration": 14400
+    },
+    "duration": 14400
+  },
+  {
+    "id": "breakthrough_research",
+    "name": "Breakthrough Research Discovery",
+    "type": "positive",
+    "category": "technology",
+    "description": "Your research team discovered a novel threat detection algorithm.",
+    "rarity": "epic",
+    "frequency": 0.015,
+    "effects": {
+      "threat_reduction": 0.25,
+      "research_efficiency": 0.4,
+      "duration": 43200
+    },
+    "duration": 43200
+  },
+  {
+    "id": "competitor_poaching",
+    "name": "Competitor Talent Poaching",
+    "type": "choice",
+    "category": "recruitment",
+    "description": "A competitor's star analyst wants to join your team, but it would require a signing bonus.",
+    "rarity": "rare",
+    "frequency": 0.05,
+    "choices": [
+      {
+        "text": "Hire the analyst with bonus",
+        "effects": {
+          "money": -5000,
+          "unlock_specialist": "poached_expert",
+          "reputation": -1
+        }
+      },
+      {
+        "text": "Decline the offer",
+        "effects": {
+          "reputation": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "data_breach_notification",
+    "name": "Industry Data Breach",
+    "type": "neutral",
+    "category": "industry",
+    "description": "A major industry player suffered a massive data breach. Clients are more concerned about security.",
+    "rarity": "common",
+    "frequency": 0.2,
+    "effects": {
+      "contract_demand_multiplier": 0.2,
+      "threat_awareness": 0.15,
+      "duration": 21600
+    },
+    "duration": 21600
+  },
+  {
+    "id": "holiday_bonus",
+    "name": "Holiday Season Bonus",
+    "type": "positive",
+    "category": "seasonal",
+    "description": "The holiday season brings generous bonuses from appreciative clients.",
+    "rarity": "uncommon",
+    "frequency": 0.06,
+    "effects": {
+      "money": 2000,
+      "specialist_morale": 0.3,
+      "duration": 86400
+    },
+    "duration": 86400
+  },
+  {
+    "id": "software_vulnerability",
+    "name": "Critical Software Vulnerability",
+    "type": "negative",
+    "category": "technology",
+    "description": "A widely-used software component has a critical vulnerability affecting all clients.",
+    "rarity": "rare",
+    "frequency": 0.04,
+    "effects": {
+      "threat_increase": 0.4,
+      "contract_risk_multiplier": 0.5,
+      "duration": 7200
+    },
+    "duration": 7200
+  },
+  {
+    "id": "government_contract",
+    "name": "Government Security Contract",
+    "type": "positive",
+    "category": "business",
+    "description": "The government has opened bidding for a high-security contract with excellent compensation.",
+    "rarity": "epic",
+    "frequency": 0.01,
+    "effects": {
+      "unlock_contract": "government_elite",
+      "reputation": 10,
+      "money": 10000
+    },
+    "duration": 0
+  },
+  {
+    "id": "team_burnout",
+    "name": "Team Burnout Warning",
+    "type": "negative",
+    "category": "team",
+    "description": "Your specialists have been working overtime and are showing signs of burnout.",
+    "rarity": "uncommon",
+    "frequency": 0.09,
+    "effects": {
+      "specialist_efficiency": -0.2,
+      "threat_resolution_time_multiplier": 0.3,
+      "duration": 10800
+    },
+    "duration": 10800
+  },
+  {
+    "id": "training_opportunity",
+    "name": "Advanced Training Program",
+    "type": "choice",
+    "category": "education",
+    "description": "An intensive cybersecurity training program is available for your team.",
+    "rarity": "uncommon",
+    "frequency": 0.07,
+    "choices": [
+      {
+        "text": "Enroll team in training",
+        "effects": {
+          "money": -2000,
+          "specialist_efficiency": 0.25,
+          "threat_reduction": 0.1,
+          "duration": 36000
+        }
+      },
+      {
+        "text": "Skip training for now",
         "effects": {}
       }
     ]
   },
   {
-    "id": "event_005",
-    "type": "positive",
-    "description": "A successful security audit impressed a new client. They've referred several contacts!",
+    "id": "black_hat_conference",
+    "name": "Black Hat Conference Intel",
+    "type": "neutral",
+    "category": "intelligence",
+    "description": "Your undercover operative at Black Hat conference gathered valuable threat intelligence.",
+    "rarity": "rare",
+    "frequency": 0.03,
     "effects": {
-      "money": 400,
-      "reputation": 2
-    }
+      "threat_intelligence": 0.3,
+      "research_efficiency": 0.2,
+      "duration": 18000
+    },
+    "duration": 18000
   },
   {
-    "id": "event_006",
+    "id": "economic_downturn",
+    "name": "Economic Downturn",
     "type": "negative",
-    "description": "Network maintenance requires updating all monitoring systems. Unexpected costs arise.",
+    "category": "economic",
+    "description": "Economic uncertainty has clients delaying security investments.",
+    "rarity": "rare",
+    "frequency": 0.04,
     "effects": {
-      "money": -150
-    }
+      "contract_value_multiplier": -0.3,
+      "income_rate_multiplier": -0.2,
+      "duration": 43200
+    },
+    "duration": 43200
+  },
+  {
+    "id": "partnership_opportunity",
+    "name": "Strategic Partnership",
+    "type": "positive",
+    "category": "business",
+    "description": "A major security vendor wants to partner with your firm for mutual benefits.",
+    "rarity": "epic",
+    "frequency": 0.02,
+    "effects": {
+      "income_rate_multiplier": 0.15,
+      "upgrade_discount": 0.2,
+      "reputation": 8,
+      "duration": 604800
+    },
+    "duration": 604800
+  },
+  {
+    "id": "ransomware_epidemic",
+    "name": "Ransomware Epidemic",
+    "type": "negative",
+    "category": "threat",
+    "description": "A new ransomware variant is spreading rapidly through the industry.",
+    "rarity": "epic",
+    "frequency": 0.008,
+    "effects": {
+      "threat_increase": 0.6,
+      "contract_risk_multiplier": 0.8,
+      "specialist_stress": 0.4,
+      "duration": 14400
+    },
+    "duration": 14400
+  },
+  {
+    "id": "ai_breakthrough",
+    "name": "AI Security Breakthrough",
+    "type": "positive",
+    "category": "technology",
+    "description": "Your AI research team developed a revolutionary threat detection system.",
+    "rarity": "legendary",
+    "frequency": 0.005,
+    "effects": {
+      "threat_reduction": 0.4,
+      "automated_resolution_rate": 0.3,
+      "research_efficiency": 0.5,
+      "duration": 86400
+    },
+    "duration": 86400
+  },
+  {
+    "id": "international_expansion",
+    "name": "International Expansion",
+    "type": "choice",
+    "category": "business",
+    "description": "An international client wants to expand their contract globally.",
+    "rarity": "rare",
+    "frequency": 0.05,
+    "choices": [
+      {
+        "text": "Accept international expansion",
+        "effects": {
+          "income_rate_multiplier": 0.4,
+          "money": 5000,
+          "reputation": 5,
+          "international_penalty": 0.2,
+          "duration": 259200
+        }
+      },
+      {
+        "text": "Focus on domestic market",
+        "effects": {
+          "reputation": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "cyber_insurance_claim",
+    "name": "Cyber Insurance Payout",
+    "type": "positive",
+    "category": "insurance",
+    "description": "Your cyber insurance policy paid out for a covered security incident.",
+    "rarity": "uncommon",
+    "frequency": 0.06,
+    "effects": {
+      "money": 3000,
+      "insurance_premium_increase": 0.1
+    },
+    "duration": 0
+  },
+  {
+    "id": "regulatory_fine",
+    "name": "Regulatory Fine",
+    "type": "negative",
+    "category": "compliance",
+    "description": "A compliance violation resulted in a significant regulatory fine.",
+    "rarity": "rare",
+    "frequency": 0.03,
+    "effects": {
+      "money": -5000,
+      "reputation": -5,
+      "contract_penalty": 0.15,
+      "duration": 86400
+    },
+    "duration": 86400
+  },
+  {
+    "id": "open_source_contribution",
+    "name": "Open Source Recognition",
+    "type": "positive",
+    "category": "community",
+    "description": "Your open source security tools gained widespread adoption and recognition.",
+    "rarity": "uncommon",
+    "frequency": 0.08,
+    "effects": {
+      "reputation": 4,
+      "community_support": 0.2,
+      "threat_intelligence": 0.15,
+      "duration": 43200
+    },
+    "duration": 43200
+  },
+  {
+    "id": "competitor_bankruptcy",
+    "name": "Competitor Bankruptcy",
+    "type": "positive",
+    "category": "business",
+    "description": "A major competitor filed for bankruptcy, opening market opportunities.",
+    "rarity": "epic",
+    "frequency": 0.01,
+    "effects": {
+      "market_share_increase": 0.25,
+      "income_rate_multiplier": 0.2,
+      "reputation": 3,
+      "duration": 172800
+    },
+    "duration": 172800
+  },
+  {
+    "id": "quantum_threat_warning",
+    "name": "Quantum Computing Threat",
+    "type": "negative",
+    "category": "emerging_threat",
+    "description": "Advances in quantum computing pose new threats to current encryption.",
+    "rarity": "legendary",
+    "frequency": 0.002,
+    "effects": {
+      "encryption_vulnerability": 0.5,
+      "research_urgency": 0.8,
+      "threat_increase": 0.3,
+      "duration": 604800
+    },
+    "duration": 604800
+  },
+  {
+    "id": "blockchain_adoption",
+    "name": "Blockchain Security Boom",
+    "type": "positive",
+    "category": "emerging_tech",
+    "description": "Rising blockchain adoption creates demand for specialized security services.",
+    "rarity": "rare",
+    "frequency": 0.04,
+    "effects": {
+      "blockchain_contract_multiplier": 0.5,
+      "income_rate_multiplier": 0.15,
+      "specialist_demand": 0.3,
+      "duration": 259200
+    },
+    "duration": 259200
+  },
+  {
+    "id": "iot_vulnerability_wave",
+    "name": "IoT Vulnerability Wave",
+    "type": "negative",
+    "category": "iot",
+    "description": "Massive IoT device vulnerabilities are being exploited across industries.",
+    "rarity": "uncommon",
+    "frequency": 0.07,
+    "effects": {
+      "iot_threat_multiplier": 0.6,
+      "contract_risk_multiplier": 0.4,
+      "research_focus_iot": 0.5,
+      "duration": 21600
+    },
+    "duration": 21600
+  },
+  {
+    "id": "cloud_migration_boom",
+    "name": "Cloud Migration Rush",
+    "type": "positive",
+    "category": "cloud",
+    "description": "Massive cloud migration projects create urgent security consulting needs.",
+    "rarity": "uncommon",
+    "frequency": 0.09,
+    "effects": {
+      "cloud_contract_multiplier": 0.4,
+      "income_rate_multiplier": 0.25,
+      "upgrade_cloud_focus": 0.3,
+      "duration": 129600
+    },
+    "duration": 129600
+  },
+  {
+    "id": "supply_chain_attack",
+    "name": "Industry Supply Chain Attack",
+    "type": "negative",
+    "category": "supply_chain",
+    "description": "A critical software supplier was compromised, affecting multiple clients.",
+    "rarity": "epic",
+    "frequency": 0.015,
+    "effects": {
+      "supply_chain_risk": 0.7,
+      "contract_cancellation_rate": 0.2,
+      "reputation": -3,
+      "duration": 28800
+    },
+    "duration": 28800
+  },
+  {
+    "id": "ai_ethics_debate",
+    "name": "AI Ethics Controversy",
+    "type": "neutral",
+    "category": "ethics",
+    "description": "Public debate about AI in cybersecurity raises ethical concerns and scrutiny.",
+    "rarity": "uncommon",
+    "frequency": 0.06,
+    "effects": {
+      "ai_research_delay": 0.3,
+      "public_scrutiny": 0.4,
+      "ethical_compliance_cost": 0.2,
+      "duration": 86400
+    },
+    "duration": 86400
+  },
+  {
+    "id": "talent_shortage",
+    "name": "Cybersecurity Talent Shortage",
+    "type": "negative",
+    "category": "recruitment",
+    "description": "Industry-wide shortage of skilled cybersecurity professionals drives up costs.",
+    "rarity": "uncommon",
+    "frequency": 0.08,
+    "effects": {
+      "specialist_cost_multiplier": 0.4,
+      "recruitment_time_multiplier": 0.5,
+      "contract_competition": 0.3,
+      "duration": 518400
+    },
+    "duration": 518400
+  },
+  {
+    "id": "international_cyber_treaty",
+    "name": "International Cyber Treaty",
+    "type": "positive",
+    "category": "policy",
+    "description": "New international cybersecurity cooperation agreements open global markets.",
+    "rarity": "epic",
+    "frequency": 0.02,
+    "effects": {
+      "international_market_access": 0.5,
+      "reputation": 6,
+      "cross_border_contracts": 0.3,
+      "duration": 2592000
+    },
+    "duration": 2592000
+  },
+  {
+    "id": "dark_web_intelligence",
+    "name": "Dark Web Intelligence",
+    "type": "neutral",
+    "category": "intelligence",
+    "description": "Your dark web monitoring uncovered upcoming targeted attack campaigns.",
+    "rarity": "rare",
+    "frequency": 0.05,
+    "effects": {
+      "threat_foresight": 0.4,
+      "preventive_measures": 0.25,
+      "intelligence_quality": 0.3,
+      "duration": 36000
+    },
+    "duration": 36000
+  },
+  {
+    "id": "startup_acquisition",
+    "name": "Startup Acquisition",
+    "type": "choice",
+    "category": "business",
+    "description": "A promising cybersecurity startup wants to be acquired by your firm.",
+    "rarity": "epic",
+    "frequency": 0.025,
+    "choices": [
+      {
+        "text": "Acquire the startup",
+        "effects": {
+          "money": -25000,
+          "unlock_technology": "startup_tech",
+          "income_rate_multiplier": 0.2,
+          "reputation": 4,
+          "integration_challenges": 0.3,
+          "duration": 86400
+        }
+      },
+      {
+        "text": "Pass on acquisition",
+        "effects": {
+          "reputation": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "climate_change_threats",
+    "name": "Climate-Driven Cyber Threats",
+    "type": "negative",
+    "category": "environmental",
+    "description": "Extreme weather events are causing infrastructure failures and cyber attacks.",
+    "rarity": "rare",
+    "frequency": 0.04,
+    "effects": {
+      "infrastructure_vulnerability": 0.35,
+      "emergency_response_cost": 0.4,
+      "threat_increase": 0.2,
+      "duration": 172800
+    },
+    "duration": 172800
+  },
+  {
+    "id": "quantum_resistant_crypto",
+    "name": "Quantum-Resistant Cryptography",
+    "type": "positive",
+    "category": "technology",
+    "description": "Your research team developed quantum-resistant encryption algorithms.",
+    "rarity": "legendary",
+    "frequency": 0.003,
+    "effects": {
+      "quantum_resistance": 1.0,
+      "encryption_security": 0.8,
+      "industry_leadership": 0.5,
+      "reputation": 15,
+      "duration": 0
+    },
+    "duration": 0
+  },
+  {
+    "id": "metaverse_security_boom",
+    "name": "Metaverse Security Demand",
+    "type": "positive",
+    "category": "emerging_tech",
+    "description": "The metaverse explosion creates unprecedented demand for virtual security services.",
+    "rarity": "epic",
+    "frequency": 0.02,
+    "effects": {
+      "metaverse_contract_multiplier": 0.6,
+      "income_rate_multiplier": 0.3,
+      "virtual_reality_focus": 0.4,
+      "duration": 345600
+    },
+    "duration": 345600
+  },
+  {
+    "id": "satellite_hacking_threat",
+    "name": "Satellite Infrastructure Attack",
+    "type": "negative",
+    "category": "critical_infrastructure",
+    "description": "Satellite communications systems are being targeted by nation-state actors.",
+    "rarity": "legendary",
+    "frequency": 0.001,
+    "effects": {
+      "satellite_dependency_risk": 0.8,
+      "communication_disruption": 0.6,
+      "global_impact": 0.4,
+      "duration": 7200
+    },
+    "duration": 7200
+  },
+  {
+    "id": "universal_income_experiment",
+    "name": "Universal Basic Income Trial",
+    "type": "neutral",
+    "category": "social",
+    "description": "A local government is testing universal basic income, affecting workforce dynamics.",
+    "rarity": "uncommon",
+    "frequency": 0.06,
+    "effects": {
+      "talent_competition": 0.25,
+      "workforce_stability": -0.15,
+      "economic_uncertainty": 0.2,
+      "duration": 259200
+    },
+    "duration": 259200
+  },
+  {
+    "id": "neural_interface_hack",
+    "name": "Neural Interface Vulnerability",
+    "type": "negative",
+    "category": "emerging_threat",
+    "description": "Early neural interface implants are vulnerable to sophisticated cyber attacks.",
+    "rarity": "legendary",
+    "frequency": 0.001,
+    "effects": {
+      "neural_security_risk": 0.9,
+      "human_machine_interface_threat": 0.7,
+      "ethical_concerns": 0.8,
+      "duration": 3600
+    },
+    "duration": 3600
+  },
+  {
+    "id": "consciousness_upload_security",
+    "name": "Digital Consciousness Security",
+    "type": "positive",
+    "category": "futuristic",
+    "description": "Your firm was selected to secure the world's first consciousness upload facility.",
+    "rarity": "mythic",
+    "frequency": 0.0001,
+    "effects": {
+      "consciousness_security_expertise": 1.0,
+      "reputation": 50,
+      "income_rate_multiplier": 1.0,
+      "ultimate_achievement": true,
+      "duration": 0
+    },
+    "duration": 0
   }
 ]

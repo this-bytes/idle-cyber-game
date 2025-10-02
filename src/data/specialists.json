@@ -227,12 +227,643 @@
           }
         ]
       }
+    },
+    "forensic_analyst": {
+      "id": "forensic_analyst",
+      "type": "specialist",
+      "name": "Digital Forensics Expert",
+      "displayName": "Digital Forensics Expert",
+      "cost": {
+        "money": 22000,
+        "reputation": 18
+      },
+      "efficiency": 2.7,
+      "speed": 1.2,
+      "trace": 2.0,
+      "defense": 1.3,
+      "description": "Master of digital evidence collection and analysis",
+      "abilities": [
+        "evidence_collection",
+        "memory_analysis",
+        "timeline_reconstruction"
+      ],
+      "tier": 3,
+      "rarity": "rare",
+      "tags": ["forensics", "evidence", "analysis"],
+      "effects": {
+        "passive": [
+          {
+            "type": "trace_multiplier",
+            "value": 1.5,
+            "target": "all"
+          },
+          {
+            "type": "threat_detection",
+            "value": 0.2,
+            "target": "advanced"
+          }
+        ]
+      }
+    },
+    "malware_researcher": {
+      "id": "malware_researcher",
+      "type": "specialist",
+      "name": "Malware Researcher",
+      "displayName": "Malware Researcher",
+      "cost": {
+        "money": 28000,
+        "reputation": 22
+      },
+      "efficiency": 3.2,
+      "speed": 1.4,
+      "trace": 1.8,
+      "defense": 1.5,
+      "description": "Specializes in reverse engineering and malware analysis",
+      "abilities": [
+        "reverse_engineering",
+        "behavioral_analysis",
+        "signature_creation"
+      ],
+      "tier": 3,
+      "rarity": "epic",
+      "tags": ["malware", "reverse_engineering", "research"],
+      "effects": {
+        "passive": [
+          {
+            "type": "threat_reduction",
+            "value": 0.25,
+            "target": "malware"
+          },
+          {
+            "type": "xp_multiplier",
+            "value": 1.2,
+            "target": "malware"
+          }
+        ]
+      }
+    },
+    "cryptography_expert": {
+      "id": "cryptography_expert",
+      "type": "specialist",
+      "name": "Cryptography Specialist",
+      "displayName": "Cryptography Specialist",
+      "cost": {
+        "money": 35000,
+        "reputation": 30
+      },
+      "efficiency": 3.8,
+      "speed": 1.3,
+      "trace": 1.6,
+      "defense": 2.2,
+      "description": "Master of encryption algorithms and cryptographic security",
+      "abilities": [
+        "quantum_resistant_crypto",
+        "key_management",
+        "cryptanalysis"
+      ],
+      "tier": 4,
+      "rarity": "epic",
+      "tags": ["cryptography", "encryption", "quantum"],
+      "effects": {
+        "passive": [
+          {
+            "type": "threat_reduction",
+            "value": 0.4,
+            "target": "cryptographic"
+          },
+          {
+            "type": "income_multiplier",
+            "value": 1.4,
+            "target": "high_security"
+          }
+        ]
+      }
+    },
+    "incident_responder": {
+      "id": "incident_responder",
+      "type": "specialist",
+      "name": "Incident Response Coordinator",
+      "displayName": "Incident Response Coordinator",
+      "cost": {
+        "money": 20000,
+        "reputation": 16
+      },
+      "efficiency": 2.9,
+      "speed": 2.1,
+      "trace": 1.4,
+      "defense": 1.6,
+      "description": "Lightning-fast incident response and crisis management expert",
+      "abilities": [
+        "crisis_management",
+        "rapid_containment",
+        "communication_coordination"
+      ],
+      "tier": 3,
+      "rarity": "rare",
+      "tags": ["incident_response", "crisis", "coordination"],
+      "effects": {
+        "passive": [
+          {
+            "type": "response_speed",
+            "value": 0.3,
+            "target": "incidents"
+          },
+          {
+            "type": "threat_containment",
+            "value": 0.2,
+            "target": "all"
+          }
+        ]
+      }
+    },
+    "threat_hunter": {
+      "id": "threat_hunter",
+      "type": "specialist",
+      "name": "Threat Hunter",
+      "displayName": "Threat Hunter",
+      "cost": {
+        "money": 32000,
+        "reputation": 28
+      },
+      "efficiency": 3.6,
+      "speed": 1.8,
+      "trace": 2.5,
+      "defense": 1.8,
+      "description": "Proactive threat hunter who finds hidden attackers before they strike",
+      "abilities": [
+        "threat_hunting",
+        "anomaly_detection",
+        "lateral_movement_detection"
+      ],
+      "tier": 4,
+      "rarity": "epic",
+      "tags": ["threat_hunting", "proactive", "detection"],
+      "effects": {
+        "passive": [
+          {
+            "type": "threat_prevention",
+            "value": 0.35,
+            "target": "advanced"
+          },
+          {
+            "type": "detection_range",
+            "value": 0.5,
+            "target": "hidden_threats"
+          }
+        ]
+      }
+    },
+    "red_team_operator": {
+      "id": "red_team_operator",
+      "type": "specialist",
+      "name": "Red Team Operator",
+      "displayName": "Red Team Operator",
+      "cost": {
+        "money": 45000,
+        "reputation": 35
+      },
+      "efficiency": 4.2,
+      "speed": 2.0,
+      "trace": 1.9,
+      "defense": 2.0,
+      "description": "Former military cyber operator specializing in offensive security",
+      "abilities": [
+        "penetration_testing",
+        "social_engineering",
+        "exploit_development"
+      ],
+      "tier": 4,
+      "rarity": "legendary",
+      "tags": ["red_team", "military", "offensive"],
+      "effects": {
+        "passive": [
+          {
+            "type": "threat_simulation",
+            "value": 0.4,
+            "target": "training"
+          },
+          {
+            "type": "team_synergy",
+            "value": 0.3,
+            "target": "defensive_team"
+          }
+        ]
+      }
+    },
+    "ai_security_engineer": {
+      "id": "ai_security_engineer",
+      "type": "specialist",
+      "name": "AI Security Engineer",
+      "displayName": "AI Security Engineer",
+      "cost": {
+        "money": 55000,
+        "reputation": 40
+      },
+      "efficiency": 4.5,
+      "speed": 1.7,
+      "trace": 2.2,
+      "defense": 2.3,
+      "description": "Pioneer in AI-driven security systems and machine learning defenses",
+      "abilities": [
+        "ai_model_security",
+        "machine_learning_defense",
+        "automated_response"
+      ],
+      "tier": 5,
+      "rarity": "legendary",
+      "tags": ["ai", "machine_learning", "automation"],
+      "effects": {
+        "passive": [
+          {
+            "type": "ai_effectiveness",
+            "value": 0.6,
+            "target": "all"
+          },
+          {
+            "type": "automation_efficiency",
+            "value": 0.4,
+            "target": "responses"
+          }
+        ]
+      }
+    },
+    "quantum_cryptographer": {
+      "id": "quantum_cryptographer",
+      "type": "specialist",
+      "name": "Quantum Cryptographer",
+      "displayName": "Quantum Cryptographer",
+      "cost": {
+        "money": 80000,
+        "reputation": 60
+      },
+      "efficiency": 5.0,
+      "speed": 1.5,
+      "trace": 2.8,
+      "defense": 3.0,
+      "description": "Master of post-quantum cryptography and quantum-resistant algorithms",
+      "abilities": [
+        "quantum_key_distribution",
+        "post_quantum_crypto",
+        "quantum_threat_analysis"
+      ],
+      "tier": 5,
+      "rarity": "mythic",
+      "tags": ["quantum", "cryptography", "future_proof"],
+      "effects": {
+        "passive": [
+          {
+            "type": "quantum_resistance",
+            "value": 1.0,
+            "target": "all"
+          },
+          {
+            "type": "future_threat_protection",
+            "value": 0.8,
+            "target": "quantum_threats"
+          }
+        ]
+      }
+    },
+    "cyber_warfare_specialist": {
+      "id": "cyber_warfare_specialist",
+      "type": "specialist",
+      "name": "Cyber Warfare Specialist",
+      "displayName": "Cyber Warfare Specialist",
+      "cost": {
+        "money": 65000,
+        "reputation": 50
+      },
+      "efficiency": 4.8,
+      "speed": 2.3,
+      "trace": 2.4,
+      "defense": 2.5,
+      "description": "Nation-state level cyber operations expert with APT capabilities",
+      "abilities": [
+        "apt_operations",
+        "nation_state_defense",
+        "supply_chain_security"
+      ],
+      "tier": 5,
+      "rarity": "legendary",
+      "tags": ["cyber_warfare", "apt", "nation_state"],
+      "effects": {
+        "passive": [
+          {
+            "type": "apt_defense",
+            "value": 0.7,
+            "target": "advanced_persistent"
+          },
+          {
+            "type": "supply_chain_protection",
+            "value": 0.5,
+            "target": "third_party"
+          }
+        ]
+      }
+    },
+    "blockchain_security_expert": {
+      "id": "blockchain_security_expert",
+      "type": "specialist",
+      "name": "Blockchain Security Expert",
+      "displayName": "Blockchain Security Expert",
+      "cost": {
+        "money": 40000,
+        "reputation": 32
+      },
+      "efficiency": 3.9,
+      "speed": 1.6,
+      "trace": 2.1,
+      "defense": 2.1,
+      "description": "Specialist in securing blockchain networks and smart contracts",
+      "abilities": [
+        "smart_contract_audit",
+        "blockchain_forensics",
+        "decentralized_security"
+      ],
+      "tier": 4,
+      "rarity": "epic",
+      "tags": ["blockchain", "smart_contracts", "decentralized"],
+      "effects": {
+        "passive": [
+          {
+            "type": "income_multiplier",
+            "value": 1.5,
+            "target": "cryptocurrency"
+          },
+          {
+            "type": "blockchain_security",
+            "value": 0.4,
+            "target": "crypto_assets"
+          }
+        ]
+      }
+    },
+    "iot_security_architect": {
+      "id": "iot_security_architect",
+      "type": "specialist",
+      "name": "IoT Security Architect",
+      "displayName": "IoT Security Architect",
+      "cost": {
+        "money": 38000,
+        "reputation": 30
+      },
+      "efficiency": 3.7,
+      "speed": 1.5,
+      "trace": 1.9,
+      "defense": 2.0,
+      "description": "Expert in securing Internet of Things devices and networks",
+      "abilities": [
+        "iot_device_hardening",
+        "embedded_security",
+        "connected_device_protection"
+      ],
+      "tier": 4,
+      "rarity": "epic",
+      "tags": ["iot", "embedded", "connected_devices"],
+      "effects": {
+        "passive": [
+          {
+            "type": "iot_protection",
+            "value": 0.5,
+            "target": "connected_devices"
+          },
+          {
+            "type": "income_multiplier",
+            "value": 1.3,
+            "target": "automotive"
+          }
+        ]
+      }
+    },
+    "social_engineering_defender": {
+      "id": "social_engineering_defender",
+      "type": "specialist",
+      "name": "Social Engineering Defense Specialist",
+      "displayName": "Social Engineering Defense Specialist",
+      "cost": {
+        "money": 25000,
+        "reputation": 20
+      },
+      "efficiency": 3.1,
+      "speed": 1.7,
+      "trace": 2.3,
+      "defense": 1.7,
+      "description": "Master of human factors security and phishing prevention",
+      "abilities": [
+        "phishing_simulation",
+        "security_awareness_training",
+        "behavioral_analysis"
+      ],
+      "tier": 3,
+      "rarity": "rare",
+      "tags": ["social_engineering", "phishing", "human_factors"],
+      "effects": {
+        "passive": [
+          {
+            "type": "phishing_defense",
+            "value": 0.4,
+            "target": "social_attacks"
+          },
+          {
+            "type": "awareness_training",
+            "value": 0.3,
+            "target": "team"
+          }
+        ]
+      }
+    },
+    "data_privacy_officer": {
+      "id": "data_privacy_officer",
+      "type": "specialist",
+      "name": "Data Privacy Officer",
+      "displayName": "Data Privacy Officer",
+      "cost": {
+        "money": 42000,
+        "reputation": 35
+      },
+      "efficiency": 4.0,
+      "speed": 1.4,
+      "trace": 1.7,
+      "defense": 2.4,
+      "description": "GDPR and privacy regulation expert ensuring compliance and data protection",
+      "abilities": [
+        "gdpr_compliance",
+        "privacy_impact_assessment",
+        "data_classification"
+      ],
+      "tier": 4,
+      "rarity": "epic",
+      "tags": ["privacy", "gdpr", "compliance"],
+      "effects": {
+        "passive": [
+          {
+            "type": "compliance_bonus",
+            "value": 0.5,
+            "target": "regulated_industries"
+          },
+          {
+            "type": "data_protection",
+            "value": 0.4,
+            "target": "personal_data"
+          }
+        ]
+      }
+    },
+    "zero_trust_architect": {
+      "id": "zero_trust_architect",
+      "type": "specialist",
+      "name": "Zero Trust Architect",
+      "displayName": "Zero Trust Architect",
+      "cost": {
+        "money": 50000,
+        "reputation": 45
+      },
+      "efficiency": 4.3,
+      "speed": 1.8,
+      "trace": 2.0,
+      "defense": 2.6,
+      "description": "Architect of never-trust, always-verify security frameworks",
+      "abilities": [
+        "zero_trust_implementation",
+        "micro_segmentation",
+        "continuous_verification"
+      ],
+      "tier": 4,
+      "rarity": "legendary",
+      "tags": ["zero_trust", "architecture", "continuous_verification"],
+      "effects": {
+        "passive": [
+          {
+            "type": "lateral_movement_prevention",
+            "value": 0.6,
+            "target": "breach_attempts"
+          },
+          {
+            "type": "access_control",
+            "value": 0.5,
+            "target": "internal_threats"
+          }
+        ]
+      }
+    },
+    "ethical_hacker": {
+      "id": "ethical_hacker",
+      "type": "specialist",
+      "name": "Certified Ethical Hacker",
+      "displayName": "Certified Ethical Hacker",
+      "cost": {
+        "money": 18000,
+        "reputation": 14
+      },
+      "efficiency": 2.6,
+      "speed": 1.9,
+      "trace": 1.8,
+      "defense": 1.4,
+      "description": "CEH certified penetration tester and vulnerability hunter",
+      "abilities": [
+        "vulnerability_scanning",
+        "penetration_testing",
+        "exploit_identification"
+      ],
+      "tier": 2,
+      "rarity": "uncommon",
+      "tags": ["ethical_hacking", "penetration_testing", "vulnerabilities"],
+      "effects": {
+        "passive": [
+          {
+            "type": "vulnerability_detection",
+            "value": 0.25,
+            "target": "systems"
+          },
+          {
+            "type": "exploit_prevention",
+            "value": 0.2,
+            "target": "known_vulnerabilities"
+          }
+        ]
+      }
+    },
+    "devsecops_engineer": {
+      "id": "devsecops_engineer",
+      "type": "specialist",
+      "name": "DevSecOps Engineer",
+      "displayName": "DevSecOps Engineer",
+      "cost": {
+        "money": 36000,
+        "reputation": 28
+      },
+      "efficiency": 3.8,
+      "speed": 2.2,
+      "trace": 1.5,
+      "defense": 1.9,
+      "description": "Integrates security into development pipelines and CI/CD processes",
+      "abilities": [
+        "pipeline_security",
+        "automated_testing",
+        "infrastructure_as_code_security"
+      ],
+      "tier": 4,
+      "rarity": "epic",
+      "tags": ["devsecops", "ci_cd", "automation"],
+      "effects": {
+        "passive": [
+          {
+            "type": "deployment_speed",
+            "value": 0.3,
+            "target": "secure_deployments"
+          },
+          {
+            "type": "automation_efficiency",
+            "value": 0.4,
+            "target": "security_processes"
+          }
+        ]
+      }
+    },
+    "supply_chain_security_expert": {
+      "id": "supply_chain_security_expert",
+      "type": "specialist",
+      "name": "Supply Chain Security Expert",
+      "displayName": "Supply Chain Security Expert",
+      "cost": {
+        "money": 48000,
+        "reputation": 38
+      },
+      "efficiency": 4.1,
+      "speed": 1.6,
+      "trace": 2.6,
+      "defense": 2.2,
+      "description": "Protects against supply chain attacks and third-party risks",
+      "abilities": [
+        "vendor_assessment",
+        "dependency_analysis",
+        "software_bill_of_materials"
+      ],
+      "tier": 4,
+      "rarity": "legendary",
+      "tags": ["supply_chain", "third_party", "dependencies"],
+      "effects": {
+        "passive": [
+          {
+            "type": "supply_chain_protection",
+            "value": 0.6,
+            "target": "third_party_risks"
+          },
+          {
+            "type": "dependency_security",
+            "value": 0.5,
+            "target": "open_source"
+          }
+        ]
+      }
     }
   },
   "tiers": {
     "1": "Basic specialists with core competencies",
     "2": "Advanced specialists with specialized skills",
-    "3": "Expert specialists with rare abilities"
+    "3": "Expert specialists with rare abilities",
+    "4": "Elite specialists with exceptional capabilities",
+    "5": "Legendary specialists with transcendent powers"
   },
   "lastUpdated": "2025-09-30T04:01:46.274085"
 }

@@ -6,6 +6,7 @@
             "name": "Faster Routers",
             "displayName": "Faster Routers",
             "description": "Increases income from all contracts by 10%.",
+            "category": "infrastructure",
             "cost": {
                 "money": 50
             },
@@ -28,6 +29,8 @@
             "name": "Advanced Encryption",
             "displayName": "Advanced Encryption",
             "description": "Increases income from all contracts by 20%.",
+            "category": "infrastructure",
+            "prerequisites": ["upgrade_001"],
             "cost": {
                 "money": 250
             },
@@ -50,6 +53,8 @@
             "name": "AI-Powered Threat Intel",
             "displayName": "AI-Powered Threat Intel",
             "description": "Increases income from all contracts by 50%.",
+            "category": "infrastructure",
+            "prerequisites": ["upgrade_002"],
             "cost": {
                 "money": 1000
             },
@@ -72,11 +77,12 @@
             "name": "Threat Mitigation Suite",
             "displayName": "Threat Mitigation Suite",
             "description": "Reduces threat damage by 15%.",
+            "category": "defense",
             "cost": {
                 "money": 500
             },
             "rarity": "rare",
-            "tier": 2,
+            "tier": 1,
             "tags": ["threat_mitigation", "defense", "protection"],
             "effects": {
                 "passive": [
@@ -94,6 +100,8 @@
             "name": "Advanced SIEM",
             "displayName": "Advanced SIEM",
             "description": "Reduces threat damage by 25% and increases XP gain by 10%.",
+            "category": "defense",
+            "prerequisites": ["upgrade_004"],
             "cost": {
                 "money": 2000,
                 "reputation": 10
@@ -199,6 +207,1109 @@
                     {
                         "type": "click_multiplier",
                         "value": 4.00,
+                        "target": "all"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "infra_001",
+            "type": "upgrade",
+            "name": "Redundant Power Systems",
+            "displayName": "Redundant Power Systems",
+            "description": "Backup generators and UPS systems prevent downtime. +5% income stability.",
+            "category": "infrastructure",
+            "cost": {
+                "money": 300
+            },
+            "rarity": "common",
+            "tier": 1,
+            "tags": ["power", "redundancy", "stability"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "income_stability",
+                        "value": 0.05,
+                        "target": "all"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "infra_002",
+            "type": "upgrade",
+            "name": "Climate-Controlled Server Room",
+            "displayName": "Climate-Controlled Server Room",
+            "description": "Temperature and humidity control for optimal hardware performance. +10% income efficiency.",
+            "category": "infrastructure",
+            "prerequisites": ["infra_001"],
+            "cost": {
+                "money": 1500
+            },
+            "rarity": "uncommon",
+            "tier": 2,
+            "tags": ["climate_control", "hardware", "efficiency"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "income_multiplier",
+                        "value": 1.10,
+                        "target": "all"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "infra_003",
+            "type": "upgrade",
+            "name": "Enterprise Fiber Optic Network",
+            "displayName": "Enterprise Fiber Optic Network",
+            "description": "High-speed fiber connections for lightning-fast data transfer. +25% income speed.",
+            "category": "infrastructure",
+            "prerequisites": ["infra_002", "upgrade_001"],
+            "cost": {
+                "money": 5000,
+                "reputation": 5
+            },
+            "rarity": "rare",
+            "tier": 3,
+            "tags": ["fiber_optic", "network_speed", "performance"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "income_multiplier",
+                        "value": 1.25,
+                        "target": "all"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "infra_004",
+            "type": "upgrade",
+            "name": "Quantum-Secure Communication",
+            "displayName": "Quantum-Secure Communication",
+            "description": "Post-quantum cryptography for unbreakable encryption. +50% income from high-security contracts.",
+            "category": "infrastructure",
+            "prerequisites": ["infra_003", "upgrade_002"],
+            "cost": {
+                "money": 25000,
+                "reputation": 25
+            },
+            "rarity": "epic",
+            "tier": 4,
+            "tags": ["quantum_cryptography", "unbreakable", "high_security"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "income_multiplier",
+                        "value": 1.50,
+                        "target": "high_security"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "infra_005",
+            "type": "upgrade",
+            "name": "Global CDN Infrastructure",
+            "displayName": "Global CDN Infrastructure",
+            "description": "Worldwide content delivery network for instant global response. +75% international contract income.",
+            "category": "infrastructure",
+            "prerequisites": ["infra_004"],
+            "cost": {
+                "money": 100000,
+                "reputation": 50
+            },
+            "rarity": "legendary",
+            "tier": 5,
+            "tags": ["cdn", "global", "international"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "income_multiplier",
+                        "value": 1.75,
+                        "target": "international"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "tools_001",
+            "type": "upgrade",
+            "name": "Basic Vulnerability Scanner",
+            "displayName": "Basic Vulnerability Scanner",
+            "description": "Automated scanning tool for common vulnerabilities. +5% threat detection rate.",
+            "category": "tools",
+            "cost": {
+                "money": 200
+            },
+            "rarity": "common",
+            "tier": 1,
+            "tags": ["vulnerability_scanner", "automation", "detection"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "threat_detection",
+                        "value": 0.05,
+                        "target": "all"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "tools_002",
+            "type": "upgrade",
+            "name": "Advanced Penetration Testing Suite",
+            "displayName": "Advanced Penetration Testing Suite",
+            "description": "Professional-grade pentesting tools for comprehensive security assessment. +15% threat detection.",
+            "category": "tools",
+            "prerequisites": ["tools_001"],
+            "cost": {
+                "money": 1200
+            },
+            "rarity": "uncommon",
+            "tier": 2,
+            "tags": ["pentesting", "professional", "assessment"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "threat_detection",
+                        "value": 0.15,
+                        "target": "all"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "tools_003",
+            "type": "upgrade",
+            "name": "Zero-Day Exploit Database",
+            "displayName": "Zero-Day Exploit Database",
+            "description": "Access to the latest zero-day vulnerabilities and exploits. +30% threat detection for advanced attacks.",
+            "category": "tools",
+            "prerequisites": ["tools_002"],
+            "cost": {
+                "money": 8000,
+                "reputation": 15
+            },
+            "rarity": "rare",
+            "tier": 3,
+            "tags": ["zero_day", "exploit_database", "advanced_threats"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "threat_detection",
+                        "value": 0.30,
+                        "target": "advanced"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "tools_004",
+            "type": "upgrade",
+            "name": "AI-Powered Anomaly Detection",
+            "displayName": "AI-Powered Anomaly Detection",
+            "description": "Machine learning algorithms detect unusual network behavior. +50% unknown threat detection.",
+            "category": "tools",
+            "prerequisites": ["tools_003", "upgrade_003"],
+            "cost": {
+                "money": 35000,
+                "reputation": 30
+            },
+            "rarity": "epic",
+            "tier": 4,
+            "tags": ["ai", "anomaly_detection", "machine_learning"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "threat_detection",
+                        "value": 0.50,
+                        "target": "unknown"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "tools_005",
+            "type": "upgrade",
+            "name": "Quantum Threat Prediction Engine",
+            "displayName": "Quantum Threat Prediction Engine",
+            "description": "Predicts future cyber threats using quantum computing. +100% predictive threat prevention.",
+            "category": "tools",
+            "prerequisites": ["tools_004", "infra_004"],
+            "cost": {
+                "money": 200000,
+                "reputation": 75
+            },
+            "rarity": "legendary",
+            "tier": 5,
+            "tags": ["quantum", "prediction", "preventive"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "threat_prevention",
+                        "value": 1.00,
+                        "target": "predictive"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "personnel_001",
+            "type": "upgrade",
+            "name": "Security Awareness Training",
+            "displayName": "Security Awareness Training",
+            "description": "Mandatory cybersecurity training for all staff. +10% team efficiency.",
+            "category": "personnel",
+            "cost": {
+                "money": 400
+            },
+            "rarity": "common",
+            "tier": 1,
+            "tags": ["training", "awareness", "team_efficiency"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "team_efficiency",
+                        "value": 0.10,
+                        "target": "all"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "personnel_002",
+            "type": "upgrade",
+            "name": "Certified Security Professionals",
+            "displayName": "Certified Security Professionals",
+            "description": "CISSP and CEH certified team members. +25% specialist effectiveness.",
+            "category": "personnel",
+            "prerequisites": ["personnel_001"],
+            "cost": {
+                "money": 2500,
+                "reputation": 8
+            },
+            "rarity": "uncommon",
+            "tier": 2,
+            "tags": ["certifications", "professionals", "specialist_effectiveness"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "specialist_effectiveness",
+                        "value": 0.25,
+                        "target": "all"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "personnel_003",
+            "type": "upgrade",
+            "name": "Elite Red Team Operators",
+            "displayName": "Elite Red Team Operators",
+            "description": "Former military cyber operators and ethical hackers. +50% incident response speed.",
+            "category": "personnel",
+            "prerequisites": ["personnel_002"],
+            "cost": {
+                "money": 15000,
+                "reputation": 20
+            },
+            "rarity": "rare",
+            "tier": 3,
+            "tags": ["red_team", "military", "incident_response"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "response_speed",
+                        "value": 0.50,
+                        "target": "incidents"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "personnel_004",
+            "type": "upgrade",
+            "name": "Global Threat Intelligence Network",
+            "displayName": "Global Threat Intelligence Network",
+            "description": "International network of security researchers and analysts. +75% threat intelligence quality.",
+            "category": "personnel",
+            "prerequisites": ["personnel_003"],
+            "cost": {
+                "money": 75000,
+                "reputation": 40
+            },
+            "rarity": "epic",
+            "tier": 4,
+            "tags": ["global_network", "intelligence", "researchers"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "intelligence_quality",
+                        "value": 0.75,
+                        "target": "threats"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "personnel_005",
+            "type": "upgrade",
+            "name": "Quantum Security Research Division",
+            "displayName": "Quantum Security Research Division",
+            "description": "Dedicated team researching post-quantum security. +200% future-proofing against quantum threats.",
+            "category": "personnel",
+            "prerequisites": ["personnel_004", "infra_004"],
+            "cost": {
+                "money": 500000,
+                "reputation": 100
+            },
+            "rarity": "legendary",
+            "tier": 5,
+            "tags": ["quantum_research", "future_proofing", "advanced_threats"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "quantum_resistance",
+                        "value": 2.00,
+                        "target": "future_threats"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "research_001",
+            "type": "upgrade",
+            "name": "Basic Research Lab",
+            "displayName": "Basic Research Lab",
+            "description": "Small research facility for security innovations. +5% research speed.",
+            "category": "research",
+            "cost": {
+                "money": 1000
+            },
+            "rarity": "common",
+            "tier": 1,
+            "tags": ["research_lab", "innovation", "development"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "research_speed",
+                        "value": 0.05,
+                        "target": "all"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "research_002",
+            "type": "upgrade",
+            "name": "Advanced Cryptography Research",
+            "displayName": "Advanced Cryptography Research",
+            "description": "Dedicated team researching next-generation encryption. Unlocks quantum-resistant algorithms.",
+            "category": "research",
+            "prerequisites": ["research_001"],
+            "cost": {
+                "money": 5000,
+                "reputation": 10
+            },
+            "rarity": "uncommon",
+            "tier": 2,
+            "tags": ["cryptography", "quantum_resistant", "algorithms"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "unlock_tech",
+                        "value": "quantum_crypto",
+                        "target": "upgrades"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "research_003",
+            "type": "upgrade",
+            "name": "AI Security Research Center",
+            "displayName": "AI Security Research Center",
+            "description": "State-of-the-art facility for AI-driven security research. +50% AI tool effectiveness.",
+            "category": "research",
+            "prerequisites": ["research_002", "upgrade_003"],
+            "cost": {
+                "money": 25000,
+                "reputation": 25
+            },
+            "rarity": "rare",
+            "tier": 3,
+            "tags": ["ai_research", "facility", "ai_effectiveness"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "ai_effectiveness",
+                        "value": 0.50,
+                        "target": "all"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "research_004",
+            "type": "upgrade",
+            "name": "Quantum Computing Security Lab",
+            "displayName": "Quantum Computing Security Lab",
+            "description": "Quantum computers for security research and threat simulation. +100% threat prediction accuracy.",
+            "category": "research",
+            "prerequisites": ["research_003", "infra_004"],
+            "cost": {
+                "money": 150000,
+                "reputation": 60
+            },
+            "rarity": "epic",
+            "tier": 4,
+            "tags": ["quantum_computing", "threat_simulation", "prediction"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "prediction_accuracy",
+                        "value": 1.00,
+                        "target": "threats"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "research_005",
+            "type": "upgrade",
+            "name": "Singularity Research Complex",
+            "displayName": "Singularity Research Complex",
+            "description": "Ultimate research facility exploring the boundaries of cybersecurity. Unlocks singularity-level technologies.",
+            "category": "research",
+            "prerequisites": ["research_004", "personnel_005"],
+            "cost": {
+                "money": 1000000,
+                "reputation": 200
+            },
+            "rarity": "mythic",
+            "tier": 6,
+            "tags": ["singularity", "ultimate", "boundary_exploration"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "unlock_tech",
+                        "value": "singularity_tech",
+                        "target": "all"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "defense_001",
+            "type": "upgrade",
+            "name": "Basic Firewall",
+            "displayName": "Basic Firewall",
+            "description": "Network firewall for basic traffic filtering. -10% incoming threats.",
+            "category": "defense",
+            "cost": {
+                "money": 150
+            },
+            "rarity": "common",
+            "tier": 1,
+            "tags": ["firewall", "network", "traffic_filtering"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "threat_reduction",
+                        "value": 0.10,
+                        "target": "network"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "defense_002",
+            "type": "upgrade",
+            "name": "Next-Gen Web Application Firewall",
+            "displayName": "Next-Gen Web Application Firewall",
+            "description": "Advanced WAF with AI-powered threat detection. -25% web-based attacks.",
+            "category": "defense",
+            "prerequisites": ["defense_001"],
+            "cost": {
+                "money": 800
+            },
+            "rarity": "uncommon",
+            "tier": 2,
+            "tags": ["waf", "ai_powered", "web_protection"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "threat_reduction",
+                        "value": 0.25,
+                        "target": "web"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "defense_003",
+            "type": "upgrade",
+            "name": "Zero-Trust Architecture",
+            "displayName": "Zero-Trust Architecture",
+            "description": "Never trust, always verify security model. -40% lateral movement attacks.",
+            "category": "defense",
+            "prerequisites": ["defense_002", "upgrade_004"],
+            "cost": {
+                "money": 5000,
+                "reputation": 12
+            },
+            "rarity": "rare",
+            "tier": 3,
+            "tags": ["zero_trust", "architecture", "lateral_movement"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "threat_reduction",
+                        "value": 0.40,
+                        "target": "lateral_movement"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "defense_004",
+            "type": "upgrade",
+            "name": "Quantum-Resistant Cryptography Suite",
+            "displayName": "Quantum-Resistant Cryptography Suite",
+            "description": "Post-quantum encryption algorithms immune to quantum attacks. -75% cryptographic threats.",
+            "category": "defense",
+            "prerequisites": ["defense_003", "research_002"],
+            "cost": {
+                "money": 30000,
+                "reputation": 35
+            },
+            "rarity": "epic",
+            "tier": 4,
+            "tags": ["quantum_resistant", "cryptography", "encryption"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "threat_reduction",
+                        "value": 0.75,
+                        "target": "cryptographic"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "defense_005",
+            "type": "upgrade",
+            "name": "Omni-Dimensional Defense Matrix",
+            "displayName": "Omni-Dimensional Defense Matrix",
+            "description": "Multi-layered defense system spanning all attack vectors. -95% all threat types.",
+            "category": "defense",
+            "prerequisites": ["defense_004", "tools_005"],
+            "cost": {
+                "money": 500000,
+                "reputation": 150
+            },
+            "rarity": "legendary",
+            "tier": 5,
+            "tags": ["omni_dimensional", "multi_layered", "comprehensive"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "threat_reduction",
+                        "value": 0.95,
+                        "target": "all"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "efficiency_001",
+            "type": "upgrade",
+            "name": "Process Automation Scripts",
+            "displayName": "Process Automation Scripts",
+            "description": "Automated scripts for routine security tasks. -5% contract completion time.",
+            "category": "efficiency",
+            "cost": {
+                "money": 300
+            },
+            "rarity": "common",
+            "tier": 1,
+            "tags": ["automation", "scripts", "routine_tasks"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "duration_reduction",
+                        "value": 0.05,
+                        "target": "contracts"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "efficiency_002",
+            "type": "upgrade",
+            "name": "Workflow Optimization Suite",
+            "displayName": "Workflow Optimization Suite",
+            "description": "Streamlined processes and efficient task management. -15% contract completion time.",
+            "category": "efficiency",
+            "prerequisites": ["efficiency_001"],
+            "cost": {
+                "money": 1500
+            },
+            "rarity": "uncommon",
+            "tier": 2,
+            "tags": ["workflow", "optimization", "task_management"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "duration_reduction",
+                        "value": 0.15,
+                        "target": "contracts"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "efficiency_003",
+            "type": "upgrade",
+            "name": "AI Task Prioritization Engine",
+            "displayName": "AI Task Prioritization Engine",
+            "description": "Intelligent task prioritization and resource allocation. -30% contract completion time.",
+            "category": "efficiency",
+            "prerequisites": ["efficiency_002", "upgrade_003"],
+            "cost": {
+                "money": 8000,
+                "reputation": 18
+            },
+            "rarity": "rare",
+            "tier": 3,
+            "tags": ["ai_prioritization", "resource_allocation", "intelligence"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "duration_reduction",
+                        "value": 0.30,
+                        "target": "contracts"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "efficiency_004",
+            "type": "upgrade",
+            "name": "Quantum Parallel Processing",
+            "displayName": "Quantum Parallel Processing",
+            "description": "Quantum computing for simultaneous task processing. -60% contract completion time.",
+            "category": "efficiency",
+            "prerequisites": ["efficiency_003", "research_004"],
+            "cost": {
+                "money": 75000,
+                "reputation": 45
+            },
+            "rarity": "epic",
+            "tier": 4,
+            "tags": ["quantum_processing", "parallel", "simultaneous"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "duration_reduction",
+                        "value": 0.60,
+                        "target": "contracts"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "efficiency_005",
+            "type": "upgrade",
+            "name": "Singularity Efficiency Matrix",
+            "displayName": "Singularity Efficiency Matrix",
+            "description": "Reality-bending efficiency that transcends time itself. -90% contract completion time.",
+            "category": "efficiency",
+            "prerequisites": ["efficiency_004", "research_005"],
+            "cost": {
+                "money": 2000000,
+                "reputation": 300
+            },
+            "rarity": "mythic",
+            "tier": 6,
+            "tags": ["singularity", "reality_bending", "transcendent"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "duration_reduction",
+                        "value": 0.90,
+                        "target": "contracts"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "specialist_001",
+            "type": "upgrade",
+            "name": "Specialist Training Academy",
+            "displayName": "Specialist Training Academy",
+            "description": "Dedicated training facility for security specialists. +10% specialist XP gain.",
+            "category": "specialist",
+            "cost": {
+                "money": 600
+            },
+            "rarity": "common",
+            "tier": 1,
+            "tags": ["training_academy", "specialists", "xp_gain"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "specialist_xp_multiplier",
+                        "value": 1.10,
+                        "target": "all"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "specialist_002",
+            "type": "upgrade",
+            "name": "Elite Specialist Recruitment",
+            "displayName": "Elite Specialist Recruitment",
+            "description": "Global recruitment network for top-tier security talent. +25% specialist effectiveness.",
+            "category": "specialist",
+            "prerequisites": ["specialist_001"],
+            "cost": {
+                "money": 3000,
+                "reputation": 12
+            },
+            "rarity": "uncommon",
+            "tier": 2,
+            "tags": ["recruitment", "elite_talent", "global_network"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "specialist_effectiveness",
+                        "value": 0.25,
+                        "target": "all"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "specialist_003",
+            "type": "upgrade",
+            "name": "Specialist Synergy Matrix",
+            "displayName": "Specialist Synergy Matrix",
+            "description": "Advanced team coordination and synergy optimization. +50% team synergy bonuses.",
+            "category": "specialist",
+            "prerequisites": ["specialist_002"],
+            "cost": {
+                "money": 12000,
+                "reputation": 25
+            },
+            "rarity": "rare",
+            "tier": 3,
+            "tags": ["synergy", "team_coordination", "optimization"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "team_synergy",
+                        "value": 0.50,
+                        "target": "all"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "specialist_004",
+            "type": "upgrade",
+            "name": "Legendary Specialist Legends",
+            "displayName": "Legendary Specialist Legends",
+            "description": "Recruitment of cybersecurity legends and pioneers. +100% legendary specialist power.",
+            "category": "specialist",
+            "prerequisites": ["specialist_003", "personnel_003"],
+            "cost": {
+                "money": 50000,
+                "reputation": 50
+            },
+            "rarity": "epic",
+            "tier": 4,
+            "tags": ["legendary", "pioneers", "cybersecurity_legends"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "legendary_power",
+                        "value": 1.00,
+                        "target": "specialists"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "specialist_005",
+            "type": "upgrade",
+            "name": "Transcendent Specialist Collective",
+            "displayName": "Transcendent Specialist Collective",
+            "description": "Hive-mind collective of transcendent security entities. +500% collective intelligence.",
+            "category": "specialist",
+            "prerequisites": ["specialist_004", "research_005"],
+            "cost": {
+                "money": 5000000,
+                "reputation": 500
+            },
+            "rarity": "mythic",
+            "tier": 6,
+            "tags": ["transcendent", "hive_mind", "collective_intelligence"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "collective_intelligence",
+                        "value": 5.00,
+                        "target": "all"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "income_001",
+            "type": "upgrade",
+            "name": "Revenue Optimization Consultant",
+            "displayName": "Revenue Optimization Consultant",
+            "description": "Expert consultant for maximizing contract profitability. +15% income from all sources.",
+            "category": "income",
+            "cost": {
+                "money": 800
+            },
+            "rarity": "uncommon",
+            "tier": 2,
+            "tags": ["revenue", "optimization", "consultant"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "income_multiplier",
+                        "value": 1.15,
+                        "target": "all"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "income_002",
+            "type": "upgrade",
+            "name": "Bulk Contract Negotiation",
+            "displayName": "Bulk Contract Negotiation",
+            "description": "Negotiate better rates for multiple contracts simultaneously. +25% income from enterprise contracts.",
+            "category": "income",
+            "prerequisites": ["income_001"],
+            "cost": {
+                "money": 4000,
+                "reputation": 15
+            },
+            "rarity": "rare",
+            "tier": 3,
+            "tags": ["bulk_negotiation", "enterprise", "rates"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "income_multiplier",
+                        "value": 1.25,
+                        "target": "enterprise"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "income_003",
+            "type": "upgrade",
+            "name": "Premium Service Packages",
+            "displayName": "Premium Service Packages",
+            "description": "Offer premium security packages at higher margins. +40% income from premium services.",
+            "category": "income",
+            "prerequisites": ["income_002"],
+            "cost": {
+                "money": 18000,
+                "reputation": 30
+            },
+            "rarity": "epic",
+            "tier": 4,
+            "tags": ["premium_packages", "higher_margins", "services"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "income_multiplier",
+                        "value": 1.40,
+                        "target": "premium"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "income_004",
+            "type": "upgrade",
+            "name": "Global Market Dominance",
+            "displayName": "Global Market Dominance",
+            "description": "Monopolistic position in global security market. +100% income from international markets.",
+            "category": "income",
+            "prerequisites": ["income_003", "infra_005"],
+            "cost": {
+                "money": 250000,
+                "reputation": 100
+            },
+            "rarity": "legendary",
+            "tier": 5,
+            "tags": ["global_dominance", "monopolistic", "international"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "income_multiplier",
+                        "value": 2.00,
+                        "target": "international"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "income_005",
+            "type": "upgrade",
+            "name": "Reality Market Manipulation",
+            "displayName": "Reality Market Manipulation",
+            "description": "Bend economic reality to maximize profits. +1000% income from all sources (reality distortion).",
+            "category": "income",
+            "prerequisites": ["income_004", "research_005"],
+            "cost": {
+                "money": 10000000,
+                "reputation": 1000
+            },
+            "rarity": "mythic",
+            "tier": 6,
+            "tags": ["reality_manipulation", "economic_distortion", "infinite_profits"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "income_multiplier",
+                        "value": 11.00,
+                        "target": "all"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "reputation_001",
+            "type": "upgrade",
+            "name": "Public Relations Campaign",
+            "displayName": "Public Relations Campaign",
+            "description": "Professional PR campaign to build brand awareness. +10 reputation gain rate.",
+            "category": "reputation",
+            "cost": {
+                "money": 500
+            },
+            "rarity": "common",
+            "tier": 1,
+            "tags": ["pr_campaign", "brand_awareness", "marketing"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "reputation_multiplier",
+                        "value": 1.10,
+                        "target": "all"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "reputation_002",
+            "type": "upgrade",
+            "name": "Industry Awards Strategy",
+            "displayName": "Industry Awards Strategy",
+            "description": "Strategic pursuit of cybersecurity industry awards. +25% reputation from successful contracts.",
+            "category": "reputation",
+            "prerequisites": ["reputation_001"],
+            "cost": {
+                "money": 2500,
+                "reputation": 10
+            },
+            "rarity": "uncommon",
+            "tier": 2,
+            "tags": ["industry_awards", "strategic", "recognition"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "reputation_multiplier",
+                        "value": 1.25,
+                        "target": "contracts"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "reputation_003",
+            "type": "upgrade",
+            "name": "Thought Leadership Platform",
+            "displayName": "Thought Leadership Platform",
+            "description": "Establish as industry thought leader through publications and speaking. +50% reputation growth.",
+            "category": "reputation",
+            "prerequisites": ["reputation_002"],
+            "cost": {
+                "money": 10000,
+                "reputation": 20
+            },
+            "rarity": "rare",
+            "tier": 3,
+            "tags": ["thought_leadership", "publications", "speaking"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "reputation_multiplier",
+                        "value": 1.50,
+                        "target": "growth"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "reputation_004",
+            "type": "upgrade",
+            "name": "Global Security Alliance",
+            "displayName": "Global Security Alliance",
+            "description": "Form alliances with international security organizations. +100% reputation from partnerships.",
+            "category": "reputation",
+            "prerequisites": ["reputation_003"],
+            "cost": {
+                "money": 50000,
+                "reputation": 50
+            },
+            "rarity": "epic",
+            "tier": 4,
+            "tags": ["global_alliance", "international", "partnerships"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "reputation_multiplier",
+                        "value": 2.00,
+                        "target": "partnerships"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "reputation_005",
+            "type": "upgrade",
+            "name": "Universal Security Authority",
+            "displayName": "Universal Security Authority",
+            "description": "Become the universally recognized authority on cybersecurity. Infinite reputation growth.",
+            "category": "reputation",
+            "prerequisites": ["reputation_004", "personnel_005"],
+            "cost": {
+                "money": 1000000,
+                "reputation": 200
+            },
+            "rarity": "legendary",
+            "tier": 5,
+            "tags": ["universal_authority", "recognized", "infinite_growth"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "reputation_multiplier",
+                        "value": 10.00,
                         "target": "all"
                     }
                 ]

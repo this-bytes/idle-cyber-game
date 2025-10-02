@@ -1,254 +1,268 @@
--- Achievement System
--- Tracks player progress and unlocks rewards
+-- Achievement System - Tracks player progress and unlocks rewards
+-- Manages achievement tracking, unlocking, and reward distribution
 
 local AchievementSystem = {}
 AchievementSystem.__index = AchievementSystem
 
--- Create new achievement system
-function AchievementSystem.new(eventBus)
+function AchievementSystem.new(eventBus, dataManager, resourceManager)
     local self = setmetatable({}, AchievementSystem)
+
+    -- Dependencies
     self.eventBus = eventBus
-    
-    -- Achievement progress tracking
-    self.progress = {
-        totalClicks = 0,
-        totalContractsCompleted = 0,
-        totalUpgradesPurchased = 0,
-        maxClickCombo = 1.0,
-        criticalHits = 0
-    }
-    
-    -- Unlocked achievements
-    self.unlocked = {}
-    
-    -- Achievement definitions
-    self.achievements = {
-        firstClick = {
-            id = "firstClick",
-            name = "🖱️ First Click",
-            description = "Click to earn your first Data Bit",
-            requirement = {type = "clicks", value = 1},
-            reward = {type = "none"},
-            unlocked = false
-        },
-        clickMaster = {
-            id = "clickMaster",
-            name = "🎯 Click Master",
-            description = "Perform 100 clicks",
-            requirement = {type = "clicks", value = 100},
-            reward = {type = "clickPower", value = 2},
-            unlocked = false
-        },
-        comboKing = {
-            id = "comboKing",
-            name = "🔥 Action Specialist",
-            description = "Execute 5 consecutive successful actions",
-            requirement = {type = "maxCombo", value = 5.0},
-            reward = {type = "money", value = 500},
-            unlocked = false
-        },
-        firstUpgrade = {
-            id = "firstUpgrade",
-            name = "🛒 First Purchase",
-            description = "Buy your first upgrade",
-            requirement = {type = "upgrades", value = 1},
-            reward = {type = "money", value = 250},
-            unlocked = false
-        },
-        businessBuilder = {
-            id = "businessBuilder",
-            name = "💼 Business Builder",
-            description = "Complete 10 contracts successfully",
-            requirement = {type = "contractsCompleted", value = 10},
-            reward = {type = "reputation", value = 10},
-            unlocked = false
-        },
-        
-        -- Progression-based achievements
-        businessGrowth = {
-            id = "businessGrowth",
-            name = "📈 Business Growth",
-            description = "Advance to Small Business tier",
-            requirement = {type = "progressionTier", value = "smallBusiness"},
-            reward = {type = "money", value = 5000},
-            unlocked = false
-        },
-        
-        enterpriseExpansion = {
-            id = "enterpriseExpansion", 
-            name = "🏛️ Enterprise Expansion",
-            description = "Reach Enterprise tier",
-            requirement = {type = "progressionTier", value = "enterprise"},
-            reward = {type = "skillPoints", value = 10},
-            unlocked = false
-        },
-        
-        firstPrestige = {
-            id = "firstPrestige",
-            name = "🌟 First Prestige",
-            description = "Complete your first company prestige",
-            requirement = {type = "prestigeLevel", value = 1},
-            reward = {type = "prestigePoints", value = 5},
-            unlocked = false
-        },
-        
-        currencyMaster = {
-            id = "currencyMaster",
-            name = "💎 Currency Master",
-            description = "Accumulate 100 skill points",
-            requirement = {type = "currency", currency = "skillPoints", value = 100},
-            reward = {type = "researchCredits", value = 10},
-            unlocked = false
-        }
-    }
-    
-    -- Subscribe to events
+    self.dataManager = dataManager
+    self.resourceManager = resourceManager
+
+    -- Achievement state
+    self.achievements = {}
+    self.unlockedAchievements = {}
+    self.progress = {}
+
+    -- Load achievement definitions
+    self:loadAchievements()
+
+    -- Subscribe to relevant events
     self:subscribeToEvents()
-    
+
+    print("🏆 Achievement System initialized")
     return self
 end
 
--- Subscribe to relevant events
+-- Load achievement definitions from data
+function AchievementSystem:loadAchievements()
+    if not self.dataManager then
+        print("⚠️ AchievementSystem: No dataManager available")
+        return
+    end
+
+    local achievementData = self.dataManager:getData("achievements")
+    if not achievementData or not achievementData.achievements then
+        print("⚠️ AchievementSystem: No achievement data found")
+        return
+    end
+
+    self.achievements = achievementData.achievements
+
+    -- Initialize progress tracking
+    local count = 0
+    for id, achievement in pairs(self.achievements) do
+        self.progress[id] = {
+            current = 0,
+            unlocked = achievement.unlocked or false,
+            unlockedAt = nil
+        }
+        count = count + 1
+    end
+
+    print("📚 Loaded " .. count .. " achievements")
+end
+
+-- Subscribe to events that trigger achievement checks
 function AchievementSystem:subscribeToEvents()
-    -- Track contract completions
+    if not self.eventBus then return end
+
+    -- Game events
+    self.eventBus:subscribe("game_started", function() self:checkAchievement("first_contract") end)
+
+    -- Resource events
+    self.eventBus:subscribe("resource_changed", function(data)
+        if data.resource == "money" then
+            self:updateProgress("millionaire", data.newValue)
+        elseif data.resource == "reputation" then
+            self:updateProgress("reputation_master", data.newValue)
+        end
+    end)
+
+    -- Contract events
+    self.eventBus:subscribe("contract_accepted", function()
+        self:updateProgress("first_contract", 1)
+        self:updateProgress("contract_master", 1)
+    end)
+
     self.eventBus:subscribe("contract_completed", function(data)
-        self.progress.totalContractsCompleted = self.progress.totalContractsCompleted + 1
-        self:checkAchievements()
+        self:updateProgress("contract_master", 1)
+        if data.industry then
+            self:updateProgress("contract_industry_completed", 1, {industry = data.industry})
+        end
+        if data.tier then
+            self:updateProgress("contract_tier_completed", 1, {tier = data.tier})
+        end
     end)
-    
-    -- Track upgrade purchases
-    self.eventBus:subscribe("upgrade_purchased", function(data)
-        self.progress.totalUpgradesPurchased = self.progress.totalUpgradesPurchased + 1
-        self:checkAchievements()
+
+    -- Threat events
+    self.eventBus:subscribe("threat_detected", function()
+        self:updateProgress("first_threat_resolved", 1)
+        self:updateProgress("threat_hunter", 1)
     end)
-    
-    -- Track progression tier advances
-    self.eventBus:subscribe("tier_advanced", function(data)
-        self.progress.currentTier = data.newTier
-        self:checkAchievements()
+
+    self.eventBus:subscribe("threat_resolved", function(data)
+        self:updateProgress("threat_hunter", 1)
+        if data.category then
+            self:updateProgress("threats_resolved_by_category", 1, {category = data.category})
+        end
+        if data.rarity then
+            self:updateProgress("threats_resolved_by_rarity", 1, {rarity = data.rarity})
+        end
+        if data.id then
+            self:updateProgress("threat_resolved_by_id", 1, {threat_id = data.id})
+        end
+        if data.perfect then
+            self:updateProgress("perfect_resolutions", 1)
+        end
     end)
-    
-    -- Track prestige completions
-    self.eventBus:subscribe("prestige_performed", function(data)
-        self.progress.prestigeLevel = data.level
-        self:checkAchievements()
+
+    -- Specialist events
+    self.eventBus:subscribe("specialist_hired", function()
+        self:updateProgress("first_specialist", 1)
+        self:updateProgress("team_builder", 1)
+        self:updateProgress("specialist_collector", 1)
     end)
-    
-    -- Track currency awards for currency-based achievements
-    self.eventBus:subscribe("currency_awarded", function(data)
-        self:checkAchievements()
+
+    -- Upgrade events
+    self.eventBus:subscribe("upgrade_purchased", function()
+        self:updateProgress("upgrade_enthusiast", 1)
+        self:updateProgress("upgrade_master", 1)
+    end)
+
+    -- Time-based events
+    self.eventBus:subscribe("play_time_milestone", function(data)
+        if data.hours == 24 then
+            self:updateProgress("time_waster", 24)
+        elseif data.hours == 100 then
+            self:updateProgress("dedicated_player", 100)
+        end
+    end)
+
+    -- Offline earnings
+    self.eventBus:subscribe("offline_earnings_calculated", function(data)
+        self:updateProgress("idle_tycoon", data.netGain)
+        self:updateProgress("offline_legend", data.netGain)
     end)
 end
 
-function AchievementSystem:update(dt)
-    -- Check for newly unlocked achievements
-    self:checkAchievements()
-end
+-- Update progress for a specific achievement
+function AchievementSystem:updateProgress(achievementId, value, context)
+    if not self.achievements[achievementId] or not self.progress[achievementId] then
+        return
+    end
 
--- Check if any achievements can be unlocked
-function AchievementSystem:checkAchievements()
-    for achievementId, achievement in pairs(self.achievements) do
-        if not achievement.unlocked and self:checkRequirement(achievement.requirement) then
-            self:unlockAchievement(achievementId)
+    local achievement = self.achievements[achievementId]
+    local progress = self.progress[achievementId]
+
+    -- Skip if already unlocked
+    if progress.unlocked then
+        return
+    end
+
+    -- Check requirement type
+    local requirement = achievement.requirement
+    local shouldUnlock = false
+
+    if requirement.type == "clicks" or requirement.type == "total_money_earned" or
+       requirement.type == "reputation_earned" or requirement.type == "threats_resolved" or
+       requirement.type == "contracts_completed" or requirement.type == "specialists_hired" or
+       requirement.type == "unique_specialists_hired" or requirement.type == "unique_upgrades_purchased" or
+       requirement.type == "play_time_hours" or requirement.type == "offline_earnings" or
+       requirement.type == "perfect_resolutions" then
+        progress.current = progress.current + value
+        shouldUnlock = progress.current >= requirement.value
+
+    elseif requirement.type == "threats_resolved_by_category" and context and context.category == requirement.category then
+        progress.current = progress.current + value
+        shouldUnlock = progress.current >= requirement.value
+
+    elseif requirement.type == "threats_resolved_by_rarity" and context and context.rarity == requirement.rarity then
+        progress.current = progress.current + value
+        shouldUnlock = progress.current >= requirement.value
+
+    elseif requirement.type == "threat_resolved_by_id" and context and context.threat_id == requirement.threat_id then
+        progress.current = progress.current + value
+        shouldUnlock = progress.current >= requirement.value
+
+    elseif requirement.type == "contract_industry_completed" and context and context.industry == requirement.industry then
+        progress.current = progress.current + value
+        shouldUnlock = progress.current >= requirement.value
+
+    elseif requirement.type == "contract_tier_completed" and context and context.tier == requirement.tier then
+        progress.current = progress.current + value
+        shouldUnlock = progress.current >= requirement.value
+
+    elseif requirement.type == "threat_resolved_perfect" and context and context.threat_id == requirement.threat_id then
+        progress.current = progress.current + value
+        shouldUnlock = progress.current >= requirement.value
+
+    elseif requirement.type == "fastest_resolution_seconds" then
+        if value <= requirement.value then
+            shouldUnlock = true
+        end
+
+    elseif requirement.type == "simultaneous_resolutions" then
+        if value >= requirement.value then
+            shouldUnlock = true
+        end
+
+    elseif requirement.type == "survived_major_loss" then
+        progress.current = progress.current + value
+        shouldUnlock = progress.current >= requirement.value
+
+    elseif requirement.type == "resolution_efficiency_percent" then
+        if value >= requirement.value then
+            shouldUnlock = true
         end
     end
-end
 
--- Check if requirement is met
-function AchievementSystem:checkRequirement(requirement)
-    local reqType = requirement.type
-    local reqValue = requirement.value
-    
-    if reqType == "clicks" then
-        return self.progress.totalClicks >= reqValue
-    elseif reqType == "maxCombo" then
-        return self.progress.maxClickCombo >= reqValue
-    elseif reqType == "upgrades" then
-        return self.progress.totalUpgradesPurchased >= reqValue
-    elseif reqType == "contractsCompleted" then
-        return self.progress.totalContractsCompleted >= reqValue
-    elseif reqType == "progressionTier" then
-        -- Check if current tier meets or exceeds required tier
-        local hasAccess = false
-        self.eventBus:publish("check_progression_tier", {
-            requiredTier = reqValue,
-            callback = function(access)
-                hasAccess = access
-            end
-        })
-        return hasAccess
-    elseif reqType == "prestigeLevel" then
-        return (self.progress.prestigeLevel or 0) >= reqValue
-    elseif reqType == "currency" then
-        -- Check specific currency amount
-        local hasAmount = false
-        self.eventBus:publish("get_currency_amount", {
-            currency = requirement.currency,
-            callback = function(amount)
-                hasAmount = amount >= reqValue
-            end
-        })
-        return hasAmount
+    -- Unlock achievement if conditions met
+    if shouldUnlock then
+        self:unlockAchievement(achievementId)
     end
-    
-    return false
 end
 
 -- Unlock an achievement
 function AchievementSystem:unlockAchievement(achievementId)
+    if not self.achievements[achievementId] or self.progress[achievementId].unlocked then
+        return
+    end
+
     local achievement = self.achievements[achievementId]
-    if not achievement or achievement.unlocked then
-        return false
-    end
-    
-    achievement.unlocked = true
-    self.unlocked[achievementId] = true
-    
-    -- Apply reward
-    self:applyReward(achievement.reward)
-    
-    -- Publish achievement event
+    local progress = self.progress[achievementId]
+
+    -- Mark as unlocked
+    progress.unlocked = true
+    progress.unlockedAt = os.time()
+
+    -- Add to unlocked list
+    table.insert(self.unlockedAchievements, achievementId)
+
+    -- Grant rewards
+    self:grantReward(achievement.reward)
+
+    -- Publish event
     self.eventBus:publish("achievement_unlocked", {
-        achievementId = achievementId,
-        achievement = achievement
+        achievement = achievement,
+        id = achievementId
     })
-    
+
     print("🏆 Achievement Unlocked: " .. achievement.name)
-    print("   " .. achievement.description)
-    
-    return true
 end
 
--- Apply achievement reward
-function AchievementSystem:applyReward(reward)
-    if reward.type == "money" then
-        self.eventBus:publish("add_resource", {
-            resource = "money",
-            amount = reward.value
-        })
-    elseif reward.type == "reputation" then  
-        self.eventBus:publish("add_resource", {
-            resource = "reputation",
-            amount = reward.value
-        })
-    elseif reward.type == "skillPoints" or reward.type == "prestigePoints" or reward.type == "researchCredits" then
-        -- Award progression system currencies
-        self.eventBus:publish("award_currency", {
-            currency = reward.type,
-            amount = reward.value
-        })
+-- Grant achievement reward
+function AchievementSystem:grantReward(reward)
+    if not reward or reward.type == "none" then
+        return
+    end
+
+    if reward.type == "money" and self.resourceManager then
+        self.resourceManager:addResource("money", reward.value)
+        print("💰 Achievement reward: $" .. reward.value)
+
+    elseif reward.type == "reputation" and self.resourceManager then
+        self.resourceManager:addResource("reputation", reward.value)
+        print("⭐ Achievement reward: " .. reward.value .. " reputation")
     end
 end
 
-function AchievementSystem:initializeProgress()
-    -- Initialize progress tracking
-    self.progress = {
-        totalClicks = 0,
-        totalContractsCompleted = 0,
-        totalUpgradesPurchased = 0,
-        maxClickCombo = 1.0,
-        criticalHits = 0
-    }
+-- Get achievement progress
+function AchievementSystem:getProgress(achievementId)
+    return self.progress[achievementId] or {current = 0, unlocked = false}
 end
 
 -- Get all achievements
@@ -258,43 +272,52 @@ end
 
 -- Get unlocked achievements
 function AchievementSystem:getUnlockedAchievements()
-    local unlocked = {}
-    for achievementId, achievement in pairs(self.achievements) do
-        if achievement.unlocked then
-            unlocked[achievementId] = achievement
+    return self.unlockedAchievements
+end
+
+-- Get achievement stats
+function AchievementSystem:getStats()
+    local total = 0
+    local unlocked = 0
+
+    for _, achievement in pairs(self.achievements) do
+        total = total + 1
+        if self.progress[achievement.id] and self.progress[achievement.id].unlocked then
+            unlocked = unlocked + 1
         end
     end
-    return unlocked
-end
 
--- Get progress
-function AchievementSystem:getProgress()
-    return self.progress
-end
-
-function AchievementSystem:getState()
     return {
-        unlocked = self.unlocked,
-        progress = self.progress,
-        achievements = self.achievements
+        total = total,
+        unlocked = unlocked,
+        completionRate = total > 0 and (unlocked / total) or 0
     }
 end
 
-function AchievementSystem:loadState(state)
-    if state.unlocked then
-        self.unlocked = state.unlocked
-    end
-    
-    if state.progress then
-        self.progress = state.progress
-    end
-    
-    if state.achievements then
-        for achievementId, achievementData in pairs(state.achievements) do
-            if self.achievements[achievementId] then
-                self.achievements[achievementId].unlocked = achievementData.unlocked
-            end
-        end
+-- Check if achievement is unlocked
+function AchievementSystem:isUnlocked(achievementId)
+    return self.progress[achievementId] and self.progress[achievementId].unlocked
+end
+
+-- Update method (for time-based achievements)
+function AchievementSystem:update(dt)
+    -- Could implement time-based tracking here
+end
+
+-- Save achievement progress
+function AchievementSystem:saveProgress()
+    local saveData = {
+        progress = self.progress,
+        unlockedAchievements = self.unlockedAchievements
+    }
+    return saveData
+end
+
+-- Load achievement progress
+function AchievementSystem:loadProgress(saveData)
+    if saveData then
+        self.progress = saveData.progress or self.progress
+        self.unlockedAchievements = saveData.unlockedAchievements or self.unlockedAchievements
     end
 end
 

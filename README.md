@@ -21,20 +21,6 @@ This modular instruction system provides comprehensive guidance for all aspects 
 - **[11-technical-architecture](.github/copilot-instructions/11-technical-architecture.instructions.md)** - System architecture
 - **[12-development-roadmap](.github/copilot-instructions/12-development-roadmap.instructions.md)** - Development phases
 
-## 🎨 Smart UI Framework - INTEGRATED! ✅
-
-**The Smart UI Framework is fully integrated into the game!** 🎉
-
-- ✅ **Component-Based Architecture** - Automatic layout with flexbox/grid
-- ✅ **Toast Notifications** - Animated notifications with auto-dismiss
-- ✅ **Cyberpunk Styling** - Neon borders, glow effects, cut corners
-
-**See It In Action:**
-```bash
-love .           # Main game with Smart UI
-love ui_demo     # UI component showcase
-```
-
 **Documentation:**
 - [Smart UI Framework Guide](docs/SMART_UI_FRAMEWORK.md) - Complete API reference
 - [Quick Reference](docs/SMART_UI_QUICK_REFERENCE.md) - Cheat sheets
@@ -55,13 +41,7 @@ See [11-technical-architecture.instructions.md](.github/copilot-instructions/11-
 
 ## Running the Game
 
-### Fortress Edition (Recommended)
-```bash
-love .                    # Uses fortress_main.lua automatically
-lua5.3 fortress_main.lua  # Direct fortress execution
-```
-
-### Legacy Edition  
+### Main Edition  
 ```bash
 lua5.3 main.lua          # Original monolithic version
 ```
@@ -72,10 +52,7 @@ lua5.3 main.lua          # Original monolithic version
 lua5.3 tests/test_runner.lua  # Runs all 46 tests (42 pass, 4 legacy issues)
 ```
 
-**Test Coverage**:
-- ✅ 12 fortress architecture tests (all passing)
-- ✅ 34 legacy system tests (30 passing, 4 known issues)
-- ✅ Integration tests for fortress-legacy compatibility
+
 
 ## Development
 

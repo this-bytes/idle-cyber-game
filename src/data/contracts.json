@@ -2,16 +2,16 @@
   {
     "id": "basic_small_business",
     "type": "contract",
-    "clientName": "Small Business",
-    "displayName": "Small Business Security",
-    "description": "Provide basic security audit and recommendations.",
-    "baseBudget": 500,
-    "baseDuration": 30,
+    "clientName": "Local Coffee Shop",
+    "displayName": "Basic WiFi Security",
+    "description": "Secure the point-of-sale system and customer WiFi network.",
+    "baseBudget": 300,
+    "baseDuration": 20,
     "reputationReward": 1,
     "riskLevel": "LOW",
     "requiredResources": [],
     "rarity": "common",
-    "tags": ["small_business", "audit", "basic"],
+    "tags": ["retail", "wifi", "basic"],
     "tier": 1,
     "effects": {
       "passive": []
@@ -20,16 +20,16 @@
   {
     "id": "tech_startup",
     "type": "contract",
-    "clientName": "Tech Startup",
-    "displayName": "Tech Startup Security",
-    "description": "Implement a lightweight WAF and incident response plan.",
+    "clientName": "FinTech Startup",
+    "displayName": "Startup Security Audit",
+    "description": "Comprehensive security assessment for a growing financial technology company.",
     "baseBudget": 1200,
-    "baseDuration": 60,
-    "reputationReward": 2,
+    "baseDuration": 45,
+    "reputationReward": 3,
     "riskLevel": "MEDIUM",
     "requiredResources": [],
     "rarity": "common",
-    "tags": ["startup", "waf", "incident_response"],
+    "tags": ["startup", "fintech", "audit"],
     "tier": 2,
     "effects": {
       "passive": []
@@ -38,59 +38,467 @@
   {
     "id": "enterprise_contract",
     "type": "contract",
-    "clientName": "Enterprise Corp",
-    "displayName": "Enterprise Security",
-    "description": "Enterprise security overhaul with training and long-term monitoring.",
-    "baseBudget": 5000,
-    "baseDuration": 300,
-    "reputationReward": 20,
+    "clientName": "Global Manufacturing Corp",
+    "displayName": "Enterprise Security Overhaul",
+    "description": "Complete security transformation for a Fortune 500 manufacturing company.",
+    "baseBudget": 15000,
+    "baseDuration": 180,
+    "reputationReward": 25,
     "riskLevel": "HIGH",
     "requiredResources": [],
     "rarity": "rare",
-    "tags": ["enterprise", "training", "monitoring", "long_term"],
-    "tier": 3,
+    "tags": ["enterprise", "manufacturing", "transformation"],
+    "tier": 4,
     "effects": {
-      "passive": [
-        {
-          "type": "reputation_multiplier",
-          "value": 1.1,
-          "target": "all"
-        }
-      ]
+      "passive": []
     }
   },
   {
-    "id": "fintech_compliance",
+    "id": "healthcare_clinic",
     "type": "contract",
-    "clientName": "FinTech Solutions Inc",
-    "displayName": "FinTech Compliance",
-    "description": "Ensure compliance with financial regulations and implement fraud detection.",
-    "baseBudget": 2500,
-    "baseDuration": 180,
-    "reputationReward": 10,
+    "clientName": "Regional Medical Center",
+    "displayName": "HIPAA Compliance Security",
+    "description": "Implement HIPAA-compliant security measures for patient data protection.",
+    "baseBudget": 800,
+    "baseDuration": 60,
+    "reputationReward": 4,
+    "riskLevel": "MEDIUM",
+    "requiredResources": [],
+    "rarity": "common",
+    "tags": ["healthcare", "hipaa", "compliance"],
+    "tier": 2,
+    "effects": {
+      "passive": []
+    }
+  },
+  {
+    "id": "university_network",
+    "type": "contract",
+    "clientName": "State University",
+    "displayName": "Campus Network Security",
+    "description": "Secure the university's extensive network infrastructure and student systems.",
+    "baseBudget": 5000,
+    "baseDuration": 120,
+    "reputationReward": 15,
     "riskLevel": "HIGH",
     "requiredResources": [],
-    "rarity": "rare",
-    "tags": ["fintech", "compliance", "fraud_detection"],
+    "rarity": "uncommon",
+    "tags": ["education", "network", "campus"],
     "tier": 3,
     "effects": {
       "passive": []
     }
   },
   {
-    "id": "cloud_migration",
+    "id": "government_agency",
     "type": "contract",
-    "clientName": "Cloud Infrastructure Ltd",
-    "displayName": "Cloud Migration Security",
-    "description": "Secure cloud migration and implement cloud-native security controls.",
-    "baseBudget": 3000,
-    "baseDuration": 240,
-    "reputationReward": 15,
+    "clientName": "Federal Agency",
+    "displayName": "Government Security Clearance",
+    "description": "Implement classified information protection systems for government operations.",
+    "baseBudget": 25000,
+    "baseDuration": 300,
+    "reputationReward": 50,
+    "riskLevel": "CRITICAL",
+    "requiredResources": [],
+    "rarity": "epic",
+    "tags": ["government", "classified", "federal"],
+    "tier": 5,
+    "effects": {
+      "passive": []
+    }
+  },
+  {
+    "id": "ecommerce_platform",
+    "type": "contract",
+    "clientName": "Online Retail Giant",
+    "displayName": "E-commerce Payment Security",
+    "description": "Secure payment processing and customer data for a major online retailer.",
+    "baseBudget": 8000,
+    "baseDuration": 90,
+    "reputationReward": 20,
     "riskLevel": "HIGH",
     "requiredResources": [],
     "rarity": "rare",
-    "tags": ["cloud", "migration", "infrastructure"],
+    "tags": ["ecommerce", "payments", "retail"],
+    "tier": 4,
+    "effects": {
+      "passive": []
+    }
+  },
+  {
+    "id": "cryptocurrency_exchange",
+    "type": "contract",
+    "clientName": "Crypto Exchange Platform",
+    "displayName": "Cryptocurrency Security",
+    "description": "Implement advanced security for a cryptocurrency trading platform.",
+    "baseBudget": 20000,
+    "baseDuration": 150,
+    "reputationReward": 35,
+    "riskLevel": "CRITICAL",
+    "requiredResources": [],
+    "rarity": "epic",
+    "tags": ["cryptocurrency", "blockchain", "trading"],
+    "tier": 5,
+    "effects": {
+      "passive": []
+    }
+  },
+  {
+    "id": "gaming_company",
+    "type": "contract",
+    "clientName": "AAA Game Studio",
+    "displayName": "Game Server Security",
+    "description": "Protect game servers and player data for a major gaming company.",
+    "baseBudget": 6000,
+    "baseDuration": 75,
+    "reputationReward": 18,
+    "riskLevel": "HIGH",
+    "requiredResources": [],
+    "rarity": "uncommon",
+    "tags": ["gaming", "servers", "player_data"],
     "tier": 3,
+    "effects": {
+      "passive": []
+    }
+  },
+  {
+    "id": "social_media_platform",
+    "type": "contract",
+    "clientName": "Social Media Network",
+    "displayName": "User Privacy Protection",
+    "description": "Implement comprehensive privacy controls for a social media platform.",
+    "baseBudget": 12000,
+    "baseDuration": 100,
+    "reputationReward": 28,
+    "riskLevel": "HIGH",
+    "requiredResources": [],
+    "rarity": "rare",
+    "tags": ["social_media", "privacy", "user_data"],
+    "tier": 4,
+    "effects": {
+      "passive": []
+    }
+  },
+  {
+    "id": "banking_institution",
+    "type": "contract",
+    "clientName": "National Bank",
+    "displayName": "Banking Security Standards",
+    "description": "Meet regulatory requirements for banking security and fraud prevention.",
+    "baseBudget": 18000,
+    "baseDuration": 200,
+    "reputationReward": 40,
+    "riskLevel": "CRITICAL",
+    "requiredResources": [],
+    "rarity": "epic",
+    "tags": ["banking", "regulatory", "fraud_prevention"],
+    "tier": 5,
+    "effects": {
+      "passive": []
+    }
+  },
+  {
+    "id": "pharmaceutical_company",
+    "type": "contract",
+    "clientName": "Pharma Research Corp",
+    "displayName": "Drug Development Security",
+    "description": "Protect intellectual property and research data for pharmaceutical development.",
+    "baseBudget": 14000,
+    "baseDuration": 160,
+    "reputationReward": 32,
+    "riskLevel": "HIGH",
+    "requiredResources": [],
+    "rarity": "rare",
+    "tags": ["pharmaceutical", "research", "ip_protection"],
+    "tier": 4,
+    "effects": {
+      "passive": []
+    }
+  },
+  {
+    "id": "airline_company",
+    "type": "contract",
+    "clientName": "International Airline",
+    "displayName": "Aviation Security Systems",
+    "description": "Secure booking systems and passenger data for an international airline.",
+    "baseBudget": 9000,
+    "baseDuration": 110,
+    "reputationReward": 24,
+    "riskLevel": "HIGH",
+    "requiredResources": [],
+    "rarity": "uncommon",
+    "tags": ["aviation", "booking", "passenger_data"],
+    "tier": 3,
+    "effects": {
+      "passive": []
+    }
+  },
+  {
+    "id": "energy_utility",
+    "type": "contract",
+    "clientName": "Power Grid Operator",
+    "displayName": "Critical Infrastructure Security",
+    "description": "Protect SCADA systems and power grid infrastructure from cyber threats.",
+    "baseBudget": 22000,
+    "baseDuration": 250,
+    "reputationReward": 45,
+    "riskLevel": "CRITICAL",
+    "requiredResources": [],
+    "rarity": "legendary",
+    "tags": ["energy", "scada", "critical_infrastructure"],
+    "tier": 5,
+    "effects": {
+      "passive": []
+    }
+  },
+  {
+    "id": "automotive_manufacturer",
+    "type": "contract",
+    "clientName": "Electric Vehicle Maker",
+    "displayName": "Connected Car Security",
+    "description": "Secure IoT systems and over-the-air updates for connected vehicles.",
+    "baseBudget": 11000,
+    "baseDuration": 130,
+    "reputationReward": 26,
+    "riskLevel": "HIGH",
+    "requiredResources": [],
+    "rarity": "rare",
+    "tags": ["automotive", "iot", "connected_devices"],
+    "tier": 4,
+    "effects": {
+      "passive": []
+    }
+  },
+  {
+    "id": "telecom_provider",
+    "type": "contract",
+    "clientName": "National Telecom",
+    "displayName": "Telecommunications Security",
+    "description": "Secure network infrastructure and customer communication systems.",
+    "baseBudget": 16000,
+    "baseDuration": 140,
+    "reputationReward": 30,
+    "riskLevel": "HIGH",
+    "requiredResources": [],
+    "rarity": "rare",
+    "tags": ["telecom", "network", "communications"],
+    "tier": 4,
+    "effects": {
+      "passive": []
+    }
+  },
+  {
+    "id": "insurance_company",
+    "type": "contract",
+    "clientName": "Global Insurance Group",
+    "displayName": "Insurance Data Security",
+    "description": "Protect sensitive customer data and claims processing systems.",
+    "baseBudget": 7000,
+    "baseDuration": 85,
+    "reputationReward": 19,
+    "riskLevel": "MEDIUM",
+    "requiredResources": [],
+    "rarity": "uncommon",
+    "tags": ["insurance", "customer_data", "claims"],
+    "tier": 3,
+    "effects": {
+      "passive": []
+    }
+  },
+  {
+    "id": "logistics_company",
+    "type": "contract",
+    "clientName": "Global Shipping Corp",
+    "displayName": "Supply Chain Security",
+    "description": "Secure logistics tracking and supply chain management systems.",
+    "baseBudget": 5500,
+    "baseDuration": 70,
+    "reputationReward": 16,
+    "riskLevel": "MEDIUM",
+    "requiredResources": [],
+    "rarity": "uncommon",
+    "tags": ["logistics", "supply_chain", "tracking"],
+    "tier": 3,
+    "effects": {
+      "passive": []
+    }
+  },
+  {
+    "id": "real_estate_platform",
+    "type": "contract",
+    "clientName": "Property Management Platform",
+    "displayName": "Real Estate Data Security",
+    "description": "Protect property listings and transaction data for a real estate platform.",
+    "baseBudget": 4200,
+    "baseDuration": 55,
+    "reputationReward": 12,
+    "riskLevel": "MEDIUM",
+    "requiredResources": [],
+    "rarity": "uncommon",
+    "tags": ["real_estate", "property", "transactions"],
+    "tier": 2,
+    "effects": {
+      "passive": []
+    }
+  },
+  {
+    "id": "fitness_app",
+    "type": "contract",
+    "clientName": "Health & Fitness App",
+    "displayName": "Health Data Privacy",
+    "description": "Secure user health data and wearable device integrations.",
+    "baseBudget": 3800,
+    "baseDuration": 50,
+    "reputationReward": 11,
+    "riskLevel": "MEDIUM",
+    "requiredResources": [],
+    "rarity": "uncommon",
+    "tags": ["health", "wearables", "fitness"],
+    "tier": 2,
+    "effects": {
+      "passive": []
+    }
+  },
+  {
+    "id": "music_streaming",
+    "type": "contract",
+    "clientName": "Music Streaming Service",
+    "displayName": "Digital Rights Security",
+    "description": "Protect digital content and user streaming data.",
+    "baseBudget": 6500,
+    "baseDuration": 80,
+    "reputationReward": 17,
+    "riskLevel": "MEDIUM",
+    "requiredResources": [],
+    "rarity": "uncommon",
+    "tags": ["music", "streaming", "digital_rights"],
+    "tier": 3,
+    "effects": {
+      "passive": []
+    }
+  },
+  {
+    "id": "dating_app",
+    "type": "contract",
+    "clientName": "Dating Platform",
+    "displayName": "User Privacy & Safety",
+    "description": "Implement safety features and protect user personal information.",
+    "baseBudget": 4800,
+    "baseDuration": 65,
+    "reputationReward": 14,
+    "riskLevel": "MEDIUM",
+    "requiredResources": [],
+    "rarity": "uncommon",
+    "tags": ["dating", "privacy", "user_safety"],
+    "tier": 2,
+    "effects": {
+      "passive": []
+    }
+  },
+  {
+    "id": "food_delivery",
+    "type": "contract",
+    "clientName": "Food Delivery Network",
+    "displayName": "Delivery Platform Security",
+    "description": "Secure payment processing and delivery tracking systems.",
+    "baseBudget": 3200,
+    "baseDuration": 40,
+    "reputationReward": 9,
+    "riskLevel": "MEDIUM",
+    "requiredResources": [],
+    "rarity": "common",
+    "tags": ["food_delivery", "payments", "tracking"],
+    "tier": 2,
+    "effects": {
+      "passive": []
+    }
+  },
+  {
+    "id": "video_streaming",
+    "type": "contract",
+    "clientName": "Video Streaming Platform",
+    "displayName": "Content Delivery Security",
+    "description": "Protect streaming infrastructure and prevent content piracy.",
+    "baseBudget": 7500,
+    "baseDuration": 95,
+    "reputationReward": 21,
+    "riskLevel": "HIGH",
+    "requiredResources": [],
+    "rarity": "uncommon",
+    "tags": ["video", "streaming", "content_protection"],
+    "tier": 3,
+    "effects": {
+      "passive": []
+    }
+  },
+  {
+    "id": "ride_sharing",
+    "type": "contract",
+    "clientName": "Ride-Sharing Platform",
+    "displayName": "Transportation Security",
+    "description": "Secure driver/passenger matching and payment systems.",
+    "baseBudget": 5800,
+    "baseDuration": 75,
+    "reputationReward": 16,
+    "riskLevel": "MEDIUM",
+    "requiredResources": [],
+    "rarity": "uncommon",
+    "tags": ["transportation", "ride_sharing", "payments"],
+    "tier": 3,
+    "effects": {
+      "passive": []
+    }
+  },
+  {
+    "id": "cloud_provider",
+    "type": "contract",
+    "clientName": "Cloud Infrastructure Provider",
+    "displayName": "Cloud Security Services",
+    "description": "Implement enterprise-grade security for cloud computing platforms.",
+    "baseBudget": 30000,
+    "baseDuration": 400,
+    "reputationReward": 60,
+    "riskLevel": "CRITICAL",
+    "requiredResources": [],
+    "rarity": "legendary",
+    "tags": ["cloud", "infrastructure", "enterprise"],
+    "tier": 5,
+    "effects": {
+      "passive": []
+    }
+  },
+  {
+    "id": "satellite_operator",
+    "type": "contract",
+    "clientName": "Satellite Communications",
+    "displayName": "Satellite Network Security",
+    "description": "Secure satellite communication systems and ground stations.",
+    "baseBudget": 28000,
+    "baseDuration": 350,
+    "reputationReward": 55,
+    "riskLevel": "CRITICAL",
+    "requiredResources": [],
+    "rarity": "legendary",
+    "tags": ["satellite", "communications", "space"],
+    "tier": 5,
+    "effects": {
+      "passive": []
+    }
+  },
+  {
+    "id": "quantum_computing",
+    "type": "contract",
+    "clientName": "Quantum Research Lab",
+    "displayName": "Quantum Computing Security",
+    "description": "Protect cutting-edge quantum computing research and intellectual property.",
+    "baseBudget": 50000,
+    "baseDuration": 600,
+    "reputationReward": 100,
+    "riskLevel": "CRITICAL",
+    "requiredResources": [],
+    "rarity": "mythic",
+    "tags": ["quantum", "research", "cutting_edge"],
+    "tier": 6,
     "effects": {
       "passive": []
     }

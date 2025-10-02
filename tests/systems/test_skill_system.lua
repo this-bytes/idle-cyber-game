@@ -8,8 +8,8 @@ love = love or {}
 love.timer = love.timer or {}
 love.timer.getTime = function() return os.clock() end
 
-local SkillSystem = require("skill_system")
-local EventBus = require("event_bus")
+local SkillSystem = require("src.systems.skill_system")
+local EventBus = require("src.utils.event_bus")
 
 -- Test: Initialize skill system with default skills
 TestRunner.test("SkillSystem: Initialize with default skills", function()
@@ -46,7 +46,25 @@ end)
 -- Test: Initialize entity with skills
 TestRunner.test("SkillSystem: Initialize entity with appropriate skills", function()
     local eventBus = EventBus.new()
-    local skillSystem = SkillSystem.new(eventBus)
+    
+    -- Mock dataManager
+    local mockDataManager = {
+        getData = function(self, key)
+            if key == "skills" then
+                return {
+                    skills = {
+                        basic_analysis = {name = "Basic Analysis", maxLevel = 5},
+                        network_fundamentals = {name = "Network Fundamentals", maxLevel = 5},
+                        team_coordination = {name = "Team Coordination", maxLevel = 5}
+                    },
+                    categories = {}
+                }
+            end
+            return nil
+        end
+    }
+    
+    local skillSystem = SkillSystem.new(eventBus, mockDataManager)
     
     -- Initialize CEO
     skillSystem:initializeEntity(0, "ceo")
@@ -68,7 +86,24 @@ end)
 -- Test: XP award and skill level up
 TestRunner.test("SkillSystem: XP award and skill level up", function()
     local eventBus = EventBus.new()
-    local skillSystem = SkillSystem.new(eventBus)
+    
+    -- Mock dataManager
+    local mockDataManager = {
+        getData = function(self, key)
+            if key == "skills" then
+                return {
+                    skills = {
+                        basic_analysis = {name = "Basic Analysis", maxLevel = 5, baseXpCost = 100, xpGrowth = 1.2},
+                        network_fundamentals = {name = "Network Fundamentals", maxLevel = 5, baseXpCost = 150, xpGrowth = 1.3}
+                    },
+                    categories = {}
+                }
+            end
+            return nil
+        end
+    }
+    
+    local skillSystem = SkillSystem.new(eventBus, mockDataManager)
     
     skillSystem:initializeEntity(0, "ceo")
     
@@ -89,7 +124,24 @@ end)
 -- Test: Skill unlock prerequisites
 TestRunner.test("SkillSystem: Skill unlock prerequisites", function()
     local eventBus = EventBus.new()
-    local skillSystem = SkillSystem.new(eventBus)
+    
+    -- Mock dataManager
+    local mockDataManager = {
+        getData = function(self, key)
+            if key == "skills" then
+                return {
+                    skills = {
+                        basic_analysis = {name = "Basic Analysis", maxLevel = 5, requirements = {}},
+                        advanced_analysis = {name = "Advanced Analysis", maxLevel = 5, requirements = {basic_analysis = 3}}
+                    },
+                    categories = {}
+                }
+            end
+            return nil
+        end
+    }
+    
+    local skillSystem = SkillSystem.new(eventBus, mockDataManager)
     
     skillSystem:initializeEntity(0, "ceo")
     
@@ -109,7 +161,23 @@ end)
 -- Test: Skill effects calculation
 TestRunner.test("SkillSystem: Skill effects calculation", function()
     local eventBus = EventBus.new()
-    local skillSystem = SkillSystem.new(eventBus)
+    
+    -- Mock dataManager
+    local mockDataManager = {
+        getData = function(self, key)
+            if key == "skills" then
+                return {
+                    skills = {
+                        basic_analysis = {name = "Basic Analysis", maxLevel = 5, effects = {{stat = "efficiency", bonus = 0.05}}}
+                    },
+                    categories = {}
+                }
+            end
+            return nil
+        end
+    }
+    
+    local skillSystem = SkillSystem.new(eventBus, mockDataManager)
     
     skillSystem:initializeEntity(0, "ceo")
     
@@ -133,7 +201,23 @@ end)
 -- Test: Save and load state
 TestRunner.test("SkillSystem: Save and load state", function()
     local eventBus = EventBus.new()
-    local skillSystem = SkillSystem.new(eventBus)
+    
+    -- Mock dataManager
+    local mockDataManager = {
+        getData = function(self, key)
+            if key == "skills" then
+                return {
+                    skills = {
+                        basic_analysis = {name = "Basic Analysis", maxLevel = 5}
+                    },
+                    categories = {}
+                }
+            end
+            return nil
+        end
+    }
+    
+    local skillSystem = SkillSystem.new(eventBus, mockDataManager)
     
     skillSystem:initializeEntity(0, "ceo")
     skillSystem:awardXp(0, "basic_analysis", 150)
@@ -156,7 +240,28 @@ end)
 -- Test: Data-driven skill system
 TestRunner.test("SkillSystem: Data-driven skill definitions", function()
     local eventBus = EventBus.new()
-    local skillSystem = SkillSystem.new(eventBus)
+    
+    -- Mock dataManager
+    local mockDataManager = {
+        getData = function(self, key)
+            if key == "skills" then
+                return {
+                    skills = {
+                        basic_analysis = {name = "Basic Analysis", maxLevel = 5, category = "analysis"},
+                        network_fundamentals = {name = "Network Fundamentals", maxLevel = 5, category = "network"}
+                    },
+                    categories = {
+                        analysis = {name = "Analysis Skills"},
+                        network = {name = "Network Skills"},
+                        leadership = {name = "Leadership Skills"}
+                    }
+                }
+            end
+            return nil
+        end
+    }
+    
+    local skillSystem = SkillSystem.new(eventBus, mockDataManager)
     
     -- Test skill categories
     local categories = skillSystem:getSkillCategories()
@@ -178,7 +283,23 @@ end)
 -- Test: Extended skill effects
 TestRunner.test("SkillSystem: Extended skill effects", function()
     local eventBus = EventBus.new()
-    local skillSystem = SkillSystem.new(eventBus)
+    
+    -- Mock dataManager
+    local mockDataManager = {
+        getData = function(self, key)
+            if key == "skills" then
+                return {
+                    skills = {
+                        basic_analysis = {name = "Basic Analysis", maxLevel = 5, effects = {{stat = "IncidentSuccessRate", bonus = 0.1}}}
+                    },
+                    categories = {}
+                }
+            end
+            return nil
+        end
+    }
+    
+    local skillSystem = SkillSystem.new(eventBus, mockDataManager)
     
     skillSystem:initializeEntity(0, "ceo")
     

@@ -15,13 +15,65 @@ function UpgradeSystem.new(eventBus, dataManager)
     self.allUpgrades = (upgradeData and upgradeData.upgrades) or {}
     self.purchasedUpgrades = {}
     
+    -- Build upgrade trees and prerequisites
+    self.upgradeTrees = {}
+    self:buildUpgradeTrees()
+    
     if not self.allUpgrades or #self.allUpgrades == 0 then
         print("⚠️ WARNING: No upgrade data found. Upgrade system may not function.")
         self.allUpgrades = {}
     end
 
-    print("🔧 Upgrade system initialized with " .. #self.allUpgrades .. " upgrades.")
+    print("🔧 Upgrade system initialized with " .. #self.allUpgrades .. " upgrades in " .. #self.upgradeTrees .. " trees.")
     return self
+end
+
+function UpgradeSystem:buildUpgradeTrees()
+    -- Group upgrades by category/tree
+    local trees = {}
+    
+    for _, upgrade in ipairs(self.allUpgrades) do
+        local category = upgrade.category or "general"
+        if not trees[category] then
+            trees[category] = {}
+        end
+        table.insert(trees[category], upgrade)
+    end
+    
+    -- Sort upgrades within each tree by tier
+    for category, upgrades in pairs(trees) do
+        table.sort(upgrades, function(a, b) return (a.tier or 1) < (b.tier or 1) end)
+    end
+    
+    self.upgradeTrees = trees
+end
+
+function UpgradeSystem:getAvailableUpgrades()
+    local available = {}
+    
+    for _, upgrade in ipairs(self.allUpgrades) do
+        if not self.purchasedUpgrades[upgrade.id] and self:canPurchaseUpgrade(upgrade.id) then
+            table.insert(available, upgrade)
+        end
+    end
+    
+    return available
+end
+
+function UpgradeSystem:canPurchaseUpgrade(upgradeId)
+    local upgrade = self:getUpgradeById(upgradeId)
+    if not upgrade then return false end
+    
+    -- Check prerequisites
+    if upgrade.prerequisites then
+        for _, prereqId in ipairs(upgrade.prerequisites) do
+            if not self.purchasedUpgrades[prereqId] then
+                return false
+            end
+        end
+    end
+    
+    return true
 end
 
 function UpgradeSystem:purchaseUpgrade(upgradeId)
@@ -33,6 +85,12 @@ function UpgradeSystem:purchaseUpgrade(upgradeId)
 
     if self.purchasedUpgrades[upgradeId] then
         print("Info: Upgrade already purchased: " .. upgrade.name)
+        return false
+    end
+    
+    -- Check prerequisites
+    if not self:canPurchaseUpgrade(upgradeId) then
+        print("Error: Prerequisites not met for upgrade: " .. upgrade.name)
         return false
     end
 

@@ -8,8 +8,8 @@ love = love or {}
 love.timer = love.timer or {}
 love.timer.getTime = function() return os.clock() end
 
-local ContractSystem = require("contract_system")
-local EventBus = require("event_bus")
+local ContractSystem = require("src.systems.contract_system")
+local EventBus = require("src.utils.event_bus")
 
 -- Test contract system initialization
 TestRunner.test("ContractSystem: Initialize with basic contract", function()

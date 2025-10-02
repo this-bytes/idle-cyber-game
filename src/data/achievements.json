@@ -1,41 +1,574 @@
 {
   "achievements": {
-    "firstClick": {
-      "id": "firstClick",
-      "name": "\ud83d\uddb1\ufe0f First Click",
-      "description": "Click to earn your first Data Bit",
+    "first_contract": {
+      "id": "first_contract",
+      "name": "🛡️ First Contract",
+      "description": "Accept your first client contract",
       "requirement": {
-        "type": "clicks",
+        "type": "contracts_accepted",
         "value": 1
       },
       "reward": {
-        "type": "none"
+        "type": "money",
+        "value": 1000
       },
       "unlocked": false,
-      "hidden": false
+      "hidden": false,
+      "category": "getting_started"
     },
-    "test_achievement": {
-      "id": "test_achievement",
-      "name": "Test Achievement",
-      "description": "Updated achievement",
+    "first_threat_resolved": {
+      "id": "first_threat_resolved",
+      "name": "🛡️ Threat Neutralized",
+      "description": "Successfully resolve your first security threat",
       "requirement": {
-        "type": "test",
+        "type": "threats_resolved",
+        "value": 1
+      },
+      "reward": {
+        "type": "reputation",
+        "value": 50
+      },
+      "unlocked": false,
+      "hidden": false,
+      "category": "getting_started"
+    },
+    "first_specialist": {
+      "id": "first_specialist",
+      "name": "👥 First Hire",
+      "description": "Hire your first security specialist",
+      "requirement": {
+        "type": "specialists_hired",
+        "value": 1
+      },
+      "reward": {
+        "type": "money",
+        "value": 2000
+      },
+      "unlocked": false,
+      "hidden": false,
+      "category": "progression"
+    },
+    "millionaire": {
+      "id": "millionaire",
+      "name": "💰 Millionaire SOC",
+      "description": "Accumulate 1,000,000 credits",
+      "requirement": {
+        "type": "total_money_earned",
+        "value": 1000000
+      },
+      "reward": {
+        "type": "reputation",
+        "value": 100
+      },
+      "unlocked": false,
+      "hidden": false,
+      "category": "economic"
+    },
+    "reputation_master": {
+      "id": "reputation_master",
+      "name": "🏆 Industry Leader",
+      "description": "Reach 10,000 reputation points",
+      "requirement": {
+        "type": "reputation_earned",
+        "value": 10000
+      },
+      "reward": {
+        "type": "money",
+        "value": 50000
+      },
+      "unlocked": false,
+      "hidden": false,
+      "category": "economic"
+    },
+    "threat_hunter": {
+      "id": "threat_hunter",
+      "name": "🔍 Threat Hunter",
+      "description": "Resolve 100 security threats",
+      "requirement": {
+        "type": "threats_resolved",
+        "value": 100
+      },
+      "reward": {
+        "type": "reputation",
+        "value": 200
+      },
+      "unlocked": false,
+      "hidden": false,
+      "category": "combat"
+    },
+    "malware_expert": {
+      "id": "malware_expert",
+      "name": "🦠 Malware Expert",
+      "description": "Resolve 50 malware-related threats",
+      "requirement": {
+        "type": "threats_resolved_by_category",
+        "category": "malware",
+        "value": 50
+      },
+      "reward": {
+        "type": "money",
+        "value": 25000
+      },
+      "unlocked": false,
+      "hidden": false,
+      "category": "combat"
+    },
+    "social_engineering_defender": {
+      "id": "social_engineering_defender",
+      "name": "🎭 Social Engineering Defender",
+      "description": "Resolve 50 social engineering attacks",
+      "requirement": {
+        "type": "threats_resolved_by_category",
+        "category": "social_engineering",
+        "value": 50
+      },
+      "reward": {
+        "type": "reputation",
+        "value": 150
+      },
+      "unlocked": false,
+      "hidden": false,
+      "category": "combat"
+    },
+    "network_defender": {
+      "id": "network_defender",
+      "name": "🌐 Network Defender",
+      "description": "Resolve 50 network-based attacks",
+      "requirement": {
+        "type": "threats_resolved_by_category",
+        "category": "network_attack",
+        "value": 50
+      },
+      "reward": {
+        "type": "money",
+        "value": 30000
+      },
+      "unlocked": false,
+      "hidden": false,
+      "category": "combat"
+    },
+    "web_security_expert": {
+      "id": "web_security_expert",
+      "name": "🕸️ Web Security Expert",
+      "description": "Resolve 30 web application attacks",
+      "requirement": {
+        "type": "threats_resolved_by_category",
+        "category": "web_attack",
+        "value": 30
+      },
+      "reward": {
+        "type": "reputation",
+        "value": 125
+      },
+      "unlocked": false,
+      "hidden": false,
+      "category": "combat"
+    },
+    "apt_buster": {
+      "id": "apt_buster",
+      "name": "🎯 APT Buster",
+      "description": "Successfully resolve an Advanced Persistent Threat",
+      "requirement": {
+        "type": "threat_resolved_by_id",
+        "threat_id": "apt_campaign",
+        "value": 1
+      },
+      "reward": {
+        "type": "money",
+        "value": 100000
+      },
+      "unlocked": false,
+      "hidden": false,
+      "category": "combat"
+    },
+    "zero_day_hero": {
+      "id": "zero_day_hero",
+      "name": "⚡ Zero-Day Hero",
+      "description": "Resolve a zero-day vulnerability exploit",
+      "requirement": {
+        "type": "threat_resolved_by_id",
+        "threat_id": "zero_day_exploit",
+        "value": 1
+      },
+      "reward": {
+        "type": "reputation",
+        "value": 500
+      },
+      "unlocked": false,
+      "hidden": false,
+      "category": "combat"
+    },
+    "ransomware_savior": {
+      "id": "ransomware_savior",
+      "name": "🔒 Ransomware Savior",
+      "description": "Resolve a ransomware attack without data loss",
+      "requirement": {
+        "type": "threat_resolved_perfect",
+        "threat_id": "ransomware_detection",
+        "value": 1
+      },
+      "reward": {
+        "type": "money",
+        "value": 75000
+      },
+      "unlocked": false,
+      "hidden": false,
+      "category": "combat"
+    },
+    "contract_master": {
+      "id": "contract_master",
+      "name": "📋 Contract Master",
+      "description": "Complete 500 client contracts",
+      "requirement": {
+        "type": "contracts_completed",
+        "value": 500
+      },
+      "reward": {
+        "type": "reputation",
+        "value": 300
+      },
+      "unlocked": false,
+      "hidden": false,
+      "category": "business"
+    },
+    "enterprise_client": {
+      "id": "enterprise_client",
+      "name": "🏢 Enterprise Client",
+      "description": "Secure a Fortune 500 enterprise contract",
+      "requirement": {
+        "type": "contract_tier_completed",
+        "tier": "enterprise",
+        "value": 1
+      },
+      "reward": {
+        "type": "money",
+        "value": 50000
+      },
+      "unlocked": false,
+      "hidden": false,
+      "category": "business"
+    },
+    "government_secured": {
+      "id": "government_secured",
+      "name": "🏛️ Government Secured",
+      "description": "Complete a government security contract",
+      "requirement": {
+        "type": "contract_industry_completed",
+        "industry": "government",
+        "value": 1
+      },
+      "reward": {
+        "type": "reputation",
+        "value": 250
+      },
+      "unlocked": false,
+      "hidden": false,
+      "category": "business"
+    },
+    "healthcare_hero": {
+      "id": "healthcare_hero",
+      "name": "🏥 Healthcare Hero",
+      "description": "Protect patient data in healthcare contracts",
+      "requirement": {
+        "type": "contract_industry_completed",
+        "industry": "healthcare",
         "value": 10
       },
       "reward": {
         "type": "money",
+        "value": 40000
+      },
+      "unlocked": false,
+      "hidden": false,
+      "category": "business"
+    },
+    "finance_fortress": {
+      "id": "finance_fortress",
+      "name": "💳 Finance Fortress",
+      "description": "Secure financial institution contracts",
+      "requirement": {
+        "type": "contract_industry_completed",
+        "industry": "finance",
+        "value": 15
+      },
+      "reward": {
+        "type": "reputation",
+        "value": 200
+      },
+      "unlocked": false,
+      "hidden": false,
+      "category": "business"
+    },
+    "team_builder": {
+      "id": "team_builder",
+      "name": "👥 Team Builder",
+      "description": "Hire 10 different specialists",
+      "requirement": {
+        "type": "unique_specialists_hired",
+        "value": 10
+      },
+      "reward": {
+        "type": "money",
+        "value": 15000
+      },
+      "unlocked": false,
+      "hidden": false,
+      "category": "progression"
+    },
+    "specialist_collector": {
+      "id": "specialist_collector",
+      "name": "🎖️ Specialist Collector",
+      "description": "Hire all available specialists",
+      "requirement": {
+        "type": "unique_specialists_hired",
+        "value": 22
+      },
+      "reward": {
+        "type": "reputation",
+        "value": 400
+      },
+      "unlocked": false,
+      "hidden": false,
+      "category": "collection"
+    },
+    "upgrade_enthusiast": {
+      "id": "upgrade_enthusiast",
+      "name": "⬆️ Upgrade Enthusiast",
+      "description": "Purchase 25 different upgrades",
+      "requirement": {
+        "type": "unique_upgrades_purchased",
+        "value": 25
+      },
+      "reward": {
+        "type": "money",
+        "value": 20000
+      },
+      "unlocked": false,
+      "hidden": false,
+      "category": "progression"
+    },
+    "upgrade_master": {
+      "id": "upgrade_master",
+      "name": "⚡ Upgrade Master",
+      "description": "Purchase all available upgrades",
+      "requirement": {
+        "type": "unique_upgrades_purchased",
+        "value": 60
+      },
+      "reward": {
+        "type": "reputation",
         "value": 500
       },
-      "unlocked": true,
-      "hidden": false
+      "unlocked": false,
+      "hidden": false,
+      "category": "collection"
+    },
+    "idle_tycoon": {
+      "id": "idle_tycoon",
+      "name": "💤 Idle Tycoon",
+      "description": "Earn 100,000 credits from offline progress",
+      "requirement": {
+        "type": "offline_earnings",
+        "value": 100000
+      },
+      "reward": {
+        "type": "money",
+        "value": 25000
+      },
+      "unlocked": false,
+      "hidden": false,
+      "category": "idle"
+    },
+    "offline_legend": {
+      "id": "offline_legend",
+      "name": "🌙 Offline Legend",
+      "description": "Earn 1,000,000 credits from offline progress",
+      "requirement": {
+        "type": "offline_earnings",
+        "value": 1000000
+      },
+      "reward": {
+        "type": "reputation",
+        "value": 350
+      },
+      "unlocked": false,
+      "hidden": false,
+      "category": "idle"
+    },
+    "time_waster": {
+      "id": "time_waster",
+      "name": "⏰ Time Waster",
+      "description": "Play for 24 hours total",
+      "requirement": {
+        "type": "play_time_hours",
+        "value": 24
+      },
+      "reward": {
+        "type": "money",
+        "value": 10000
+      },
+      "unlocked": false,
+      "hidden": false,
+      "category": "time"
+    },
+    "dedicated_player": {
+      "id": "dedicated_player",
+      "name": "🎮 Dedicated Player",
+      "description": "Play for 100 hours total",
+      "requirement": {
+        "type": "play_time_hours",
+        "value": 100
+      },
+      "reward": {
+        "type": "reputation",
+        "value": 250
+      },
+      "unlocked": false,
+      "hidden": false,
+      "category": "time"
+    },
+    "perfect_defense": {
+      "id": "perfect_defense",
+      "name": "🛡️ Perfect Defense",
+      "description": "Resolve 10 threats without taking any damage",
+      "requirement": {
+        "type": "perfect_resolutions",
+        "value": 10
+      },
+      "reward": {
+        "type": "money",
+        "value": 50000
+      },
+      "unlocked": false,
+      "hidden": false,
+      "category": "special"
+    },
+    "crisis_manager": {
+      "id": "crisis_manager",
+      "name": "🚨 Crisis Manager",
+      "description": "Resolve 5 critical severity threats",
+      "requirement": {
+        "type": "threats_resolved_by_severity",
+        "severity": 9,
+        "value": 5
+      },
+      "reward": {
+        "type": "reputation",
+        "value": 300
+      },
+      "unlocked": false,
+      "hidden": false,
+      "category": "special"
+    },
+    "legendary_threat_hunter": {
+      "id": "legendary_threat_hunter",
+      "name": "👑 Legendary Threat Hunter",
+      "description": "Resolve 10 legendary rarity threats",
+      "requirement": {
+        "type": "threats_resolved_by_rarity",
+        "rarity": "legendary",
+        "value": 10
+      },
+      "reward": {
+        "type": "money",
+        "value": 200000
+      },
+      "unlocked": false,
+      "hidden": false,
+      "category": "special"
+    },
+    "mythical_champion": {
+      "id": "mythical_champion",
+      "name": "🌟 Mythical Champion",
+      "description": "Resolve a mythical rarity threat",
+      "requirement": {
+        "type": "threats_resolved_by_rarity",
+        "rarity": "mythic",
+        "value": 1
+      },
+      "reward": {
+        "type": "reputation",
+        "value": 1000
+      },
+      "unlocked": false,
+      "hidden": true,
+      "category": "special"
+    },
+    "speed_demon": {
+      "id": "speed_demon",
+      "name": "⚡ Speed Demon",
+      "description": "Resolve a threat in under 30 seconds",
+      "requirement": {
+        "type": "fastest_resolution_seconds",
+        "value": 30
+      },
+      "reward": {
+        "type": "money",
+        "value": 15000
+      },
+      "unlocked": false,
+      "hidden": false,
+      "category": "special"
+    },
+    "bulk_processor": {
+      "id": "bulk_processor",
+      "name": "📦 Bulk Processor",
+      "description": "Resolve 5 threats simultaneously",
+      "requirement": {
+        "type": "simultaneous_resolutions",
+        "value": 5
+      },
+      "reward": {
+        "type": "reputation",
+        "value": 150
+      },
+      "unlocked": false,
+      "hidden": false,
+      "category": "special"
+    },
+    "survivor": {
+      "id": "survivor",
+      "name": "🏗️ Survivor",
+      "description": "Continue playing after losing 50% of your money to a single threat",
+      "requirement": {
+        "type": "survived_major_loss",
+        "value": 1
+      },
+      "reward": {
+        "type": "money",
+        "value": 30000
+      },
+      "unlocked": false,
+      "hidden": false,
+      "category": "special"
+    },
+    "efficiency_expert": {
+      "id": "efficiency_expert",
+      "name": "⚙️ Efficiency Expert",
+      "description": "Achieve 95% threat resolution efficiency",
+      "requirement": {
+        "type": "resolution_efficiency_percent",
+        "value": 95
+      },
+      "reward": {
+        "type": "reputation",
+        "value": 200
+      },
+      "unlocked": false,
+      "hidden": false,
+      "category": "special"
     }
   },
   "categories": [
+    "getting_started",
     "progression",
     "combat",
+    "economic",
     "business",
-    "exploration",
+    "idle",
+    "time",
+    "collection",
     "special"
   ],
-  "lastUpdated": "2025-09-30T04:01:46.287277"
+  "lastUpdated": "2025-01-15T10:30:00.000Z"
 }

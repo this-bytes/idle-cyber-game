@@ -6,7 +6,7 @@ local ContractSystem = {}
 ContractSystem.__index = ContractSystem
 
 -- Create new contract system
-function ContractSystem.new(eventBus, dataManager, upgradeSystem, specialistSystem, itemRegistry, effectProcessor)
+function ContractSystem.new(eventBus, dataManager, upgradeSystem, specialistSystem, itemRegistry, effectProcessor, resourceManager)
     local self = setmetatable({}, ContractSystem)
     self.eventBus = eventBus
     self.dataManager = dataManager
@@ -17,6 +17,7 @@ function ContractSystem.new(eventBus, dataManager, upgradeSystem, specialistSyst
     -- AWESOME Backend systems
     self.itemRegistry = itemRegistry
     self.effectProcessor = effectProcessor
+    self.resourceManager = resourceManager -- Add resource manager reference
     
     self.contracts = nil -- Will be loaded during initialize
     self.availableContracts = {}
@@ -27,6 +28,11 @@ function ContractSystem.new(eventBus, dataManager, upgradeSystem, specialistSyst
     self.contractGenerationInterval = 10 -- seconds
     self.incomeTimer = 0
     self.incomeInterval = 0.1 -- Payout every 0.1 seconds
+    
+    -- Auto-accept settings for idle gameplay
+    self.autoAcceptEnabled = true -- Enable auto-accept by default for better idle experience
+    self.maxActiveContracts = 3 -- Limit concurrent contracts for balance
+    
     return self
 end
 
@@ -48,13 +54,10 @@ function ContractSystem:initialize()
         print("📜 Contract system initialized with " .. #self.contracts .. " contract types.")
     end
 
-    -- Start with one active contract to get the ball rolling
+    -- Start with one available contract to get the ball rolling
     if #self.availableContracts == 0 and #self.activeContracts == 0 then
         self:generateRandomContract()
-        if #self.availableContracts > 0 then
-            local firstAvailableId = next(self.availableContracts)
-            self:acceptContract(firstAvailableId)
-        end
+        -- Don't auto-accept - let player choose which contracts to accept
     end
 end
 
@@ -65,6 +68,16 @@ function ContractSystem:update(dt)
         self.contractGenerationTimer = 0
         if #self.availableContracts < 5 then -- Limit available contracts
             self:generateRandomContract()
+        end
+    end
+
+    -- Auto-accept contracts if enabled and capacity available
+    if self.autoAcceptEnabled and #self.activeContracts < self.maxActiveContracts then
+        for id, contract in pairs(self.availableContracts) do
+            if #self.activeContracts < self.maxActiveContracts then
+                self:acceptContract(id)
+                break -- Accept one at a time to avoid spam
+            end
         end
     end
 
@@ -88,6 +101,9 @@ function ContractSystem:update(dt)
     for _, id in ipairs(completed) do
         self:completeContract(id)
     end
+    
+    -- Update resource generation rates
+    self:updateIncomeRate()
 end
 
 function ContractSystem:generateIncome()
@@ -160,6 +176,13 @@ function ContractSystem:generateIncome()
     if totalIncome > 0 then
         self.eventBus:publish("resource_add", { money = totalIncome })
     end
+end
+
+function ContractSystem:updateIncomeRate()
+    if not self.resourceManager then return end
+    
+    local totalIncomeRate = self:getTotalIncomeRate()
+    self.resourceManager:setGenerationRate("money", totalIncomeRate)
 end
 
 function ContractSystem:getActiveEffectItems()
@@ -254,6 +277,9 @@ function ContractSystem:acceptContract(id)
         self.activeContracts[id] = contract
         self.eventBus:publish("contract_accepted", { contract = contract })
         print("Accepted contract: " .. contract.clientName .. " (Assigned: CEO)")
+        
+        -- Update income rate when contract is accepted
+        self:updateIncomeRate()
     else
         print("Error: Tried to accept non-existent contract with id: " .. tostring(id))
     end
@@ -280,6 +306,9 @@ function ContractSystem:completeContract(id)
         self.eventBus:publish("resource_change", { money = contract.reward }) -- Assuming direct resource change
         
         print("Completed contract: " .. contract.clientName .. ". Reward: " .. contract.reward .. ", XP: " .. xpAmount)
+        
+        -- Update income rate when contract is completed
+        self:updateIncomeRate()
     end
 end
 
@@ -289,6 +318,95 @@ end
 
 function ContractSystem:getActiveContracts()
     return self.activeContracts
+end
+
+function ContractSystem:getTotalIncomeRate()
+    local totalIncome = 0
+    
+    if #self.activeContracts == 0 then
+        return 0
+    end
+
+    -- Use AWESOME Backend if available
+    if self.effectProcessor and self.itemRegistry then
+        for id, contract in pairs(self.activeContracts) do
+            -- Get contract item definition
+            local contractItem = self.itemRegistry:getItem(contract.templateId or contract.id)
+            
+            if contractItem then
+                -- Build context for effect calculation
+                local context = {
+                    type = "contract",
+                    tags = contractItem.tags or {},
+                    activeItems = self:getActiveEffectItems(),
+                    soft_cap = 10.0 -- Prevent runaway growth
+                }
+                
+                -- Calculate income with all active effects
+                local baseIncome = contract.reward / contract.duration
+                local effectiveIncome = self.effectProcessor:calculateValue(
+                    baseIncome,
+                    "income_multiplier",
+                    context
+                )
+                
+                totalIncome = totalIncome + effectiveIncome
+            else
+                -- Fallback to basic calculation
+                local incomePerSecond = contract.reward / contract.duration
+                totalIncome = totalIncome + incomePerSecond
+            end
+        end
+    else
+        -- Legacy calculation
+        local incomeModifier = 1.0
+
+        -- Check for income-boosting upgrades
+        if self.upgradeSystem then
+            local purchasedUpgrades = self.upgradeSystem:getPurchasedUpgrades()
+            for _, upgrade in ipairs(purchasedUpgrades) do
+                if upgrade.effects and upgrade.effects.income_multiplier then
+                    incomeModifier = incomeModifier + (upgrade.effects.income_multiplier - 1)
+                end
+            end
+        end
+
+        -- Check for specialist efficiency bonuses
+        if self.specialistSystem then
+            local teamBonuses = self.specialistSystem:getTeamBonuses()
+            if teamBonuses and teamBonuses.efficiency then
+                incomeModifier = incomeModifier * teamBonuses.efficiency
+            end
+        end
+
+        for id, contract in pairs(self.activeContracts) do
+            local incomePerSecond = contract.reward / contract.duration
+            totalIncome = totalIncome + (incomePerSecond * incomeModifier)
+        end
+    end
+    
+    return totalIncome
+end
+
+function ContractSystem:getStats()
+    local availableCount = 0
+    for _ in pairs(self.availableContracts) do
+        availableCount = availableCount + 1
+    end
+    
+    local activeCount = 0
+    for _ in pairs(self.activeContracts) do
+        activeCount = activeCount + 1
+    end
+    
+    local completedCount = #self.completedContracts
+    
+    return {
+        availableContracts = availableCount,
+        activeContracts = activeCount,
+        completedContracts = completedCount,
+        totalIncomeRate = self:getTotalIncomeRate()
+    }
 end
 
 return ContractSystem

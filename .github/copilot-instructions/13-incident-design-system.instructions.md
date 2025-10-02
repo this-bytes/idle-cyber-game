@@ -6,7 +6,7 @@ This document defines the Incident system design based on SLA-driven contracts, 
 ## Core Design Principles
 
 ### 1. SLA-Driven Incident Generation (Contract Focus)
-**Philosophy:** More contracts = more attack surface = more crises
+**Philosophy:** More contracts = more attack surface = more incidents. Higher-tier contracts increase incident frequency and complexity.
 
 **Mechanics:**
 - Each active contract has an SLA (Service Level Agreement) defining:

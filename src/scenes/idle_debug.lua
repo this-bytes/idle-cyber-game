@@ -137,6 +137,8 @@ function IdleDebugScene:initializeDebugTracking()
 end
 
 function IdleDebugScene:updateDebugData()
+    if not self.systems then return end
+
     -- Update resource data
     if self.systems.resourceManager then
         local resources = self.systems.resourceManager.resources or {}

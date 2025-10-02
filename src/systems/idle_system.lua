@@ -303,7 +303,10 @@ end
 
 -- Helper function to get upgrade counts (with fallback for non-existent upgrades)
 function IdleSystem:getUpgradeCount(upgradeId)
-    return self.upgradeSystem.owned[upgradeId] or 0
+    if self.upgradeSystem and self.upgradeSystem.purchasedUpgrades then
+        return self.upgradeSystem.purchasedUpgrades[upgradeId] and 1 or 0
+    end
+    return 0
 end
 
 -- Apply offline progress to game state

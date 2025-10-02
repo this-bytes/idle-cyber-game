@@ -38,12 +38,7 @@ end
 
 -- Enter upgrade shop scene
 function UpgradeShop:enter(data)
-    -- Get system references
-    if data and data.systems then
-        self.resourceManager = data.systems.resourceManager
-        self.securityUpgrades = data.systems.securityUpgrades
-    end
-    
+    -- Systems are injected by SceneManager
     print("🛒 UpgradeShop: Entered security upgrade shop")
 end
 
@@ -382,37 +377,40 @@ end
 
 -- Helper methods
 function UpgradeShop:getUpgradesForCategory(category)
-    if not self.securityUpgrades then
+    if not self.systems or not self.systems.upgradeSystem then
         return {}
     end
     
-    local availableUpgrades = self.securityUpgrades:getAvailableUpgrades() or {}
-    local categoryUpgrades = {}
-    
-    for _, upgrade in ipairs(availableUpgrades) do
-        if upgrade.category == category then
-            table.insert(categoryUpgrades, upgrade)
-        end
-    end
-    
-    return categoryUpgrades
+    local upgradeTrees = self.systems.upgradeSystem.upgradeTrees or {}
+    return upgradeTrees[category] or {}
 end
 
 function UpgradeShop:canAffordUpgrade(upgrade)
-    if not self.resourceManager or not upgrade then
+    if not self.systems or not self.systems.resourceManager or not upgrade or not upgrade.cost then
         return false
     end
     
-    local money = self.resourceManager:getResource("money") or 0
-    return money >= (upgrade.cost or 0)
+    local resources = self.systems.resourceManager:getState()
+    
+    -- Check money cost
+    if upgrade.cost.money and resources.money < upgrade.cost.money then
+        return false
+    end
+    
+    -- Check reputation cost
+    if upgrade.cost.reputation and resources.reputation < upgrade.cost.reputation then
+        return false
+    end
+    
+    return true
 end
 
 function UpgradeShop:isUpgradeOwned(upgrade)
-    if not self.securityUpgrades or not upgrade then
+    if not self.systems or not self.systems.upgradeSystem or not upgrade then
         return false
     end
     
-    return self.securityUpgrades:hasUpgrade(upgrade.id)
+    return self.systems.upgradeSystem.purchasedUpgrades[upgrade.id] ~= nil
 end
 
 function UpgradeShop:purchaseSelectedUpgrade()
@@ -435,8 +433,8 @@ function UpgradeShop:purchaseSelectedUpgrade()
     end
     
     -- Purchase upgrade
-    if self.securityUpgrades and self.securityUpgrades.purchaseUpgrade then
-        local success = self.securityUpgrades:purchaseUpgrade(upgrade.id)
+    if self.systems and self.systems.upgradeSystem and self.systems.upgradeSystem.purchaseUpgrade then
+        local success = self.systems.upgradeSystem:purchaseUpgrade(upgrade.id)
         if success then
             print("🛒 UpgradeShop: Purchased upgrade - " .. upgrade.name)
             self.eventBus:publish("security_upgrade_purchased", upgrade)
