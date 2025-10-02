@@ -22,6 +22,7 @@ This modular instruction system provides comprehensive guidance for all aspects 
 - **[12-development-roadmap](.github/copilot-instructions/12-development-roadmap.instructions.md)** - Development phases
 
 **Documentation:**
+- [Game State Engine](docs/GAME_STATE_ENGINE.md) - Complete state management system
 - [Smart UI Framework Guide](docs/SMART_UI_FRAMEWORK.md) - Complete API reference
 - [Quick Reference](docs/SMART_UI_QUICK_REFERENCE.md) - Cheat sheets
 - [Debug Overlay](docs/DEBUG_OVERLAY.md) - Comprehensive game state inspector
@@ -31,6 +32,7 @@ This modular instruction system provides comprehensive guidance for all aspects 
 ### Modern Game Architecture (Current)
 Production-ready architecture implementing industry-standard SOLID design principles:
 
+- **GameStateEngine**: Comprehensive state management with auto-save and offline earnings
 - **GameLoop**: Central system orchestration with priority-based updates
 - **ResourceManager**: Unified resource handling (money, reputation, XP, mission tokens)
 - **SecurityUpgrades**: Authentic cybersecurity infrastructure with 4 categories

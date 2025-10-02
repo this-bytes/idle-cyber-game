@@ -18,6 +18,7 @@ local InputSystem = require("src.systems.input_system")
 local ClickRewardSystem = require("src.systems.click_reward_system")
 local ParticleSystem = require("src.systems.particle_system")
 local AchievementSystem = require("src.systems.achievement_system")
+local GameStateEngine = require("src.systems.game_state_engine")
 
 -- Scene Dependencies
 local MainMenu = require("src.scenes.main_menu")
@@ -56,19 +57,23 @@ function SOCGame:initialize()
     self.isInitialized = true
 
     print("🛡️ Initializing SOC Game Systems...")
-    -- 1. Create Core Systems & Data Manager
+    
+    -- 1. Create Game State Engine FIRST (manages all state)
+    self.systems.gameStateEngine = GameStateEngine.new(self.eventBus)
+    
+    -- 2. Create Core Systems & Data Manager
     self.systems.dataManager = DataManager.new(self.eventBus)
     self.systems.dataManager:loadAllData()
     
-    -- 2. Create ResourceManager
+    -- 3. Create ResourceManager
     self.systems.resourceManager = ResourceManager.new(self.eventBus)
 
-    -- 3. Create Input & Click Systems
+    -- 4. Create Input & Click Systems
     self.systems.inputSystem = InputSystem.new(self.eventBus)
     self.systems.clickRewardSystem = ClickRewardSystem.new(self.eventBus, self.systems.resourceManager, self.systems.upgradeSystem, self.systems.specialistSystem)
     self.systems.particleSystem = ParticleSystem.new(self.eventBus)
 
-    -- 4. Create other systems
+    -- 5. Create other systems
     self.systems.skillSystem = SkillSystem.new(self.eventBus, self.systems.dataManager)
     self.systems.upgradeSystem = UpgradeSystem.new(self.eventBus, self.systems.dataManager)
     self.systems.specialistSystem = SpecialistSystem.new(self.eventBus, self.systems.dataManager, self.systems.skillSystem)
@@ -78,7 +83,25 @@ function SOCGame:initialize()
     self.systems.idleSystem = IdleSystem.new(self.eventBus, self.systems.resourceManager, self.systems.threatSystem, self.systems.upgradeSystem)
     self.systems.achievementSystem = AchievementSystem.new(self.eventBus, self.systems.dataManager, self.systems.resourceManager)
 
-    -- 2. Create Scene Manager AFTER systems are created
+    -- 6. Register all systems with GameStateEngine for state management
+    self.systems.gameStateEngine:registerSystem("resourceManager", self.systems.resourceManager)
+    self.systems.gameStateEngine:registerSystem("skillSystem", self.systems.skillSystem)
+    self.systems.gameStateEngine:registerSystem("upgradeSystem", self.systems.upgradeSystem)
+    self.systems.gameStateEngine:registerSystem("specialistSystem", self.systems.specialistSystem)
+    self.systems.gameStateEngine:registerSystem("contractSystem", self.systems.contractSystem)
+    self.systems.gameStateEngine:registerSystem("threatSystem", self.systems.threatSystem)
+    self.systems.gameStateEngine:registerSystem("idleSystem", self.systems.idleSystem)
+    self.systems.gameStateEngine:registerSystem("achievementSystem", self.systems.achievementSystem)
+    
+    -- 7. Try to load saved game state
+    local saveLoaded = self.systems.gameStateEngine:loadState()
+    if saveLoaded then
+        print("📂 Loaded game state from previous session")
+    else
+        print("🎮 Starting new game (no save found)")
+    end
+
+    -- 8. Create Scene Manager AFTER systems are created
     self.sceneManager = SceneManager.new(self.eventBus, self.systems)
     
     -- Subscribe to game start events
@@ -88,14 +111,14 @@ function SOCGame:initialize()
         end
     end)
 
-    -- 3. Initialize Systems (that need it)
+    -- 9. Initialize Systems (that need it)
     self.systems.contractSystem:initialize()
     self.systems.specialistSystem:initialize()
     self.systems.eventSystem:initialize()
     self.systems.threatSystem:initialize()
     self.sceneManager:initialize()
 
-    -- 4. Register Scenes
+    -- 10. Register Scenes
     -- Use Smart Main Menu with animations and dual-mode support!
     self.sceneManager:registerScene("main_menu", MainMenu.new(self.eventBus))
     self.sceneManager:registerScene("soc_view", SOCView.new(self.eventBus))
@@ -105,15 +128,12 @@ function SOCGame:initialize()
     self.sceneManager:registerScene("admin_mode", AdminMode.new())
     self.sceneManager:registerScene("idle_debug", IdleDebugScene.new(self.eventBus))
     
-    -- 5. Start Initial Scene (Main Menu)
+    -- 11. Start Initial Scene (Main Menu)
     self.sceneManager:requestScene("main_menu")
     
-    -- 6. Initialize Debug Overlay (overlays on top of any scene)
+    -- 12. Initialize Debug Overlay (overlays on top of any scene)
     self.debugOverlay = DebugOverlay.new(self.eventBus, self.systems)
     print("🔍 Debug Overlay initialized (Toggle with F3)")
-    
-    -- 7. Load last exit time for offline earnings calculation
-    self:loadExitTime()
 
     print("✅ SOC Game Systems Initialized!")
     return true
@@ -130,6 +150,11 @@ function SOCGame:update(dt)
     -- Update debug overlay (always active when visible)
     if self.debugOverlay then
         self.debugOverlay:update(dt)
+    end
+    
+    -- Update GameStateEngine (handles auto-save and state tracking)
+    if self.systems.gameStateEngine then
+        self.systems.gameStateEngine:update(dt)
     end
     
     -- Only update game systems after game has started
@@ -210,41 +235,25 @@ function SOCGame:startGame()
     self.isGameStarted = true
     print("🚀 SOCGame: Game started!")
     
-    -- Calculate offline earnings if player was away
-    if self.lastExitTime and self.systems.idleSystem then
-        local currentTime = os.time()
-        local idleTimeSeconds = currentTime - self.lastExitTime
+    -- Calculate offline earnings using GameStateEngine
+    if self.systems.gameStateEngine then
+        local offlineProgress = self.systems.gameStateEngine:calculateOfflineEarnings()
         
-        if idleTimeSeconds > 60 then -- Only calculate if away for more than 1 minute
-            local offlineProgress = self.systems.idleSystem:calculateOfflineProgress(idleTimeSeconds)
+        if offlineProgress then
+            -- Show offline earnings notification
+            local timeAwayMinutes = math.floor(offlineProgress.idleTime / 60)
+            local timeAwayHours = math.floor(timeAwayMinutes / 60)
+            local timeAwayDisplay = timeAwayHours > 0 
+                and string.format("%dh %dm", timeAwayHours, timeAwayMinutes % 60)
+                or string.format("%dm", timeAwayMinutes)
             
-            if offlineProgress then
-                -- Apply offline earnings
-                if offlineProgress.netGain and offlineProgress.netGain > 0 then
-                    self.eventBus:publish("resource_add", { money = offlineProgress.netGain })
-                end
-                
-                -- Show offline earnings notification
-                local timeAwayMinutes = math.floor(idleTimeSeconds / 60)
-                local timeAwayHours = math.floor(timeAwayMinutes / 60)
-                local timeAwayDisplay = timeAwayHours > 0 
-                    and string.format("%dh %dm", timeAwayHours, timeAwayMinutes % 60)
-                    or string.format("%dm", timeAwayMinutes)
-                
-                print(string.format("💰 Offline Earnings: You were away for %s", timeAwayDisplay))
-                print(string.format("   Earned: $%d | Damage: $%d | Net: $%d", 
-                    offlineProgress.earnings or 0,
-                    offlineProgress.damage or 0,
-                    offlineProgress.netGain or 0))
-                
-                -- Publish notification event for UI
-                self.eventBus:publish("offline_earnings_calculated", {
-                    timeAway = timeAwayDisplay,
-                    earnings = offlineProgress.earnings or 0,
-                    damage = offlineProgress.damage or 0,
-                    netGain = offlineProgress.netGain or 0
-                })
-            end
+            print(string.format("💰 Offline Earnings: You were away for %s", timeAwayDisplay))
+            print(string.format("   Earned: $%d | Damage: $%d | Net: $%d", 
+                offlineProgress.earnings or 0,
+                offlineProgress.damage or 0,
+                offlineProgress.netGain or 0))
+            
+            -- Event already published by GameStateEngine
         end
     end
 end
@@ -304,10 +313,17 @@ function SOCGame:resize(w, h)
 end
 
 function SOCGame:shutdown()
-    print("Shutting down SOC game...")
-    -- Save exit time for offline earnings calculation
+    print("🛡️ Shutting down SOC game...")
+    
+    -- Save game state using GameStateEngine
+    if self.systems.gameStateEngine then
+        self.systems.gameStateEngine:quickSave()
+    end
+    
+    -- Legacy: Also save exit time separately for compatibility
     self:saveExitTime()
-    -- Perform any cleanup here
+    
+    print("👋 Shutdown complete")
 end
 
 -- Save the current time as exit time
