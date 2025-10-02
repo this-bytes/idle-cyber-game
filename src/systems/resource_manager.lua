@@ -286,6 +286,11 @@ function ResourceManager:getSaveData()
     }
 end
 
+-- Get state (standard method for GameStateEngine)
+function ResourceManager:getState()
+    return self:getSaveData()
+end
+
 -- Load save data
 function ResourceManager:loadSaveData(data)
     if data.resources then
@@ -307,6 +312,11 @@ function ResourceManager:loadSaveData(data)
     end
     
     print("💰 Resources loaded from save")
+end
+
+-- Load state (standard method for GameStateEngine)
+function ResourceManager:loadState(state)
+    self:loadSaveData(state)
 end
 
 return ResourceManager

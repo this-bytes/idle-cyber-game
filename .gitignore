@@ -42,6 +42,11 @@ luac.out
 # LÖVE-specific
 *.love
 
+# Game save files (generated during development/testing)
+game_state.json
+last_exit.dat
+cyberspace_tycoon_save.json
+
 # Temporary issue creation files
 /tmp/
 /temp/
