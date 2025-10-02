@@ -17,12 +17,12 @@ function DebugOverlay.new(eventBus, systems)
     -- Layout configuration
     self.layout = {
         margin = 10,
-        panelWidth = 380,
-        panelHeight = 160,
+        panelWidth = 320,
+        panelHeight = 140,
         columnSpacing = 10,
         rowSpacing = 10,
         fontSize = 10,
-        titleFontSize = 12,
+        titleFontSize = 11,
         headerHeight = 35
     }
     
@@ -36,6 +36,7 @@ function DebugOverlay.new(eventBus, systems)
         skills = {},
         idle = {},
         progression = {},
+        achievements = {},
         rng = {}
     }
     
@@ -106,6 +107,11 @@ function DebugOverlay:updateCachedData()
     -- Update progression data
     if self.systems.progressionSystem then
         self.cachedData.progression = self:getProgressionData()
+    end
+    
+    -- Update achievement data
+    if self.systems.achievementSystem then
+        self.cachedData.achievements = self:getAchievementData()
     end
     
     -- Update RNG data
@@ -233,6 +239,16 @@ function DebugOverlay:getProgressionData()
     return data
 end
 
+function DebugOverlay:getAchievementData()
+    local as = self.systems.achievementSystem
+    local data = {
+        total = self:countTable(as.achievements or {}),
+        unlocked = self:countTable(as.unlockedAchievements or {}),
+        progress = self:countTable(as.progress or {})
+    }
+    return data
+end
+
 function DebugOverlay:getRNGData()
     -- Track RNG state - Lua uses a global random seed
     local data = {
@@ -255,27 +271,30 @@ function DebugOverlay:draw()
     -- Draw header
     self:drawHeader()
     
-    -- Draw panels in a grid layout
+    -- Draw panels in a grid layout (3 columns)
     local startY = self.layout.headerHeight
     local col1X = self.layout.margin
     local col2X = col1X + self.layout.panelWidth + self.layout.columnSpacing
+    local col3X = col2X + self.layout.panelWidth + self.layout.columnSpacing
     
     local row1Y = startY + self.layout.margin
     local row2Y = row1Y + self.layout.panelHeight + self.layout.rowSpacing
     local row3Y = row2Y + self.layout.panelHeight + self.layout.rowSpacing
-    local row4Y = row3Y + self.layout.panelHeight + self.layout.rowSpacing
     
-    -- Left column
+    -- Column 1 - Core Economy
     self:drawResourcePanel(col1X, row1Y)
     self:drawContractPanel(col1X, row2Y)
     self:drawThreatPanel(col1X, row3Y)
-    self:drawIdlePanel(col1X, row4Y)
     
-    -- Right column
+    -- Column 2 - Systems
     self:drawSpecialistPanel(col2X, row1Y)
     self:drawUpgradePanel(col2X, row2Y)
     self:drawSkillPanel(col2X, row3Y)
-    self:drawProgressionPanel(col2X, row4Y)
+    
+    -- Column 3 - Meta
+    self:drawIdlePanel(col3X, row1Y)
+    self:drawProgressionPanel(col3X, row2Y)
+    self:drawAchievementPanel(col3X, row3Y)
     
     -- Draw controls footer
     self:drawFooter()
@@ -286,11 +305,11 @@ function DebugOverlay:drawHeader()
     love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), self.layout.headerHeight)
     
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.setNewFont(18)
+    love.graphics.setFont(love.graphics.newFont(18))
     love.graphics.print("🔍 DEBUG OVERLAY - GAME STATE INSPECTOR", self.layout.margin, 8)
     
     -- Show FPS and update stats
-    love.graphics.setNewFont(self.layout.fontSize)
+    love.graphics.setFont(love.graphics.newFont(self.layout.fontSize))
     local fps = love.timer and love.timer.getFPS() or 0
     local statsText = string.format("FPS: %d | Press F3 to toggle", fps)
     love.graphics.printf(statsText, 0, 12, love.graphics.getWidth() - self.layout.margin, "right")
@@ -302,7 +321,7 @@ function DebugOverlay:drawFooter()
     love.graphics.rectangle("fill", 0, y, love.graphics.getWidth(), 25)
     
     love.graphics.setColor(0.8, 0.8, 0.8, 1)
-    love.graphics.setNewFont(self.layout.fontSize)
+    love.graphics.setFont(love.graphics.newFont(self.layout.fontSize))
     love.graphics.print("Controls: F3 - Toggle Debug | ESC - Close", self.layout.margin, y + 7)
 end
 
@@ -326,11 +345,11 @@ function DebugOverlay:drawPanel(title, icon, x, y, content)
     
     -- Title text
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.setNewFont(self.layout.titleFontSize)
+    love.graphics.setFont(love.graphics.newFont(self.layout.titleFontSize))
     love.graphics.print(icon .. " " .. title, x + 8, y + 5)
     
     -- Content
-    love.graphics.setNewFont(self.layout.fontSize)
+    love.graphics.setFont(love.graphics.newFont(self.layout.fontSize))
     local contentY = y + 28
     for _, line in ipairs(content) do
         love.graphics.setColor(line.color or {1, 1, 1, 1})
@@ -438,6 +457,17 @@ function DebugOverlay:drawProgressionPanel(x, y)
     end
     
     self:drawPanel("PROGRESSION", "📊", x, y, content)
+end
+
+function DebugOverlay:drawAchievementPanel(x, y)
+    local ach = self.cachedData.achievements
+    local content = {
+        {text = string.format("Total: %d", ach.total), color = {1, 1, 1, 1}},
+        {text = string.format("Unlocked: %d", ach.unlocked), color = {0.2, 1, 0.2, 1}},
+        {text = string.format("In Progress: %d", ach.progress), color = {1, 0.8, 0.2, 1}},
+        {text = string.format("Completion: %.1f%%", ach.total > 0 and (ach.unlocked / ach.total * 100) or 0), color = {0.7, 0.7, 0.7, 1}}
+    }
+    self:drawPanel("ACHIEVEMENTS", "🏆", x, y, content)
 end
 
 function DebugOverlay:countTable(tbl)
