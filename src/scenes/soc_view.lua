@@ -659,11 +659,8 @@ function SOCView:draw()
         -- Update UI data before drawing
         self:updateUIData()
 
-        -- Draw the UI
+        -- Draw the UI (this includes toast notifications)
         self.uiManager:draw()
-
-        -- Draw toast notifications
-        self.uiManager.toastManager:draw()
 
         -- Draw notification panel on top
         self.notificationPanel:draw()

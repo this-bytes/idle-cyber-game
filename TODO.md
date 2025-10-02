@@ -20,6 +20,17 @@
 - Balanced idle progression with incident engagement
 - Player agency in business growth strategy
 
+# Player Stats
+all game stats need to save to the player. We need to handle persistance of this.
+
+# Dashboard controls for selected item. 
+when on dashboard an viewing the alert feed need to be able to select any 
+
+Game debug screen should be a complete snap shot of game and the current multipliers in place as they are Pretty much a live view of the game state.
+
+
+
+
 ### Incident System 
 - [ ] Create upgradable office starting with garage and expand, feeds into the stats of game initially then can be scene changes
 - [ ] Multiple incident scenarios with different threat types

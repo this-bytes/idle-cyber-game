@@ -1,19 +1,31 @@
 -- Incident Response Mode - Real-time Incident Management
 -- Real-time operations mode for handling security incidents
 
+local SmartUIManager = require("src.ui.smart_ui_manager")
+
 local AdminMode = {}
 AdminMode.__index = AdminMode
 
 -- Create new admin mode
-function AdminMode.new(systems)
+function AdminMode.new()
     local self = setmetatable({}, AdminMode)
-    self.systems = systems
+    self.systems = nil -- Will be injected by SceneManager
+    self.uiManager = nil -- Will be initialized in enter()
     
     -- Incident Mode state
     self.responseLog = {}
     
+    return self
+end
+
+-- Enter the admin mode scene
+function AdminMode:enter(data)
+    -- Initialize Smart UI Manager
+    self.uiManager = SmartUIManager.new(self.systems.eventBus, self.systems.resourceManager)
+    self.uiManager:initialize()
+    
     -- Subscribe to specialist level-up events
-    if self.systems.eventBus then
+    if self.systems and self.systems.eventBus then
         self.systems.eventBus:subscribe("specialist_leveled_up", function(data)
             local message = string.format("⭐ %s leveled up to Level %d!", 
                 data.specialist.name, data.newLevel)
@@ -33,8 +45,6 @@ function AdminMode.new(systems)
                 data.moneyAwarded or 0, data.reputationChange or 0, data.xpAwarded or 0))
         end)
     end
-    
-    return self
 end
 
 function AdminMode:update(dt)
@@ -57,8 +67,14 @@ function AdminMode:update(dt)
 end
 
 function AdminMode:draw()
+    if not self.uiManager then
+        -- uiManager is not ready, draw a loading message or just return
+        love.graphics.print("Loading Admin Mode...", 10, 10)
+        return
+    end
+    
     -- Get terminal theme from UI manager
-    local theme = self.systems.uiManager.theme
+    local theme = self.uiManager.theme
     
     -- Draw Incident mode header with special styling
     local contentY = theme:drawHeader("🚨 Incident RESPONSE CENTER 🚨", "Real-time Incident Management System")

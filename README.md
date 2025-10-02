@@ -53,6 +53,17 @@ lua5.3 tests/test_runner.lua  # Runs all 46 tests (42 pass, 4 legacy issues)
 ```
 
 
+### Screenshot tool behavior
+
+When running under a LÖVE runtime the project uses the engine's screenshot APIs.
+When running tests or scripts under plain Lua (CI or dev scripts) the
+`tools/screenshot_tool.lua` module falls back to writing a small PNG file into
+the current working directory so tests can assert on an actual image file
+instead of a textual placeholder. The tool also clears previously generated
+timestamped screenshots (e.g. `screenshot_YYYYMMDD_HHMMSS.png`) before each
+fallback run so tests start from a clean state.
+
+
 
 ## Development
 

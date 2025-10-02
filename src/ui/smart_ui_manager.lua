@@ -62,7 +62,43 @@ function SmartUIManager.new(eventBus, resourceManager)
         success = {0.2, 0.8, 0.3, 1.0},
         warning = {0.9, 0.7, 0.2, 1.0},
         danger = {0.9, 0.3, 0.2, 1.0},
-        border = {0.3, 0.4, 0.5, 1.0}
+        border = {0.3, 0.4, 0.5, 1.0},
+        dimmed = {0.6, 0.6, 0.6, 1.0},
+        secondary = {0.7, 0.8, 0.9, 1.0},
+        primary = {0.9, 0.9, 0.95, 1.0}
+    }
+    
+    -- Theme system for legacy compatibility
+    self.theme = {
+        getColor = function(name) return self.colors[name] or self.colors.text end,
+        drawHeader = function(title, subtitle)
+            love.graphics.setColor(self.colors.accent)
+            love.graphics.print(title, 20, 20)
+            love.graphics.setColor(self.colors.secondary)
+            love.graphics.print(subtitle or "", 20, 50)
+            love.graphics.setColor(1, 1, 1, 1)
+            return 80
+        end,
+        drawPanel = function(x, y, w, h, title)
+            -- Draw panel background
+            love.graphics.setColor(self.colors.panel)
+            love.graphics.rectangle("fill", x, y, w, h)
+            love.graphics.setColor(self.colors.border)
+            love.graphics.rectangle("line", x, y, w, h)
+            
+            -- Draw title
+            if title then
+                love.graphics.setColor(self.colors.accent)
+                love.graphics.print(title, x + 10, y + 5)
+            end
+            
+            love.graphics.setColor(1, 1, 1, 1)
+        end,
+        drawText = function(text, x, y, color)
+            love.graphics.setColor(color or self.colors.text)
+            love.graphics.print(text, x, y)
+            love.graphics.setColor(1, 1, 1, 1)
+        end
     }
     
     return self

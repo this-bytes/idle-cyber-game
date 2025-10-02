@@ -11,7 +11,7 @@ DEBUG_UI = false
 -- Usage:
 -- e.g. love . --test=contracts
 -- or love . --test=progression
-local args = {...}
+local args = arg
 if args then
     for i, v in ipairs(args) do
         if v:find("--test=") == 1 then
@@ -44,6 +44,20 @@ if args then
                 print("Unknown test: " .. testName)
                 love.event.quit()
             end
+        elseif v:find("--screenshot") == 1 then
+            -- Enable screenshot mode (automated mode that quits after capture)
+            SCREENSHOT_MODE = true
+            SCREENSHOT_READY = false
+            SCREENSHOT_AGENT = false
+            print("📸 Screenshot mode enabled from command line")
+        elseif v:find("--screenshot-agent") == 1 then
+            -- Agent-triggered screenshots: enable capturing but do NOT quit the
+            -- game afterwards. Useful for coding agents that want to inspect
+            -- UI without terminating the process.
+            SCREENSHOT_MODE = true
+            SCREENSHOT_READY = false
+            SCREENSHOT_AGENT = true
+            print("📸 Screenshot agent mode enabled from command line")
         end
     end
 end
@@ -56,6 +70,9 @@ function love.load()
     
     local font = love.graphics.newFont(12)
     love.graphics.setFont(font)
+
+    -- Debug: print command line arguments
+    print("📋 Command line args:", table.concat(arg, ", "))
 
     -- Create and initialize the main game object
     local EventBus = require("src.utils.event_bus"):new()
@@ -75,6 +92,23 @@ function love.load()
     
     if success then
         print("🚀 Game loaded successfully!")
+        -- If in screenshot mode, schedule captures after first draw to ensure
+        -- the window has been rendered. We'll capture main_menu first, then
+        -- navigate to soc_view and capture that. Agent mode controls whether
+        -- we quit after capturing.
+        if SCREENSHOT_MODE then
+            SCREENSHOT_CAPTURE_FLOW = true
+            SCREENSHOT_CAPTURED_MAIN = false
+            SCREENSHOT_CAPTURED_SOC = false
+            print("📸 Screenshot mode scheduled: will capture main_menu then soc_view")
+        end
+        -- Start the game normally; captures will be triggered from love.draw
+        if SCREENSHOT_MODE and not SCREENSHOT_AGENT then
+            -- For automated screenshot mode (non-agent) we still start the game
+            -- so the SOC view can be reached automatically.
+            game:startGame()
+            game.sceneManager:requestScene("soc_view")
+        end
     else
         print("❌❌❌ FATAL ERROR DURING INITIALIZATION ❌❌❌")
         print(err)
@@ -85,6 +119,26 @@ end
 function love.update(dt)
     if game then
         game:update(dt)
+        
+        -- Mark screenshot as ready after first update cycle
+        if SCREENSHOT_MODE and not SCREENSHOT_READY then
+            SCREENSHOT_READY = true
+            print("📸 Screenshot mode: Ready to capture after first update cycle")
+        end
+        -- If we're waiting for async screenshot file to be written, poll for it
+        if SCREENSHOT_WAITING and SCREENSHOT_PENDING_PATH then
+            if SCREENSHOT_WAIT_FRAMES and SCREENSHOT_WAIT_FRAMES > 0 then
+                SCREENSHOT_WAIT_FRAMES = SCREENSHOT_WAIT_FRAMES - 1
+            end
+            local exists = io.open(SCREENSHOT_PENDING_PATH, 'rb') ~= nil
+            if exists or (SCREENSHOT_WAIT_FRAMES and SCREENSHOT_WAIT_FRAMES <= 0) then
+                print('📸 Screenshot file presence check: ' .. tostring(exists))
+                SCREENSHOT_WAITING = false
+                SCREENSHOT_PENDING_PATH = nil
+                -- Quit now that the file exists (or we've given up waiting)
+                love.event.quit()
+            end
+        end
     end
 end
 
@@ -93,6 +147,38 @@ function love.draw()
         game:draw()
     else
         love.graphics.printf("Error during initialization. Check console.", 0, 10, love.graphics.getWidth(), "center")
+    end
+
+    -- Take screenshot if in screenshot mode and ready
+    if SCREENSHOT_MODE and SCREENSHOT_READY and game and SCREENSHOT_CAPTURE_FLOW then
+        local ScreenshotTool = require("tools.screenshot_tool")
+        local currentScene = game.sceneManager and game.sceneManager.currentSceneName or "unknown"
+
+        if not SCREENSHOT_CAPTURED_MAIN and currentScene == "main_menu" then
+            print("📸 Capturing main menu scene:", currentScene)
+            ScreenshotTool.takeScreenshotWithPrefix("dashboard_main_menu")
+            SCREENSHOT_CAPTURED_MAIN = true
+            -- After capturing main menu, ensure SOC view will be shown to capture
+            if not SCREENSHOT_AGENT then
+                -- For automated mode, request SOC view immediately.
+                game.sceneManager:requestScene("soc_view")
+            end
+            return
+        end
+
+        if SCREENSHOT_CAPTURED_MAIN and not SCREENSHOT_CAPTURED_SOC and currentScene == "soc_view" then
+            print("📸 Capturing SOC view scene:", currentScene)
+            local path = ScreenshotTool.takeScreenshotWithPrefix("dashboard_soc_view")
+            SCREENSHOT_CAPTURED_SOC = true
+            if not SCREENSHOT_AGENT then
+                -- Start waiting for the file to exist before quitting
+                SCREENSHOT_WAITING = true
+                SCREENSHOT_PENDING_PATH = path
+                SCREENSHOT_WAIT_FRAMES = 5 -- poll a few frames to allow async encode
+            end
+            return
+        end
+        -- If agent mode, we leave screenshots for inspection and do not quit.
     end
 end
 

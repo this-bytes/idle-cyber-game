@@ -98,7 +98,7 @@ function SOCGame:initialize()
     self.sceneManager:registerScene("upgrade_shop", UpgradeShop.new(self.eventBus))
     self.sceneManager:registerScene("game_over", GameOver.new(self.eventBus))
     self.sceneManager:registerScene("incident_response", IncidentResponse.new(self.eventBus))
-    self.sceneManager:registerScene("admin_mode", AdminMode.new(self.eventBus))
+    self.sceneManager:registerScene("admin_mode", AdminMode.new())
     self.sceneManager:registerScene("idle_debug", IdleDebugScene.new(self.eventBus))
     
     -- 5. Start Initial Scene (Main Menu)
