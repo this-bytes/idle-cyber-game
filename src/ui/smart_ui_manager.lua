@@ -17,6 +17,7 @@ SmartUIManager.__index = SmartUIManager
 local UI_STATES = {
     LOADING = "loading",
     SPLASH = "splash",
+    MENU = "menu",
     GAME = "game",
     PAUSED = "paused"
 }
@@ -109,6 +110,8 @@ function SmartUIManager:buildUI()
     
     if self.currentState == UI_STATES.SPLASH then
         self:buildSplashScreen(content)
+    elseif self.currentState == UI_STATES.MENU then
+        self:buildMenuUI(content)
     elseif self.currentState == UI_STATES.GAME then
         self:buildGameUI(content)
     end
@@ -143,6 +146,101 @@ function SmartUIManager:buildSplashScreen(container)
     splashPanel:addChild(instructions)
     
     container:addChild(splashPanel)
+end
+
+-- Build main menu UI
+function SmartUIManager:buildMenuUI(container)
+    -- Title panel
+    local titlePanel = Panel.new({
+        title = "🛡️ SOC Command Center",
+        cornerStyle = "cut",
+        glow = true,
+        minHeight = 120,
+        padding = {30, 30, 30, 30}
+    })
+    
+    local subtitle = Text.new({
+        text = "Cybersecurity Operations Management",
+        color = self.colors.accent,
+        align = "center",
+        fontSize = 16
+    })
+    titlePanel:addChild(subtitle)
+    
+    container:addChild(titlePanel)
+    
+    -- Menu options panel
+    local menuPanel = Panel.new({
+        title = "Operations Menu",
+        cornerStyle = "cut",
+        minHeight = 300,
+        padding = {20, 20, 20, 20}
+    })
+    
+    -- Menu items container
+    local menuItems = Box.new({
+        direction = "vertical",
+        gap = 15,
+        padding = {10, 10, 10, 10}
+    })
+    
+    -- Menu buttons
+    local menuOptions = {
+        {text = "Start SOC Operations", action = "start_game"},
+        {text = "Debug Mode", action = "debug"},
+        {text = "SOC Settings", action = "settings"},
+        {text = "Quit", action = "quit"}
+    }
+    
+    for _, option in ipairs(menuOptions) do
+        local button = Button.new({
+            text = option.text,
+            width = 300,
+            height = 40,
+            onClick = function()
+                self:handleMenuAction(option.action)
+            end
+        })
+        menuItems:addChild(button)
+    end
+    
+    menuPanel:addChild(menuItems)
+    container:addChild(menuPanel)
+    
+    -- Status panel
+    local statusPanel = Panel.new({
+        title = "System Status",
+        cornerStyle = "cut",
+        minHeight = 80,
+        padding = {15, 15, 15, 15}
+    })
+    
+    local statusText = Text.new({
+        text = "SOC Status: READY",
+        color = self.colors.success,
+        align = "center",
+        fontSize = 14
+    })
+    statusPanel:addChild(statusText)
+    
+    container:addChild(statusPanel)
+end
+
+-- Handle menu actions
+function SmartUIManager:handleMenuAction(action)
+    if action == "start_game" then
+        if self.eventBus then
+            self.eventBus:publish("scene_request", {scene = "soc_view"})
+        end
+    elseif action == "debug" then
+        if self.eventBus then
+            self.eventBus:publish("request_scene_change", {scene = "idle_debug"})
+        end
+    elseif action == "settings" then
+        print("⚙️ Settings menu not yet implemented")
+    elseif action == "quit" then
+        love.event.quit()
+    end
 end
 
 -- Build game UI
@@ -372,6 +470,12 @@ function SmartUIManager:mousepressed(x, y, button)
     end
     
     return false
+end
+
+-- Handle keyboard events (stub for now)
+function SmartUIManager:keypressed(key)
+    -- TODO: Implement keyboard navigation for UI components
+    -- For now, this is a stub to prevent errors
 end
 
 function SmartUIManager:mousereleased(x, y, button)

@@ -610,6 +610,20 @@ function SOCView:showOfflineEarnings(data)
     print("💰 SOCView: Displayed offline earnings notification")
 end
 
+-- Show achievement notification
+function SOCView:showAchievementNotification(achievement)
+    if not achievement or not self.notificationPanel then return end
+    
+    local message = string.format(
+        "🏆 Achievement Unlocked: %s\\n%s",
+        achievement.name or "Unknown",
+        achievement.description or ""
+    )
+    
+    self.notificationPanel:addNotification(message, "SUCCESS")
+    print("🏆 SOCView: Displayed achievement notification: " .. (achievement.name or "Unknown"))
+end
+
 -- Update SOC view
 function SOCView:update(dt)
     -- Update UI components
