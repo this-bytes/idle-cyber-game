@@ -13,6 +13,7 @@ function MainMenu.new(eventBus)
     self.eventBus = eventBus
     self.menuItems = {
         {text = "Start SOC Operations", action = "start_game"},
+        {text = "Debug", action = "debug"},
         {text = "Load Previous SOC", action = "load_game"},
         {text = "SOC Settings", action = "settings"},
         {text = "Quit", action = "quit"}
@@ -20,7 +21,7 @@ function MainMenu.new(eventBus)
     self.selectedItem = 1
     
     -- Visual elements
-    self.titleText = "🛡️ SOC Command Center"
+    self.titleText = "SOC Command Center"
     self.subtitleText = "Cybersecurity Operations Management"
     
     print("🏠 MainMenu: Initialized SOC main menu")
@@ -156,6 +157,12 @@ function MainMenu:activateMenuItem(itemIndex)
             self.eventBus:publish("scene_request", {scene = "soc_view"})
         else
             print("load_game_request + scene_request: eventBus missing")
+        end
+    elseif item.action == "debug" then
+        if self.eventBus then
+            self.eventBus:publish("request_scene_change", {scene = "idle_debug"})
+        else
+            print("request_scene_change: idle_debug (eventBus missing)")
         end
     elseif item.action == "settings" then
         -- TODO: Implement settings scene

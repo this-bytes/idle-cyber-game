@@ -118,6 +118,11 @@
             "type": "threat_reduction",
             "value": 0.15,
             "target": "network"
+          },
+          {
+            "type": "click_multiplier",
+            "value": 1.25,
+            "target": "all"
           }
         ]
       }
@@ -150,6 +155,11 @@
             "type": "income_multiplier",
             "value": 1.15,
             "target": "startup"
+          },
+          {
+            "type": "click_multiplier",
+            "value": 1.35,
+            "target": "all"
           }
         ]
       }

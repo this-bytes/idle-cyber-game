@@ -137,6 +137,72 @@
                     }
                 ]
             }
+        },
+        {
+            "id": "upgrade_click_001",
+            "type": "upgrade",
+            "name": "Click Training Program",
+            "displayName": "Click Training Program",
+            "description": "Trains SOC staff in efficient manual response techniques. Increases click income by 50%.",
+            "cost": {
+                "money": 100
+            },
+            "rarity": "common",
+            "tier": 1,
+            "tags": ["training", "manual_response", "click_income"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "click_multiplier",
+                        "value": 1.50,
+                        "target": "all"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "upgrade_click_002",
+            "type": "upgrade",
+            "name": "Ergonomic Mouse Setup",
+            "displayName": "Ergonomic Mouse Setup",
+            "description": "Professional gaming-grade mouse and wrist support. Increases click income by 100%.",
+            "cost": {
+                "money": 500
+            },
+            "rarity": "uncommon",
+            "tier": 2,
+            "tags": ["ergonomics", "equipment", "click_income"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "click_multiplier",
+                        "value": 2.00,
+                        "target": "all"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "upgrade_click_003",
+            "type": "upgrade",
+            "name": "Automated Click Assistant",
+            "displayName": "Automated Click Assistant",
+            "description": "AI-powered click automation software. Increases click income by 300%.",
+            "cost": {
+                "money": 2500
+            },
+            "rarity": "rare",
+            "tier": 3,
+            "tags": ["automation", "ai", "click_income"],
+            "effects": {
+                "passive": [
+                    {
+                        "type": "click_multiplier",
+                        "value": 4.00,
+                        "target": "all"
+                    }
+                ]
+            }
         }
     ]
 }

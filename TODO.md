@@ -1,54 +1,33 @@
 # Idle Sec Ops - Development TODO
+## Development Notes
 
-## Completed ✅
-- [x] Resource system refactor (Money, Reputation, XP, Mission Tokens)
-- [x] Contract system implementation with client tiers
-- [x] Specialist system with team management
-- [x] incident Mode foundation with sample scenario
-- [x] UI refactor to Idle Sec Ops theme
-- [x] Test suite with 46 tests (42 passing, 4 legacy issues)
-- [x] Save/load integration for all systems
-- [x] **Fortress Architecture Implementation (PR #37)**
-  - [x] GameLoop - Central system orchestration with priority-based updates
-  - [x] ResourceManager - Unified resource handling with event-driven updates
-  - [x] SecurityUpgrades - Realistic cybersecurity infrastructure system
-  - [x] ThreatSimulation - Authentic cyber threat engine with 8 threat types
-  - [x] UIManager - Modern reactive UI system with cybersecurity theming
-  - [x] FortressGame - Integrated controller replacing monolithic game.lua
-  - [x] fortress_main.lua - Modern LÖVE 2D entry point
-  - [x] 12 comprehensive fortress architecture tests
-  - [x] 100% backward compatibility with legacy systems
-  - [x] Performance monitoring and real-time metrics
-  - [x] Industry-standard SOLID design principles
-- [x] **AWESOME Backend Architecture Implementation** 🚀
-  - [x] ItemRegistry - Universal item loading and validation (35 items loaded)
-  - [x] EffectProcessor - Cross-system effect calculations with 9 effect types
-  - [x] FormulaEngine - Safe data-driven formula evaluation (6/6 tests passing)
-  - [x] ProcGen - Procedural content generation from templates
-  - [x] SynergyDetector - Automatic synergy detection (8 synergies defined)
-  - [x] AnalyticsCollector - Privacy-respecting game analytics
-  - [x] Universal item schema migration (contracts, specialists, upgrades, threats)
-  - [x] ContractSystem integration with ItemRegistry and EffectProcessor
-  - [x] Comprehensive test suite (7/7 AWESOME backend tests passing)
-  - [x] Legacy Python backend removal (app.py, game_data.py deprecated)
-  - [x] Documentation updates (ARCHITECTURE.md, backend/DEPRECATED.md)
+### Current Architecture Strengths
+- Event-driven system communication
+- Modular system design
+- Comprehensive test coverage
+- Data-driven approach for flexibility
 
-## Phase 2: Core Systems Expansion
+### Areas for Improvement
+- engaging game - go from want to play to need to play
+- incident scenarios should be data-driven
+- UI needs component-based architecture
+- Resource management could be more sophisticated
+- Performance monitoring for complex simulations
 
-### Incident System (HIGH PRIORITY)
-- [x] Fortress ThreatSimulation with 8 authentic threat types
-- [x] Severity-based damage calculations with defense effectiveness
-- [x] Real-time threat mitigation progress tracking
-- [ ] Create upgradable office starting with garage and expand
+### Design Philosophy
+- Maintain cybersecurity SOC theme authenticity althought the content can be tongue in check puns etc
+- COre idle engine needs to be robust to allow for multiplcation through stat/skill tree and other scable factors
+- Balanced idle progression with incident engagement
+- Player agency in business growth strategy
+
+### Incident System 
+- [ ] Create upgradable office starting with garage and expand, feeds into the stats of game initially then can be scene changes
 - [ ] Multiple incident scenarios with different threat types
-- [ ] Dynamic incident generation based on active contracts
-- [ ] Specialist abilities integration with incident responses
+- [ ] Dynamic incident generation based on active contracts, use some sort of rng engine to determine stats. Need a word list to use to generate random names etc
+- [ ] Specialist system with upgrade, cooldowns etc
 - [ ] incident outcome affects client reputation and contract renewals
 
 ### Facility & Upgrade System 
-- [x] Fortress SecurityUpgrades system with 4 categories (Infrastructure, Tools, Personnel, Research)
-- [x] Authentic cybersecurity upgrade catalog with cost scaling
-- [x] Threat reduction calculations based on actual security implementations
 - [ ] Office facility expansion (garage → office → enterprise progression)
 - [ ] Physical facility upgrades affecting capacity and bonuses
 - [ ] Upgrade trees tied to company growth phases
@@ -66,7 +45,6 @@
 - [ ] Faction-specific contract types and threats
 - [ ] Faction bonuses and penalties
 
-## Phase 3: Polish & Balance
 
 ### UI/UX Improvements
 - [ ] Better contract selection interface (scrollable list, filters)
@@ -84,10 +62,10 @@
 ### Achievement System
 - [ ] Business milestones (first $100K revenue, 10 specialists, etc.)
 - [ ] incident response achievements
+- [ ] Dynamic generation
 - [ ] Client relationship achievements
 - [ ] Specialist training achievements
 
-## Phase 4: Advanced Features
 
 ### Automation & QoL
 - [ ] Auto-accept contracts based on criteria
@@ -100,11 +78,6 @@
 - [ ] Prestige bonuses for new game plus
 - [ ] Legacy reputation affecting new company starts
 
-### Multiplayer Concepts (Future)
-- [ ] Industry rankings/leaderboards
-- [ ] Contract market (compete for premium clients)
-- [ ] Specialist sharing/trading
-- [ ] Collaborative incident response
 
 ## Technical Debt & Cleanup
 
@@ -115,86 +88,19 @@
 - [ ] Performance optimization for large specialist teams
 
 ### Legacy System Removal
-- [x] Fortress architecture provides modern alternative to legacy systems
-- [x] Maintained backward compatibility for existing save files  
-- [x] **AWESOME Backend replaces hardcoded item systems** 
-- [x] **Legacy Python backend removed** (app.py, game_data.py, test_api.py)
-- [x] **Universal item schema** replaces separate item definitions
-- [x] **Effect-based calculations** replace manual multiplier code
 - [ ] Remove DataBits, ProcessingPower, SecurityRating resources (replaced by fortress ResourceManager)
 - [ ] Remove zone system (replace with office/facility system) - fortress provides foundation
 - [ ] Remove old upgrade definitions (replaced by fortress SecurityUpgrades)
 - [ ] Clean up unused code paths
 
 ### Testing Expansion
-- [x] Fortress architecture tests (12/12 passing)
-- [x] Integration tests validating fortress-legacy compatibility
-- [x] Performance benchmarking and metrics validation
-- [x] Mock LÖVE 2D environment for headless testing
-- [x] **AWESOME Backend tests (7/7 passing)**
-  - [x] FormulaEngine (6/6 formula tests)
-  - [x] ItemRegistry (35 items loaded)
-  - [x] EffectProcessor (effect calculations)
-  - [x] ProcGen (procedural generation)
-  - [x] SynergyDetector (synergy detection)
+- [ ] Need to be able to test game engine directly with out waiting for time to pass.
 - [ ] incident system tests
 - [ ] UI interaction tests
 - [ ] Save/load validation tests
 - [ ] Performance benchmarks
 
 ## Documentation
-- [x] **Fortress Architecture Documentation (This PR)**
-  - [x] Updated ARCHITECTURE.md with comprehensive fortress architecture docs
-  - [x] Updated technical architecture instruction file with fortress patterns
-  - [x] Documented fortress entry points and system integration
-  - [x] Updated TODO.md to reflect completed fortress implementation
 - [ ] Player manual for game mechanics
 - [ ] Developer API documentation
-- [ ] Modding guide for custom scenarios
 - [ ] Balance spreadsheet with formulas
-
----
-
-## Development Notes
-
-### Current Architecture Strengths
-- Event-driven system communication
-- Modular system design
-- Comprehensive test coverage
-- Data-driven approach for flexibility
-
-### Areas for Improvement
-- incident scenarios should be data-driven
-- UI needs component-based architecture
-- Resource management could be more sophisticated
-- Performance monitoring for complex simulations
-
-### Design Philosophy
-- Maintain cybersecurity theme authenticity
-- Progressive complexity (garage to global enterprise)
-- Balanced idle progression with incident engagement
-- Player agency in business growth strategy
-
----
-
-## Recent work & next tasks
-
-### Recent (completed)
-- [x] **Fortress Architecture Implementation (PR #37)** — Complete architectural overhaul
-  - [x] GameLoop with priority-based system orchestration
-  - [x] ResourceManager with unified resource handling  
-  - [x] SecurityUpgrades with realistic cybersecurity infrastructure
-  - [x] ThreatSimulation with 8 authentic threat types
-  - [x] UIManager with modern reactive UI system
-  - [x] FortressGame controller replacing monolithic game.lua
-  - [x] 100% backward compatibility with legacy systems
-- [x] Centralized contract template registry (`src/data/contracts.lua`) — templates and instantiate API
-- [x] Wired contract registry into `ContractSystem` so contract generation uses templates
-- [x] **Documentation Updates for Fortress Refactor** — Proper documentation of architectural changes
-
-### Next (short-term)
-- [ ] Use template `unlockRequirement` in `ContractSystem:generateRandomContract` to gate higher-tier templates by reputation/mission tokens
-- [ ] Add JSON/YAML loader to `src/data/contracts` so designers can add templates as data files (data/contracts/*.json)
-- [ ] Add unit tests for template instantiation, overrides, and registration
-- [ ] Leverage fortress ThreatSimulation for dynamic incident generation based on active contracts
-- [ ] Integrate fortress SecurityUpgrades with contract difficulty and threat mitigation

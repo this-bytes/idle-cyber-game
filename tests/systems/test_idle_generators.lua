@@ -54,7 +54,6 @@ end
 runTest("IdleGenerators: Initialize system", function()
     local eventBus = EventBus.new()
     local resourceManager = ResourceManager.new(eventBus)
-    resourceManager:initialize()
     
     local idleGenerators = IdleGenerators.new(eventBus, resourceManager)
     local success = idleGenerators:initialize()

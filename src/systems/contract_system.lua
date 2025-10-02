@@ -202,21 +202,31 @@ function ContractSystem:getActiveEffectItems()
 end
 
 function ContractSystem:generateRandomContract()
-    if not self.contracts or #self.contracts == 0 then return end
-
-    local contractTemplate = self.contracts[math.random(#self.contracts)]
+    if not self.contracts or #self.contracts == 0 then
+        print("❌ No contract templates available")
+        return
+    end
+    
+    -- Select random contract template
+    local template = self.contracts[math.random(#self.contracts)]
+    
+    -- Create contract instance
     local newContract = {
         id = self.nextContractId,
-        clientName = contractTemplate.clientName,
-        description = contractTemplate.description,
-        reward = contractTemplate.baseBudget, -- Use baseBudget for reward
-        risk = contractTemplate.riskLevel, -- Use riskLevel for risk
-        duration = contractTemplate.baseDuration, -- Use baseDuration for duration
-        remainingTime = contractTemplate.baseDuration
+        clientName = template.clientName or "Unknown Client",
+        displayName = template.displayName or template.name or "Contract",
+        description = template.description or "No description",
+        baseBudget = template.baseBudget or 1000,
+        baseDuration = template.baseDuration or 60,
+        reputationReward = template.reputationReward or 1,
+        riskLevel = template.riskLevel or "LOW",
+        requiredResources = template.requiredResources or {},
+        rarity = template.rarity or "common",
+        tags = template.tags or {},
+        tier = template.tier or 1,
+        effects = template.effects or {}
     }
-    -- DEBUG LOG: Check created contract
-    -- print(string.format("DEBUG: Generated contract with Reward: %s, Duration: %s", tostring(newContract.reward), tostring(newContract.duration)))
-
+    
     self.availableContracts[self.nextContractId] = newContract
     self.nextContractId = self.nextContractId + 1
 
@@ -227,16 +237,19 @@ end
 function ContractSystem:acceptContract(id)
     local contract = self.availableContracts[id]
     if contract then
-        -- Ensure reward and duration are numbers before proceeding
-        if type(contract.reward) ~= "number" or type(contract.duration) ~= "number" or contract.duration <= 0 then
-            print(string.format("Error: Invalid contract data for %s. Reward: %s, Duration: %s", 
-                contract.clientName, tostring(contract.reward), tostring(contract.duration)))
+        -- Ensure baseBudget and baseDuration are numbers before proceeding
+        if type(contract.baseBudget) ~= "number" or type(contract.baseDuration) ~= "number" or contract.baseDuration <= 0 then
+            print(string.format("Error: Invalid contract data for %s. Budget: %s, Duration: %s", 
+                contract.clientName, tostring(contract.baseBudget), tostring(contract.baseDuration)))
             return
         end
         self.availableContracts[id] = nil
         
         -- Assign specialists (auto-assign CEO for now)
         contract.assignedSpecialists = {0} -- ID 0 is the CEO
+        contract.reward = contract.baseBudget -- Set reward for income calculation
+        contract.duration = contract.baseDuration -- Set duration for income calculation
+        contract.remainingTime = contract.baseDuration
 
         self.activeContracts[id] = contract
         self.eventBus:publish("contract_accepted", { contract = contract })

@@ -119,6 +119,20 @@ function ParticleSystem:subscribeToEvents()
         end
     end)
     
+    -- Click reward effects (Phase 2)
+    self.eventBus:subscribe("click_reward_earned", function(data)
+        if data.amount > 0 then
+            -- Use position from click data, default to money counter area
+            local x = data.position and data.position.x or 150
+            local y = data.position and data.position.y or 100
+            
+            self:emitParticles("money_gain", x, y, {
+                count = math.min(math.floor(data.amount / 10) + 1, 5),
+                text = "$" .. data.amount
+            })
+        end
+    end)
+    
     -- Achievement effects
     self.eventBus:subscribe("achievement_unlocked", function(data)
         local w, h = 800, 600 -- Default dimensions

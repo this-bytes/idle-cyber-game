@@ -41,6 +41,11 @@ function SOCView.new(eventBus)
         {name = "Skills", key = "skills"}
     }
 
+    -- Keyboard Navigation State (Phase 2)
+    self.focusedElement = nil
+    self.focusableElements = {}
+    self.focusIndex = 1
+
     -- Game Logic State
     self.socStatus = {
         alertLevel = "GREEN",
@@ -84,6 +89,13 @@ function SOCView.new(eventBus)
         self.eventBus:subscribe("contract_completed", function() self:updateData() end)
         self.eventBus:subscribe("specialist_hired", function() self:updateData() end)
         self.eventBus:subscribe("upgrade_purchased", function() self:updateData() end)
+
+        -- Phase 2: Manual income events
+        self.eventBus:subscribe("input_action_manual_income", function(event)
+            -- The ClickRewardSystem handles the actual reward processing
+            -- We just need to provide visual feedback here if needed
+            print("🎮 SOCView: Manual income action triggered from " .. (event.source or "unknown"))
+        end)
     end
 
     -- Initial data fetch is now done in :enter()
@@ -102,6 +114,9 @@ function SOCView:enter(data)
     -- Refresh data every time the scene is entered
     self:updateData()
     self:updateSOCCapabilities()
+
+    -- Register focusable elements for keyboard navigation (Phase 2)
+    self:registerFocusableElements()
 end
 
 -- Exit SOC view scene
@@ -123,6 +138,94 @@ function SOCView:updateData()
     end
     if self.systems.upgradeSystem then
         self.upgrades = self.systems.upgradeSystem:getPurchasedUpgrades()
+    end
+end
+
+-- Register focusable elements for keyboard navigation (Phase 2)
+function SOCView:registerFocusableElements()
+    self.focusableElements = {
+        {
+            id = "money_counter",
+            bounds = {x = 20, y = 80, width = 280, height = 40},
+            action = "manual_income"
+        },
+        {
+            id = "manual_income_button",
+            bounds = {x = 320, y = 80, width = 120, height = 40},
+            action = "manual_income"
+        }
+    }
+
+    -- Set initial focus
+    self.focusedElement = self.focusableElements[1]
+end
+
+-- Handle keyboard input for navigation (Phase 2)
+function SOCView:keypressed(key, scancode, isrepeat)
+    if isrepeat then return end
+
+    -- Number keys for panel selection (1-7)
+    local panelNumber = tonumber(key)
+    if panelNumber and panelNumber >= 1 and panelNumber <= #self.panels then
+        self.selectedPanel = panelNumber
+        return
+    end
+
+    -- TAB for focus navigation
+    if key == "tab" then
+        self:navigateFocus(love.keyboard.isDown("lshift") and "prev" or "next")
+        return
+    end
+
+    -- Arrow keys for panel navigation
+    if key == "up" then
+        self.selectedPanel = self.selectedPanel - 1
+        if self.selectedPanel < 1 then self.selectedPanel = #self.panels end
+    elseif key == "down" then
+        self.selectedPanel = self.selectedPanel + 1
+        if self.selectedPanel > #self.panels then self.selectedPanel = 1 end
+    elseif key == "return" or key == "kpenter" then
+        -- Activate focused element
+        if self.focusedElement then
+            self:activateFocusedElement()
+        end
+    end
+end
+
+-- Navigate focus between elements
+function SOCView:navigateFocus(direction)
+    if #self.focusableElements == 0 then return end
+
+    local currentIndex = 1
+    for i, element in ipairs(self.focusableElements) do
+        if element == self.focusedElement then
+            currentIndex = i
+            break
+        end
+    end
+
+    if direction == "next" then
+        currentIndex = currentIndex % #self.focusableElements + 1
+    elseif direction == "prev" then
+        currentIndex = currentIndex - 1
+        if currentIndex < 1 then currentIndex = #self.focusableElements end
+    end
+
+    self.focusedElement = self.focusableElements[currentIndex]
+end
+
+-- Activate the currently focused element
+function SOCView:activateFocusedElement()
+    if not self.focusedElement then return end
+
+    if self.focusedElement.action == "manual_income" then
+        -- Trigger manual income through event bus
+        if self.eventBus then
+            self.eventBus:publish("input_action_manual_income", {
+                source = "keyboard_activation",
+                data = {}
+            })
+        end
     end
 end
 
@@ -181,12 +284,27 @@ function SOCView:update(dt)
 end
 
 function SOCView:draw()
+    -- Apply screen shake effect (Phase 2)
+    local shakeX, shakeY = 0, 0
+    if self.systems.clickRewardSystem and self.systems.clickRewardSystem.getScreenShakeOffset then
+        shakeX, shakeY = self.systems.clickRewardSystem:getScreenShakeOffset()
+    end
+    
+    love.graphics.push()
+    love.graphics.translate(shakeX, shakeY)
+    
     love.graphics.setBackgroundColor(0.1, 0.1, 0.12)
     love.graphics.clear()
     love.graphics.setColor(1, 1, 1)
 
-    -- Draw Header
+    -- Draw Header with Money Counter (CLICKABLE!)
     love.graphics.printf("SOC Command Center - Alert Level: " .. self.socStatus.alertLevel, 0, 10, love.graphics.getWidth(), "center")
+
+    -- Draw Money Counter (Phase 2 - Clickable!)
+    self:drawMoneyCounter()
+
+    -- Draw Manual Income Button (Phase 2)
+    self:drawManualIncomeButton()
 
     -- Draw Sidebar with panel options
     local y = 50
@@ -211,9 +329,143 @@ function SOCView:draw()
     
     -- Draw current event at the bottom of the screen
     self:drawEventDisplay()
+
+    -- Draw keyboard navigation hints (Phase 2)
+    self:drawKeyboardHints()
     
     -- Draw notification panel on top of everything
     self.notificationPanel:draw()
+    
+    -- Draw ripple effects on top of everything (Phase 2)
+    if self.systems.clickRewardSystem and self.systems.clickRewardSystem.drawRipples then
+        self.systems.clickRewardSystem:drawRipples()
+    end
+    
+    love.graphics.pop() -- End screen shake transform
+end
+
+-- Draw clickable money counter (Phase 2)
+function SOCView:drawMoneyCounter()
+    local moneyX, moneyY = 20, 80
+    local moneyWidth, moneyHeight = 280, 40
+
+    -- Check if this element is focused
+    local isFocused = self.focusedElement and self.focusedElement.id == "money_counter"
+
+    -- Draw focus indicator if focused
+    if isFocused then
+        love.graphics.setColor(1, 1, 0, 0.8) -- Yellow focus ring
+        love.graphics.rectangle("line", moneyX - 3, moneyY - 3, moneyWidth + 6, moneyHeight + 6)
+        love.graphics.setColor(1, 1, 0, 0.2) -- Yellow background tint
+        love.graphics.rectangle("fill", moneyX, moneyY, moneyWidth, moneyHeight)
+    end
+
+    -- Draw background rectangle (clickable area)
+    love.graphics.setColor(0.2, 0.3, 0.4, 0.8)
+    love.graphics.rectangle("fill", moneyX, moneyY, moneyWidth, moneyHeight)
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.rectangle("line", moneyX, moneyY, moneyWidth, moneyHeight)
+
+    -- Draw money text
+    local money = self.resources.money or 0
+    local income = self.resources.income or 0
+    local moneyText = string.format("$%s (+$%s/sec)", self:formatNumber(money), self:formatNumber(income))
+
+    love.graphics.setColor(1, 1, 0) -- Gold color for money
+    love.graphics.printf(moneyText, moneyX, moneyY + 10, moneyWidth, "center")
+    love.graphics.setColor(1, 1, 1)
+
+    -- Draw click hint
+    love.graphics.setColor(0.7, 0.7, 0.7)
+    love.graphics.setFont(love.graphics.newFont(12))
+    local hintText = "Click or press SPACE/M"
+    if isFocused and self.systems.clickRewardSystem and self.systems.clickRewardSystem.getCurrentClickValue then
+        local clickValue = self.systems.clickRewardSystem:getCurrentClickValue()
+        hintText = string.format("Click: +$%s | SPACE/M", self:formatNumber(clickValue))
+    end
+    love.graphics.printf(hintText, moneyX, moneyY + 25, moneyWidth, "center")
+    love.graphics.setFont(love.graphics.newFont()) -- Reset to default
+    love.graphics.setColor(1, 1, 1)
+end
+
+-- Draw manual income button (Phase 2)
+function SOCView:drawManualIncomeButton()
+    local buttonX, buttonY = 320, 80
+    local buttonWidth, buttonHeight = 120, 40
+
+    -- Store button bounds for click detection
+    self.manualIncomeButtonBounds = {
+        x = buttonX,
+        y = buttonY,
+        width = buttonWidth,
+        height = buttonHeight
+    }
+
+    -- Check if this element is focused
+    local isFocused = self.focusedElement and self.focusedElement.id == "manual_income_button"
+
+    -- Button colors based on state
+    local isHovered = self:isMouseOverButton(buttonX, buttonY, buttonWidth, buttonHeight)
+    local bgColor, textColor
+
+    if isFocused then
+        bgColor = {0.8, 0.8, 0.2, 0.9} -- Yellow focus
+        textColor = {0, 0, 0}
+    elseif isHovered then
+        bgColor = {0.4, 0.6, 0.8, 0.9} -- Light blue hover
+        textColor = {1, 1, 1}
+    else
+        bgColor = {0.3, 0.5, 0.7, 0.8} -- Blue normal
+        textColor = {1, 1, 1}
+    end
+
+    -- Draw focus indicator if focused
+    if isFocused then
+        love.graphics.setColor(1, 1, 0, 0.8) -- Yellow focus ring
+        love.graphics.rectangle("line", buttonX - 3, buttonY - 3, buttonWidth + 6, buttonHeight + 6)
+    end
+
+    -- Draw button background
+    love.graphics.setColor(unpack(bgColor))
+    love.graphics.rectangle("fill", buttonX, buttonY, buttonWidth, buttonHeight)
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.rectangle("line", buttonX, buttonY, buttonWidth, buttonHeight)
+
+    -- Draw button text
+    love.graphics.setColor(unpack(textColor))
+    local clickValue = "$1"
+    if self.systems.clickRewardSystem and self.systems.clickRewardSystem.getCurrentClickValue then
+        local value = self.systems.clickRewardSystem:getCurrentClickValue()
+        clickValue = self:formatNumber(value)
+    end
+    love.graphics.printf("+" .. clickValue, buttonX, buttonY + 8, buttonWidth, "center")
+
+    -- Draw keybind hint
+    love.graphics.setColor(0.8, 0.8, 0.8)
+    love.graphics.setFont(love.graphics.newFont(10))
+    love.graphics.printf("[SPACE]", buttonX, buttonY + 22, buttonWidth, "center")
+    love.graphics.setFont(love.graphics.newFont()) -- Reset font
+    love.graphics.setColor(1, 1, 1)
+end
+
+-- Check if mouse is over a button
+function SOCView:isMouseOverButton(x, y, width, height)
+    if not love.mouse then return false end
+    local mouseX, mouseY = love.mouse.getPosition()
+    return mouseX >= x and mouseX <= x + width and mouseY >= y and mouseY <= y + height
+end
+
+-- Format large numbers
+function SOCView:formatNumber(num)
+    if num >= 1000000000 then
+        return string.format("%.1fB", num / 1000000000)
+    elseif num >= 1000000 then
+        return string.format("%.1fM", num / 1000000)
+    elseif num >= 1000 then
+        return string.format("%.1fK", num / 1000)
+    else
+        return tostring(math.floor(num))
+    end
 end
 
 function SOCView:drawMainPanel()
@@ -314,6 +566,33 @@ function SOCView:drawEventDisplay()
         love.graphics.setColor(1, 1, 1)
         love.graphics.printf(self.currentEvent.description, 60, love.graphics.getHeight() - 140, love.graphics.getWidth() - 120, "left")
     end
+end
+
+-- Draw keyboard navigation hints (Phase 2)
+function SOCView:drawKeyboardHints()
+    local screenWidth = love.graphics.getWidth()
+    local screenHeight = love.graphics.getHeight()
+    local hintY = screenHeight - 30
+
+    -- Draw semi-transparent background
+    love.graphics.setColor(0, 0, 0, 0.7)
+    love.graphics.rectangle("fill", 0, hintY, screenWidth, 30)
+    love.graphics.setColor(1, 1, 1)
+
+    -- Draw hints
+    love.graphics.setFont(love.graphics.newFont(12))
+    local hints = {
+        "TAB: Navigate UI",
+        "↑↓: Change Panel",
+        "1-7: Select Panel",
+        "ENTER: Activate",
+        "SPACE/M: Manual Income"
+    }
+
+    local hintText = table.concat(hints, " | ")
+    love.graphics.printf(hintText, 10, hintY + 8, screenWidth - 20, "left")
+
+    love.graphics.setFont(love.graphics.newFont()) -- Reset font
 end
 
 function SOCView:drawSkillsPanel()

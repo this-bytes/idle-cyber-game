@@ -20,7 +20,6 @@ function love.conf(t)
     t.window.highdpi = false
     t.window.x = nil
     t.window.y = nil
-    
     t.modules.audio = true
     t.modules.event = true
     t.modules.graphics = true

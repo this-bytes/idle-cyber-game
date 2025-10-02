@@ -14,7 +14,25 @@ local EventBus = require("event_bus")
 -- Test contract system initialization
 TestRunner.test("ContractSystem: Initialize with basic contract", function()
     local eventBus = EventBus.new()
-    local contracts = ContractSystem.new(eventBus)
+    
+    -- Mock dataManager
+    local mockDataManager = {
+        getData = function(self, key)
+            if key == "contracts" then
+                return {
+                    {id = "basic_small_business", name = "Small Business", baseBudget = 500, baseDuration = 30, reputationReward = 1, riskLevel = "LOW"}
+                }
+            end
+            return nil
+        end
+    }
+    
+    -- Mock other systems
+    local mockUpgradeSystem = {}
+    local mockSpecialistSystem = {}
+    
+    local contracts = ContractSystem.new(eventBus, mockDataManager, mockUpgradeSystem, mockSpecialistSystem)
+    contracts:initialize()
     
     -- Should generate initial contract
     local available = contracts:getAvailableContracts()
@@ -28,7 +46,25 @@ end)
 
 TestRunner.test("ContractSystem: Accept and complete contract", function()
     local eventBus = EventBus.new()
-    local contracts = ContractSystem.new(eventBus)
+    
+    -- Mock dataManager
+    local mockDataManager = {
+        getData = function(self, key)
+            if key == "contracts" then
+                return {
+                    {id = "basic_small_business", name = "Small Business", baseBudget = 500, baseDuration = 30, reputationReward = 1, riskLevel = "LOW"}
+                }
+            end
+            return nil
+        end
+    }
+    
+    -- Mock other systems
+    local mockUpgradeSystem = {}
+    local mockSpecialistSystem = {}
+    
+    local contracts = ContractSystem.new(eventBus, mockDataManager, mockUpgradeSystem, mockSpecialistSystem)
+    contracts:initialize()
     
     -- Get first available contract
     local available = contracts:getAvailableContracts()

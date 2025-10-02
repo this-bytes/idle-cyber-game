@@ -1,7 +1,7 @@
 -- Test Suite for Threat Event Standardization
 -- Verifies that threat_detected events use canonical shape and are handled correctly
 
-local ThreatSimulation = require("src.core.threat_simulation")
+local ThreatSystem = require("src.systems.threat_system")
 local SOCView = require("src.scenes.soc_view")
 local UIManager = require("src.core.ui_manager")
 local SOCGame = require("src.soc_game")
@@ -38,15 +38,14 @@ local function runTest(testName, testFunction)
     end
 end
 
--- Test ThreatSimulation publishes canonical format
-runTest("ThreatSimulation: Publishes canonical threat_detected event", function()
+-- Test ThreatSystem publishes canonical format
+runTest("ThreatSystem: Publishes canonical threat_detected event", function()
     local eventBus = EventBus.new()
     local resourceManager = ResourceManager.new(eventBus)
-    resourceManager:initialize()
     
     local securityUpgrades = SecurityUpgrades.new(eventBus, resourceManager)
-    local threatSimulation = ThreatSimulation.new(eventBus, resourceManager, securityUpgrades)
-    threatSimulation:initialize()
+    local threatSystem = ThreatSystem.new(eventBus, nil, nil, nil)
+    threatSystem:initialize()
     
     local receivedEvent = nil
     eventBus:subscribe("threat_detected", function(data)
@@ -54,7 +53,7 @@ runTest("ThreatSimulation: Publishes canonical threat_detected event", function(
     end)
     
     -- Generate a threat using the public method
-    local threat = threatSimulation:generateThreat()
+    local threat = threatSystem:generateThreat()
     
     -- Verify canonical shape
     assert(receivedEvent ~= nil, "Should receive threat_detected event")
@@ -68,8 +67,7 @@ end)
 -- Test SOCView publishes canonical format
 runTest("SOCView: Publishes canonical threat_detected event", function()
     local eventBus = EventBus.new()
-    local socView = SOCView.new()
-    socView:initialize(eventBus)
+    local socView = SOCView.new(eventBus)
     
     -- Set up SOC view state for threat generation
     socView.socStatus.detectionCapability = 100 -- Force threat detection
@@ -96,13 +94,14 @@ end)
 runTest("UIManager: Consumes canonical threat_detected event", function()
     local eventBus = EventBus.new()
     local resourceManager = ResourceManager.new(eventBus)
-    resourceManager:initialize()
     
     local securityUpgrades = SecurityUpgrades.new(eventBus, resourceManager)
-    local threatSimulation = ThreatSimulation.new(eventBus, resourceManager, securityUpgrades)
+    local threatSystem = ThreatSystem.new(eventBus, nil, nil, nil)
+    threatSystem:initialize()
+    
     local gameLoop = { registerSystem = function() end, getSystem = function() return nil end }
     
-    local uiManager = UIManager.new(eventBus, resourceManager, securityUpgrades, threatSimulation, gameLoop)
+    local uiManager = UIManager.new(eventBus, resourceManager, securityUpgrades, threatSystem, gameLoop)
     uiManager:initialize()
     
     -- Create a canonical threat_detected event
@@ -131,10 +130,10 @@ runTest("SOCStats: Consumes canonical threat_detected event", function()
     
     local securityUpgrades = SecurityUpgrades.new(eventBus, resourceManager)
     
-    local socStats = SOCStats.new(eventBus, resourceManager, securityUpgrades)
+    local socStats = SOCStats.new(eventBus, resourceManager)
     socStats:initialize()
     
-    local initialThreatsDetected = socStats.metrics.threatsDetected
+    local initialThreatsDetected = socStats.stats.threatsDetected
     
     -- Create a canonical threat_detected event
     local testThreat = {
@@ -192,8 +191,7 @@ end)
 -- Test SOCView consumes canonical format correctly  
 runTest("SOCView: Consumes canonical threat_detected event", function()
     local eventBus = EventBus.new()
-    local socView = SOCView.new()
-    socView:initialize(eventBus)
+    local socView = SOCView.new(eventBus)
     
     local initialIncidents = #socView.socStatus.activeIncidents
     

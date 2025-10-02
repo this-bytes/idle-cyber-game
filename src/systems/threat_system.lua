@@ -202,7 +202,7 @@ function ThreatSystem:generateThreat()
     self.activeThreats[newThreat.id] = newThreat
     self.nextThreatId = self.nextThreatId + 1
     
-    self.eventBus:publish("threat_generated", {threat = newThreat})
+    self.eventBus:publish("threat_detected", {threat = newThreat})
 
     -- If threat is critical, force switch to Admin Mode
     if newThreat.severity >= 7 then

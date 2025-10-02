@@ -14,7 +14,25 @@ local EventBus = require("event_bus")
 -- Test: Initialize skill system with default skills
 TestRunner.test("SkillSystem: Initialize with default skills", function()
     local eventBus = EventBus.new()
-    local skillSystem = SkillSystem.new(eventBus)
+    
+    -- Mock dataManager
+    local mockDataManager = {
+        getData = function(self, key)
+            if key == "skills" then
+                return {
+                    skills = {
+                        basic_analysis = {name = "Basic Analysis", maxLevel = 5},
+                        network_fundamentals = {name = "Network Fundamentals", maxLevel = 5},
+                        team_coordination = {name = "Team Coordination", maxLevel = 5}
+                    },
+                    categories = {}
+                }
+            end
+            return nil
+        end
+    }
+    
+    local skillSystem = SkillSystem.new(eventBus, mockDataManager)
     
     TestRunner.assertNotNil(skillSystem, "Skill system should be created")
     

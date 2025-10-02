@@ -17,15 +17,9 @@ end
 -- Loads a single JSON file and stores its content.
 function DataManager:loadDataFile(fileName)
     local path = self.dataDirectory .. "/" .. fileName
-    local file, err = love.filesystem.newFile(path, "r")
-    if not file then
-        print("❌ DataManager: Failed to open data file: " .. path .. " - " .. tostring(err))
-        return false
-    end
-
-    local content, readErr = file:read()
+    local content, err = love.filesystem.read(path)
     if not content then
-        print("❌ DataManager: Failed to read data file: " .. path .. " - " .. tostring(readErr))
+        print("❌ DataManager: Failed to read data file: " .. path .. " - " .. tostring(err))
         return false
     end
 

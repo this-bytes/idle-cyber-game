@@ -701,4 +701,35 @@ function SpecialistSystem:loadState(state)
     end
 end
 
+function SpecialistSystem:getTeamBonuses()
+    local bonuses = {
+        efficiency = 1.0,
+        speed = 1.0,
+        defense = 1.0,
+        availableSpecialists = 0
+    }
+    
+    -- Count available specialists
+    for _, specialist in pairs(self.specialists) do
+        if specialist.status == "available" then
+            bonuses.availableSpecialists = bonuses.availableSpecialists + 1
+        end
+    end
+    
+    -- Calculate bonuses from specialist stats
+    for _, specialist in pairs(self.specialists) do
+        if specialist.efficiency then
+            bonuses.efficiency = bonuses.efficiency * specialist.efficiency
+        end
+        if specialist.speed then
+            bonuses.speed = bonuses.speed * specialist.speed
+        end
+        if specialist.defense then
+            bonuses.defense = bonuses.defense * specialist.defense
+        end
+    end
+    
+    return bonuses
+end
+
 return SpecialistSystem

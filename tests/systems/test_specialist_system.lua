@@ -14,7 +14,30 @@ local EventBus = require("event_bus")
 -- Test specialist system initialization
 TestRunner.test("SpecialistSystem: Initialize with CEO", function()
     local eventBus = EventBus.new()
-    local specialists = SpecialistSystem.new(eventBus)
+    
+    -- Mock dataManager
+    local mockDataManager = {
+        getData = function(self, key)
+            if key == "specialists" then
+                return {
+                    specialists = {
+                        {id = "junior_analyst", name = "Junior Analyst"},
+                        {id = "network_admin", name = "Network Admin"}
+                    }
+                }
+            end
+            return nil
+        end
+    }
+    
+    -- Mock skillSystem
+    local mockSkillSystem = {
+        initializeEntity = function() end,
+        getSkillEffects = function() return {} end
+    }
+    
+    local specialists = SpecialistSystem.new(eventBus, mockDataManager, mockSkillSystem)
+    specialists:initialize()
     
     -- Should start with CEO (player)
     local allSpecialists = specialists:getAllSpecialists()
@@ -36,7 +59,30 @@ end)
 
 TestRunner.test("SpecialistSystem: Team bonuses calculation", function()
     local eventBus = EventBus.new()
-    local specialists = SpecialistSystem.new(eventBus)
+    
+    -- Mock dataManager
+    local mockDataManager = {
+        getData = function(self, key)
+            if key == "specialists" then
+                return {
+                    specialists = {
+                        {id = "junior_analyst", name = "Junior Analyst"},
+                        {id = "network_admin", name = "Network Admin"}
+                    }
+                }
+            end
+            return nil
+        end
+    }
+    
+    -- Mock skillSystem
+    local mockSkillSystem = {
+        initializeEntity = function() end,
+        getSkillEffects = function() return {} end
+    }
+    
+    local specialists = SpecialistSystem.new(eventBus, mockDataManager, mockSkillSystem)
+    specialists:initialize()
     
     -- Get team bonuses
     local bonuses = specialists:getTeamBonuses()
@@ -49,7 +95,30 @@ end)
 
 TestRunner.test("SpecialistSystem: Specialist assignment", function()
     local eventBus = EventBus.new()
-    local specialists = SpecialistSystem.new(eventBus)
+    
+    -- Mock dataManager
+    local mockDataManager = {
+        getData = function(self, key)
+            if key == "specialists" then
+                return {
+                    specialists = {
+                        {id = "junior_analyst", name = "Junior Analyst"},
+                        {id = "network_admin", name = "Network Admin"}
+                    }
+                }
+            end
+            return nil
+        end
+    }
+    
+    -- Mock skillSystem
+    local mockSkillSystem = {
+        initializeEntity = function() end,
+        getSkillEffects = function() return {} end
+    }
+    
+    local specialists = SpecialistSystem.new(eventBus, mockDataManager, mockSkillSystem)
+    specialists:initialize()
     
     -- Find CEO
     local ceoId = nil

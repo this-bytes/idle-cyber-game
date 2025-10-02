@@ -3,6 +3,50 @@
 
 -- Global game instance
 local game
+---@param DEBUG_UI boolean If true, show debug overlay for UI elements
+DEBUG_UI = false
+--Arguments to run parts directly passed in via command line expand as we develop
+-- Useful for running specific test suites without a full IDE setup or driving particular
+-- game modes directly from command line.
+-- Usage:
+-- e.g. love . --test=contracts
+-- or love . --test=progression
+local args = {...}
+if args then
+    for i, v in ipairs(args) do
+        if v:find("--test=") == 1 then
+            local testName = v:sub(8)
+            if testName == "contracts" then
+                print("Running contract system tests...")
+                local ContractTests = require("tests.systems.test_contract_system")
+                local passed, failed = ContractTests.run_contract_tests()
+                print(string.format("Contract tests completed: %d passed, %d failed", passed, failed))
+                love.event.quit()
+            elseif testName == "progression" then
+                print("Running progression system tests...")
+                local ProgressionTests = require("tests.systems.test_progression_system")
+                local passed, failed = ProgressionTests.run_progression_tests()
+                print(string.format("Progression tests completed: %d passed, %d failed", passed, failed))
+                love.event.quit()
+            elseif testName == "specialists" then
+                print("Running specialist system tests...")
+                local SpecialistTests = require("tests.systems.test_specialist_system")
+                local passed, failed = SpecialistTests.run_specialist_tests()
+                print(string.format("Specialist tests completed: %d passed, %d failed", passed, failed))
+                love.event.quit()
+            elseif testName == "input" then
+                print("Running input system tests...")
+                local InputTests = require("tests.systems.test_input_system")
+                local passed, failed = InputTests.run_input_tests()
+                print(string.format("Input tests completed: %d passed, %d failed", passed, failed))
+                love.event.quit()
+            else
+                print("Unknown test: " .. testName)
+                love.event.quit()
+            end
+        end
+    end
+end
 
 function love.load()
     -- Set up LÖVE 2D configuration

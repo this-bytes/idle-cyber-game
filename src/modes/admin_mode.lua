@@ -140,14 +140,17 @@ function AdminMode:draw()
             stageY = stageY + 5
         end
         
-    else
-        -- Monitoring mode display
-        theme:drawPanel(20, y, 480, 250, "🔍 MONITORING STATUS")
-        local monitorY = y + 25
+        -- Risk assessment panel
+        theme:drawPanel(520, y, 480, 250, "⚠️ THREAT ASSESSMENT")
+        local riskY = y + 25
         
-        theme:drawText("SYSTEM STATUS:", 30, monitorY, theme:getColor("secondary"))
-        theme:drawText("ALL SYSTEMS OPERATIONAL", 200, monitorY, theme:getColor("success"))
-        monitorY = monitorY + 30
+        local contractStats = self.systems.contracts:getStats()
+        theme:drawText("RISK SOURCES:", 530, riskY, theme:getColor("secondary"))
+        riskY = riskY + 20
+        theme:drawText("ACTIVE CONTRACTS:", 540, riskY, theme:getColor("dimmed"))
+        theme:drawText(tostring(contractStats.activeContracts or 0), 720, riskY, theme:getColor("warning"))
+        riskY = riskY + 15
+        theme:drawText("EXPOSURE LEVEL:", 540, riskY, theme:getColor("dimmed"))
         
         -- Show team readiness
         local specialistStats = self.systems.specialists:getStats()
@@ -239,6 +242,15 @@ function AdminMode:draw()
         
         y = y + 200
     else
+        -- Monitoring mode display
+        theme:drawPanel(20, y, 480, 250, "🔍 MONITORING STATUS")
+        local monitorY = y + 25
+        
+        theme:drawText("SYSTEM STATUS:", 30, monitorY, theme:getColor("secondary"))
+        theme:drawText("ALL SYSTEMS OPERATIONAL", 200, monitorY, theme:getColor("success"))
+        monitorY = monitorY + 30
+        theme:drawText("Press [C] to simulate crisis scenario", 30, monitorY, theme:getColor("primary"))
+        
         y = y + 270
     end
     
@@ -448,45 +460,6 @@ function AdminMode:handleCrisisResponse(key)
             amount = 1
         })
     end
-end
-
--- Resolve crisis (now handled by CrisisSystem, this is just for UI logging)
-function AdminMode:resolveCrisis(outcome)
-    -- Crisis system handles the actual resolution
-    -- This method is kept for potential UI-specific logic
-end
-        
-        self.systems.eventBus:publish("add_resource", {
-            resource = "money", 
-            amount = moneyGain
-        })
-        
-        self.systems.eventBus:publish("add_resource", {
-            resource = "missionTokens",
-            amount = tokenGain
-        })
-        
-        print(string.format("✅ Crisis resolved! +$%d, +%d reputation, +%d tokens (%.0f%% efficiency)", 
-              moneyGain, reputationGain, tokenGain, timeBonus * 100))
-        
-    elseif outcome == "timeout" then
-        table.insert(self.responseLog, "╔══════════════════════════════════════════════════════════════════╗")
-        table.insert(self.responseLog, "║ " .. timestamp .. " CRISIS TIMED OUT - REPUTATION DAMAGE")
-        table.insert(self.responseLog, "║ Client confidence decreased due to slow response")
-        table.insert(self.responseLog, "║ Penalty: -5 reputation")
-        table.insert(self.responseLog, "╚══════════════════════════════════════════════════════════════════╝")
-        
-        -- Penalty for timeout
-        self.systems.eventBus:publish("add_resource", {
-            resource = "reputation",
-            amount = -5
-        })
-        
-        print("❌ Crisis timed out! -5 reputation")
-    end
-    
-    self.currentCrisis = nil
-    self.crisisTimer = 0
 end
 
 return AdminMode
