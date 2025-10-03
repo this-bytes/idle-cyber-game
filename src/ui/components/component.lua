@@ -295,19 +295,28 @@ function Component:onMouseRelease(x, y, button)
     
     -- Check self
     if wasPressed and self:containsPoint(x, y) then
-        -- Prefer explicit onRelease, but also trigger onClick for convenience
-        if self.props.onRelease then
-            self.props.onRelease(self, button)
-        end
-        if self.props.onClick then
-            -- onClick is a higher-level convenience callback (press+release)
-            self.props.onClick(self, button)
-        end
         -- Debug: report release and click
         print(string.format("[UI DEBUG] onMouseRelease on component id=%s class=%s x=%.1f y=%.1f w=%.1f h=%.1f -> wasPressed=%s", tostring(self.id), tostring(self.className), self.x, self.y, self.width, self.height, tostring(wasPressed)))
-        return true
+        
+        local handled = false
+        -- Prefer explicit onRelease, but also trigger onClick for convenience
+        if self.props.onRelease then
+            print(string.format("[UI DEBUG] Calling onRelease callback for component id=%s", tostring(self.id)))
+            self.props.onRelease(self, button)
+            handled = true
+        end
+        if self.props.onClick then
+            print(string.format("[UI DEBUG] Calling onClick callback for component id=%s", tostring(self.id)))
+            -- onClick is a higher-level convenience callback (press+release)
+            self.props.onClick(self, button)
+            handled = true
+        else
+            print(string.format("[UI DEBUG] NO onClick callback for component id=%s class=%s", tostring(self.id), tostring(self.className)))
+        end
+        -- Only return true if we actually handled the event (had a callback)
+        return handled
     end
-    
+
     return false
 end
 

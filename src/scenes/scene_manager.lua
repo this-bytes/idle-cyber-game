@@ -124,6 +124,8 @@ end
 -- @param y Mouse y-coordinate.
 -- @param button Mouse button index.
 function SceneManager:mousereleased(x, y, button)
+    -- Debug: report mousereleased entering SceneManager
+    print(string.format("[UI DEBUG] SceneManager:mousereleased x=%.1f y=%.1f button=%s currentScene=%s", x, y, tostring(button), tostring(self.currentSceneName)))
     if self.currentScene and self.currentScene.mousereleased then
         self.currentScene:mousereleased(x, y, button)
     end

@@ -222,15 +222,23 @@ function SmartUIManager:buildMenuUI(container)
     
     -- Menu buttons
     local menuOptions = {
-        {text = "Start SOC Operations", action = "start_game"},
-        {text = "Debug Mode", action = "debug"},
-        {text = "SOC Settings", action = "settings"},
-        {text = "Quit", action = "quit"}
+        {text = "▶ Start SOC Operations", action = "start_game"},
+        {text = "⚙ SOC Settings", action = "settings"},
+        {text = "✕ Quit", action = "quit"}
     }
+    
+    -- Check if debug scene is enabled (for developers)
+    local enableDebugScene = false
+    local envVal = os.getenv("IDLE_DEBUG_SCENE")
+    if envVal and (envVal == "1" or envVal:lower() == "true") then
+        enableDebugScene = true
+        -- Add debug button only in developer mode
+        table.insert(menuOptions, 2, {text = "🔧 Developer Debug Scene", action = "debug"})
+    end
     
     for _, option in ipairs(menuOptions) do
         local button = Button.new({
-            text = option.text,
+            label = option.text,  -- Button uses 'label' not 'text'
             width = 300,
             height = 40,
             onClick = function()
@@ -264,12 +272,16 @@ end
 
 -- Handle menu actions
 function SmartUIManager:handleMenuAction(action)
+    print(string.format("[UI DEBUG] handleMenuAction called with action='%s'", tostring(action)))
+    
     if action == "start_game" then
         if self.eventBus then
+            print("[UI DEBUG] Publishing scene_request event for 'soc_view'")
             self.eventBus:publish("scene_request", {scene = "soc_view"})
         end
     elseif action == "debug" then
         if self.eventBus then
+            print("[UI DEBUG] Publishing request_scene_change event for 'idle_debug'")
             self.eventBus:publish("request_scene_change", {scene = "idle_debug"})
         end
     elseif action == "settings" then

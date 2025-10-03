@@ -1,12 +1,12 @@
--- Debug Overlay - Comprehensive Game State Inspector
+-- Stats Overlay - Player-Facing Game State Inspector
 -- Can be overlaid on any scene to inspect game economy and systems in-depth
 -- Toggle with F3 key
 
-local DebugOverlay = {}
-DebugOverlay.__index = DebugOverlay
+local StatsOverlay = {}
+StatsOverlay.__index = StatsOverlay
 
-function DebugOverlay.new(eventBus, systems)
-    local self = setmetatable({}, DebugOverlay)
+function StatsOverlay.new(eventBus, systems)
+    local self = setmetatable({}, StatsOverlay)
     
     self.eventBus = eventBus
     self.systems = systems
@@ -44,20 +44,20 @@ function DebugOverlay.new(eventBus, systems)
     return self
 end
 
-function DebugOverlay:toggle()
+function StatsOverlay:toggle()
     self.visible = not self.visible
     print(string.format("🔍 Debug Overlay: %s", self.visible and "ENABLED" or "DISABLED"))
 end
 
-function DebugOverlay:show()
+function StatsOverlay:show()
     self.visible = true
 end
 
-function DebugOverlay:hide()
+function StatsOverlay:hide()
     self.visible = false
 end
 
-function DebugOverlay:update(dt)
+function StatsOverlay:update(dt)
     if not self.visible then return end
     
     self.updateTimer = self.updateTimer + dt
@@ -67,7 +67,7 @@ function DebugOverlay:update(dt)
     end
 end
 
-function DebugOverlay:updateCachedData()
+function StatsOverlay:updateCachedData()
     if not self.systems then return end
     
     -- Update resource data
@@ -124,7 +124,7 @@ function DebugOverlay:updateCachedData()
     self.cachedData.rng = self:getRNGData()
 end
 
-function DebugOverlay:getResourceData()
+function StatsOverlay:getResourceData()
     local rm = self.systems.resourceManager
     local data = {
         money = rm.resources.money or 0,
@@ -144,7 +144,7 @@ function DebugOverlay:getResourceData()
     return data
 end
 
-function DebugOverlay:getContractData()
+function StatsOverlay:getContractData()
     local cs = self.systems.contractSystem
     local data = {
         available = self:countTable(cs.availableContracts),
@@ -159,7 +159,7 @@ function DebugOverlay:getContractData()
     return data
 end
 
-function DebugOverlay:getSpecialistData()
+function StatsOverlay:getSpecialistData()
     local ss = self.systems.specialistSystem
     local all = ss:getAllSpecialists() or {}
     
@@ -184,7 +184,7 @@ function DebugOverlay:getSpecialistData()
     return data
 end
 
-function DebugOverlay:getThreatData()
+function StatsOverlay:getThreatData()
     local ts = self.systems.threatSystem
     local data = {
         active = self:countTable(ts.activeThreats or {}),
@@ -197,7 +197,7 @@ function DebugOverlay:getThreatData()
     return data
 end
 
-function DebugOverlay:getUpgradeData()
+function StatsOverlay:getUpgradeData()
     local us = self.systems.upgradeSystem
     local data = {
         total = #(us.allUpgrades or {}),
@@ -207,7 +207,7 @@ function DebugOverlay:getUpgradeData()
     return data
 end
 
-function DebugOverlay:getSkillData()
+function StatsOverlay:getSkillData()
     local ss = self.systems.skillSystem
     local data = {
         definitions = ss.skillDefinitions and self:countTable(ss.skillDefinitions) or 0,
@@ -221,7 +221,7 @@ function DebugOverlay:getSkillData()
     return data
 end
 
-function DebugOverlay:getIdleData()
+function StatsOverlay:getIdleData()
     local is = self.systems.idleSystem
     local data = {
         lastSaveTime = is.lastSaveTime or 0,
@@ -232,7 +232,7 @@ function DebugOverlay:getIdleData()
     return data
 end
 
-function DebugOverlay:getProgressionData()
+function StatsOverlay:getProgressionData()
     local ps = self.systems.progressionSystem
     if not ps then return {} end
     
@@ -245,7 +245,7 @@ function DebugOverlay:getProgressionData()
     return data
 end
 
-function DebugOverlay:getAchievementData()
+function StatsOverlay:getAchievementData()
     local as = self.systems.achievementSystem
     local data = {
         total = self:countTable(as.achievements or {}),
@@ -255,7 +255,7 @@ function DebugOverlay:getAchievementData()
     return data
 end
 
-function DebugOverlay:getEventData()
+function StatsOverlay:getEventData()
     local es = self.systems.eventSystem
     local data = {
         total = #(es.events or {}),
@@ -267,7 +267,7 @@ function DebugOverlay:getEventData()
     return data
 end
 
-function DebugOverlay:getRNGData()
+function StatsOverlay:getRNGData()
     -- Track RNG state - Lua uses a global random seed
     local data = {
         -- Sample random values to show distribution
@@ -279,7 +279,7 @@ function DebugOverlay:getRNGData()
     return data
 end
 
-function DebugOverlay:draw()
+function StatsOverlay:draw()
     if not self.visible then return end
     
     -- Semi-transparent dark background
@@ -322,7 +322,7 @@ function DebugOverlay:draw()
     self:drawFooter()
 end
 
-function DebugOverlay:drawHeader()
+function StatsOverlay:drawHeader()
     love.graphics.setColor(0.2, 0.4, 0.8, 0.95)
     love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), self.layout.headerHeight)
     
@@ -337,7 +337,7 @@ function DebugOverlay:drawHeader()
     love.graphics.printf(statsText, 0, 12, love.graphics.getWidth() - self.layout.margin, "right")
 end
 
-function DebugOverlay:drawFooter()
+function StatsOverlay:drawFooter()
     local y = love.graphics.getHeight() - 25
     love.graphics.setColor(0.2, 0.2, 0.2, 0.9)
     love.graphics.rectangle("fill", 0, y, love.graphics.getWidth(), 25)
@@ -347,7 +347,7 @@ function DebugOverlay:drawFooter()
     love.graphics.print("Controls: F3 - Toggle Debug | ESC - Close", self.layout.margin, y + 7)
 end
 
-function DebugOverlay:drawPanel(title, icon, x, y, content)
+function StatsOverlay:drawPanel(title, icon, x, y, content)
     local w = self.layout.panelWidth
     local h = self.layout.panelHeight
     
@@ -380,7 +380,7 @@ function DebugOverlay:drawPanel(title, icon, x, y, content)
     end
 end
 
-function DebugOverlay:drawResourcePanel(x, y)
+function StatsOverlay:drawResourcePanel(x, y)
     local res = self.cachedData.resources or {}
     local content = {
         {text = string.format("Money: $%.0f", res.money or 0), color = {0.2, 1, 0.2, 1}},
@@ -394,7 +394,7 @@ function DebugOverlay:drawResourcePanel(x, y)
     self:drawPanel("RESOURCES", "💰", x, y, content)
 end
 
-function DebugOverlay:drawContractPanel(x, y)
+function StatsOverlay:drawContractPanel(x, y)
     local con = self.cachedData.contracts or {}
     local content = {
         {text = string.format("Available: %d", con.available or 0), color = {0.8, 0.8, 1, 1}},
@@ -407,7 +407,7 @@ function DebugOverlay:drawContractPanel(x, y)
     self:drawPanel("CONTRACTS", "📋", x, y, content)
 end
 
-function DebugOverlay:drawSpecialistPanel(x, y)
+function StatsOverlay:drawSpecialistPanel(x, y)
     local spec = self.cachedData.specialists or {}
     local content = {
         {text = string.format("Total: %d", spec.total or 0), color = {1, 1, 1, 1}},
@@ -418,7 +418,7 @@ function DebugOverlay:drawSpecialistPanel(x, y)
     self:drawPanel("SPECIALISTS", "👥", x, y, content)
 end
 
-function DebugOverlay:drawThreatPanel(x, y)
+function StatsOverlay:drawThreatPanel(x, y)
     local thr = self.cachedData.threats or {}
     local content = {
         {text = string.format("Active Threats: %d", thr.active or 0), color = {1, 0.3, 0.3, 1}},
@@ -430,7 +430,7 @@ function DebugOverlay:drawThreatPanel(x, y)
     self:drawPanel("THREATS", "🚨", x, y, content)
 end
 
-function DebugOverlay:drawUpgradePanel(x, y)
+function StatsOverlay:drawUpgradePanel(x, y)
     local upg = self.cachedData.upgrades or {}
     local content = {
         {text = string.format("Total Upgrades: %d", upg.total or 0), color = {1, 1, 1, 1}},
@@ -440,7 +440,7 @@ function DebugOverlay:drawUpgradePanel(x, y)
     self:drawPanel("UPGRADES", "⬆️", x, y, content)
 end
 
-function DebugOverlay:drawSkillPanel(x, y)
+function StatsOverlay:drawSkillPanel(x, y)
     local skill = self.cachedData.skills or {}
     local content = {
         {text = string.format("Skill Definitions: %d", skill.definitions or 0), color = {1, 1, 1, 1}},
@@ -449,7 +449,7 @@ function DebugOverlay:drawSkillPanel(x, y)
     self:drawPanel("SKILLS", "🎯", x, y, content)
 end
 
-function DebugOverlay:drawIdlePanel(x, y)
+function StatsOverlay:drawIdlePanel(x, y)
     local idle = self.cachedData.idle or {}
     local timeSinceLastSave = (os.time() - (idle.lastSaveTime or os.time()))
     local content = {
@@ -461,7 +461,7 @@ function DebugOverlay:drawIdlePanel(x, y)
     self:drawPanel("IDLE SYSTEM", "💤", x, y, content)
 end
 
-function DebugOverlay:drawProgressionPanel(x, y)
+function StatsOverlay:drawProgressionPanel(x, y)
     local prog = self.cachedData.progression or {}
     local content = {}
     
@@ -482,7 +482,7 @@ function DebugOverlay:drawProgressionPanel(x, y)
     self:drawPanel("PROGRESSION", "📊", x, y, content)
 end
 
-function DebugOverlay:drawAchievementPanel(x, y)
+function StatsOverlay:drawAchievementPanel(x, y)
     local ach = self.cachedData.achievements or {}
     local completionPercent = (ach.total or 0) > 0 and ((ach.unlocked or 0) / ach.total * 100) or 0
     local content = {
@@ -494,7 +494,7 @@ function DebugOverlay:drawAchievementPanel(x, y)
     self:drawPanel("ACHIEVEMENTS", "🏆", x, y, content)
 end
 
-function DebugOverlay:drawEventPanel(x, y)
+function StatsOverlay:drawEventPanel(x, y)
     local evt = self.cachedData.events or {}
     local content = {
         {text = string.format("Total Events: %d", evt.total or 0), color = {1, 1, 1, 1}},
@@ -505,7 +505,7 @@ function DebugOverlay:drawEventPanel(x, y)
     self:drawPanel("EVENTS", "🎲", x, y, content)
 end
 
-function DebugOverlay:drawRNGPanel(x, y)
+function StatsOverlay:drawRNGPanel(x, y)
     local rng = self.cachedData.rng or {}
     local content = {
         {text = string.format("Sample 1: %.6f", rng.sample1 or 0), color = {0.8, 0.8, 1, 1}},
@@ -516,7 +516,7 @@ function DebugOverlay:drawRNGPanel(x, y)
     self:drawPanel("RNG STATE", "🎰", x, y, content)
 end
 
-function DebugOverlay:drawSummaryPanel(x, y)
+function StatsOverlay:drawSummaryPanel(x, y)
     local res = self.cachedData.resources or {}
     local con = self.cachedData.contracts or {}
     local spec = self.cachedData.specialists or {}
@@ -534,7 +534,7 @@ function DebugOverlay:drawSummaryPanel(x, y)
     self:drawPanel("SUMMARY", "📈", x, y, content)
 end
 
-function DebugOverlay:countTable(tbl)
+function StatsOverlay:countTable(tbl)
     if type(tbl) ~= "table" then return 0 end
     local count = 0
     for _ in pairs(tbl) do
@@ -543,4 +543,4 @@ function DebugOverlay:countTable(tbl)
     return count
 end
 
-return DebugOverlay
+return StatsOverlay

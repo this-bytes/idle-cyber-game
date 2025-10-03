@@ -31,7 +31,7 @@ local AdminMode = require("src.modes.admin_mode")
 local IdleDebugScene = require("src.scenes.idle_debug")
 
 -- UI Components
-local DebugOverlay = require("src.ui.debug_overlay")
+local StatsOverlay = require("src.ui.stats_overlay")
 
 
 local SOCGame = {}
@@ -42,7 +42,7 @@ function SOCGame.new(eventBus)
     self.eventBus = eventBus
     self.systems = {}
     self.sceneManager = nil
-    self.debugOverlay = nil
+    self.statsOverlay = nil
     self.isInitialized = false
     self.isGameStarted = false -- Track if player has started the game
     return self
@@ -135,14 +135,26 @@ function SOCGame:initialize()
     self.sceneManager:registerScene("game_over", GameOver.new(self.eventBus))
     self.sceneManager:registerScene("incident_response", IncidentResponse.new(self.eventBus))
     self.sceneManager:registerScene("admin_mode", AdminMode.new())
-    self.sceneManager:registerScene("idle_debug", IdleDebugScene.new(self.eventBus))
+    -- Register developer-only debug scene only when explicitly enabled via env var
+    local enableIdleDebug = false
+    local envVal = os.getenv("IDLE_DEBUG_SCENE")
+    if envVal and (envVal == "1" or envVal:lower() == "true") then
+        enableIdleDebug = true
+    end
+    if enableIdleDebug then
+        self.sceneManager:registerScene("idle_debug", IdleDebugScene.new(self.eventBus))
+        print("🔧 Idle Debug Scene registered (developer mode)")
+    else
+        -- For safety, do not expose the full idle debug scene in normal builds; use overlay instead
+        print("🔧 Idle Debug Scene not registered (set IDLE_DEBUG_SCENE=1 to enable)")
+    end
     
     -- 11. Start Initial Scene (Main Menu)
     self.sceneManager:requestScene("main_menu")
     
-    -- 12. Initialize Debug Overlay (overlays on top of any scene)
-    self.debugOverlay = DebugOverlay.new(self.eventBus, self.systems)
-    print("🔍 Debug Overlay initialized (Toggle with F3)")
+    -- 12. Initialize Stats Overlay (player-facing, overlays on top of any scene)
+    self.statsOverlay = StatsOverlay.new(self.eventBus, self.systems)
+    print("� Stats Overlay initialized (Toggle with F3)")
 
     print("✅ SOC Game Systems Initialized!")
     return true
@@ -156,9 +168,9 @@ function SOCGame:update(dt)
     -- Update scene manager (always active for menus)
     self.sceneManager:update(dt)
     
-    -- Update debug overlay (always active when visible)
-    if self.debugOverlay then
-        self.debugOverlay:update(dt)
+    -- Update stats overlay (always active when visible)
+    if self.statsOverlay then
+        self.statsOverlay:update(dt)
     end
     
     -- Update GameStateEngine (handles auto-save and state tracking)
@@ -213,17 +225,17 @@ function SOCGame:draw()
         self.systems.particleSystem:draw()
     end
     
-    -- Draw debug overlay on top of everything (if visible)
-    if self.debugOverlay then
-        self.debugOverlay:draw()
+    -- Draw stats overlay on top of everything (if visible)
+    if self.statsOverlay then
+        self.statsOverlay:draw()
     end
 end
 
 function SOCGame:keypressed(key, scancode, isrepeat)
-    -- Handle global debug overlay toggle (F3)
+    -- Handle global stats overlay toggle (F3)
     if key == "f3" then
-        if self.debugOverlay then
-            self.debugOverlay:toggle()
+        if self.statsOverlay then
+            self.statsOverlay:toggle()
         end
         return -- Don't pass F3 to other systems
     end

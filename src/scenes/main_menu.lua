@@ -63,4 +63,11 @@ function MainMenu:mousepressed(x, y, button)
     end
 end
 
+-- Handle mouse release (critical for onClick callbacks)
+function MainMenu:mousereleased(x, y, button)
+    if self.uiManager then
+        self.uiManager:mousereleased(x, y, button)
+    end
+end
+
 return MainMenu
