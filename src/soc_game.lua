@@ -32,7 +32,7 @@ local IdleDebugScene = require("src.scenes.idle_debug")
 
 -- UI Components
 -- LUIS (Love UI System) - loaded directly, no wrapper
-local StatsOverlay = require("src.ui.stats_overlay")
+local StatsOverlayLuis = require("src.ui.stats_overlay_luis")
 local OverlayManager = require("src.ui.overlay_manager")
 
 
@@ -200,14 +200,15 @@ function SOCGame:initialize()
     -- self.sceneManager:requestScene("main_menu") -- Commented out - finalizeScenes does this
     
     -- 12. Initialize Stats Overlay (player-facing, overlays on top of any scene)
-    self.statsOverlay = StatsOverlay.new(self.eventBus, self.systems)
+    -- Pass LUIS instance to overlay for direct UI control
+    self.statsOverlay = StatsOverlayLuis.new(self.eventBus, self.systems, self.luis)
 
     -- Create overlay manager and register the stats overlay so it can
     -- capture input when visible. We push the overlay but it will only be
-    -- visible when toggled (StatsOverlay.visible).
+    -- visible when toggled (StatsOverlayLuis.visible).
     self.overlayManager = OverlayManager.new()
     self.overlayManager:push(self.statsOverlay)
-    print("🔎 Stats Overlay registered with OverlayManager (Toggle with F3)")
+    print("🔎 Stats Overlay (LUIS) registered with OverlayManager (Toggle with F3)")
 
     print("✅ SOC Game Systems Initialized!")
     return true
