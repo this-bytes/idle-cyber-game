@@ -55,6 +55,9 @@ function SOCView.new(eventBus)
     self.eventDisplayTime = 0
     self.eventDisplayDuration = 5.0
     self.showingChoiceEvent = false
+    -- UI interaction state
+    self.highlightedSpecialistId = nil
+    self.highlightSpecialistTimer = 0
 
     -- Subscribe to long-lived events
     if self.eventBus then
@@ -93,6 +96,19 @@ function SOCView.new(eventBus)
         -- Achievement events
         self.eventBus:subscribe("achievement_unlocked", function(data)
             self:showAchievementNotification(data.achievement)
+        end)
+
+        -- Notification clicks (from NotificationPanel)
+        self.eventBus:subscribe("notification_clicked", function(data)
+            local meta = data and data.meta
+            if meta and meta.action == "open_panel" and meta.panel then
+                self.selectedPanel = meta.panel
+                if self.uiManager then self.uiManager.needsRebuild = true end
+                if meta.highlightSpecialistId then
+                    self.highlightedSpecialistId = meta.highlightSpecialistId
+                    self.highlightSpecialistTimer = 4.0 -- seconds to highlight
+                end
+            end
         end)
     end
 
@@ -363,13 +379,31 @@ function SOCView:addSpecialistsContent(container)
         color = {1, 0, 1}
     })
     container:addChild(title)
-
     -- Specialists would go here
-    local specialistCount = self.specialists and #self.specialists or 0
+    local specialistCount = 0
+    local sampleLines = {}
+
+    if self.specialists then
+        -- specialists may be a map keyed by id or an array; count robustly
+        for id, spec in pairs(self.specialists) do
+            specialistCount = specialistCount + 1
+            if #sampleLines < 5 then
+                table.insert(sampleLines, string.format("%s (Lvl %d)", spec.name or tostring(id), spec.level or 1))
+            end
+        end
+    end
+
     local countText = require("src.ui.components.text").new({
         text = "Active specialists: " .. specialistCount
     })
     container:addChild(countText)
+
+    if #sampleLines > 0 then
+        local listText = require("src.ui.components.text").new({
+            text = table.concat(sampleLines, ", ")
+        })
+        container:addChild(listText)
+    end
 end
 
 -- Add skills panel content
@@ -481,6 +515,20 @@ function SOCView:keypressed(key, scancode, isrepeat)
     end
 end
 
+-- Handle mouse input (forward to UI manager and notification panel)
+function SOCView:mousepressed(x, y, button)
+    if self.uiManager and self.uiManager.mousepressed then
+        self.uiManager:mousepressed(x, y, button)
+    end
+
+    if self.notificationPanel and self.notificationPanel.handleClick then
+        if self.notificationPanel:handleClick(x, y) then
+            -- Click was handled by notification panel
+            return
+        end
+    end
+end
+
 -- Navigate focus between elements
 function SOCView:navigateFocus(direction)
     if #self.focusableElements == 0 then return end
@@ -522,13 +570,29 @@ function SOCView:updateSOCCapabilities()
     self.socStatus.detectionCapability = 0
     self.socStatus.responseCapability = 0
     
-    if self.systems.specialistSystem then
-        local specialists = self.systems.specialistSystem:getAllSpecialists()
+    if self.systems and self.systems.specialistSystem then
+        local specialists = self.systems.specialistSystem:getAllSpecialists() or {}
         for _, specialist in pairs(specialists) do
+            -- Be defensive: different data shapes may exist (specialist.stats.analysis, specialist.analysis,
+            -- or older fields like efficiency/trace). Try multiple fallbacks.
+            local detect = 0
+            local respond = 0
+
             if specialist.stats then
-                self.socStatus.detectionCapability = self.socStatus.detectionCapability + (specialist.stats.analysis or 0)
-                self.socStatus.responseCapability = self.socStatus.responseCapability + (specialist.stats.resolve or 0)
+                detect = specialist.stats.analysis or specialist.stats.detect or specialist.stats.detection or 0
+                respond = specialist.stats.resolve or specialist.stats.response or 0
             end
+
+            -- Direct fields fallback
+            detect = detect + (specialist.analysis or specialist.detect or specialist.detection or 0)
+            respond = respond + (specialist.resolve or specialist.response or specialist.defense or 0)
+
+            -- Skill/system derived fields fallback (efficiency/trace map roughly to detection/response)
+            detect = detect + (specialist.efficiency and (specialist.efficiency * 0.5) or 0) + (specialist.trace and (specialist.trace * 0.2) or 0)
+            respond = respond + (specialist.speed and (specialist.speed * 0.3) or 0) + (specialist.defense and (specialist.defense * 0.5) or 0)
+
+            self.socStatus.detectionCapability = self.socStatus.detectionCapability + detect
+            self.socStatus.responseCapability = self.socStatus.responseCapability + respond
         end
     end
 end
@@ -688,6 +752,16 @@ function SOCView:update(dt)
         if self.eventDisplayTime >= self.eventDisplayDuration then
             self.currentEvent = nil
             self.eventDisplayTime = 0
+        end
+    end
+
+    -- Highlight timer for specialist opened via notification
+    if self.highlightedSpecialistId then
+        self.highlightSpecialistTimer = self.highlightSpecialistTimer - dt
+        if self.highlightSpecialistTimer <= 0 then
+            self.highlightedSpecialistId = nil
+            self.highlightSpecialistTimer = 0
+            if self.uiManager then self.uiManager.needsRebuild = true end
         end
     end
 end
@@ -862,8 +936,9 @@ function SOCView:formatNumber(num)
 end
 
 function SOCView:drawMainPanel()
-    local panelKey = self.panels[self.selectedPanel].key
-    
+    -- panels is a map keyed by panel id (e.g. 'threats'). Use selectedPanel directly.
+    local panelKey = self.selectedPanel
+
     local panelDrawers = {
         threats = function() self:drawThreatsPanel() end,
         incidents = function() self:drawIncidentsPanel() end,
@@ -877,7 +952,7 @@ function SOCView:drawMainPanel()
     if panelDrawers[panelKey] then
         panelDrawers[panelKey]()
     else
-        love.graphics.print("Panel not implemented: " .. panelKey, self.layout.sidebarWidth + 10, 50)
+        love.graphics.print("Panel not implemented: " .. tostring(panelKey), self.layout.sidebarWidth + 10, 50)
     end
 end
 
@@ -1017,7 +1092,14 @@ function SOCView:drawSpecialistsPanel()
             end
             
             local xpDisplay = nextLevelXp == "MAX" and "[MAX LEVEL]" or "[" .. currentXp .. " / " .. nextLevelXp .. " XP]"
-            love.graphics.print(string.format("[%s] %s (Lvl %d) %s", id, specialist.name, level, xpDisplay), self.layout.sidebarWidth + 20, y)
+            -- Highlight if recently opened via notification
+            if self.highlightedSpecialistId and tostring(self.highlightedSpecialistId) == tostring(id) then
+                love.graphics.setColor(1, 1, 0) -- yellow highlight
+                love.graphics.print(string.format(">> [%s] %s (Lvl %d) %s", id, specialist.name, level, xpDisplay), self.layout.sidebarWidth + 20, y)
+                love.graphics.setColor(1, 1, 1)
+            else
+                love.graphics.print(string.format("[%s] %s (Lvl %d) %s", id, specialist.name, level, xpDisplay), self.layout.sidebarWidth + 20, y)
+            end
             y = y + 15
         end
     else

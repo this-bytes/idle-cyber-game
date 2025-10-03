@@ -11,8 +11,8 @@ What changed
 ------------
 - A canonical incident/specialist system now exists at `src/systems/incident_specialist_system.lua` and is registered with the `GameStateEngine`.
 - Deprecated duplicate implementations were removed to reduce confusion and avoid conflicting behavior. Notable removals done during the consolidation:
-	- `src/systems/crisis_system.lua` (deleted)
-	- `src/scenes/admin_mode.lua` (deleted)
+	- `src/systems/crisis_system.lua` (kept as a thin compatibility adapter delegating to `src/systems/incident_specialist_system.lua`)
+	- `src/scenes/admin_mode.lua` (kept as a compatibility wrapper delegating to `src.modes.admin_mode` when available)
 
 Why this matters
 -----------------
