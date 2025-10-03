@@ -23,11 +23,11 @@ local GameStateEngine = require("src.systems.game_state_engine")
 
 -- Scene Dependencies
 local MainMenuLuis = require("src.scenes.main_menu_luis") -- Pure LUIS implementation
-local SOCView = require("src.scenes.soc_view")
-local UpgradeShop = require("src.scenes.upgrade_shop")
+local SOCViewLuis = require("src.scenes.soc_view_luis") -- Pure LUIS implementation
+local UpgradeShopLuis = require("src.scenes.upgrade_shop_luis") -- Pure LUIS implementation
 local GameOverLuis = require("src.scenes.game_over_luis") -- Pure LUIS implementation
-local IncidentResponse = require("src.scenes.incident_response")
-local AdminMode = require("src.modes.admin_mode")
+local IncidentResponseLuis = require("src.scenes.incident_response_luis") -- Pure LUIS implementation
+local AdminModeLuis = require("src.scenes.admin_mode_luis") -- Pure LUIS implementation
 local IdleDebugScene = require("src.scenes.idle_debug")
 
 -- UI Components
@@ -172,13 +172,13 @@ function SOCGame:initialize()
     self.sceneManager:initialize()
 
     -- 10. Register Scenes
-    -- Use LUIS-based Main Menu (pure LUIS implementation)
+    -- All scenes now use LUIS (Love UI System) for consistent UI framework
     self.sceneManager:registerScene("main_menu", MainMenuLuis.new(self.eventBus, self.luis))
-    self.sceneManager:registerScene("soc_view", SOCView.new(self.eventBus))
-    self.sceneManager:registerScene("upgrade_shop", UpgradeShop.new(self.eventBus))
+    self.sceneManager:registerScene("soc_view", SOCViewLuis.new(self.eventBus, self.luis))
+    self.sceneManager:registerScene("upgrade_shop", UpgradeShopLuis.new(self.eventBus, self.luis))
     self.sceneManager:registerScene("game_over", GameOverLuis.new(self.eventBus, self.luis))
-    self.sceneManager:registerScene("incident_response", IncidentResponse.new(self.eventBus))
-    self.sceneManager:registerScene("admin_mode", AdminMode.new())
+    self.sceneManager:registerScene("incident_response", IncidentResponseLuis.new(self.eventBus, self.luis))
+    self.sceneManager:registerScene("admin_mode", AdminModeLuis.new(self.eventBus, self.luis))
     -- Register developer-only debug scene only when explicitly enabled via env var
     local enableIdleDebug = false
     local envVal = os.getenv("IDLE_DEBUG_SCENE")
