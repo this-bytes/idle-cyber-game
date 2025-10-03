@@ -57,6 +57,42 @@
       },
       "requirements": {}
     },
+    "network_scan": {
+      "id": "network_scan",
+      "name": "Network Scan",
+      "description": "Scans network activity to find weak points.",
+      "category": "network",
+      "maxLevel": 5,
+      "baseXpCost": 50,
+      "xpGrowth": 1.2,
+      "effects": [
+        { "stat": "defense", "bonus": 0.02 }
+      ],
+      "activeEffect": {
+        "type": "damage",
+        "baseAmount": 25,
+        "description": "Performs a quick network scan, dealing 25 damage."
+      },
+      "requirements": {}
+    },
+    "traffic_analysis": {
+      "id": "traffic_analysis",
+      "name": "Traffic Analysis",
+      "description": "Deep traffic analysis to identify and mitigate attacks.",
+      "category": "network",
+      "maxLevel": 5,
+      "baseXpCost": 120,
+      "xpGrowth": 1.3,
+      "effects": [
+        { "stat": "efficiency", "bonus": 0.05 }
+      ],
+      "activeEffect": {
+        "type": "damage",
+        "baseAmount": 75,
+        "description": "Performs an advanced traffic analysis, dealing 75 damage."
+      },
+      "requirements": {}
+    },
     "team_coordination": {
         "id": "team_coordination",
         "name": "Team Coordination",

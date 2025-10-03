@@ -48,6 +48,11 @@ function ResourcePanel:update()
     if not self.resourceManager then return end
 
     local resources = self.resourceManager:getAllResources()
+    print("--- DEBUG: resources ---")
+    for k, v in pairs(resources) do
+        print(k, v)
+    end
+    print("--- END DEBUG ---")
 
     -- Budget
     if self.resourceTexts.money then

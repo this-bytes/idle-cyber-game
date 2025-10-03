@@ -43,8 +43,9 @@ end
 function SpecialistSystem:initialize()
     local specialistTypesData = self.dataManager:getData("specialists")
     if specialistTypesData and specialistTypesData.specialists then
-        for _, specialistType in ipairs(specialistTypesData.specialists) do
-            self.specialistTypes[specialistType.id] = specialistType
+        -- specialists.json is a map of id -> specialist definition, iterate with pairs
+        for id, specialistType in pairs(specialistTypesData.specialists) do
+            self.specialistTypes[id] = specialistType
         end
     end
 
@@ -98,12 +99,40 @@ function SpecialistSystem:initialize()
 end
 
 function SpecialistSystem:handleAdminDeploy(data)
+    print(string.format("[DEBUG] handleAdminDeploy invoked with specialistName='%s' abilityName='%s'", tostring(data.specialistName), tostring(data.abilityName)))
     local specialist = self:getSpecialistByName(data.specialistName)
     local abilityName = data.abilityName
 
     if not specialist then
-        self.eventBus:publish("admin_log", { message = string.format("[ERROR] Specialist '%s' not found.", data.specialistName) })
-        return
+        -- Try to find in available specialists (auto-hire for admin commands)
+        local lname = string.lower(data.specialistName or "")
+        local candidateIndex = nil
+        local candidate = nil
+        print("[DEBUG] Available specialists for hire:")
+        for idx, a in ipairs(self.availableSpecialists) do
+            print(string.format("  - idx=%d name=%s type=%s", idx, tostring(a.name), tostring(a.type)))
+        end
+        for idx, avail in ipairs(self.availableSpecialists) do
+            if (avail.name and string.find(string.lower(avail.name), lname, 1, true)) or (avail.type and string.find(string.lower(avail.type), lname, 1, true)) then
+                candidateIndex = idx
+                candidate = avail
+                break
+            end
+        end
+
+        if candidate then
+            print(string.format("[DEBUG] Found candidate to auto-hire: idx=%s name=%s type=%s", tostring(candidateIndex), tostring(candidate.name), tostring(candidate.type)))
+            -- Hire immediately (admin power)
+            local hired = self:addSpecialist(candidate.type, candidate)
+            print(string.format("[DEBUG] Hired specialist id=%s name=%s", tostring(hired.id), tostring(hired.name)))
+            -- Remove from available list
+            table.remove(self.availableSpecialists, candidateIndex)
+            specialist = hired
+            self.eventBus:publish("admin_log", { message = string.format("[INFO] Auto-hired specialist '%s' for admin deploy.", specialist.name) })
+        else
+            self.eventBus:publish("admin_log", { message = string.format("[ERROR] Specialist '%s' not found.", data.specialistName) })
+            return
+        end
     end
 
     if specialist.status ~= "available" then
@@ -124,23 +153,30 @@ function SpecialistSystem:handleAdminDeploy(data)
     end
 
     if not hasAbility then
-        self.eventBus:publish("admin_log", { message = string.format("[ERROR] Specialist '%s' does not have the ability '%s'.", specialist.name, abilityName) })
-        return
+        -- Don't block admin deploys for missing abilities; allow the admin to force an ability.
+        self.eventBus:publish("admin_log", { message = string.format("[WARNING] Specialist '%s' does not have the ability '%s'. Admin forcing ability execution.", specialist.name, abilityName) })
+        -- proceed without returning
     end
 
     -- TODO: Define ability effects, costs, and cooldowns.
     local cooldown = 30 -- Placeholder cooldown in seconds
-    specialist.status = "busy"
-    specialist.busyUntil = love.timer.getTime() + cooldown
 
-    self.eventBus:publish("admin_log", { message = string.format("[SUCCESS] %s is now executing '%s'. Cooldown: %d seconds.", specialist.name, abilityName, cooldown) })
-    
-    -- We can also publish a more specific event for other systems to react to
-    self.eventBus:publish("specialist_ability_used", {
-        specialistId = specialist.id,
-        abilityName = abilityName,
-        incidentId = data.incidentId
-    })
+    -- Use the assignSpecialist helper to mark busy and emit events
+    local assigned = self:assignSpecialist(specialist.id, cooldown)
+    if assigned then
+        self.eventBus:publish("admin_log", { message = string.format("[SUCCESS] %s is now executing '%s'. Cooldown: %d seconds.", specialist.name, abilityName, cooldown) })
+
+        -- Publish ability used event for other systems (e.g., threat resolution)
+        self.eventBus:publish("specialist_ability_used", {
+            specialistId = specialist.id,
+            abilityName = abilityName,
+            incidentId = data.incidentId
+        })
+        -- Debug: log status immediately after assignment
+        print(string.format("[DEBUG] handleAdminDeploy: specialist '%s' status='%s' busyUntil=%s", specialist.name, tostring(specialist.status), tostring(specialist.busyUntil)))
+    else
+        self.eventBus:publish("admin_log", { message = string.format("[ERROR] Failed to assign specialist '%s'.", specialist.name) })
+    end
 end
 
 function SpecialistSystem:update(dt)
@@ -156,6 +192,38 @@ end
 
 function SpecialistSystem:getSpecialists()
     return self.specialists
+end
+
+-- Get a specialist by their name (case-insensitive)
+function SpecialistSystem:getSpecialistByName(name)
+    if not name then return nil end
+    local lname = string.lower(name)
+    -- 1) Exact matches
+    for id, spec in pairs(self.specialists) do
+        if spec.name and string.lower(spec.name) == lname then
+            return spec
+        end
+        if spec.displayName and string.lower(spec.displayName) == lname then
+            return spec
+        end
+        if spec.type and string.lower(spec.type) == lname then
+            return spec
+        end
+    end
+
+    -- 2) Partial / substring matches (e.g., 'analyst' -> 'Junior Analyst')
+    for id, spec in pairs(self.specialists) do
+        if spec.name and string.find(string.lower(spec.name), lname, 1, true) then
+            return spec
+        end
+        if spec.displayName and string.find(string.lower(spec.displayName), lname, 1, true) then
+            return spec
+        end
+        if spec.type and string.find(string.lower(spec.type), lname, 1, true) then
+            return spec
+        end
+    end
+    return nil
 end
 
 -- Set skill system reference
@@ -179,6 +247,15 @@ function SpecialistSystem:addSpecialist(specialistType, specialistData)
     if not specialist.name then
         local typeData = self.specialistTypes[specialistType]
         specialist.name = typeData and typeData.name or "Unknown Specialist"
+    end
+
+    -- Normalize name for consistency (remove redundant words like 'Security')
+    local function trim(s)
+        return (s:gsub("^%s+", ""):gsub("%s+$", ""))
+    end
+    if specialist.name and type(specialist.name) == "string" then
+        -- Remove the word 'Security' to produce shorter display names (e.g., 'Junior Security Analyst' -> 'Junior Analyst')
+        specialist.name = trim((specialist.name:gsub("%s*[Ss]ecurity%s*", " ")))
     end
     
     -- Set defaults if not provided
@@ -389,6 +466,7 @@ function SpecialistSystem:assignSpecialist(specialistId, duration)
         specialist = specialist,
         duration = duration
     })
+    print(string.format("[DEBUG] assignSpecialist: id=%s name='%s' status=%s busyUntil=%s", tostring(specialistId), tostring(specialist.name), tostring(specialist.status), tostring(specialist.busyUntil)))
     
     return true
 end

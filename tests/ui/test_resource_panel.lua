@@ -20,6 +20,10 @@ function MockResourceManager:getAllResources()
     return self.resources
 end
 
+function MockResourceManager:setResource(name, value)
+    self.resources[name] = value
+end
+
 -- Mock Theme
 local MockTheme = {}
 function MockTheme:getColor(name)

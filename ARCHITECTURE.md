@@ -52,8 +52,9 @@ The UI is in a transitional state and is the area most in need of refactoring.
 
 The codebase contains several critical issues that must be addressed.
 
-1.  **Redundant and Conflicting "Incident" Systems**: The codebase contains at least **four** different implementations of a crisis/incident/admin mode (`modes/admin_mode.lua`, `scenes/admin_mode.lua`, `scenes/incident_response.lua`, `systems/crisis_system.lua`).
-    -   **Action**: This is the highest priority architectural issue. A single, canonical implementation must be chosen, and the other three must be deleted to resolve the confusion.
+1.  **Redundant and Conflicting "Incident" Systems**: The codebase previously contained multiple implementations of a crisis/incident/admin mode (`modes/admin_mode.lua`, `scenes/admin_mode.lua`, `scenes/incident_response.lua`, `systems/crisis_system.lua`).
+    -   **Status**: Resolved. The project now uses a single canonical implementation: `src/systems/incident_specialist_system.lua`.
+    -   **Action Taken**: Duplicate legacy files have been removed and the canonical system is registered with the `GameStateEngine`. See `docs/INCIDENT_REFACTOR.md` for details.
 
 2.  **Broken UI Scenes**: The primary UI scenes are non-functional due to critical bugs.
     -   `modes/idle_mode.lua`: Has duplicate functions (`enter`, `mousepressed`) that break initialization and input.

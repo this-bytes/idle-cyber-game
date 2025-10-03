@@ -14,6 +14,7 @@ local EventSystem = require("src.systems.event_system")
 local ThreatSystem = require("src.systems.threat_system")
 local SkillSystem = require("src.systems.skill_system")
 local IdleSystem = require("src.systems.idle_system")
+local IncidentSpecialistSystem = require("src.systems.incident_specialist_system")
 local InputSystem = require("src.systems.input_system")
 local ClickRewardSystem = require("src.systems.click_reward_system")
 local ParticleSystem = require("src.systems.particle_system")
@@ -72,6 +73,10 @@ function SOCGame:initialize()
     self.systems.clickRewardSystem = ClickRewardSystem.new(self.eventBus, self.systems.resourceManager, self.systems.upgradeSystem, self.systems.specialistSystem)
     self.systems.particleSystem = ParticleSystem.new(self.eventBus)
 
+    -- 4.1 Create Incident / Specialist system (canonical incident implementation)
+    -- This consolidates incident logic into a single system (see ARCHITECTURE.md)
+    self.systems.Incident = IncidentSpecialistSystem.new(self.eventBus, self.systems.resourceManager)
+
     -- 5. Create other systems
     self.systems.skillSystem = SkillSystem.new(self.eventBus, self.systems.dataManager)
     self.systems.upgradeSystem = UpgradeSystem.new(self.eventBus, self.systems.dataManager)
@@ -90,6 +95,7 @@ function SOCGame:initialize()
     self.systems.gameStateEngine:registerSystem("contractSystem", self.systems.contractSystem)
     self.systems.gameStateEngine:registerSystem("threatSystem", self.systems.threatSystem)
     self.systems.gameStateEngine:registerSystem("idleSystem", self.systems.idleSystem)
+    self.systems.gameStateEngine:registerSystem("Incident", self.systems.Incident)
     self.systems.gameStateEngine:registerSystem("achievementSystem", self.systems.achievementSystem)
     
     -- 7. Try to load saved game state
@@ -114,6 +120,10 @@ function SOCGame:initialize()
     self.systems.contractSystem:initialize()
     self.systems.specialistSystem:initialize()
     self.systems.eventSystem:initialize()
+    -- Initialize canonical Incident system
+    if self.systems.Incident and self.systems.Incident.initialize then
+        self.systems.Incident:initialize()
+    end
     -- self.systems.threatSystem:initialize() -- Disabled to prevent conflict with incident_specialist_system
     self.sceneManager:initialize()
 
