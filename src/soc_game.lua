@@ -22,7 +22,7 @@ local AchievementSystem = require("src.systems.achievement_system")
 local GameStateEngine = require("src.systems.game_state_engine")
 
 -- Scene Dependencies
-local MainMenu = require("src.scenes.main_menu")
+local MainMenuLuis = require("src.scenes.main_menu_luis") -- Pure LUIS implementation
 local SOCView = require("src.scenes.soc_view")
 local UpgradeShop = require("src.scenes.upgrade_shop")
 local GameOver = require("src.scenes.game_over")
@@ -31,6 +31,7 @@ local AdminMode = require("src.modes.admin_mode")
 local IdleDebugScene = require("src.scenes.idle_debug")
 
 -- UI Components
+-- LUIS (Love UI System) - loaded directly, no wrapper
 local StatsOverlay = require("src.ui.stats_overlay")
 local OverlayManager = require("src.ui.overlay_manager")
 
@@ -43,6 +44,7 @@ function SOCGame.new(eventBus)
     self.eventBus = eventBus
     self.systems = {}
     self.sceneManager = nil
+    self.luis = nil -- LUIS (Love UI System) instance
     self.statsOverlay = nil
     self.overlayManager = nil
     self.isInitialized = false
@@ -68,7 +70,21 @@ function SOCGame:initialize()
 
     print("🛡️ Initializing SOC Game Systems...")
     
-    -- 1. Create Game State Engine FIRST (manages all state)
+    -- 0. Initialize LUIS (Love UI System) directly - no wrapper
+    local initLuis = require("luis.init")
+    self.luis = initLuis("lib/luis/widgets")
+    
+    -- Configure LUIS defaults
+    self.luis.showGrid = false
+    self.luis.showLayerNames = false
+    self.luis.showElementOutlines = false
+    
+    -- Register flux for animations
+    self.luis.flux = require("luis.3rdparty.flux")
+    
+    print("🎨 LUIS initialized with grid size: " .. self.luis.gridSize)
+    
+    -- 1. Create Game State Engine (manages all state)
     self.systems.gameStateEngine = GameStateEngine.new(self.eventBus)
     
     -- 2. Create Core Systems & Data Manager
@@ -156,8 +172,8 @@ function SOCGame:initialize()
     self.sceneManager:initialize()
 
     -- 10. Register Scenes
-    -- Use Smart Main Menu with animations and dual-mode support!
-    self.sceneManager:registerScene("main_menu", MainMenu.new(self.eventBus))
+    -- Use LUIS-based Main Menu (pure LUIS implementation)
+    self.sceneManager:registerScene("main_menu", MainMenuLuis.new(self.eventBus, self.luis))
     self.sceneManager:registerScene("soc_view", SOCView.new(self.eventBus))
     self.sceneManager:registerScene("upgrade_shop", UpgradeShop.new(self.eventBus))
     self.sceneManager:registerScene("game_over", GameOver.new(self.eventBus))
@@ -202,6 +218,12 @@ function SOCGame:update(dt)
         return
     end
     
+    -- Update LUIS (handles animations via flux)
+    if self.luis then
+        self.luis.flux.update(dt)
+        self.luis.update(dt)
+    end
+    
     -- Update scene manager (always active for menus)
     self.sceneManager:update(dt)
     
@@ -224,12 +246,9 @@ function SOCGame:update(dt)
     if not self.isGameStarted then
         if self._pendingStart then
             self._pendingStart = nil
-            -- Defensive: clear any lingering input states on overlays and scene UI
+            -- Defensive: clear any lingering input states on overlays
             if self.overlayManager and self.overlayManager.clearInputState then
                 self.overlayManager:clearInputState()
-            end
-            if self.sceneManager and self.sceneManager.currentScene and self.sceneManager.currentScene.uiManager and self.sceneManager.currentScene.uiManager.root and self.sceneManager.currentScene.uiManager.root.clearInputState then
-                self.sceneManager.currentScene.uiManager.root:clearInputState()
             end
             -- Run startGame now (will set isGameStarted)
             self:startGame()
@@ -270,11 +289,17 @@ function SOCGame:update(dt)
 end
 
 function SOCGame:draw()
+    -- Draw scenes first
     if self.sceneManager then
         self.sceneManager:draw()
     end
     
-    -- Draw particle effects on top of everything
+    -- Draw LUIS widgets
+    if self.luis then
+        self.luis.draw()
+    end
+    
+    -- Draw particle effects on top of UI
     if self.systems.particleSystem then
         self.systems.particleSystem:draw()
     end
@@ -380,7 +405,41 @@ function SOCGame:startGame()
     end
 end
 
+function SOCGame:keypressed(key, scancode, isrepeat)
+    -- Toggle LUIS debug view with Tab
+    if key == "tab" and self.luis then
+        self.luis.showGrid = not self.luis.showGrid
+        self.luis.showLayerNames = not self.luis.showLayerNames
+        self.luis.showElementOutlines = not self.luis.showElementOutlines
+        return
+    end
+    
+    -- LUIS input handling
+    if self.luis and self.luis.keypressed(key, scancode, isrepeat) then
+        return
+    end
+
+    -- Global hotkeys via input system
+    if self.systems.inputSystem then
+        self.systems.inputSystem:keypressed(key, scancode, isrepeat)
+    end
+
+    -- Overlays
+    if self.overlayManager and self.overlayManager:keypressed(key) then
+        return
+    end
+
+    if self.sceneManager then
+        self.sceneManager:keypressed(key, scancode, isrepeat)
+    end
+end
+
 function SOCGame:keyreleased(key)
+    -- LUIS input handling
+    if self.luis and self.luis.keyreleased(key) then
+        return
+    end
+
     if self.systems.inputSystem then
         self.systems.inputSystem:keyreleased(key)
     end
@@ -394,17 +453,22 @@ function SOCGame:mousepressed(x, y, button, istouch, presses)
     -- Log at SOCGame layer to verify coordinate mapping after LÖVE dispatch
     print(string.format("[UI RAW] SOCGame:mousepressed x=%.1f y=%.1f button=%s", x, y, tostring(button)))
 
-    -- Handle input system first (for global click actions)
+    -- LUIS input handling
+    if self.luis and self.luis.mousepressed(x, y, button, istouch, presses) then
+        return
+    end
+
+    -- Handle input system (for global click actions)
     if self.systems.inputSystem then
         self.systems.inputSystem:mousepressed(x, y, button, istouch, presses)
     end
 
-    -- Overlays get first chance to consume input. If consumed, do not pass
-    -- to the scene manager.
+    -- Overlays get chance to consume input
     if self.overlayManager and self.overlayManager:mousepressed(x, y, button) then
         return
     end
 
+    -- Finally pass to scene manager
     if self.sceneManager then
         self.sceneManager:mousepressed(x, y, button, istouch, presses)
     else
@@ -416,11 +480,16 @@ function SOCGame:mousereleased(x, y, button, istouch, presses)
     -- Log at SOCGame layer to verify release events arrive from LÖVE
     print(string.format("[UI RAW] SOCGame:mousereleased x=%.1f y=%.1f button=%s", x, y, tostring(button)))
 
+    -- LUIS input handling
+    if self.luis and self.luis.mousereleased(x, y, button, istouch, presses) then
+        return
+    end
+
     if self.systems.inputSystem then
         self.systems.inputSystem:mousereleased(x, y, button, istouch, presses)
     end
 
-    -- Overlays get first chance to consume releases
+    -- Overlays get chance to consume releases
     if self.overlayManager and self.overlayManager:mousereleased(x, y, button) then
         print("[UI RAW] SOCGame:mousereleased consumed by overlay")
         return
@@ -432,18 +501,15 @@ function SOCGame:mousereleased(x, y, button, istouch, presses)
         print("[UI RAW] SOCGame:mousereleased but no sceneManager.mousereleased handler")
     end
 
-    -- Defensive fallback: clear any lingering input states after processing
-    -- This handles edge-cases where the release was not forwarded to the
-    -- specific component (e.g., due to focus changes or scene swaps).
+    -- Defensive fallback: clear any lingering input states
     if self.overlayManager and self.overlayManager.clearInputState then
         self.overlayManager:clearInputState()
-    end
-    if self.sceneManager and self.sceneManager.currentScene and self.sceneManager.currentScene.uiManager and self.sceneManager.currentScene.uiManager.root and self.sceneManager.currentScene.uiManager.root.clearInputState then
-        self.sceneManager.currentScene.uiManager.root:clearInputState()
     end
 end
 
 function SOCGame:mousemoved(x, y, dx, dy)
+    -- LUIS doesn't have mousemoved - it handles hover internally
+    
     if self.overlayManager and self.overlayManager:mousemoved(x, y, dx, dy) then
         return
     end
@@ -454,6 +520,11 @@ function SOCGame:mousemoved(x, y, dx, dy)
 end
 
 function SOCGame:wheelmoved(x, y)
+    -- LUIS input handling
+    if self.luis and self.luis.wheelmoved(x, y) then
+        return
+    end
+
     if self.overlayManager and self.overlayManager:wheelmoved(x, y) then
         return
     end
@@ -464,6 +535,8 @@ function SOCGame:wheelmoved(x, y)
 end
 
 function SOCGame:resize(w, h)
+    -- LUIS automatically handles resize through love.graphics dimensions
+    
     if self.sceneManager and self.sceneManager.resize then
         self.sceneManager:resize(w, h)
     end

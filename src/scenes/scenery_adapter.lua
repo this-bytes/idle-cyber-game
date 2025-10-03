@@ -170,10 +170,20 @@ function SceneryAdapter:finalizeScenes(defaultSceneName)
     
     -- Load the default scene
     local defaultScene = self.scenes[defaultSceneName]
+    print(string.format("🎬 Scenery: Loading default scene '%s'... (scene = %s, has load = %s, has enter = %s)", 
+        defaultSceneName, tostring(defaultScene), tostring(defaultScene and defaultScene.load ~= nil), tostring(defaultScene and defaultScene.enter ~= nil)))
+    
     if defaultScene and defaultScene.load then
-        defaultScene:load()
+        print("🎬 Scenery: Calling load() on " .. defaultSceneName)
+        local success, err = pcall(function() defaultScene:load() end)
+        if not success then
+            print("🎬 Scenery: ERROR calling load(): " .. tostring(err))
+        end
     elseif defaultScene and defaultScene.enter then
+        print("🎬 Scenery: Calling enter() on " .. defaultSceneName)
         defaultScene:enter()
+    else
+        print("🎬 Scenery: WARNING - No load() or enter() method found for " .. defaultSceneName)
     end
     
     print("🎬 Scenery Adapter: Finalized with " .. self:getSceneCount() .. " scenes, default: " .. defaultSceneName)

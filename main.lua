@@ -1,6 +1,23 @@
 -- Idle Sec Ops - Cybersecurity Idle Game
 -- This is the single entry point for the game.
 
+-- LUIS Integration: Override require to translate "luis.*" to "lib/luis/*"
+do
+    local originalRequire = require
+    _G.require = function(moduleName)
+        if moduleName:match("^luis%.") then
+            -- Translate "luis.core" -> "lib.luis.core", "luis.3rdparty.flux" -> "lib.luis.3rdparty.flux"
+            local translatedPath = moduleName:gsub("^luis%.", "lib.luis.")
+            local success, result = pcall(originalRequire, translatedPath)
+            if success then
+                return result
+            end
+            -- If that didn't work, fall through to original require
+        end
+        return originalRequire(moduleName)
+    end
+end
+
 local game
 local ScreenshotTool = require("tools.screenshot_tool")
 
