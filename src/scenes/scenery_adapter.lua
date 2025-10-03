@@ -117,21 +117,66 @@ function SceneryAdapter:finalizeScenes(defaultSceneName)
     end
     
     -- Build scene table for Scenery initialization
+    -- Scenery's manualLoad expects: {path = scene_table, key = "name", default = bool}
     local sceneTable = {}
     for name, scene in pairs(self.scenes) do
         table.insert(sceneTable, {
-            path = scene, -- Scenery accepts table directly
+            path = scene, -- Scenery's manualLoad calls require() but we pass table directly
             key = name,
             default = (name == defaultSceneName)
         })
     end
     
-    -- Initialize Scenery with manual loading
-    self.scenery = SceneryInit(table.unpack(sceneTable))
+    -- CRITICAL FIX: Scenery expects path to be requireable string OR the actual table
+    -- Since we're passing tables, we need to modify approach
+    -- Instead, we'll use Scenery directly but inject setScene into each scene
+    
+    -- Store scenes and current scene
     self.currentSceneName = defaultSceneName
     
-    -- Hook Scenery into Love2D callbacks (will be called by SOCGame)
-    print("🎬 Scenery Adapter: Finalized with " .. #sceneTable .. " scenes, default: " .. defaultSceneName)
+    -- Create setScene function for all scenes
+    local setSceneFunc = function(key, data)
+        if not self.scenes[key] then
+            error("No such scene '" .. key .. "'")
+        end
+        
+        -- Exit current scene
+        local current = self.scenes[self.currentSceneName]
+        if current and current.exit then
+            current:exit()
+        end
+        
+        -- Change scene
+        self.currentSceneName = key
+        local newScene = self.scenes[key]
+        
+        -- Enter/Load new scene
+        if newScene and newScene.load then
+            newScene:load(data)
+        elseif newScene and newScene.enter then
+            newScene:enter(data)
+        end
+        
+        -- Publish scene change event
+        if self.eventBus and self.eventBus.publish then
+            self.eventBus:publish("scene_changed", {scene = key})
+        end
+    end
+    
+    -- Inject setScene into all scenes
+    for name, scene in pairs(self.scenes) do
+        scene.setScene = setSceneFunc
+    end
+    
+    -- Load the default scene
+    local defaultScene = self.scenes[defaultSceneName]
+    if defaultScene and defaultScene.load then
+        defaultScene:load()
+    elseif defaultScene and defaultScene.enter then
+        defaultScene:enter()
+    end
+    
+    print("🎬 Scenery Adapter: Finalized with " .. self:getSceneCount() .. " scenes, default: " .. defaultSceneName)
 end
 
 --- Requests a transition to a new scene.
@@ -143,21 +188,22 @@ function SceneryAdapter:requestScene(sceneName, params)
         return
     end
     
-    if not self.scenery then
-        print("Error: Scenery not initialized. Call finalizeScenes() first.")
-        return
-    end
-    
-    -- Use Scenery's setScene method
-    -- Note: Scenery internally calls setScene on the scene table
-    local scene = self.scenes[sceneName]
-    if scene and scene.setScene then
-        scene.setScene(sceneName, params)
+    -- Use the injected setScene function
+    if self.scenes[self.currentSceneName] and self.scenes[self.currentSceneName].setScene then
+        self.scenes[self.currentSceneName].setScene(sceneName, params)
     else
-        print("Error: Scene '" .. sceneName .. "' does not have setScene method")
+        print("Error: Cannot change scene - setScene not initialized. Call finalizeScenes() first.")
     end
-    
-    self.currentSceneName = sceneName
+end
+
+--- Get the number of registered scenes
+-- @return Number of scenes
+function SceneryAdapter:getSceneCount()
+    local count = 0
+    for _ in pairs(self.scenes) do
+        count = count + 1
+    end
+    return count
 end
 
 --- Get the current active scene name.
@@ -175,80 +221,90 @@ end
 -- Love2D callback delegations (called by SOCGame)
 
 function SceneryAdapter:load()
-    if self.scenery then
-        self.scenery:load()
-    end
+    -- Initial load already handled in finalizeScenes
 end
 
 function SceneryAdapter:update(dt)
-    if self.scenery then
-        self.scenery:update(dt)
+    local scene = self.scenes[self.currentSceneName]
+    if scene and scene.update then
+        scene:update(dt)
     end
 end
 
 function SceneryAdapter:draw()
-    if self.scenery then
-        self.scenery:draw()
+    local scene = self.scenes[self.currentSceneName]
+    if scene and scene.draw then
+        scene:draw()
     end
 end
 
 function SceneryAdapter:mousepressed(x, y, button, istouch, presses)
-    if self.scenery then
-        self.scenery:mousepressed(x, y, button, istouch, presses)
+    local scene = self.scenes[self.currentSceneName]
+    if scene and scene.mousepressed then
+        return scene:mousepressed(x, y, button, istouch, presses)
     end
 end
 
 function SceneryAdapter:mousereleased(x, y, button, istouch, presses)
-    if self.scenery then
-        self.scenery:mousereleased(x, y, button, istouch, presses)
+    local scene = self.scenes[self.currentSceneName]
+    if scene and scene.mousereleased then
+        return scene:mousereleased(x, y, button, istouch, presses)
     end
 end
 
 function SceneryAdapter:mousemoved(x, y, dx, dy, istouch)
-    if self.scenery then
-        self.scenery:mousemoved(x, y, dx, dy, istouch)
+    local scene = self.scenes[self.currentSceneName]
+    if scene and scene.mousemoved then
+        return scene:mousemoved(x, y, dx, dy, istouch)
     end
 end
 
 function SceneryAdapter:wheelmoved(x, y)
-    if self.scenery then
-        self.scenery:wheelmoved(x, y)
+    local scene = self.scenes[self.currentSceneName]
+    if scene and scene.wheelmoved then
+        return scene:wheelmoved(x, y)
     end
 end
 
 function SceneryAdapter:keypressed(key, scancode, isrepeat)
-    if self.scenery then
-        self.scenery:keypressed(key, scancode, isrepeat)
+    local scene = self.scenes[self.currentSceneName]
+    if scene and scene.keypressed then
+        return scene:keypressed(key, scancode, isrepeat)
     end
 end
 
 function SceneryAdapter:keyreleased(key, scancode)
-    if self.scenery then
-        self.scenery:keyreleased(key, scancode)
+    local scene = self.scenes[self.currentSceneName]
+    if scene and scene.keyreleased then
+        return scene:keyreleased(key, scancode)
     end
 end
 
 function SceneryAdapter:textinput(text)
-    if self.scenery then
-        self.scenery:textinput(text)
+    local scene = self.scenes[self.currentSceneName]
+    if scene and scene.textinput then
+        return scene:textinput(text)
     end
 end
 
 function SceneryAdapter:resize(w, h)
-    if self.scenery then
-        self.scenery:resize(w, h)
+    local scene = self.scenes[self.currentSceneName]
+    if scene and scene.resize then
+        return scene:resize(w, h)
     end
 end
 
 function SceneryAdapter:focus(focused)
-    if self.scenery then
-        self.scenery:focus(focused)
+    local scene = self.scenes[self.currentSceneName]
+    if scene and scene.focus then
+        return scene:focus(focused)
     end
 end
 
 function SceneryAdapter:quit()
-    if self.scenery then
-        return self.scenery:quit()
+    local scene = self.scenes[self.currentSceneName]
+    if scene and scene.quit then
+        return scene:quit()
     end
     return false
 end

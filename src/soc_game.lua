@@ -6,7 +6,7 @@
 local EventBus = require("src.utils.event_bus") -- 
 local DataManager = require("src.systems.data_manager")
 local ResourceManager = require("src.systems.resource_manager")
-local SceneManager = require("src.scenes.scene_manager")
+local SceneManager = require("src.scenes.scenery_adapter") -- Using Scenery adapter for scene management
 local ContractSystem = require("src.systems.contract_system")
 local SpecialistSystem = require("src.systems.specialist_system")
 local UpgradeSystem = require("src.systems.upgrade_system")
@@ -177,8 +177,11 @@ function SOCGame:initialize()
         print("🔧 Idle Debug Scene not registered (set IDLE_DEBUG_SCENE=1 to enable)")
     end
     
-    -- 11. Start Initial Scene (Main Menu)
-    self.sceneManager:requestScene("main_menu")
+    -- 10.5. Finalize scene registration with SceneryAdapter (new requirement)
+    self.sceneManager:finalizeScenes("main_menu")
+    
+    -- 11. Start Initial Scene (Main Menu) - now handled by finalizeScenes
+    -- self.sceneManager:requestScene("main_menu") -- Commented out - finalizeScenes does this
     
     -- 12. Initialize Stats Overlay (player-facing, overlays on top of any scene)
     self.statsOverlay = StatsOverlay.new(self.eventBus, self.systems)
