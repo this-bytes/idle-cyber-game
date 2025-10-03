@@ -160,7 +160,12 @@ function AdminMode:draw()
         theme:drawPanel(520, y, 480, 250, "⚠️ THREAT ASSESSMENT")
         local riskY = y + 25
         
-        local contractStats = self.systems.contracts:getStats()
+        local contractStats = nil
+        if self.systems.contractSystem and self.systems.contractSystem.getStats then
+            contractStats = self.systems.contractSystem:getStats()
+        else
+            contractStats = { activeContracts = 0 }
+        end
         theme:drawText("RISK SOURCES:", 530, riskY, theme:getColor("secondary"))
         riskY = riskY + 20
         theme:drawText("ACTIVE CONTRACTS:", 540, riskY, theme:getColor("dimmed"))
@@ -169,8 +174,16 @@ function AdminMode:draw()
         theme:drawText("EXPOSURE LEVEL:", 540, riskY, theme:getColor("dimmed"))
         
         -- Show team readiness
-        local specialistStats = self.systems.specialists:getStats()
-        local teamBonuses = self.systems.specialists:getTeamBonuses()
+        local specialistStats = { available = 0, total = 0 }
+        local teamBonuses = { efficiency = 1.0, speed = 1.0, defense = 1.0 }
+        if self.systems.specialistSystem then
+            if self.systems.specialistSystem.getStats then
+                specialistStats = self.systems.specialistSystem:getStats()
+            end
+            if self.systems.specialistSystem.getTeamBonuses then
+                teamBonuses = self.systems.specialistSystem:getTeamBonuses()
+            end
+        end
         
         theme:drawText("TEAM READINESS:", 30, monitorY, theme:getColor("secondary"))
         monitorY = monitorY + 20
@@ -209,7 +222,10 @@ function AdminMode:draw()
         theme:drawPanel(20, y, 980, 180, "👥 SPECIALIST ROSTER")
         local rosterY = y + 25
         
-        local allSpecialists = self.systems.specialists:getAllSpecialists()
+        local allSpecialists = {}
+        if self.systems.specialistSystem and self.systems.specialistSystem.getAllSpecialists then
+            allSpecialists = self.systems.specialistSystem:getAllSpecialists()
+        end
         local specialistCount = 0
         for specialistId, specialist in pairs(allSpecialists) do
             if specialistCount < 4 then -- Show first 4 specialists

@@ -68,9 +68,8 @@ function SOCGame:initialize()
     -- 3. Create ResourceManager
     self.systems.resourceManager = ResourceManager.new(self.eventBus)
 
-    -- 4. Create Input & Click Systems
+    -- 4. Create Input System (clickRewardSystem depends on upgrade/specialist systems so it's created later)
     self.systems.inputSystem = InputSystem.new(self.eventBus)
-    self.systems.clickRewardSystem = ClickRewardSystem.new(self.eventBus, self.systems.resourceManager, self.systems.upgradeSystem, self.systems.specialistSystem)
     self.systems.particleSystem = ParticleSystem.new(self.eventBus)
 
     -- 4.1 Create Incident / Specialist system (canonical incident implementation)
@@ -81,6 +80,8 @@ function SOCGame:initialize()
     self.systems.skillSystem = SkillSystem.new(self.eventBus, self.systems.dataManager)
     self.systems.upgradeSystem = UpgradeSystem.new(self.eventBus, self.systems.dataManager)
     self.systems.specialistSystem = SpecialistSystem.new(self.eventBus, self.systems.dataManager, self.systems.skillSystem)
+    -- Create Click Reward System after upgrade and specialist systems are available
+    self.systems.clickRewardSystem = ClickRewardSystem.new(self.eventBus, self.systems.resourceManager, self.systems.upgradeSystem, self.systems.specialistSystem)
     self.systems.contractSystem = ContractSystem.new(self.eventBus, self.systems.dataManager, self.systems.upgradeSystem, self.systems.specialistSystem, nil, nil, self.systems.resourceManager)
     self.systems.eventSystem = EventSystem.new(self.eventBus, self.systems.dataManager, self.systems.resourceManager)
     self.systems.threatSystem = ThreatSystem.new(self.eventBus, self.systems.dataManager, self.systems.specialistSystem, self.systems.skillSystem)
