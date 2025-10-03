@@ -38,6 +38,11 @@ end
 -- Update main menu
 function MainMenu:update(dt)
     -- Menu animations or state updates can go here
+    -- TODO: This should allow for dynamic sizing of element based of window size
+
+    if self.uiManager then
+        self.uiManager:update(dt)
+    end
 end
 
 -- Draw main menu

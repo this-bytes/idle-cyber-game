@@ -26,8 +26,13 @@ function NotificationPanel:subscribeToEvents()
         self:addNotification("✨ Event: " .. data.event.description, "event")
     end)
 
+    -- Allow publishers to attach metadata to notifications (e.g. panel navigation)
     self.eventBus:subscribe("specialist_leveled_up", function(data)
-        self:addNotification(string.format("⭐ %s is now Level %d!", data.specialist.name, data.specialist.level), "positive")
+        -- include specialist id in meta so the UI can react to clicks
+        local meta = { action = "open_panel", panel = "specialists", highlightSpecialistId = data.specialistId or (data.specialist and data.specialist.id) }
+        local specialistName = data.specialist and data.specialist.name or ("Specialist " .. tostring(meta.highlightSpecialistId))
+        local specialistLevel = data.newLevel or (data.specialist and data.specialist.level) or "?"
+        self:addNotification(string.format("⭐ %s is now Level %d!", specialistName, specialistLevel), "positive", meta)
     end)
 
     self.eventBus:subscribe("ui_notification", function(data)
@@ -39,11 +44,12 @@ function NotificationPanel:subscribeToEvents()
     end)
 end
 
-function NotificationPanel:addNotification(text, type)
+function NotificationPanel:addNotification(text, type, meta)
     local notification = {
         text = text,
         type = type,
-        timer = 0
+        timer = 0,
+        meta = meta
     }
     table.insert(self.notifications, 1, notification)
     
@@ -82,6 +88,34 @@ function NotificationPanel:draw()
     end
     
     love.graphics.setColor(1, 1, 1)
+end
+
+-- Return bounding boxes for notifications (in draw order) for hit testing
+function NotificationPanel:getNotificationBounds()
+    local screenWidth = love.graphics.getWidth()
+    local y = 50
+    local bounds = {}
+    for i, notif in ipairs(self.notifications) do
+        local h = 20
+        table.insert(bounds, { x = screenWidth - 410, y = y, width = 400, height = h, meta = notif.meta })
+        y = y + 25
+    end
+    return bounds
+end
+
+-- Handle a mouse click at (x,y). Returns true if a notification was clicked.
+function NotificationPanel:handleClick(x, y)
+    local bounds = self:getNotificationBounds()
+    for _, b in ipairs(bounds) do
+        if x >= b.x and x <= b.x + b.width and y >= b.y and y <= b.y + b.height then
+            -- Publish a notification click event so scenes can react
+            if self.eventBus then
+                self.eventBus:publish("notification_clicked", { meta = b.meta })
+            end
+            return true
+        end
+    end
+    return false
 end
 
 return NotificationPanel

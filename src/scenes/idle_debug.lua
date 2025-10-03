@@ -235,7 +235,7 @@ function IdleDebugScene:buildDebugUI()
 
     -- Title
     header:addChild(Text.new({
-        text = "� IDLE DEBUG MONITOR",
+        text = "🛠️ IDLE DEBUG MONITOR",
         fontSize = 24,
         color = {0, 1, 1, 1}, -- Cyan
         textAlign = "center"

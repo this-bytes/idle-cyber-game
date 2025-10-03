@@ -1,6 +1,23 @@
 -- Admin Mode Scene - Active Incident Response
 -- A focused, terminal-style interface for hands-on Incident management.
 
+-- Backwards-compatible adapter: prefer `src.modes.admin_mode` (SmartUI manager) when available.
+local ok, ModesAdmin = pcall(function() return require("src.modes.admin_mode") end)
+
+if ok and ModesAdmin and ModesAdmin.new then
+    -- Delegate: return the modes admin as a scene-compatible object
+    local wrapper = {}
+    function wrapper.new(eventBus)
+        -- Modes admin expects systems via SceneManager injection; create an instance and return it
+        local instance = ModesAdmin.new()
+        -- If the instance needs the eventBus, attach it
+        instance.eventBus = eventBus
+        return instance
+    end
+    return wrapper
+end
+
+-- Fallback: keep the original terminal AdminMode implementation when modes.admin_mode is not available
 local CommandParser = require("src.utils.command_parser")
 
 local AdminMode = {}
