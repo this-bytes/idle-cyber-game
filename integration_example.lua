@@ -5,7 +5,7 @@
 
 local IncidentSpecialistSystem = require("src.systems.incident_specialist_system")
 local EventBus = require("src.utils.event_bus")
-local ResourceManager = require("src.core.resource_manager")
+local ResourceManager = require("src.systems.resource_manager")
 
 -- Mock game object for demonstration
 local Game = {}

@@ -92,57 +92,8 @@ end
 
 -- Validates a single item's data
 function ItemRegistry:validateItem(item)
-    -- Basic validation
-    if not item.id then
-        print("❌ Item missing ID: " .. (item.displayName or "unknown"))
-        return false
-    end
-    
-    if not item.type then
-        print("❌ Item missing type: " .. item.id)
-        return false
-    end
-    
-    -- Check for duplicate IDs
-    if self.itemsById[item.id] then
-        print("❌ Duplicate item ID: " .. item.id)
-        return false
-    end
-    
-    return true
-end
-
--- Adds a validated item to the registry
-function ItemRegistry:registerItem(item)
-    -- Store by type
-    if not self.items[item.type] then
-        self.items[item.type] = {}
-    end
-    table.insert(self.items[item.type], item)
-    
-    -- Store by ID for quick lookup
-    self.itemsById[item.id] = item
-end
-
--- Builds secondary indices (e.g., by tag) for fast querying
-function ItemRegistry:buildIndices()
-    -- Build tag index
-    self.itemsByTag = {}
-    
-    for id, item in pairs(self.itemsById) do
-        if item.tags then
-            for _, tag in ipairs(item.tags) do
-                if not self.itemsByTag[tag] then
-                    self.itemsByTag[tag] = {}
-                end
-                table.insert(self.itemsByTag[tag], item)
-            end
-        end
-    end
-end
-
--- Query methods
-
+    -- Forwarder: src.core.item_registry -> src.systems.item_registry
+    return require("src.systems.item_registry")
 -- Get a single item by its unique ID
 function ItemRegistry:getItem(id)
     return self.itemsById[id]

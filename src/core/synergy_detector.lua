@@ -95,30 +95,8 @@ function SynergyDetector:checkSingleCondition(condition, gameState)
             condition.item_tag,
             condition.item_type,
             condition.state,
-            gameState
-        )
-        
-        local minCount = condition.min_count or 1
-        if count < minCount then
-            return false
-        end
-    end
-    
-    -- Resource threshold condition
-    if condition.resource then
-        local amount = gameState.resources and gameState.resources[condition.resource] or 0
-        local required = condition.min_amount or 0
-        if amount < required then
-            return false
-        end
-    end
-    
-    -- Stat threshold condition
-    if condition.stat then
-        local value = gameState.stats and gameState.stats[condition.stat] or 0
-        local required = condition.min_value or 0
-        if value < required then
-            return false
+            -- Forwarder: src.core.synergy_detector -> src.systems.synergy_detector
+            return require("src.systems.synergy_detector")
         end
     end
     

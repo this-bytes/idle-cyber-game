@@ -25,7 +25,5 @@ function SOCStats:initialize()
             self.metrics.threatsDetected = self.metrics.threatsDetected + 1
         end)
     end
-    return true
-end
-
-return SOCStats
+    -- Forwarder: src.core.soc_stats -> src.systems.soc_stats
+    return require("src.systems.soc_stats")

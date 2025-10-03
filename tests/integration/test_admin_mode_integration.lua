@@ -2,7 +2,7 @@
 -- Tests the full gameplay loop from threat generation to resolution
 
 local EventBus = require("src.utils.event_bus")
-local DataManager = require("src.core.data_manager")
+local DataManager = require("src.systems.data_manager")
 local SkillSystem = require("src.systems.skill_system")
 local SpecialistSystem = require("src.systems.specialist_system")
 local ThreatSystem = require("src.systems.threat_system")

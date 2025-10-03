@@ -160,39 +160,6 @@ function AnalyticsCollector:getRecentEvents(count)
         table.insert(recent, self.session.events[i])
     end
     
-    return recent
-end
+    -- Forwarder: src.core.analytics_collector -> src.systems.analytics_collector
+    return require("src.systems.analytics_collector")
 
-function AnalyticsCollector:saveState()
-    return {
-        total_playtime = self.session.total_playtime,
-        contracts_completed = self.session.contracts_completed,
-        money_earned = self.session.money_earned,
-        upgrades_purchased = self.session.upgrades_purchased,
-        specialists_hired = self.session.specialists_hired,
-        threats_mitigated = self.session.threats_mitigated,
-        crises_resolved = self.session.crises_resolved,
-        first_contract = self.session.first_contract,
-        first_Incident = self.session.first_Incident,
-        first_specialist = self.session.first_specialist,
-        first_upgrade = self.session.first_upgrade
-    }
-end
-
-function AnalyticsCollector:loadState(state)
-    if not state then return end
-    
-    self.session.total_playtime = state.total_playtime or 0
-    self.session.contracts_completed = state.contracts_completed or 0
-    self.session.money_earned = state.money_earned or 0
-    self.session.upgrades_purchased = state.upgrades_purchased or 0
-    self.session.specialists_hired = state.specialists_hired or 0
-    self.session.threats_mitigated = state.threats_mitigated or 0
-    self.session.crises_resolved = state.crises_resolved or 0
-    self.session.first_contract = state.first_contract
-    self.session.first_Incident = state.first_Incident
-    self.session.first_specialist = state.first_specialist
-    self.session.first_upgrade = state.first_upgrade
-end
-
-return AnalyticsCollector

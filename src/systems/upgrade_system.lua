@@ -118,6 +118,12 @@ function UpgradeSystem:getUpgradeById(id)
     return nil
 end
 
+function UpgradeSystem:initialize()
+    -- Backwards compatibility: some legacy code expects an initialize() method.
+    -- The UpgradeSystem performs its setup during construction, so this is a no-op.
+    return true
+end
+
 function UpgradeSystem:getAvailableUpgrades()
     local available = {}
     for _, upgrade in ipairs(self.allUpgrades) do

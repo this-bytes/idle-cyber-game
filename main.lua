@@ -1,68 +1,86 @@
 -- Idle Sec Ops - Cybersecurity Idle Game
 -- This is the single entry point for the game.
 
--- Global game instance
 local game
 local ScreenshotTool = require("tools.screenshot_tool")
----@param DEBUG_UI boolean If true, show debug overlay for UI elements
+
+-- @param DEBUG_UI boolean If true, show debug overlay for UI elements
 DEBUG_UI = false
---Arguments to run parts directly passed in via command line expand as we develop
--- Useful for running specific test suites without a full IDE setup or driving particular
--- game modes directly from command line.
--- Usage:
--- e.g. love . --test=contracts
--- or love . --test=progression
-local args = arg
-if args then
-    for i, v in ipairs(args) do
-        if v:find("--test=") == 1 then
-            local testName = v:sub(8)
-            if testName == "contracts" then
-                print("Running contract system tests...")
-                local ContractTests = require("tests.systems.test_contract_system")
-                local passed, failed = ContractTests.run_contract_tests()
-                print(string.format("Contract tests completed: %d passed, %d failed", passed, failed))
-                love.event.quit()
-            elseif testName == "progression" then
-                print("Running progression system tests...")
-                local ProgressionTests = require("tests.systems.test_progression_system")
-                local passed, failed = ProgressionTests.run_progression_tests()
-                print(string.format("Progression tests completed: %d passed, %d failed", passed, failed))
-                love.event.quit()
-            elseif testName == "specialists" then
-                print("Running specialist system tests...")
-                local SpecialistTests = require("tests.systems.test_specialist_system")
-                local passed, failed = SpecialistTests.run_specialist_tests()
-                print(string.format("Specialist tests completed: %d passed, %d failed", passed, failed))
-                love.event.quit()
-            elseif testName == "input" then
-                print("Running input system tests...")
-                local InputTests = require("tests.systems.test_input_system")
-                local passed, failed = InputTests.run_input_tests()
-                print(string.format("Input tests completed: %d passed, %d failed", passed, failed))
-                love.event.quit()
-            else
-                print("Unknown test: " .. testName)
-                love.event.quit()
-            end
-        elseif v:find("--screenshot") == 1 then
-            -- Enable screenshot mode (automated mode that quits after capture)
-            SCREENSHOT_MODE = true
-            SCREENSHOT_READY = false
-            SCREENSHOT_AGENT = false
-            print("📸 Screenshot mode enabled from command line")
-        elseif v:find("--screenshot-agent") == 1 then
-            -- Agent-triggered screenshots: enable capturing but do NOT quit the
-            -- game afterwards. Useful for coding agents that want to inspect
-            -- UI without terminating the process.
-            SCREENSHOT_MODE = true
-            SCREENSHOT_READY = false
-            SCREENSHOT_AGENT = true
-            print("📸 Screenshot agent mode enabled from command line")
+
+-- --- NEW ARGUMENT PARSING HELPER ---
+local function parse_args(args)
+    local options = {}
+    if not args then return options end
+
+    for _, v in ipairs(args) do
+        -- Find argument and its value (e.g., test=contracts)
+        if v:find("^%-%-test=") then
+            options.test = v:sub(v:find("=")[1] + 1)
+        -- Handle simple flags
+        elseif v == "--screenshot" then
+            options.screenshot_mode = true
+        elseif v == "--screenshot-agent" then
+            options.screenshot_mode = true
+            options.screenshot_agent = true
         elseif v == "--take-screenshot" then
-            TAKE_SCREENSHOT_ON_LOAD = true
+            options.take_screenshot_on_load = true
         end
     end
+    return options
+end
+-- --- END NEW ARGUMENT PARSING HELPER ---
+
+-- --- NEW TEST REGISTRY ---
+local TestRegistry = {
+    contracts = function()
+        local ContractTests = require("tests.systems.test_contract_system")
+        local p, f = ContractTests.run_contract_tests()
+        return p, f, "Contract"
+    end,
+    progression = function()
+        local ProgressionTests = require("tests.systems.test_progression_system")
+        local p, f = ProgressionTests.run_progression_tests()
+        return p, f, "Progression"
+    end,
+    specialists = function()
+        local SpecialistTests = require("tests.systems.test_specialist_system")
+        local p, f = SpecialistTests.run_specialist_tests()
+        return p, f, "Specialist"
+    end,
+    input = function()
+        local InputTests = require("tests.systems.test_input_system")
+        local p, f = InputTests.run_input_tests()
+        return p, f, "Input"
+    end,
+}
+-- --- END NEW TEST REGISTRY ---
+
+
+-- Process command line arguments
+local options = parse_args(arg)
+
+-- EXECUTE LOGIC BASED ON PARSED OPTIONS
+if options.test then
+    local runTest = TestRegistry[options.test]
+    if runTest then
+        local passed, failed, name = runTest()
+        print(string.format("%s tests completed: %d passed, %d failed", name, passed, failed))
+    else
+        print("Unknown test: " .. options.test)
+    end
+    -- Quit after test execution regardless of success/failure
+    love.event.quit()
+end
+
+-- Set global flags based on parsed options
+SCREENSHOT_MODE = options.screenshot_mode or false
+SCREENSHOT_READY = false
+SCREENSHOT_AGENT = options.screenshot_agent or false
+TAKE_SCREENSHOT_ON_LOAD = options.take_screenshot_on_load or false
+
+if SCREENSHOT_MODE or TAKE_SCREENSHOT_ON_LOAD then
+    local mode_name = SCREENSHOT_AGENT and "Agent" or "Automated"
+    print(string.format("📸 Screenshot mode enabled: %s", mode_name))
 end
 
 function love.load()
@@ -73,6 +91,9 @@ function love.load()
     
     local font = love.graphics.newFont(12)
     love.graphics.setFont(font)
+    -- TODO: Add emoji support through graphics.printf()
+
+    love.graphics.printf("🛡️ SOC Command Center - Cybersecurity Operations Simulator", 0, 50, love.graphics.getWidth(), "center")
 
     -- Debug: print command line arguments
     print("📋 Command line args:", table.concat(arg, ", "))

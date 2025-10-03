@@ -1,11 +1,11 @@
 -- Test suite for AWESOME Backend Architecture
 -- Tests ItemRegistry, EffectProcessor, FormulaEngine, ProcGen, and SynergyDetector
 
-local ItemRegistry = require("src.core.item_registry")
-local EffectProcessor = require("src.core.effect_processor")
-local FormulaEngine = require("src.core.formula_engine")
-local ProcGen = require("src.core.proc_gen")
-local SynergyDetector = require("src.core.synergy_detector")
+local ItemRegistry = require("src.systems.item_registry")
+local EffectProcessor = require("src.systems.effect_processor")
+local FormulaEngine = require("src.systems.formula_engine")
+local ProcGen = require("src.systems.proc_gen")
+local SynergyDetector = require("src.systems.synergy_detector")
 
 -- Mock DataManager for testing
 local function createMockDataManager()

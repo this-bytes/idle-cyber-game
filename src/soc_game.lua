@@ -4,7 +4,7 @@
 
 -- System Dependencies
 local EventBus = require("src.utils.event_bus") -- 
-local DataManager = require("src.core.data_manager")
+local DataManager = require("src.systems.data_manager")
 local ResourceManager = require("src.systems.resource_manager")
 local SceneManager = require("src.scenes.scene_manager")
 local ContractSystem = require("src.systems.contract_system")

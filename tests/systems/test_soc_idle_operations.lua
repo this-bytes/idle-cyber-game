@@ -3,7 +3,7 @@
 
 local SOCIdleOperations = require("src.systems.soc_idle_operations")
 local EventBus = require("src.utils.event_bus")
-local ResourceManager = require("src.core.resource_manager")
+local ResourceManager = require("src.systems.resource_manager")
 
 -- Test SOC idle operations initialization
 TestRunner.test("SOCIdleOperations - Initialization", function()
