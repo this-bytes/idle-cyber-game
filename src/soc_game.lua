@@ -25,7 +25,7 @@ local GameStateEngine = require("src.systems.game_state_engine")
 local MainMenuLuis = require("src.scenes.main_menu_luis") -- Pure LUIS implementation
 local SOCView = require("src.scenes.soc_view")
 local UpgradeShop = require("src.scenes.upgrade_shop")
-local GameOver = require("src.scenes.game_over")
+local GameOverLuis = require("src.scenes.game_over_luis") -- Pure LUIS implementation
 local IncidentResponse = require("src.scenes.incident_response")
 local AdminMode = require("src.modes.admin_mode")
 local IdleDebugScene = require("src.scenes.idle_debug")
@@ -176,7 +176,7 @@ function SOCGame:initialize()
     self.sceneManager:registerScene("main_menu", MainMenuLuis.new(self.eventBus, self.luis))
     self.sceneManager:registerScene("soc_view", SOCView.new(self.eventBus))
     self.sceneManager:registerScene("upgrade_shop", UpgradeShop.new(self.eventBus))
-    self.sceneManager:registerScene("game_over", GameOver.new(self.eventBus))
+    self.sceneManager:registerScene("game_over", GameOverLuis.new(self.eventBus, self.luis))
     self.sceneManager:registerScene("incident_response", IncidentResponse.new(self.eventBus))
     self.sceneManager:registerScene("admin_mode", AdminMode.new())
     -- Register developer-only debug scene only when explicitly enabled via env var
