@@ -43,6 +43,8 @@ function Text:setText(text)
         self.text = text
         self._textDirty = true
         self:invalidateLayout()
+        -- Keep props in sync for test assertions and external inspection
+        if self.props then self.props.text = text end
     end
 end
 

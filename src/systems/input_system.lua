@@ -70,7 +70,7 @@ function InputSystem:registerFocusable(element, priority)
     table.insert(self.focusStack, {
         element = element,
         priority = priority,
-        id = tostring(element)
+        id = element.id or tostring(element)
     })
 
     -- Sort by priority (highest first)
@@ -78,9 +78,10 @@ function InputSystem:registerFocusable(element, priority)
         return a.priority > b.priority
     end)
 
-    -- Set initial focus if none exists
-    if not self.currentFocus then
-        self.currentFocus = self.focusStack[1]
+    -- Ensure focus is set to the highest priority element
+    -- Use setFocus so focus gained/lost callbacks are invoked properly
+    if #self.focusStack > 0 then
+        self:setFocus(self.focusStack[1])
     end
 end
 
@@ -132,7 +133,13 @@ end
 -- Check if an action should trigger (with debouncing)
 function InputSystem:shouldTriggerAction(actionName)
     local now = love.timer.getTime()
-    local lastTime = self.lastTriggerTime[actionName] or 0
+    local lastTime = self.lastTriggerTime[actionName]
+
+    -- If we've never triggered this action before, allow it immediately
+    if not lastTime then
+        self.lastTriggerTime[actionName] = now
+        return true
+    end
 
     if now - lastTime >= self.debounceTime then
         self.lastTriggerTime[actionName] = now

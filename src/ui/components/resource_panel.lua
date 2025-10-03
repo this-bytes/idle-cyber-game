@@ -56,7 +56,9 @@ function ResourcePanel:update()
 
     -- Budget
     if self.resourceTexts.money then
-        self.resourceTexts.money.value:setText("$" .. format.number(resources.money or 0, 0))
+        -- Use integer display for money in the compact resource panel (tests expect raw numbers)
+        local moneyVal = math.floor(resources.money or 0)
+        self.resourceTexts.money.value:setText("$" .. tostring(moneyVal))
         self.resourceTexts.money.value.props.color = self.theme:getColor("success")
     end
 

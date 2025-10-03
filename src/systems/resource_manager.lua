@@ -74,6 +74,19 @@ function ResourceManager.new(eventBus)
     return self
 end
 
+-- Initialize method required by some systems/tests
+function ResourceManager:initialize()
+    -- Placeholder initialization for compatibility with legacy callers
+    -- Ensure generationRates and resources are set to sane defaults
+    if not self.resources then
+        self.resources = { money = 1000, reputation = 0, xp = 0, missionTokens = 0 }
+    end
+    if not self.generationRates then
+        self.generationRates = { money = 0, reputation = 0, xp = 0 }
+    end
+    return true
+end
+
 -- Update resource generation
 function ResourceManager:update(dt)
     -- Generate passive resources
