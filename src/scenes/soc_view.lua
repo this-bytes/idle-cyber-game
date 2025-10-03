@@ -624,6 +624,45 @@ function SOCView:showAchievementNotification(achievement)
     print("🏆 SOCView: Displayed achievement notification: " .. (achievement.name or "Unknown"))
 end
 
+-- Handle specialist level up events (keeps UI/state in sync)
+function SOCView:handleSpecialistLevelUp(data)
+    if not data then return end
+
+    local specialistId = data.specialistId or (data.specialist and data.specialist.id)
+    local specialist = data.specialist
+    local oldLevel = data.oldLevel
+    local newLevel = data.newLevel or (specialist and specialist.level)
+
+    -- Try to refresh specialist from the specialist system if available
+    if self.systems and self.systems.specialistSystem and specialistId then
+        local fromSystem = self.systems.specialistSystem:getSpecialist(specialistId)
+        if fromSystem then
+            specialist = fromSystem
+        end
+    end
+
+    -- Update local cache
+    if specialistId and specialist then
+        self.specialists = self.specialists or {}
+        self.specialists[specialistId] = specialist
+    end
+
+    -- Notification
+    if self.notificationPanel then
+        local name = (specialist and specialist.name) or ("Specialist " .. tostring(specialistId or "?"))
+        local lvl = tostring(newLevel or "?")
+        self.notificationPanel:addNotification(string.format("⭐ %s leveled up to Level %s!", name, lvl), "positive")
+    end
+
+    -- Recompute SOC capabilities and mark UI for rebuild
+    self:updateSOCCapabilities()
+    if self.uiManager then
+        self.uiManager.needsRebuild = true
+    end
+
+    print(string.format("SOCView: handleSpecialistLevelUp - %s leveled %s -> %s", tostring(specialist and specialist.name or specialistId), tostring(oldLevel or "?"), tostring(newLevel or "?")))
+end
+
 -- Update SOC view
 function SOCView:update(dt)
     -- Update UI components

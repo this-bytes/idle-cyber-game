@@ -266,8 +266,10 @@ function Component:onMousePress(x, y, button)
         end
     end
     
-    -- Check self
-    if self:containsPoint(x, y) then
+    -- Check self - only if we have click handlers OR we're an interactive component
+    -- This prevents non-interactive children (like text labels) from blocking parent clicks
+    local isInteractive = self.props.onClick or self.props.onPress or self.props.onRelease
+    if self:containsPoint(x, y) and isInteractive then
         self.pressed = true
         if self.props.onPress then
             self.props.onPress(self, button)

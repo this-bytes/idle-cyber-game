@@ -17,6 +17,7 @@ function Button.new(props)
     props.padding = props.padding or {8, 16, 8, 16}
     props.minWidth = props.minWidth or 80
     props.minHeight = props.minHeight or 32
+    props.className = props.className or "Button"  -- Identify as Button in logs
     
     local self = Box.new(props)
     setmetatable(self, Button)
@@ -58,7 +59,8 @@ function Button.new(props)
         fontSize = self.labelFontSize,
         font = self.labelFont,
         textAlign = "center",
-        verticalAlign = "center"
+        verticalAlign = "center",
+        className = "ButtonLabel"  -- Identify button labels in logs
     })
     
     -- Add label as child

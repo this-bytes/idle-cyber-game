@@ -39,8 +39,8 @@ function IdleDebugScene.new(eventBus)
 end
 
 -- Scene lifecycle methods
-function IdleDebugScene:enter(systems)
-    self.systems = systems
+function IdleDebugScene:enter(params)
+    -- Note: self.systems is injected by SceneManager before enter() is called
     print("🔧 Idle Debug Scene: Entered - Monitoring idle systems")
 
     -- Initialize Smart UI Manager
@@ -93,6 +93,27 @@ function IdleDebugScene:keypressed(key)
     elseif key == "space" then
         -- Toggle pause (if implemented)
         print("🔧 Pause toggle (not implemented)")
+    end
+end
+
+-- Handle mouse input
+function IdleDebugScene:mousepressed(x, y, button)
+    if self.uiManager then
+        self.uiManager:mousepressed(x, y, button)
+    end
+end
+
+-- Handle mouse release (critical for onClick callbacks)
+function IdleDebugScene:mousereleased(x, y, button)
+    if self.uiManager then
+        self.uiManager:mousereleased(x, y, button)
+    end
+end
+
+-- Handle mouse movement
+function IdleDebugScene:mousemoved(x, y, dx, dy)
+    if self.uiManager then
+        self.uiManager:mousemoved(x, y, dx, dy)
     end
 end
 
