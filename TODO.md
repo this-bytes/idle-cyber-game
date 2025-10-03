@@ -1,42 +1,77 @@
 # Idle Sec Ops - Development TODO
+
+## ✅ COMPLETED: Comprehensive Testing Framework (PRIORITY ACHIEVED)
+
+**Status**: ALL 7 MECHANICS TESTS PASSING ✅
+
+The game now has a robust, headless testing framework that validates all core mechanics:
+- ✅ Idle income generation (passive gameplay)
+- ✅ Contract lifecycle (tycoon mechanics)
+- ✅ Specialist progression (RPG mechanics)
+- ✅ Threat resolution (RTS mechanics)
+- ✅ Resource management integrity
+- ✅ Upgrade system functionality
+- ✅ System integration validation
+
+**Documentation**: See [docs/TESTING_FRAMEWORK.md](docs/TESTING_FRAMEWORK.md) and [docs/TESTING_IMPLEMENTATION_REPORT.md](docs/TESTING_IMPLEMENTATION_REPORT.md)
+
+**Run Tests**: `/usr/bin/lua tests/run_mechanics_tests.lua`
+
+---
+
+## Current Priority: UI Modernization
+
+### 🎯 Next: Refactor idle_debug.lua to SmartUIManager
+Per user directive: "This should be the first screen we apply it to as its the in game screen to see the engine"
+
+**Goals**:
+- Replace manual love.graphics calls with SmartUIManager components
+- Establish pattern for all future UI work
+- Maintain debug functionality while improving UX
+- Create reusable component library
+
+---
+
 ## Development Notes
 
 ### Current Architecture Strengths
-- Event-driven system communication
-- Modular system design
-- Comprehensive test coverage
-- Data-driven approach for flexibility
+- ✅ **Event-driven system communication**
+- ✅ **Modular system design**
+- ✅ **Comprehensive test coverage** (NEW!)
+- ✅ **Data-driven approach for flexibility**
+- ✅ **Validated core mechanics** (NEW!)
 
 ### Areas for Improvement
-- engaging game - go from want to play to need to play
-- incident scenarios should be data-driven
-- UI needs component-based architecture
+- UI needs component-based architecture (IN PROGRESS - idle_debug.lua target)
+- Engaging game progression - go from "want to play" to "need to play"
+- Incident scenarios should be data-driven
 - Resource management could be more sophisticated
 - Performance monitoring for complex simulations
 
 ### Design Philosophy
-- Maintain cybersecurity SOC theme authenticity althought the content can be tongue in cheek puns etc
-- COre idle engine needs to be robust to allow for multiplcation through stat/skill tree and other scable factors
+- Maintain cybersecurity SOC theme authenticity (content can be tongue-in-cheek puns)
+- Core idle engine needs to be robust to allow multiplication through stat/skill trees
 - Balanced idle progression with incident engagement
 - Player agency in business growth strategy
 
+---
+
+## Backlog
+
 # Player Stats
-all game stats need to save to the player. We need to handle persistance of this.
+All game stats need to save to the player. We need to handle persistence of this.
 
-# Dashboard controls for selected item. 
-when on dashboard an viewing the alert feed need to be able to select any 
+# Dashboard controls for selected item
+When on dashboard and viewing the alert feed, need to be able to select any item
 
-Game debug screen should be a complete snap shot of game and the current multipliers in place as they are Pretty much a live view of the game state.
-
-
-
+Game debug screen should be a complete snapshot of game and current multipliers as a live view of game state.
 
 ### Incident System 
-- [ ] Create upgradable office starting with garage and expand, feeds into the stats of game initially then can be scene changes
+- [ ] Create upgradable office starting with garage and expand, feeds into stats initially then scene changes
 - [ ] Multiple incident scenarios with different threat types
-- [ ] Dynamic incident generation based on active contracts, use some sort of rng engine to determine stats. Need a word list to use to generate random names etc
-- [ ] Specialist system with upgrade, cooldowns etc
-- [ ] incident outcome affects client reputation and contract renewals
+- [ ] Dynamic incident generation based on active contracts, use RNG engine to determine stats
+- [ ] Specialist system with upgrade, cooldowns etc (PARTIALLY COMPLETE - has leveling/skills)
+- [ ] Incident outcome affects client reputation and contract renewals
 
 ### Facility & Upgrade System 
 - [ ] Office facility expansion (garage → office → enterprise progression)

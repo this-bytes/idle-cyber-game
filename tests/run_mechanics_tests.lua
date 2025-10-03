@@ -2,14 +2,11 @@
 -- Headless Game Mechanics Test Runner
 -- Runs without LÖVE/GUI dependencies
 
--- Mock LÖVE timer for headless environment
-if not love then
-    love = {
-        timer = {
-            getTime = function() return os.clock() end
-        }
-    }
-end
+-- Add project paths BEFORE loading anything
+package.path = package.path .. ";./?.lua;./src/?.lua"
+
+-- Initialize LÖVE mocks for headless environment
+require("tests.headless_mock")
 
 -- Load the test suite
 local GameMechanicsTest = require("tests.test_game_mechanics")

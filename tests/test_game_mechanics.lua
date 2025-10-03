@@ -34,6 +34,7 @@ function GameMechanicsTest:setUp()
     -- Initialize systems
     self.systems.specialistSystem:initialize()
     self.systems.contractSystem:initialize()
+    self.systems.threatSystem:initialize()
     self.systems.incidentSystem:initialize()
     
     -- Give player starting resources
@@ -68,22 +69,32 @@ end
 function GameMechanicsTest:testContractLifecycle()
     print("\n🧪 Test: Contract Lifecycle (Tycoon Mechanic)")
     
+    -- Disable auto-accept to test manual contract management
+    self.systems.contractSystem.autoAcceptEnabled = false
+    
     local startMoney = self.systems.resourceManager:getResource("money")
     
-    -- Generate contracts
-    self.systems.contractSystem:update(0)
+    -- Generate contracts (need to simulate 10+ seconds for generation)
+    self.systems.contractSystem:update(11) -- Trigger contract generation
     local available = self.systems.contractSystem.availableContracts
-    assert(#available > 0, "❌ No contracts generated")
-    print(string.format("   ✅ Generated %d available contracts", #available))
+    local count = self:countTable(available)
+    assert(count > 0, "❌ No contracts generated")
+    print(string.format("   ✅ Generated %d available contracts", count))
     
-    -- Accept a contract
-    local contract = available[1]
-    local success = self.systems.contractSystem:acceptContract(1)
-    assert(success, "❌ Failed to accept contract")
+    -- Accept a contract (get first available by ID)
+    local contractId, contract = next(available)
+    self.systems.contractSystem:acceptContract(contractId)
+    
+    -- Verify contract was accepted
+    local activeCount = self:countTable(self.systems.contractSystem.activeContracts)
+    assert(activeCount > 0, "❌ Failed to accept contract")
     print(string.format("   ✅ Accepted contract: %s", contract.clientName))
     
+    -- Get the active contract (it's now been modified)
+    local activeContract = self.systems.contractSystem.activeContracts[contractId]
+    
     -- Fast-forward time to complete contract
-    local timeToComplete = contract.timeToComplete + 1
+    local timeToComplete = (activeContract.duration or contract.baseDuration) + 1
     self.systems.contractSystem:update(timeToComplete)
     
     -- Verify contract completed and money increased

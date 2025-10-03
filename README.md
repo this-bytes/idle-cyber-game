@@ -59,11 +59,29 @@ Press **F3** in-game to toggle the comprehensive debug overlay which shows:
 
 See [docs/DEBUG_OVERLAY.md](docs/DEBUG_OVERLAY.md) for full documentation.
 
-## Testing
+## Testing ✅
+
+The game has a comprehensive testing framework that validates all core mechanics in a headless environment:
 
 ```bash
-lua5.3 tests/test_runner.lua  # Runs all 46 tests (42 pass, 4 legacy issues)
+# Run comprehensive mechanics validation (RECOMMENDED)
+/usr/bin/lua tests/run_mechanics_tests.lua
+
+# Run integration and behavior tests
+./dev.sh test-all
 ```
+
+### Test Coverage
+- ✅ **All 7 comprehensive mechanics tests passing**
+- ✅ Idle income generation
+- ✅ Contract lifecycle (tycoon mechanics)
+- ✅ Specialist progression (RPG mechanics)
+- ✅ Threat resolution (RTS mechanics)
+- ✅ Resource management
+- ✅ Upgrade system
+- ✅ System integration
+
+See [TESTING.md](TESTING.md) and [docs/TESTING_FRAMEWORK.md](docs/TESTING_FRAMEWORK.md) for details.
 
 
 ### Screenshot tool behavior
