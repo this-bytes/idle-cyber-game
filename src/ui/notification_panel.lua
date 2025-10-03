@@ -30,7 +30,9 @@ function NotificationPanel:subscribeToEvents()
     self.eventBus:subscribe("specialist_leveled_up", function(data)
         -- include specialist id in meta so the UI can react to clicks
         local meta = { action = "open_panel", panel = "specialists", highlightSpecialistId = data.specialistId or (data.specialist and data.specialist.id) }
-        self:addNotification(string.format("⭐ %s is now Level %d!", data.specialist and data.specialist.name or ("Specialist " .. tostring(meta.highlightSpecialistId)), data.newLevel or (data.specialist and data.specialist.level) or "?"), "positive", meta)
+        local specialistName = data.specialist and data.specialist.name or ("Specialist " .. tostring(meta.highlightSpecialistId))
+        local specialistLevel = data.newLevel or (data.specialist and data.specialist.level) or "?"
+        self:addNotification(string.format("⭐ %s is now Level %d!", specialistName, specialistLevel), "positive", meta)
     end)
 
     self.eventBus:subscribe("ui_notification", function(data)
