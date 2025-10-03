@@ -38,7 +38,8 @@ function Wrapper.new(eventBus, dataManager)
     return facade
 end
 
-return Wrapper
+
+
 function IncidentSystem:getCurrentStage()
     if not self.activeIncident then return nil end
     return self.activeIncident.stages[self.currentStageIndex]
@@ -76,5 +77,7 @@ function IncidentSystem:loadState(state)
         self.elapsedTime = state.elapsedTime or 0
     end
 end
+
+return Wrapper
 
 return IncidentSystem
