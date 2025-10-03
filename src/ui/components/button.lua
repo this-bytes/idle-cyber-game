@@ -189,6 +189,10 @@ function Button:render()
     if self._labelComponent then
         self._labelComponent:render()
     end
+
+    if DEBUG_UI then
+        print(string.format("[UI DRAW] Button:render id=%s label='%s' hovered=%s pressed=%s", tostring(self.id), tostring(self.label), tostring(self.hovered), tostring(self.pressed)))
+    end
     
     -- Restore state
     love.graphics.setLineWidth(lineWidth)

@@ -233,6 +233,8 @@ function love.mousepressed(x, y, button)
 end
 
 function love.mousereleased(x, y, button)
+    -- Log raw coordinates at the engine entry point for diagnostics
+    print(string.format("[UI RAW] love.mousereleased raw x=%.1f y=%.1f button=%s", x, y, tostring(button)))
     if game and game.mousereleased then
         game:mousereleased(x, y, button)
     end

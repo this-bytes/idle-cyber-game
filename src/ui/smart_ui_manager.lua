@@ -1,6 +1,6 @@
 -- Smart UI Manager - Modernized UI management using Smart UI Framework
 -- Replaces old drawing code with component-based rendering
--- Integrates ToastManager and provides viewport management
+-- Integrates LovelyToasts (community library) and provides viewport management
 
 local ScrollContainer = require("src.ui.components.scroll_container")
 local Box = require("src.ui.components.box")
@@ -8,7 +8,7 @@ local Panel = require("src.ui.components.panel")
 local Text = require("src.ui.components.text")
 local Button = require("src.ui.components.button")
 local Grid = require("src.ui.components.grid")
-local ToastManager = require("src.ui.toast_manager")
+local ToastWrapper = require("src.ui.lovely_toast_wrapper")
 
 local SmartUIManager = {}
 SmartUIManager.__index = SmartUIManager
@@ -34,8 +34,8 @@ function SmartUIManager.new(eventBus, resourceManager)
     self.screenWidth = 1024
     self.screenHeight = 768
     
-    -- Toast notification system
-    self.toastManager = ToastManager.new()
+    -- Toast notification system (using Lovely-Toasts wrapper)
+    self.toastManager = ToastWrapper.new()
     
     -- Root UI components
     self.root = nil
@@ -276,8 +276,8 @@ function SmartUIManager:handleMenuAction(action)
     
     if action == "start_game" then
         if self.eventBus then
-            print("[UI DEBUG] Publishing scene_request event for 'soc_view'")
-            self.eventBus:publish("scene_request", {scene = "soc_view"})
+            print("[UI DEBUG] Publishing request_scene_change event for 'soc_view'")
+            self.eventBus:publish("request_scene_change", {scene = "soc_view"})
         end
     elseif action == "debug" then
         if self.eventBus then
@@ -452,6 +452,10 @@ end
 -- Render the UI
 function SmartUIManager:draw()
     if self.root then
+        -- Debug: confirm draw is invoked and state
+        if DEBUG_UI then
+            print(string.format("[UI DRAW] SmartUIManager:draw state=%s rootPresent=%s", tostring(self.currentState), tostring(self.root ~= nil)))
+        end
         -- Measure and layout root component
         self.root:measure(self.screenWidth, self.screenHeight)
         self.root:layout(0, 0, self.screenWidth, self.screenHeight)
@@ -460,8 +464,8 @@ function SmartUIManager:draw()
         self.root:render()
     end
     
-    -- Render toasts on top
-    self.toastManager:render()
+    -- Render toasts on top (using Lovely-Toasts)
+    self.toastManager:draw()
 end
 
 -- Show a notification
@@ -507,11 +511,6 @@ end
 
 -- Handle mouse events
 function SmartUIManager:mousepressed(x, y, button)
-    -- Check toasts first
-    if self.toastManager:mousepressed(x, y, button) then
-        return true
-    end
-    
     -- Pass to root component using correct method name
     if self.root then
         return self.root:onMousePress(x, y, button)
@@ -527,6 +526,10 @@ function SmartUIManager:keypressed(key)
 end
 
 function SmartUIManager:mousereleased(x, y, button)
+    -- Handle toast dismissal if tap-to-dismiss enabled
+    self.toastManager:mousereleased(x, y, button)
+    
+    print(string.format("[UI DEBUG] SmartUIManager:mousereleased x=%.1f y=%.1f button=%s rootPresent=%s", x, y, tostring(button), tostring(self.root ~= nil)))
     if self.root then
         return self.root:onMouseRelease(x, y, button)
     end

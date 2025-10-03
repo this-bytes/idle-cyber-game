@@ -322,6 +322,16 @@ function Component:onMouseRelease(x, y, button)
     return false
 end
 
+-- Clear pressed/hover/focus state recursively (useful when changing scenes or resetting UI)
+function Component:clearInputState()
+    self.pressed = false
+    self.hovered = false
+    self.focused = false
+    for _, child in ipairs(self.children) do
+        if child.clearInputState then child:clearInputState() end
+    end
+end
+
 function Component:containsPoint(x, y)
     return x >= self.x and x < self.x + self.width and
            y >= self.y and y < self.y + self.height

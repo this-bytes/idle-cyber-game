@@ -32,6 +32,7 @@ local IdleDebugScene = require("src.scenes.idle_debug")
 
 -- UI Components
 local StatsOverlay = require("src.ui.stats_overlay")
+local OverlayManager = require("src.ui.overlay_manager")
 
 
 local SOCGame = {}
@@ -43,6 +44,7 @@ function SOCGame.new(eventBus)
     self.systems = {}
     self.sceneManager = nil
     self.statsOverlay = nil
+    self.overlayManager = nil
     self.isInitialized = false
     self.isGameStarted = false -- Track if player has started the game
     -- Backwards-compatible fields used by older tests
@@ -117,11 +119,28 @@ function SOCGame:initialize()
 
     -- 8. Create Scene Manager AFTER systems are created
     self.sceneManager = SceneManager.new(self.eventBus, self.systems)
-    
-    -- Subscribe to game start events
+    -- Initialize scene manager subscriptions immediately so it handles scene
+    -- change requests before other subscribers (avoids heavy work blocking the
+    -- visual transition). This ensures the scene switch happens first and the
+    -- new scene can render while any subsequent listeners run.
+    self.sceneManager:initialize()
+
+    -- Subscribe to game start events (after sceneManager has registered its
+    -- listener). This ordering makes sure the visual transition occurs before
+    -- potentially expensive startup work in startGame.
+    -- Legacy event name
     self.eventBus:subscribe("scene_request", function(data)
-        if data.scene == "soc_view" and not self.isGameStarted then
-            self:startGame()
+        if data and data.scene == "soc_view" and not self.isGameStarted then
+            -- Defer heavy startGame work to the next update tick to allow the
+            -- scene transition to render and process any outstanding input
+            -- events (prevents stuck input states in interactive flows).
+            self._pendingStart = true
+        end
+    end)
+    -- Preferred event name
+    self.eventBus:subscribe("request_scene_change", function(data)
+        if data and data.scene == "soc_view" and not self.isGameStarted then
+            self._pendingStart = true
         end
     end)
 
@@ -163,7 +182,13 @@ function SOCGame:initialize()
     
     -- 12. Initialize Stats Overlay (player-facing, overlays on top of any scene)
     self.statsOverlay = StatsOverlay.new(self.eventBus, self.systems)
-    print("� Stats Overlay initialized (Toggle with F3)")
+
+    -- Create overlay manager and register the stats overlay so it can
+    -- capture input when visible. We push the overlay but it will only be
+    -- visible when toggled (StatsOverlay.visible).
+    self.overlayManager = OverlayManager.new()
+    self.overlayManager:push(self.statsOverlay)
+    print("🔎 Stats Overlay registered with OverlayManager (Toggle with F3)")
 
     print("✅ SOC Game Systems Initialized!")
     return true
@@ -177,8 +202,11 @@ function SOCGame:update(dt)
     -- Update scene manager (always active for menus)
     self.sceneManager:update(dt)
     
-    -- Update stats overlay (always active when visible)
-    if self.statsOverlay then
+    -- Update overlay manager (which updates the stats overlay and any other overlays)
+    if self.overlayManager then
+        self.overlayManager:update(dt)
+    elseif self.statsOverlay then
+        -- Backwards-compatible fallback
         self.statsOverlay:update(dt)
     end
     
@@ -188,7 +216,21 @@ function SOCGame:update(dt)
     end
     
     -- Only update game systems after game has started
+    -- If a start was requested in the previous frame, run it now so that the
+    -- scene transition can finish rendering and input can flush through.
     if not self.isGameStarted then
+        if self._pendingStart then
+            self._pendingStart = nil
+            -- Defensive: clear any lingering input states on overlays and scene UI
+            if self.overlayManager and self.overlayManager.clearInputState then
+                self.overlayManager:clearInputState()
+            end
+            if self.sceneManager and self.sceneManager.currentScene and self.sceneManager.currentScene.uiManager and self.sceneManager.currentScene.uiManager.root and self.sceneManager.currentScene.uiManager.root.clearInputState then
+                self.sceneManager.currentScene.uiManager.root:clearInputState()
+            end
+            -- Run startGame now (will set isGameStarted)
+            self:startGame()
+        end
         return
     end
     
@@ -234,8 +276,10 @@ function SOCGame:draw()
         self.systems.particleSystem:draw()
     end
     
-    -- Draw stats overlay on top of everything (if visible)
-    if self.statsOverlay then
+    -- Draw overlays on top of everything
+    if self.overlayManager then
+        self.overlayManager:draw()
+    elseif self.statsOverlay then
         self.statsOverlay:draw()
     end
 end
@@ -302,6 +346,11 @@ function SOCGame:keypressed(key, scancode, isrepeat)
         self.systems.inputSystem:keypressed(key, scancode, isrepeat)
     end
 
+    -- If any overlay consumes the key, stop propagation to scene manager
+    if self.overlayManager and self.overlayManager:keypressed(key) then
+        return
+    end
+
     -- Then pass to scene manager
     if self.sceneManager then
         self.sceneManager:keypressed(key, scancode, isrepeat)
@@ -347,6 +396,12 @@ function SOCGame:mousepressed(x, y, button, istouch, presses)
         self.systems.inputSystem:mousepressed(x, y, button, istouch, presses)
     end
 
+    -- Overlays get first chance to consume input. If consumed, do not pass
+    -- to the scene manager.
+    if self.overlayManager and self.overlayManager:mousepressed(x, y, button) then
+        return
+    end
+
     if self.sceneManager then
         self.sceneManager:mousepressed(x, y, button, istouch, presses)
     else
@@ -355,22 +410,51 @@ function SOCGame:mousepressed(x, y, button, istouch, presses)
 end
 
 function SOCGame:mousereleased(x, y, button, istouch, presses)
+    -- Log at SOCGame layer to verify release events arrive from LÖVE
+    print(string.format("[UI RAW] SOCGame:mousereleased x=%.1f y=%.1f button=%s", x, y, tostring(button)))
+
     if self.systems.inputSystem then
         self.systems.inputSystem:mousereleased(x, y, button, istouch, presses)
     end
 
+    -- Overlays get first chance to consume releases
+    if self.overlayManager and self.overlayManager:mousereleased(x, y, button) then
+        print("[UI RAW] SOCGame:mousereleased consumed by overlay")
+        return
+    end
+
     if self.sceneManager and self.sceneManager.mousereleased then
         self.sceneManager:mousereleased(x, y, button, istouch, presses)
+    else
+        print("[UI RAW] SOCGame:mousereleased but no sceneManager.mousereleased handler")
+    end
+
+    -- Defensive fallback: clear any lingering input states after processing
+    -- This handles edge-cases where the release was not forwarded to the
+    -- specific component (e.g., due to focus changes or scene swaps).
+    if self.overlayManager and self.overlayManager.clearInputState then
+        self.overlayManager:clearInputState()
+    end
+    if self.sceneManager and self.sceneManager.currentScene and self.sceneManager.currentScene.uiManager and self.sceneManager.currentScene.uiManager.root and self.sceneManager.currentScene.uiManager.root.clearInputState then
+        self.sceneManager.currentScene.uiManager.root:clearInputState()
     end
 end
 
 function SOCGame:mousemoved(x, y, dx, dy)
+    if self.overlayManager and self.overlayManager:mousemoved(x, y, dx, dy) then
+        return
+    end
+
     if self.sceneManager and self.sceneManager.mousemoved then
         self.sceneManager:mousemoved(x, y, dx, dy)
     end
 end
 
 function SOCGame:wheelmoved(x, y)
+    if self.overlayManager and self.overlayManager:wheelmoved(x, y) then
+        return
+    end
+
     if self.sceneManager and self.sceneManager.wheelmoved then
         self.sceneManager:wheelmoved(x, y)
     end

@@ -23,8 +23,14 @@ end
 function SceneManager:initialize()
     -- Subscribe to scene request events
     if self.eventBus then
+        -- Primary event name
         self.eventBus:subscribe("request_scene_change", function(data)
-            -- Check if 'data' and 'data.scene' exist to prevent errors
+            if data and data.scene then
+                self:requestScene(data.scene, data.data)
+            end
+        end)
+        -- Backwards-compatible alias
+        self.eventBus:subscribe("scene_request", function(data)
             if data and data.scene then
                 self:requestScene(data.scene, data.data)
             end
@@ -58,6 +64,15 @@ function SceneManager:requestScene(sceneName, params)
     end
     
     -- 1. Exit current scene
+    -- Defensive: clear input state on outgoing scene root to avoid carrying
+    -- pressed/hovered states across scenes (helps interactive flows where
+    -- heavy work during transition can prevent release events). Do this
+    -- before calling exit so components have a chance to reset.
+    if self.currentScene and self.currentScene.uiManager and self.currentScene.uiManager.root and self.currentScene.uiManager.root.clearInputState then
+        self.currentScene.uiManager.root:clearInputState()
+        print("[UI DEBUG] Cleared input state on outgoing scene root before exit")
+    end
+
     if self.currentScene and self.currentScene.exit then
         self.currentScene:exit()
     end
@@ -72,6 +87,17 @@ function SceneManager:requestScene(sceneName, params)
     -- 3. Enter new scene
     if self.currentScene.enter then
         self.currentScene:enter(params)
+    end
+
+    -- Notify other systems that the scene has changed (post-transition).
+    if self.eventBus and self.eventBus.publish then
+        self.eventBus:publish("scene_changed", { scene = sceneName })
+    end
+
+    -- Defensive: clear any lingering input state in new scene's UI root (if present)
+    if self.currentScene and self.currentScene.uiManager and self.currentScene.uiManager.root and self.currentScene.uiManager.root.clearInputState then
+        self.currentScene.uiManager.root:clearInputState()
+        print("[UI DEBUG] Cleared input state on new scene root to avoid stuck presses")
     end
 
     print("Transitioned to scene: " .. sceneName)
