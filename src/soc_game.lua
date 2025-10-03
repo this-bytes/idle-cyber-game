@@ -361,31 +361,6 @@ function SOCGame:initializeCore()
     return true
 end
 
-function SOCGame:keypressed(key, scancode, isrepeat)
-    -- Handle global stats overlay toggle (F3)
-    if key == "f3" then
-        if self.statsOverlay then
-            self.statsOverlay:toggle()
-        end
-        return -- Don't pass F3 to other systems
-    end
-    
-    -- Handle input system first (for global actions)
-    if self.systems.inputSystem then
-        self.systems.inputSystem:keypressed(key, scancode, isrepeat)
-    end
-
-    -- If any overlay consumes the key, stop propagation to scene manager
-    if self.overlayManager and self.overlayManager:keypressed(key) then
-        return
-    end
-
-    -- Then pass to scene manager
-    if self.sceneManager then
-        self.sceneManager:keypressed(key, scancode, isrepeat)
-    end
-end
-
 -- Start the game and calculate offline earnings
 function SOCGame:startGame()
     self.isGameStarted = true
@@ -407,6 +382,14 @@ function SOCGame:startGame()
 end
 
 function SOCGame:keypressed(key, scancode, isrepeat)
+    -- Handle global stats overlay toggle (F3) - MUST BE FIRST
+    if key == "f3" then
+        if self.statsOverlay then
+            self.statsOverlay:toggle()
+        end
+        return -- Don't pass F3 to other systems
+    end
+    
     -- Toggle LUIS debug view with Tab
     if key == "tab" and self.luis then
         self.luis.showGrid = not self.luis.showGrid
