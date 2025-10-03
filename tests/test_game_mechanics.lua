@@ -48,9 +48,9 @@ function GameMechanicsTest:testIdleIncomeGeneration()
     
     -- Start with known resources
     local startMoney = self.systems.resourceManager:getResource("money")
-    
-    -- Simulate 60 seconds of idle time
-    local idleTime = 60
+
+    -- Simulate random idle time
+    local idleTime = math.random(60, 300)
     local offlineProgress = self.systems.idleSystem:calculateOfflineProgress(idleTime)
     
     -- Verify earnings occurred
@@ -255,6 +255,71 @@ function GameMechanicsTest:testUpgradeSystem()
     end
 end
 
+-- Test 8: Idle Debug Scene UI Components (UI Modernization)
+function GameMechanicsTest:testIdleDebugSceneUI()
+    print("\n🧪 Test: Idle Debug Scene UI Components (UI Modernization)")
+
+    -- Import the scene
+    local IdleDebugScene = require("src.scenes.idle_debug")
+
+    -- Create scene instance
+    local scene = IdleDebugScene.new(self.eventBus)
+    assert(scene, "❌ Failed to create IdleDebugScene")
+    print("   ✅ IdleDebugScene created successfully")
+
+    -- Enter scene with systems
+    scene:enter(self.systems)
+    assert(scene.uiManager, "❌ SmartUIManager not initialized")
+    assert(scene.uiManager.root, "❌ UI root component not created")
+    print("   ✅ SmartUIManager initialized with root component")
+
+    -- Verify UI components were created
+    local rootChildren = scene.uiManager.root.children
+    assert(#rootChildren > 0, "❌ No UI components created")
+    print(string.format("   ✅ Created %d top-level UI components", #rootChildren))
+
+    -- Verify debug panels exist
+    assert(scene.resourcePanel, "❌ Resource panel not created")
+    assert(scene.contractPanel, "❌ Contract panel not created")
+    assert(scene.threatPanel, "❌ Threat panel not created")
+    assert(scene.generatorPanel, "❌ Generator panel not created")
+    assert(scene.specialistPanel, "❌ Specialist panel not created")
+    print("   ✅ All debug panels created successfully")
+
+    -- Verify text components exist
+    assert(scene.runtimeText, "❌ Runtime text component not created")
+    assert(scene.resourceText, "❌ Resource text component not created")
+    assert(scene.contractText, "❌ Contract text component not created")
+    assert(scene.threatText, "❌ Threat text component not created")
+    assert(scene.generatorText, "❌ Generator text component not created")
+    assert(scene.specialistText, "❌ Specialist text component not created")
+    print("   ✅ All text components created successfully")
+
+    -- Test UI update functionality
+    scene:updateDebugUI()
+    print("   ✅ UI update functionality works")
+
+    -- Exit scene
+    scene:exit()
+    print("   ✅ Scene exit handled properly")
+end
+
+-- Test 9: mock game loop to ensure no errors
+function GameMechanicsTest:testMockGameLoop()
+    print("\n🧪 Test: Mock Game Loop Execution")
+    local dt = 1/60 
+    for i = 1, 120 do -- Simulate 2 seconds of updates
+        if self.systems.contractSystem.update then self.systems.contractSystem:update(dt) end
+        if self.systems.threatSystem.update then self.systems.threatSystem:update(dt) end
+        if self.systems.idleSystem.update then self.systems.idleSystem:update(dt) end
+        if self.systems.specialistSystem.update then self.systems.specialistSystem:update(dt) end
+        if self.systems.incidentSystem.update then self.systems.incidentSystem:update(dt) end
+        if self.systems.upgradeSystem.update then self.systems.upgradeSystem:update(dt) end
+        if self.systems.resourceManager.update then self.systems.resourceManager:update(dt) end
+    end
+    print("   ✅ Mock game loop executed successfully")
+end
+
 -- Utility
 function GameMechanicsTest:countTable(t)
     local count = 0
@@ -277,7 +342,9 @@ function GameMechanicsTest:runAll()
         self.testThreatResolution,
         self.testIncidentSystem,
         self.testResourceFlow,
-        self.testUpgradeSystem
+        self.testUpgradeSystem,
+        self.testIdleDebugSceneUI,
+        self.testMockGameLoop
     }
     
     local passed = 0

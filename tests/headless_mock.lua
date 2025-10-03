@@ -87,6 +87,59 @@ local function createMockGraphics()
     }
 end
 
+-- Mock UI Components for testing
+local function createMockUIComponents()
+    -- Mock Component base class
+    local MockComponent = {
+        new = function(props)
+            return {
+                visible = true,
+                children = {},
+                addChild = function(self, child) table.insert(self.children, child) end,
+                clearChildren = function(self) self.children = {} end,
+                setText = function(self, text) self.text = text end
+            }
+        end
+    }
+    
+    -- Mock specific components
+    local MockPanel = setmetatable({}, {__index = MockComponent})
+    MockPanel.new = function(props) 
+        local self = MockComponent.new(props)
+        setmetatable(self, {__index = MockPanel})
+        return self
+    end
+    
+    local MockText = setmetatable({}, {__index = MockComponent})
+    MockText.new = function(props) 
+        local self = MockComponent.new(props)
+        setmetatable(self, {__index = MockText})
+        return self
+    end
+    
+    local MockBox = setmetatable({}, {__index = MockComponent})
+    MockBox.new = function(props) 
+        local self = MockComponent.new(props)
+        setmetatable(self, {__index = MockBox})
+        return self
+    end
+    
+    local MockGrid = setmetatable({}, {__index = MockComponent})
+    MockGrid.new = function(props) 
+        local self = MockComponent.new(props)
+        setmetatable(self, {__index = MockGrid})
+        return self
+    end
+    
+    return {
+        Component = MockComponent,
+        Panel = MockPanel,
+        Text = MockText,
+        Box = MockBox,
+        Grid = MockGrid
+    }
+end
+
 -- Initialize global love table for headless mode
 if not love then
     love = {
@@ -96,8 +149,19 @@ if not love then
     }
 end
 
+-- Create mock UI components
+local mockUI = createMockUIComponents()
+
+-- Make components globally available for require() calls
+package.preload["src.ui.components.component"] = function() return mockUI.Component end
+package.preload["src.ui.components.panel"] = function() return mockUI.Panel end
+package.preload["src.ui.components.text"] = function() return mockUI.Text end
+package.preload["src.ui.components.box"] = function() return mockUI.Box end
+package.preload["src.ui.components.grid"] = function() return mockUI.Grid end
+
 return {
     filesystem = love.filesystem,
     timer = love.timer,
-    graphics = love.graphics
+    graphics = love.graphics,
+    ui = mockUI
 }
