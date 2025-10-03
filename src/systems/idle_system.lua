@@ -333,9 +333,6 @@ function IdleSystem:applyOfflineProgress(progress)
     
     -- Store event data for UI display
     self.idleData = progress
-    
-    -- Publish event for UI to show offline summary
-    self.eventBus:publish("offline_progress_calculated", progress)
 end
 
 -- Get idle progress data for UI display

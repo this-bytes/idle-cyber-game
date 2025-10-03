@@ -509,9 +509,8 @@ function IdleMode:getSelectedContractIndex()
 end
 
 function IdleMode:mousepressed(x, y, button)
-    -- Handle clicking to select contracts (improved UI framework)
     if button == 1 then -- Left click
-        -- Check if click is within any contract area
+        -- First, check if a contract area was clicked
         for i, area in ipairs(self.contractAreas) do
             if x >= area.x and x <= area.x + area.width and
                y >= area.y and y <= area.y + area.height then
@@ -519,11 +518,18 @@ function IdleMode:mousepressed(x, y, button)
                 self.selectedContract = area.contractId
                 print("📋 Selected contract: " .. area.contract.clientName .. 
                       " - Budget: $" .. area.contract.totalBudget)
-                return true
+                return true -- Event handled
             end
         end
-        
-        -- If no contract area was clicked, try to accept selected contract
+
+        -- Second, check if a room area was clicked
+        local area = self:getAreaUnderCursor(x, y)
+        if area then
+            self.systems.rooms:handleAreaInteraction(area.id, "player")
+            return true -- Event handled
+        end
+
+        -- If nothing else was clicked, try to accept the selected contract
         if self.selectedContract then
             local success = self.systems.contracts:acceptContract(self.selectedContract)
             if success then
@@ -545,7 +551,7 @@ function IdleMode:mousepressed(x, y, button)
                 end
             end
         else
-            print("💼 Click on a contract to select it, then press SPACE to accept or click again to accept directly.")
+            print("💼 Click on a contract to select it, then press SPACE to accept.")
         end
     end
     return false
@@ -1029,18 +1035,6 @@ function IdleMode:getAreaUnderCursor(x, y)
     return self.enhancedMap:getAreaAtPosition(currentRoom, adjustedX, adjustedY, 0, 0)
 end
 
--- Handle mouse interaction with room areas
-function IdleMode:mousepressed(x, y, button)
-    if button == 1 then -- Left click
-        local area = self:getAreaUnderCursor(x, y)
-        if area then
-            self.systems.rooms:handleAreaInteraction(area.id, "player")
-            return true
-        end
-    end
-    return false
-end
-
 -- Handle room event choices
 function IdleMode:handleEventChoice(choiceNum)
     if not self.systems.roomEvents then return false end
@@ -1138,14 +1132,6 @@ function IdleMode:drawRoomEvents(theme, x, y, width)
     end
     
     return y
-end
-
--- Mode lifecycle methods
-function IdleMode:enter()
-    print("🏢 Entering Idle Mode - SOC Operations Center")
-    if self.systems.ui then
-        self.systems.ui:showNotification("🏢 SOC Operations Center Active", "info")
-    end
 end
 
 function IdleMode:exit()

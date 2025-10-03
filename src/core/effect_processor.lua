@@ -9,9 +9,6 @@ function EffectProcessor.new(eventBus)
     local self = setmetatable({}, EffectProcessor)
     self.eventBus = eventBus
     
-    -- Track active effects
-    self.activeEffects = {}
-    
     -- Effect handlers by type
     self.effectHandlers = {}
     self:registerDefaultHandlers()
@@ -19,6 +16,7 @@ function EffectProcessor.new(eventBus)
     return self
 end
 
+-- Registers the default handlers for core effect types
 function EffectProcessor:registerDefaultHandlers()
     -- Income multiplier
     self.effectHandlers["income_multiplier"] = function(effect, context)
@@ -102,6 +100,7 @@ function EffectProcessor:registerDefaultHandlers()
     end
 end
 
+-- Calculates a final value by applying all active effects of a specific type to a base value
 function EffectProcessor:calculateValue(baseValue, effectType, context)
     local multipliers = 1.0
     local additive = 0
@@ -140,6 +139,7 @@ function EffectProcessor:calculateValue(baseValue, effectType, context)
     return (baseValue + additive) * multipliers
 end
 
+-- Applies a logarithmic soft cap to a value to provide diminishing returns
 function EffectProcessor:applySoftCap(value, cap)
     if not cap then return value end
     
@@ -152,6 +152,7 @@ function EffectProcessor:applySoftCap(value, cap)
     end
 end
 
+-- Checks if an effect's target criteria are met by the current context
 function EffectProcessor:matchesTarget(target, context)
     if not target or target == "all" then
         return true
@@ -174,10 +175,12 @@ function EffectProcessor:matchesTarget(target, context)
     return false
 end
 
+-- Registers a new handler for a custom effect type
 function EffectProcessor:registerEffectHandler(effectType, handler)
     self.effectHandlers[effectType] = handler
 end
 
+-- Returns a summary of all active effects for a given context
 function EffectProcessor:getActiveEffectSummary(context)
     local summary = {
         multipliers = {},
@@ -222,7 +225,8 @@ function EffectProcessor:getActiveEffectSummary(context)
     return summary
 end
 
--- Calculate all effects for a set of items
+-- Calculate all effects for a set of items.
+-- Assumes that the effect type is the base value key with `_multiplier` appended.
 function EffectProcessor:calculateAllEffects(baseValues, activeItems, context)
     local results = {}
     

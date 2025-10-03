@@ -44,7 +44,7 @@ function EventBus:publish(event, data)
     end
 end
 
--- Clear all listeners for an event
+-- Clears listeners for a specific event, or all listeners if no event is provided
 function EventBus:clear(event)
     if event then
         self.listeners[event] = nil

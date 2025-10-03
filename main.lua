@@ -3,6 +3,7 @@
 
 -- Global game instance
 local game
+local ScreenshotTool = require("tools.screenshot_tool")
 ---@param DEBUG_UI boolean If true, show debug overlay for UI elements
 DEBUG_UI = false
 --Arguments to run parts directly passed in via command line expand as we develop
@@ -58,6 +59,8 @@ if args then
             SCREENSHOT_READY = false
             SCREENSHOT_AGENT = true
             print("📸 Screenshot agent mode enabled from command line")
+        elseif v == "--take-screenshot" then
+            TAKE_SCREENSHOT_ON_LOAD = true
         end
     end
 end
@@ -123,7 +126,7 @@ function love.update(dt)
         game:update(dt)
         
         -- Mark screenshot as ready after first update cycle
-        if SCREENSHOT_MODE and not SCREENSHOT_READY then
+        if (SCREENSHOT_MODE or TAKE_SCREENSHOT_ON_LOAD) and not SCREENSHOT_READY then
             SCREENSHOT_READY = true
             print("📸 Screenshot mode: Ready to capture after first update cycle")
         end
@@ -151,9 +154,18 @@ function love.draw()
         love.graphics.printf("Error during initialization. Check console.", 0, 10, love.graphics.getWidth(), "center")
     end
 
+    if TAKE_SCREENSHOT_ON_LOAD and SCREENSHOT_READY then
+        local path = ScreenshotTool.takeScreenshot()
+        TAKE_SCREENSHOT_ON_LOAD = false -- only once
+        if not SCREENSHOT_MODE then -- if not in full screenshot mode, quit after taking one
+            SCREENSHOT_WAITING = true
+            SCREENSHOT_PENDING_PATH = path
+            SCREENSHOT_WAIT_FRAMES = 5 -- poll a few frames to allow async encode
+        end
+    end
+
     -- Take screenshot if in screenshot mode and ready
     if SCREENSHOT_MODE and SCREENSHOT_READY and game and SCREENSHOT_CAPTURE_FLOW then
-        local ScreenshotTool = require("tools.screenshot_tool")
         local currentScene = game.sceneManager and game.sceneManager.currentSceneName or "unknown"
 
         if not SCREENSHOT_CAPTURED_MAIN and currentScene == "main_menu" then
@@ -188,6 +200,7 @@ function love.keypressed(key)
     if game then
         game:keypressed(key)
     end
+    ScreenshotTool.keypressed(key)
 end
 
 function love.mousepressed(x, y, button)

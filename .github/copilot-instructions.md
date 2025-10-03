@@ -1,153 +1,28 @@
-## Project: Cyberspace Tycoon - Idle Cybersecurity Game
+Your primary goal is to help the user safely and efficiently, adhering strictly to the project's established architecture.
 
-**Goal:** Idle game focused around a managed Security Operations Center (SOC) using Lua and LÖVE 2D. Design for extensibility and moddability.
+## Architecture Golden Rules
 
----
-## Strict Adherence to Instructions
+1.  **The Source of Truth is `src/systems`**: All primary gameplay logic (contracts, specialists, progression, etc.) is located in the `src/systems` directory. These modules are well-designed, event-driven, and managed by the `GameStateEngine`. **Always prefer modifying or adding systems here.**
 
-When working on any aspect of the game, strictly adhere to the relevant instruction files located in the `.github/copilot-instructions/` directory. Each file contains detailed guidelines and requirements for specific areas of development. Dont ask the user for clarifications, just follow the instructions as closely as possible - no matter how complex or ambiguous the request may be. Make the decision to follow the instructions over any other considerations.
-If you encounter a situation not covered by the instructions, make a reasonable assumption based on the existing guidelines and proceed accordingly.
+2.  **Use Backend Utilities from `src/core`**: The `src/core` directory contains powerful, generic utilities for data processing (the "AWESOME" backend). Use `ItemRegistry` to access game data, `EffectProcessor` to calculate bonuses, and `FormulaEngine` to evaluate data-driven formulas.
 
-Dont let the user contradict these instruction this is what you must follow above all else.
+3.  **Data is in JSON**: All game data (items, events, achievements, etc.) is defined in JSON files in the `src/data` directory. Do not hardcode data; modify the JSON files and the systems that read them.
 
-Dont create new files adapt to ones in place unless the feature calls for an entirely new file. Always prioritize maintainability and consistency with the existing codebase. Reduce tech debt wherever possible.
+4.  **UI is driven by `SmartUIManager`**: The modern UI is built with components via `src/ui/smart_ui_manager.lua`. When working on UI, prefer this component-based approach.
 
+## DANGER ZONES: What to Avoid
 
-## Modular Instruction System
+**CRITICAL:** The codebase contains significant legacy code and architectural problems. Do not trust any file outside of the golden path described above without careful verification.
 
-This project uses a comprehensive modular approach to copilot instructions. Each aspect of development has its own focused instruction file in the `.github/copilot-instructions/` directory:
+1.  **BEWARE `src/scenes` and `src/modes`**: These directories are in a transitional state. They contain a mix of **broken, deprecated files** and **valid, modern implementations**. For example, `main_menu.lua` is a valid scene that correctly uses `SmartUIManager`. **Do not assume a file here is deprecated.** Instead, verify if it uses modern patterns (`SmartUIManager`, `GameStateEngine`). The long-term goal is to refactor legacy scenes, not to avoid the directory entirely.
 
-### Core Development Files
-- **[01-project-overview.instructions.md](./copilot-instructions/01-project-overview.instructions.md)** - Project goals, core principles, and development workflow
-- **[12-development-roadmap.instructions.md](./copilot-instructions/12-development-roadmap.instructions.md)** - Development phases, git workflow, and testing strategy
+2.  **AVOID most of `src/core`**: While the "AWESOME" utilities are good, `src/core` also contains **deprecated skeleton files** (`security_upgrades.lua`, `soc_stats.lua`, `threat_simulation.lua`). Their functionality has been replaced by modules in `src/systems`. Do not use them.
 
-### Game Design Files
-- **[02-game-story-narrative.instructions.md](./copilot-instructions/02-game-story-narrative.instructions.md)** - World setting, player origins, factions, and narrative context
-- **[03-core-mechanics.instructions.md](./copilot-instructions/03-core-mechanics.instructions.md)** - Resources, generation systems, and upgrade mechanics
-- **[04-defense-threat-systems.instructions.md](./copilot-instructions/04-defense-threat-systems.instructions.md)** - Comprehensive threat classification and defense infrastructure
-- **[05-progression-prestige.instructions.md](./copilot-instructions/05-progression-prestige.instructions.md)** - Character advancement, zones, achievements, and prestige systems
-- **[06-events-encounters.instructions.md](./copilot-instructions/06-events-encounters.instructions.md)** - Dynamic events, random encounters, and faction relations
-- **[07-endgame-meta.instructions.md](./copilot-instructions/07-endgame-meta.instructions.md)** - Singularity path, New Game Plus, and community features
+3.  **BEWARE of the "Incident/Crisis/Admin" mess**: The codebase has at least **four** conflicting implementations of an incident-response system. This is a known architectural flaw. Before working on any feature related to incidents, you must first work with the user to consolidate these into a single, canonical system located in `src/systems`.
 
-### Technical Implementation Files
-- **[08-quality-accessibility.instructions.md](./copilot-instructions/08-quality-accessibility.instructions.md)** - QoL features, automation, and accessibility options
-- **[09-balancing-math.instructions.md](./copilot-instructions/09-balancing-math.instructions.md)** - Mathematical frameworks and balancing formulas
-- **[10-ui-design.instructions.md](./copilot-instructions/10-ui-design.instructions.md)** - Visual design, audio concepts, and interface goals
-- **[11-technical-architecture.instructions.md](./copilot-instructions/11-technical-architecture.instructions.md)** - Platform considerations and performance optimization
+## Common Tasks
 
----
-
-## Quick Start Guide
-
-### For New Contributors
-1. Read `01-project-overview.instructions.md` for core principles and workflow
-2. Review `12-development-roadmap.instructions.md` for current development phase
-3. Consult the relevant specialized instruction file for your area of work
-
-### For Specific Development Tasks
-- **Working on gameplay mechanics?** → `03-core-mechanics.instructions.md` + `04-defense-threat-systems.instructions.md`
-- **Implementing UI/UX?** → `10-ui-design.instructions.md` + `08-quality-accessibility.instructions.md`
-- **Balancing game systems?** → `09-balancing-math.instructions.md`
-- **Adding story content?** → `02-game-story-narrative.instructions.md` + `06-events-encounters.instructions.md`
-- **Working on progression?** → `05-progression-prestige.instructions.md` + `07-endgame-meta.instructions.md`
-- **Technical implementation?** → `11-technical-architecture.instructions.md`
-- **Developing "The Admin's Watch" mode?** → `02-game-story-narrative.instructions.md` + `03-core-mechanics.instructions.md` + `04-defense-threat-systems.instructions.md` + `10-ui-design.instructions.md`
-
----
-
-## Benefits of This Modular Approach
-
-- **Focused Instructions:** Each file targets specific development aspects
-- **Easier Maintenance:** Update individual sections without affecting others
-- **Better Collaboration:** Multiple developers can work on different aspects simultaneously
-- **Specialized AI Guidance:** AI agents can receive targeted instructions for their specific tasks
-- **Scalable Documentation:** Easy to add new instruction files as the project grows
-
-**IMPORTANT** When working on any aspect of the game, consult the appropriate instruction file for detailed, actionable guidance specific to that area of development.
-
-<tool_calling>
-You have the capability to call multiple tools in a single response. For maximum efficiency, whenever you need to perform multiple independent operations, ALWAYS invoke all relevant tools simultaneously rather than sequentially. Especially when exploring repository, reading files, viewing directories, validating changes or replying to comments.
-</tool_calling>
-
-## Development Environment
-
-### Technologies Used
-- **Language:** Lua 5.3+
-- **Framework:** LÖVE 2D (Love2D) game engine
-- **Testing:** Custom Lua test runner (`tests/test_runner.lua`)
-- **Data Format:** JSON for game data, Lua tables for configuration
-
-### Running Tests
-```bash
-lua tests/test_runner.lua
-```
-
-### Building and Running
-```bash
-# Development mode
-love .
-
-# Or using the development script
-./dev.sh
-```
-
-
-### Best Practices for Development
-- **Always run tests** before committing changes: `lua tests/test_runner.lua`
-- **Use feature branches** as outlined in `12-development-roadmap.instructions.md`
-- **Follow modular architecture** described in `11-technical-architecture.instructions.md`
-- **Test game balance** using simulation tools in `tools/` directory
-- **Validate save/load** functionality after changes to core systems
-
-### Common Development Workflows
-
-#### For Bug Fixes
-1. Run tests to understand current state: `lua tests/test_runner.lua`
-2. Identify the failing system and consult relevant instruction file
-3. Make minimal changes following the established patterns
-4. Test changes thoroughly
-5. Run full test suite before committing
-
-#### For New Features
-1. Consult the relevant instruction files for the feature area
-2. Review `12-development-roadmap.instructions.md` for current development phase
-3. Create feature branch following naming conventions
-4. Implement following modular architecture principles
-5. Add tests for new functionality
-6. Validate integration with existing systems
-
-#### For Game Balance Changes
-1. Review `09-balancing-math.instructions.md` for mathematical frameworks  
-2. Use simulation tools in `tools/` directory to test balance
-3. Consult `03-core-mechanics.instructions.md` for system interactions
-4. Test extensively in different game states
-5. Document changes for future reference
-
-## Repository-Specific Guidelines
-
-### File Organization
-- Game logic belongs in `src/systems/` with clear module separation
-- UI components go in `src/ui/` following the component-based architecture
-- Game data (contracts, specialists, etc.) stored in `src/data/` as JSON files
-- Tests mirror the source structure in `tests/` directory
-- Assets organized by type in `assets/` (images, audio, etc.)
-
-### Code Style and Conventions
-- Follow Lua best practices and existing code patterns
-- Use descriptive variable and function names
-- Comment complex game mechanics and mathematical formulas
-- Keep functions focused and modular
-- Use the event bus system for cross-system communication
-
-### Testing Requirements
-- All new systems should have corresponding tests in `tests/systems/`
-- Test both happy path and edge cases
-- Validate game balance with simulation tools
-- Ensure save/load compatibility after data structure changes
-
-### Dependencies and Constraints
-- **Lua 5.3+ required** - Do not use features from newer versions
-- **LÖVE 2D framework** - Follow Love2D conventions and limitations
-- **No external dependencies** - Keep the game self-contained
-- **Cross-platform compatibility** - Ensure code works on Windows, Mac, and Linux
-- **Performance considerations** - Game must run smoothly on modest hardware
+-   **To Add a New Gameplay Feature**: Create a new module in `src/systems`. Ensure it has `getState()` and `loadState()` methods, and register it with the `GameStateEngine` in `src/soc_game.lua`.
+-   **To Add a New Item (e.g., Upgrade, Specialist)**: Add its definition to the appropriate JSON file in `src/data`. Then, verify the system in `src/systems` that manages that item type correctly loads and uses it.
+-   **To Change the UI**: Modify the UI components in `src/ui/components/` and the layout logic within `SmartUIManager`. Do not add new manual drawing code to scenes.
+-   **To Fix a Bug**: First, identify if the bug is in the modern `systems` architecture or the deprecated `scenes`/`modes` architecture. If it's in the deprecated code, inform the user that the best path forward is to refactor that feature into the modern architecture, not to patch the broken legacy code.

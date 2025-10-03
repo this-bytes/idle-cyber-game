@@ -5,29 +5,32 @@ echo "🧪 Testing Game State Management & Offline Earnings"
 echo "=================================================="
 echo ""
 
-# Test 1: Start game (creates exit time file)
-echo "Test 1: Starting game to create initial exit time..."
+# Define the expected path for the game's save file. This makes the script
+# easier to maintain and debug. This path is standard for LÖVE on Linux.
+SAVE_FILE_PATH="$HOME/.local/share/love/idle-cyber-game/game_state.json"
+
+# Test 1: Start game (creates game state file)
+echo "Test 1: Starting game to create initial game state..."
 timeout 3 love . > /dev/null 2>&1 || true
 sleep 1
 
-# Check if exit time was saved
-if [ -f "$HOME/.local/share/love/idle-cyber-game/last_exit.dat" ]; then
-    EXIT_TIME=$(cat "$HOME/.local/share/love/idle-cyber-game/last_exit.dat")
-    echo "✅ Exit time saved: $EXIT_TIME"
+# Check if game state was saved
+if [ -f "$SAVE_FILE_PATH" ]; then
+    echo "✅ Game state file found at '$SAVE_FILE_PATH'."
 else
-    echo "❌ Exit time not saved"
+    echo "❌ Game state file not found. Expected at: '$SAVE_FILE_PATH'."
     exit 1
 fi
 
 # Wait 5 seconds to simulate being away
 echo ""
 echo "Test 2: Simulating 5 seconds offline..."
-sleep 5
+sleep 3
 
 # Start game again and check if it loads exit time
 echo ""
 echo "Test 3: Starting game again to test offline earnings..."
-timeout 3 love . 2>&1 | grep -E "(Loaded last exit time|Offline Earnings)" || echo "⚠️  Offline earnings log not found (may need longer runtime)"
+timeout 3 love . 2>&1 | grep -E "(Loaded game state|Offline Earnings)" || echo "⚠️  Offline earnings log not found (may need longer runtime)"
 
 echo ""
 echo "Test 4: Verifying game systems stay idle on main menu..."

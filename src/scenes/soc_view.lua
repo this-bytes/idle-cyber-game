@@ -1072,25 +1072,6 @@ function SOCView:drawSkillsPanel()
     end
 end
 
-function SOCView:keypressed(key)
-    if self.showingChoiceEvent and self.currentEvent and self.currentEvent.choices then
-        local choiceIndex = tonumber(key)
-        if choiceIndex and choiceIndex > 0 and choiceIndex <= #self.currentEvent.choices then
-            self:handleEventChoice(choiceIndex)
-            return
-        end
-    end
 
-    -- Panel navigation
-    if key == "left" then
-        self.selectedPanel = self.selectedPanel - 1
-        if self.selectedPanel < 1 then self.selectedPanel = #self.panels end
-    elseif key == "right" then
-        self.selectedPanel = self.selectedPanel + 1
-        if self.selectedPanel > #self.panels then self.selectedPanel = 1 end
-    elseif key == "escape" then
-        -- Could add a pause menu here later
-    end
-end
 
 return SOCView

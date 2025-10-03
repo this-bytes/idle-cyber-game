@@ -91,17 +91,10 @@ function ScreenshotTool.takeScreenshot(filename)
                     return
                 end
 
-                local wrote = false
+                local fileData = imageData:encode('png')
+                local png_bytes = fileData:getString()
 
-                -- Try to get PNG bytes directly
-                local ok_get, png_bytes = pcall(function()
-                    if imageData.getString then
-                        return imageData:getString('png')
-                    end
-                    return nil
-                end)
-
-                if ok_get and png_bytes then
+                if png_bytes then
                     local wf = io.open(abs_path, 'wb')
                     if wf then
                         wf:write(png_bytes)
@@ -110,6 +103,29 @@ function ScreenshotTool.takeScreenshot(filename)
                         wrote = true
                     else
                         print("📸 Failed to open workspace path for writing: " .. tostring(abs_path))
+                    end
+                end
+
+                if not wrote then
+                    print("📸 Failed to get PNG data from ImageData.")
+                end
+
+                if wrote then
+                    -- Verify the written file is a valid PNG
+                    local rf, err = io.open(abs_path, 'rb')
+                    if rf then
+                        local header = rf:read(4)
+                        rf:close()
+                        -- PNG magic number: 137 80 78 71 or \137PNG
+                        if header == "\137PNG" then
+                            print("✅ Screenshot file verified as valid PNG.")
+                        else
+                            print("❌ ERROR: Screenshot file is not a valid PNG. Header was: " .. tostring(header))
+                            -- Optionally, remove the corrupted file
+                            os.remove(abs_path)
+                        end
+                    else
+                        print("⚠️ Could not re-open screenshot file for verification: " .. tostring(err))
                     end
                 end
 
@@ -128,7 +144,7 @@ function ScreenshotTool.takeScreenshot(filename)
                                 if wf then
                                     wf:write(content)
                                     wf:close()
-                                    print("📸 Screenshot copied to workspace: " .. abs_path)
+                                    print("📸 Screenshot copied to workspace (fallback): " .. abs_path)
                                     wrote = true
                                 else
                                     print("📸 Failed to open workspace path for writing: " .. tostring(abs_path))
@@ -307,6 +323,15 @@ function ScreenshotTool.takeScreenshotWithPrefix(prefix)
     local timestamp = os.date("%Y%m%d_%H%M%S")
     local filename = string.format("%s_%s.png", prefix, timestamp)
     return ScreenshotTool.takeScreenshot(filename)
+end
+
+-- Keypressed handler (call from love.keypressed)
+function ScreenshotTool.keypressed(key)
+    if key == "f12" then
+        ScreenshotTool.takeScreenshot()
+        return true
+    end
+    return false
 end
 
 return ScreenshotTool

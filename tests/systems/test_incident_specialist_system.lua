@@ -3,8 +3,6 @@
 
 local IncidentSpecialistSystem = require("src.systems.incident_specialist_system")
 
-local TestIncidentSpecialistSystem = {}
-
 -- Mock EventBus for testing
 local function createMockEventBus()
     local events = {}
@@ -44,10 +42,7 @@ local function createMockResourceManager()
     }
 end
 
--- Test 1: System initialization
-function TestIncidentSpecialistSystem.test_initialization()
-    print("\n=== Test 1: System Initialization ===")
-    
+TestRunner.test("IncidentSpecialistSystem - Initialization", function()
     local eventBus = createMockEventBus()
     local resourceManager = createMockResourceManager()
     
@@ -56,33 +51,21 @@ function TestIncidentSpecialistSystem.test_initialization()
     
     local state = system:getState()
     
-    -- Verify GameState structure
-    assert(state.Specialists ~= nil, "Specialists table should exist")
-    assert(state.IncidentsQueue ~= nil, "IncidentsQueue table should exist")
-    assert(state.ThreatTemplates ~= nil, "ThreatTemplates table should exist")
-    assert(state.SpecialistTemplates ~= nil, "SpecialistTemplates table should exist")
+    TestRunner.assert(state.Specialists ~= nil, "Specialists table should exist")
+    TestRunner.assert(state.IncidentsQueue ~= nil, "IncidentsQueue table should exist")
+    TestRunner.assert(state.ThreatTemplates ~= nil, "ThreatTemplates table should exist")
+    TestRunner.assert(state.SpecialistTemplates ~= nil, "SpecialistTemplates table should exist")
+    TestRunner.assert(#state.Specialists >= 3, "Should have at least 3 starting specialists")
+    TestRunner.assert(#state.ThreatTemplates > 0, "Should have loaded threat templates")
     
-    -- Verify starting specialists were instantiated
-    assert(#state.Specialists >= 3, "Should have at least 3 starting specialists")
-    
-    -- Verify threat templates were loaded
-    assert(#state.ThreatTemplates > 0, "Should have loaded threat templates")
-    
-    -- Verify specialist templates were loaded
     local templateCount = 0
     for _ in pairs(state.SpecialistTemplates) do
         templateCount = templateCount + 1
     end
-    assert(templateCount > 0, "Should have loaded specialist templates")
-    
-    print("✅ System initialization test passed")
-    return true
-end
+    TestRunner.assert(templateCount > 0, "Should have loaded specialist templates")
+end)
 
--- Test 2: Specialist instantiation
-function TestIncidentSpecialistSystem.test_specialist_instantiation()
-    print("\n=== Test 2: Specialist Instantiation ===")
-    
+TestRunner.test("IncidentSpecialistSystem - Specialist Instantiation", function()
     local eventBus = createMockEventBus()
     local resourceManager = createMockResourceManager()
     
@@ -91,32 +74,20 @@ function TestIncidentSpecialistSystem.test_specialist_instantiation()
     
     local state = system:getState()
     
-    -- Check each specialist has required GDD fields
     for _, specialist in ipairs(state.Specialists) do
-        assert(specialist.Level ~= nil, "Specialist should have Level")
-        assert(specialist.Level == 1, "Starting level should be 1")
-        assert(specialist.XP ~= nil, "Specialist should have XP")
-        assert(specialist.XP == 0, "Starting XP should be 0")
-        assert(specialist.is_busy ~= nil, "Specialist should have is_busy flag")
-        assert(specialist.is_busy == false, "Starting is_busy should be false")
-        assert(specialist.cooldown_timer ~= nil, "Specialist should have cooldown_timer")
-        assert(specialist.cooldown_timer == 0, "Starting cooldown should be 0")
-        
-        -- Check stats (Traits)
-        assert(specialist.defense ~= nil, "Specialist should have defense stat")
-        
-        print(string.format("   ✓ %s: Level=%d, XP=%d, Defense=%.1f", 
-            specialist.name, specialist.Level, specialist.XP, specialist.defense))
+        TestRunner.assert(specialist.Level ~= nil, "Specialist should have Level")
+        TestRunner.assertEqual(1, specialist.Level, "Starting level should be 1")
+        TestRunner.assert(specialist.XP ~= nil, "Specialist should have XP")
+        TestRunner.assertEqual(0, specialist.XP, "Starting XP should be 0")
+        TestRunner.assert(specialist.is_busy ~= nil, "Specialist should have is_busy flag")
+        TestRunner.assertEqual(false, specialist.is_busy, "Starting is_busy should be false")
+        TestRunner.assert(specialist.cooldown_timer ~= nil, "Specialist should have cooldown_timer")
+        TestRunner.assertEqual(0, specialist.cooldown_timer, "Starting cooldown should be 0")
+        TestRunner.assert(specialist.defense ~= nil, "Specialist should have defense stat")
     end
-    
-    print("✅ Specialist instantiation test passed")
-    return true
-end
+end)
 
--- Test 3: Incident generation from templates
-function TestIncidentSpecialistSystem.test_incident_generation()
-    print("\n=== Test 3: Incident Generation ===")
-    
+TestRunner.test("IncidentSpecialistSystem - Incident Generation", function()
     local eventBus = createMockEventBus()
     local resourceManager = createMockResourceManager()
     
@@ -125,43 +96,24 @@ function TestIncidentSpecialistSystem.test_incident_generation()
     
     local state = system:getState()
     
-    -- Manually trigger incident generation
     if #state.ThreatTemplates > 0 then
         local template = state.ThreatTemplates[1]
         local incident = system:createIncidentFromTemplate(template)
         
-        -- Verify incident structure
-        assert(incident.id ~= nil, "Incident should have id")
-        assert(incident.trait_required ~= nil, "Incident should have trait_required")
-        assert(incident.trait_value_needed ~= nil, "Incident should have trait_value_needed")
-        assert(incident.time_to_resolve ~= nil, "Incident should have time_to_resolve")
-        assert(incident.base_reward ~= nil, "Incident should have base_reward")
-        assert(incident.status == "Pending", "New incident should be Pending")
-        
-        -- Verify reward structure
-        assert(incident.base_reward.money ~= nil, "Reward should include money")
-        assert(incident.base_reward.reputation ~= nil, "Reward should include reputation")
-        assert(incident.base_reward.xp ~= nil, "Reward should include xp")
-        assert(incident.base_reward.missionTokens ~= nil, "Reward should include missionTokens")
-        
-        print(string.format("   ✓ Created incident: %s", incident.name))
-        print(string.format("   ✓ Severity: %d, Time to Resolve: %ds", 
-            incident.trait_value_needed, incident.time_to_resolve))
-        print(string.format("   ✓ Rewards: $%.0f, %d Rep, %d XP, %d Tokens", 
-            incident.base_reward.money, 
-            incident.base_reward.reputation,
-            incident.base_reward.xp,
-            incident.base_reward.missionTokens))
+        TestRunner.assert(incident.id ~= nil, "Incident should have id")
+        TestRunner.assert(incident.trait_required ~= nil, "Incident should have trait_required")
+        TestRunner.assert(incident.trait_value_needed ~= nil, "Incident should have trait_value_needed")
+        TestRunner.assert(incident.time_to_resolve ~= nil, "Incident should have time_to_resolve")
+        TestRunner.assert(incident.base_reward ~= nil, "Incident should have base_reward")
+        TestRunner.assertEqual("Pending", incident.status, "New incident should be Pending")
+        TestRunner.assert(incident.base_reward.money ~= nil, "Reward should include money")
+        TestRunner.assert(incident.base_reward.reputation ~= nil, "Reward should include reputation")
+        TestRunner.assert(incident.base_reward.xp ~= nil, "Reward should include xp")
+        TestRunner.assert(incident.base_reward.missionTokens ~= nil, "Reward should include missionTokens")
     end
-    
-    print("✅ Incident generation test passed")
-    return true
-end
+end)
 
--- Test 4: Idle resolution check
-function TestIncidentSpecialistSystem.test_idle_resolution()
-    print("\n=== Test 4: Idle Resolution Check ===")
-    
+TestRunner.test("IncidentSpecialistSystem - Idle Resolution Check", function()
     local eventBus = createMockEventBus()
     local resourceManager = createMockResourceManager()
     
@@ -170,9 +122,7 @@ function TestIncidentSpecialistSystem.test_idle_resolution()
     
     local state = system:getState()
     
-    -- Test auto-resolve (low severity)
     if #state.ThreatTemplates > 0 then
-        -- Find a low-severity threat
         local lowThreat = nil
         for _, template in ipairs(state.ThreatTemplates) do
             if template.baseSeverity and template.baseSeverity <= 5 then
@@ -185,29 +135,18 @@ function TestIncidentSpecialistSystem.test_idle_resolution()
             local incident = system:createIncidentFromTemplate(lowThreat)
             local initialQueueSize = #state.IncidentsQueue
             
-            -- Should auto-resolve if GlobalAutoResolveStat (100) >= severity
             system:Incident_CheckIdleResolve(incident)
             
             if incident.trait_value_needed <= state.GlobalAutoResolveStat then
-                assert(#state.IncidentsQueue == initialQueueSize, 
-                    "Low severity incident should auto-resolve and not be added to queue")
-                print("   ✓ Low severity incident auto-resolved")
+                TestRunner.assertEqual(initialQueueSize, #state.IncidentsQueue, "Low severity incident should auto-resolve and not be added to queue")
             else
-                assert(#state.IncidentsQueue == initialQueueSize + 1, 
-                    "High severity incident should be added to queue")
-                print("   ✓ High severity incident escalated to queue")
+                TestRunner.assertEqual(initialQueueSize + 1, #state.IncidentsQueue, "High severity incident should be added to queue")
             end
         end
     end
-    
-    print("✅ Idle resolution test passed")
-    return true
-end
+end)
 
--- Test 5: Specialist auto-assignment
-function TestIncidentSpecialistSystem.test_auto_assignment()
-    print("\n=== Test 5: Specialist Auto-Assignment ===")
-    
+TestRunner.test("IncidentSpecialistSystem - Auto-Assignment", function()
     local eventBus = createMockEventBus()
     local resourceManager = createMockResourceManager()
     
@@ -216,54 +155,39 @@ function TestIncidentSpecialistSystem.test_auto_assignment()
     
     local state = system:getState()
     
-    -- Create a low-severity incident that will escalate
     if #state.ThreatTemplates > 0 then
         local template = state.ThreatTemplates[1]
         local incident = system:createIncidentFromTemplate(template)
         
-        -- Force escalation by setting high severity
-        incident.trait_value_needed = 200  -- Higher than GlobalAutoResolveStat
+        incident.trait_value_needed = 200
         system:Incident_CheckIdleResolve(incident)
         
-        -- Should be in queue now
-        assert(#state.IncidentsQueue > 0, "Incident should be in queue")
+        TestRunner.assert(#state.IncidentsQueue > 0, "Incident should be in queue")
         
-        -- Adjust requirement so specialists can handle it
         for _, inc in ipairs(state.IncidentsQueue) do
-            inc.trait_value_needed = 0.5  -- Very low, any specialist can handle
+            inc.trait_value_needed = 0.5
         end
         
-        -- Try auto-assignment
         system:Specialist_AutoAssign()
         
-        -- Check if any incident was assigned
         local foundAssigned = false
         for _, inc in ipairs(state.IncidentsQueue) do
             if inc.status == "AutoAssigned" then
                 foundAssigned = true
-                assert(inc.assignedSpecialistId ~= nil, "Assigned incident should have specialist ID")
+                TestRunner.assert(inc.assignedSpecialistId ~= nil, "Assigned incident should have specialist ID")
                 
-                -- Find the specialist and verify they're busy
                 local specialist = system:getSpecialistById(inc.assignedSpecialistId)
-                assert(specialist ~= nil, "Should find assigned specialist")
-                assert(specialist.is_busy == true, "Assigned specialist should be busy")
-                
-                print(string.format("   ✓ %s assigned to incident", specialist.name))
+                TestRunner.assert(specialist ~= nil, "Should find assigned specialist")
+                TestRunner.assertEqual(true, specialist.is_busy, "Assigned specialist should be busy")
                 break
             end
         end
         
-        assert(foundAssigned, "At least one incident should be auto-assigned")
+        TestRunner.assert(foundAssigned, "At least one incident should be auto-assigned")
     end
-    
-    print("✅ Auto-assignment test passed")
-    return true
-end
+end)
 
--- Test 6: Incident resolution and rewards
-function TestIncidentSpecialistSystem.test_incident_resolution()
-    print("\n=== Test 6: Incident Resolution ===")
-    
+TestRunner.test("IncidentSpecialistSystem - Incident Resolution", function()
     local eventBus = createMockEventBus()
     local resourceManager = createMockResourceManager()
     
@@ -273,13 +197,11 @@ function TestIncidentSpecialistSystem.test_incident_resolution()
     local state = system:getState()
     local resources = resourceManager:getResources()
     
-    -- Get initial resource values
     local initialMoney = resources.money
     local initialRep = resources.reputation
     local initialXP = resources.xp
     local initialTokens = resources.missionTokens
     
-    -- Create and assign an incident
     if #state.ThreatTemplates > 0 and #state.Specialists > 0 then
         local template = state.ThreatTemplates[1]
         local incident = system:createIncidentFromTemplate(template)
@@ -291,37 +213,18 @@ function TestIncidentSpecialistSystem.test_incident_resolution()
         
         local specialistInitialXP = specialist.XP
         
-        -- Resolve the incident
         system:Incident_Resolve(incident, specialist)
         
-        -- Verify rewards were awarded
-        assert(resources.money > initialMoney, "Money should increase")
-        assert(resources.reputation >= initialRep, "Reputation should increase or stay same")
-        assert(resources.xp > initialXP, "XP should increase")
-        assert(resources.missionTokens > initialTokens, "Mission Tokens should increase")
-        
-        -- Verify specialist gained XP
-        assert(specialist.XP > specialistInitialXP, "Specialist should gain XP")
-        
-        -- Verify specialist cooldown
-        assert(specialist.cooldown_timer > 0, "Specialist should have cooldown")
-        
-        print(string.format("   ✓ Resources awarded: $%.0f, %d Rep, %d XP, %d Tokens", 
-            resources.money - initialMoney,
-            resources.reputation - initialRep,
-            resources.xp - initialXP,
-            resources.missionTokens - initialTokens))
-        print(string.format("   ✓ Specialist XP gained: %d", specialist.XP - specialistInitialXP))
+        TestRunner.assert(resources.money > initialMoney, "Money should increase")
+        TestRunner.assert(resources.reputation >= initialRep, "Reputation should increase or stay same")
+        TestRunner.assert(resources.xp > initialXP, "XP should increase")
+        TestRunner.assert(resources.missionTokens > initialTokens, "Mission Tokens should increase")
+        TestRunner.assert(specialist.XP > specialistInitialXP, "Specialist should gain XP")
+        TestRunner.assert(specialist.cooldown_timer > 0, "Specialist should have cooldown")
     end
-    
-    print("✅ Incident resolution test passed")
-    return true
-end
+end)
 
--- Test 7: Specialist cooldown
-function TestIncidentSpecialistSystem.test_cooldown_system()
-    print("\n=== Test 7: Specialist Cooldown ===")
-    
+TestRunner.test("IncidentSpecialistSystem - Cooldown System", function()
     local eventBus = createMockEventBus()
     local resourceManager = createMockResourceManager()
     
@@ -333,31 +236,20 @@ function TestIncidentSpecialistSystem.test_cooldown_system()
     if #state.Specialists > 0 then
         local specialist = state.Specialists[1]
         
-        -- Set cooldown
         specialist.cooldown_timer = 5.0
         specialist.is_busy = true
         
-        -- Update with 3 seconds
         system:Specialist_Cooldown_Update(3.0)
-        assert(specialist.cooldown_timer == 2.0, "Cooldown should decrease")
-        assert(specialist.is_busy == true, "Should still be busy")
+        TestRunner.assertEqual(2.0, specialist.cooldown_timer, "Cooldown should decrease")
+        TestRunner.assertEqual(true, specialist.is_busy, "Should still be busy")
         
-        -- Update with remaining time
         system:Specialist_Cooldown_Update(2.5)
-        assert(specialist.cooldown_timer == 0, "Cooldown should be complete")
-        assert(specialist.is_busy == false, "Should no longer be busy")
-        
-        print("   ✓ Cooldown system working correctly")
+        TestRunner.assertEqual(0, specialist.cooldown_timer, "Cooldown should be complete")
+        TestRunner.assertEqual(false, specialist.is_busy, "Should no longer be busy")
     end
-    
-    print("✅ Cooldown test passed")
-    return true
-end
+end)
 
--- Test 8: Full update cycle
-function TestIncidentSpecialistSystem.test_full_update_cycle()
-    print("\n=== Test 8: Full Update Cycle ===")
-    
+TestRunner.test("IncidentSpecialistSystem - Full Update Cycle", function()
     local eventBus = createMockEventBus()
     local resourceManager = createMockResourceManager()
     
@@ -366,30 +258,14 @@ function TestIncidentSpecialistSystem.test_full_update_cycle()
     
     local state = system:getState()
     
-    -- Force incident timer to trigger
     state.IncidentTimer = 0.1
     
-    -- Run several update cycles
     for i = 1, 5 do
-        system:update(1.0)  -- 1 second per update
-        
-        local stats = system:getStatistics()
-        print(string.format("   Cycle %d: Pending=%d, Assigned=%d, Available=%d, Busy=%d", 
-            i, 
-            stats.pendingIncidents, 
-            stats.assignedIncidents,
-            stats.availableSpecialists,
-            stats.busySpecialists))
+        system:update(1.0)
     end
-    
-    print("✅ Full update cycle test passed")
-    return true
-end
+end)
 
--- Test 9: Specialist unlocking
-function TestIncidentSpecialistSystem.test_specialist_unlocking()
-    print("\n=== Test 9: Specialist Unlocking ===")
-    
+TestRunner.test("IncidentSpecialistSystem - Specialist Unlocking", function()
     local eventBus = createMockEventBus()
     local resourceManager = createMockResourceManager()
     
@@ -399,7 +275,6 @@ function TestIncidentSpecialistSystem.test_specialist_unlocking()
     local state = system:getState()
     local initialCount = #state.Specialists
     
-    -- Try to unlock a specialist that exists in templates
     local unlockableId = nil
     for id, template in pairs(state.SpecialistTemplates) do
         if not state.UnlockedSpecialists[id] then
@@ -410,28 +285,16 @@ function TestIncidentSpecialistSystem.test_specialist_unlocking()
     
     if unlockableId then
         local success = system:unlockSpecialist(unlockableId)
-        assert(success, "Should successfully unlock specialist")
-        assert(#state.Specialists == initialCount + 1, "Specialist count should increase")
-        assert(state.UnlockedSpecialists[unlockableId] == true, "Specialist should be marked as unlocked")
+        TestRunner.assert(success, "Should successfully unlock specialist")
+        TestRunner.assertEqual(initialCount + 1, #state.Specialists, "Specialist count should increase")
+        TestRunner.assertEqual(true, state.UnlockedSpecialists[unlockableId], "Specialist should be marked as unlocked")
         
-        print(string.format("   ✓ Successfully unlocked specialist: %s", unlockableId))
-        
-        -- Try to unlock again (should fail)
         local success2 = system:unlockSpecialist(unlockableId)
-        assert(success2 == false, "Should not unlock same specialist twice")
-        print("   ✓ Duplicate unlock prevented")
-    else
-        print("   ⚠️  All specialists already unlocked in test")
+        TestRunner.assertEqual(false, success2, "Should not unlock same specialist twice")
     end
-    
-    print("✅ Specialist unlocking test passed")
-    return true
-end
+end)
 
--- Test 10: Statistics reporting
-function TestIncidentSpecialistSystem.test_statistics()
-    print("\n=== Test 10: Statistics Reporting ===")
-    
+TestRunner.test("IncidentSpecialistSystem - Statistics Reporting", function()
     local eventBus = createMockEventBus()
     local resourceManager = createMockResourceManager()
     
@@ -440,67 +303,9 @@ function TestIncidentSpecialistSystem.test_statistics()
     
     local stats = system:getStatistics()
     
-    assert(stats.activeSpecialists ~= nil, "Should report active specialists")
-    assert(stats.pendingIncidents ~= nil, "Should report pending incidents")
-    assert(stats.assignedIncidents ~= nil, "Should report assigned incidents")
-    assert(stats.availableSpecialists ~= nil, "Should report available specialists")
-    assert(stats.busySpecialists ~= nil, "Should report busy specialists")
-    
-    print(string.format("   Active Specialists: %d", stats.activeSpecialists))
-    print(string.format("   Available: %d, Busy: %d", stats.availableSpecialists, stats.busySpecialists))
-    print(string.format("   Incidents - Pending: %d, Assigned: %d", 
-        stats.pendingIncidents, stats.assignedIncidents))
-    
-    print("✅ Statistics test passed")
-    return true
-end
-
--- Run all tests
-function TestIncidentSpecialistSystem.run_all_tests()
-    print("\n" .. string.rep("=", 60))
-    print("INCIDENT AND SPECIALIST MANAGEMENT SYSTEM - TEST SUITE")
-    print(string.rep("=", 60))
-    
-    local tests = {
-        TestIncidentSpecialistSystem.test_initialization,
-        TestIncidentSpecialistSystem.test_specialist_instantiation,
-        TestIncidentSpecialistSystem.test_incident_generation,
-        TestIncidentSpecialistSystem.test_idle_resolution,
-        TestIncidentSpecialistSystem.test_auto_assignment,
-        TestIncidentSpecialistSystem.test_incident_resolution,
-        TestIncidentSpecialistSystem.test_cooldown_system,
-        TestIncidentSpecialistSystem.test_full_update_cycle,
-        TestIncidentSpecialistSystem.test_specialist_unlocking,
-        TestIncidentSpecialistSystem.test_statistics
-    }
-    
-    local passed = 0
-    local failed = 0
-    local errors = {}
-    
-    for i, test in ipairs(tests) do
-        local success, err = pcall(test)
-        if success then
-            passed = passed + 1
-        else
-            failed = failed + 1
-            table.insert(errors, {test = i, error = err})
-            print("❌ Test failed: " .. tostring(err))
-        end
-    end
-    
-    print("\n" .. string.rep("=", 60))
-    print(string.format("TEST RESULTS: %d passed, %d failed", passed, failed))
-    print(string.rep("=", 60))
-    
-    if #errors > 0 then
-        print("\nFailed tests:")
-        for _, err in ipairs(errors) do
-            print(string.format("  Test %d: %s", err.test, err.error))
-        end
-    end
-    
-    return passed, failed
-end
-
-return TestIncidentSpecialistSystem
+    TestRunner.assert(stats.activeSpecialists ~= nil, "Should report active specialists")
+    TestRunner.assert(stats.pendingIncidents ~= nil, "Should report pending incidents")
+    TestRunner.assert(stats.assignedIncidents ~= nil, "Should report assigned incidents")
+    TestRunner.assert(stats.availableSpecialists ~= nil, "Should report available specialists")
+    TestRunner.assert(stats.busySpecialists ~= nil, "Should report busy specialists")
+end)

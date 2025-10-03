@@ -28,6 +28,7 @@ function ItemRegistry.new(dataManager)
     return self
 end
 
+-- Loads all items and builds indices
 function ItemRegistry:initialize()
     print("🗂️ Initializing Item Registry...")
     
@@ -45,6 +46,7 @@ function ItemRegistry:initialize()
     print("✅ Item Registry initialized with " .. self:getTotalItemCount() .. " items")
 end
 
+-- Loads all items of a specific type from a data file
 function ItemRegistry:loadItemType(dataKey, itemType)
     local data = self.dataManager:getData(dataKey)
     
@@ -88,6 +90,7 @@ function ItemRegistry:loadItemType(dataKey, itemType)
     print("  📄 Loaded " .. count .. " " .. itemType .. " items")
 end
 
+-- Validates a single item's data
 function ItemRegistry:validateItem(item)
     -- Basic validation
     if not item.id then
@@ -109,6 +112,7 @@ function ItemRegistry:validateItem(item)
     return true
 end
 
+-- Adds a validated item to the registry
 function ItemRegistry:registerItem(item)
     -- Store by type
     if not self.items[item.type] then
@@ -120,6 +124,7 @@ function ItemRegistry:registerItem(item)
     self.itemsById[item.id] = item
 end
 
+-- Builds secondary indices (e.g., by tag) for fast querying
 function ItemRegistry:buildIndices()
     -- Build tag index
     self.itemsByTag = {}
@@ -137,18 +142,23 @@ function ItemRegistry:buildIndices()
 end
 
 -- Query methods
+
+-- Get a single item by its unique ID
 function ItemRegistry:getItem(id)
     return self.itemsById[id]
 end
 
+-- Get all items of a specific type
 function ItemRegistry:getItemsByType(itemType)
     return self.items[itemType] or {}
 end
 
+-- Get all items with a specific tag
 function ItemRegistry:getItemsByTag(tag)
     return self.itemsByTag[tag] or {}
 end
 
+-- Performs a complex query on all items using a filter table
 function ItemRegistry:queryItems(filter)
     local results = {}
     
@@ -161,6 +171,7 @@ function ItemRegistry:queryItems(filter)
     return results
 end
 
+-- Helper function to check if an item matches a filter
 function ItemRegistry:matchesFilter(item, filter)
     -- Type filter
     if filter.type and item.type ~= filter.type then
@@ -195,6 +206,7 @@ function ItemRegistry:matchesFilter(item, filter)
     return true
 end
 
+-- Get the total number of items in the registry
 function ItemRegistry:getTotalItemCount()
     local count = 0
     for id, _ in pairs(self.itemsById) do
@@ -203,6 +215,7 @@ function ItemRegistry:getTotalItemCount()
     return count
 end
 
+-- Get a summary of item counts by type
 function ItemRegistry:getStats()
     local stats = {
         total = self:getTotalItemCount(),

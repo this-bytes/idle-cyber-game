@@ -3,7 +3,7 @@
 -- while main.lua handles the initial setup and object creation.
 
 -- System Dependencies
-local EventBus = require("src.utils.event_bus")
+local EventBus = require("src.utils.event_bus") -- 
 local DataManager = require("src.core.data_manager")
 local ResourceManager = require("src.systems.resource_manager")
 local SceneManager = require("src.scenes.scene_manager")
@@ -44,7 +44,6 @@ function SOCGame.new(eventBus)
     self.debugOverlay = nil
     self.isInitialized = false
     self.isGameStarted = false -- Track if player has started the game
-    self.lastExitTime = nil -- Track when player last exited
     return self
 end
 
@@ -115,7 +114,7 @@ function SOCGame:initialize()
     self.systems.contractSystem:initialize()
     self.systems.specialistSystem:initialize()
     self.systems.eventSystem:initialize()
-    self.systems.threatSystem:initialize()
+    -- self.systems.threatSystem:initialize() -- Disabled to prevent conflict with incident_specialist_system
     self.sceneManager:initialize()
 
     -- 10. Register Scenes
@@ -183,9 +182,9 @@ function SOCGame:update(dt)
     if self.systems.specialistSystem then
         self.systems.specialistSystem:update(dt)
     end
-    if self.systems.threatSystem then
-        self.systems.threatSystem:update(dt)
-    end
+    -- if self.systems.threatSystem then
+    --     self.systems.threatSystem:update(dt)
+    -- end
     if self.systems.achievementSystem then
         self.systems.achievementSystem:update(dt)
     end
@@ -238,23 +237,15 @@ function SOCGame:startGame()
     -- Calculate offline earnings using GameStateEngine
     if self.systems.gameStateEngine then
         local offlineProgress = self.systems.gameStateEngine:calculateOfflineEarnings()
-        
-        if offlineProgress then
-            -- Show offline earnings notification
-            local timeAwayMinutes = math.floor(offlineProgress.idleTime / 60)
-            local timeAwayHours = math.floor(timeAwayMinutes / 60)
-            local timeAwayDisplay = timeAwayHours > 0 
-                and string.format("%dh %dm", timeAwayHours, timeAwayMinutes % 60)
-                or string.format("%dm", timeAwayMinutes)
-            
-            print(string.format("💰 Offline Earnings: You were away for %s", timeAwayDisplay))
-            print(string.format("   Earned: $%d | Damage: $%d | Net: $%d", 
-                offlineProgress.earnings or 0,
-                offlineProgress.damage or 0,
-                offlineProgress.netGain or 0))
-            
-            -- Event already published by GameStateEngine
-        end
+
+        -- The GameStateEngine now handles applying the progress and publishing the
+        -- 'offline_earnings_calculated' event for the UI to display.
+        -- The print statements for debugging are also handled within the engine or can be
+        -- subscribed to via the event bus for a cleaner separation of concerns.
+        -- This keeps SOCGame clean and focused on orchestration.
+
+        -- The UI (e.g., SOCView) should listen for 'offline_earnings_calculated'
+        -- and display the summary to the player.
     end
 end
 
@@ -318,42 +309,6 @@ function SOCGame:shutdown()
     -- Save game state using GameStateEngine
     if self.systems.gameStateEngine then
         self.systems.gameStateEngine:quickSave()
-    end
-    
-    -- Legacy: Also save exit time separately for compatibility
-    self:saveExitTime()
-    
-    print("👋 Shutdown complete")
-end
-
--- Save the current time as exit time
-function SOCGame:saveExitTime()
-    local exitTime = os.time()
-    local saveData = string.format("%d", exitTime)
-    local success = love.filesystem.write("last_exit.dat", saveData)
-    if success then
-        print(string.format("💾 Saved exit time: %d", exitTime))
-    else
-        print("❌ Failed to save exit time")
-    end
-end
-
--- Load the last exit time
-function SOCGame:loadExitTime()
-    if love.filesystem.getInfo("last_exit.dat") then
-        local data, err = love.filesystem.read("last_exit.dat")
-        if data then
-            self.lastExitTime = tonumber(data)
-            if self.lastExitTime then
-                print(string.format("📂 Loaded last exit time: %d", self.lastExitTime))
-            else
-                print("⚠️  Invalid exit time data")
-            end
-        else
-            print("⚠️  Could not read exit time: " .. tostring(err))
-        end
-    else
-        print("📝 No previous exit time found (first run)")
     end
 end
 

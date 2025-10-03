@@ -381,96 +381,97 @@ function DebugOverlay:drawPanel(title, icon, x, y, content)
 end
 
 function DebugOverlay:drawResourcePanel(x, y)
-    local res = self.cachedData.resources
+    local res = self.cachedData.resources or {}
     local content = {
-        {text = string.format("Money: $%.0f", res.money), color = {0.2, 1, 0.2, 1}},
-        {text = string.format("  Rate: $%.1f/sec (x%.2f)", res.moneyRate, res.moneyMultiplier), color = {0.7, 0.7, 0.7, 1}},
-        {text = string.format("Reputation: %.1f (+%.2f/sec)", res.reputation, res.reputationRate), color = {1, 0.8, 0.2, 1}},
-        {text = string.format("XP: %.0f (+%.1f/sec)", res.xp, res.xpRate), color = {0.5, 0.8, 1, 1}},
-        {text = string.format("Mission Tokens: %d", res.missionTokens), color = {1, 0.5, 1, 1}},
-        {text = string.format("Total Earned: $%.0f", res.totalMoneyEarned), color = {0.6, 0.6, 0.6, 1}},
-        {text = string.format("Total Spent: $%.0f", res.totalMoneySpent), color = {0.6, 0.6, 0.6, 1}}
+        {text = string.format("Money: $%.0f", res.money or 0), color = {0.2, 1, 0.2, 1}},
+        {text = string.format("  Rate: $%.1f/sec (x%.2f)", res.moneyRate or 0, res.moneyMultiplier or 1), color = {0.7, 0.7, 0.7, 1}},
+        {text = string.format("Reputation: %.1f (+%.2f/sec)", res.reputation or 0, res.reputationRate or 0), color = {1, 0.8, 0.2, 1}},
+        {text = string.format("XP: %.0f (+%.1f/sec)", res.xp or 0, res.xpRate or 0), color = {0.5, 0.8, 1, 1}},
+        {text = string.format("Mission Tokens: %d", res.missionTokens or 0), color = {1, 0.5, 1, 1}},
+        {text = string.format("Total Earned: $%.0f", res.totalMoneyEarned or 0), color = {0.6, 0.6, 0.6, 1}},
+        {text = string.format("Total Spent: $%.0f", res.totalMoneySpent or 0), color = {0.6, 0.6, 0.6, 1}}
     }
     self:drawPanel("RESOURCES", "💰", x, y, content)
 end
 
 function DebugOverlay:drawContractPanel(x, y)
-    local con = self.cachedData.contracts
+    local con = self.cachedData.contracts or {}
     local content = {
-        {text = string.format("Available: %d", con.available), color = {0.8, 0.8, 1, 1}},
-        {text = string.format("Active: %d / %d", con.active, con.maxActive), color = {0.2, 1, 0.2, 1}},
-        {text = string.format("Completed: %d", con.completed), color = {0.5, 1, 0.5, 1}},
-        {text = string.format("Auto-Accept: %s", con.autoAcceptEnabled and "ON" or "OFF"), color = {1, 1, 0.2, 1}},
-        {text = string.format("Next ID: %d", con.nextContractId), color = {0.7, 0.7, 0.7, 1}},
-        {text = string.format("Gen Timer: %.1f / %.1f", con.generationTimer, con.generationInterval), color = {0.7, 0.7, 0.7, 1}}
+        {text = string.format("Available: %d", con.available or 0), color = {0.8, 0.8, 1, 1}},
+        {text = string.format("Active: %d / %d", con.active or 0, con.maxActive or 0), color = {0.2, 1, 0.2, 1}},
+        {text = string.format("Completed: %d", con.completed or 0), color = {0.5, 1, 0.5, 1}},
+        {text = string.format("Auto-Accept: %s", (con.autoAcceptEnabled and "ON") or "OFF"), color = {1, 1, 0.2, 1}},
+        {text = string.format("Next ID: %d", con.nextContractId or 0), color = {0.7, 0.7, 0.7, 1}},
+        {text = string.format("Gen Timer: %.1f / %.1f", con.generationTimer or 0, con.generationInterval or 0), color = {0.7, 0.7, 0.7, 1}}
     }
     self:drawPanel("CONTRACTS", "📋", x, y, content)
 end
 
 function DebugOverlay:drawSpecialistPanel(x, y)
-    local spec = self.cachedData.specialists
+    local spec = self.cachedData.specialists or {}
     local content = {
-        {text = string.format("Total: %d", spec.total), color = {1, 1, 1, 1}},
-        {text = string.format("Available: %d", spec.available), color = {0.2, 1, 0.2, 1}},
-        {text = string.format("Busy: %d", spec.busy), color = {1, 0.5, 0.2, 1}},
-        {text = string.format("Next ID: %d", spec.nextId), color = {0.7, 0.7, 0.7, 1}}
+        {text = string.format("Total: %d", spec.total or 0), color = {1, 1, 1, 1}},
+        {text = string.format("Available: %d", spec.available or 0), color = {0.2, 1, 0.2, 1}},
+        {text = string.format("Busy: %d", spec.busy or 0), color = {1, 0.5, 0.2, 1}},
+        {text = string.format("Next ID: %d", spec.nextId or 0), color = {0.7, 0.7, 0.7, 1}}
     }
     self:drawPanel("SPECIALISTS", "👥", x, y, content)
 end
 
 function DebugOverlay:drawThreatPanel(x, y)
-    local thr = self.cachedData.threats
+    local thr = self.cachedData.threats or {}
     local content = {
-        {text = string.format("Active Threats: %d", thr.active), color = {1, 0.3, 0.3, 1}},
-        {text = string.format("Templates: %d", thr.templates), color = {0.8, 0.8, 0.8, 1}},
-        {text = string.format("Next ID: %d", thr.nextId), color = {0.7, 0.7, 0.7, 1}},
-        {text = string.format("Gen Timer: %.1f / %.1f", thr.generationTimer, thr.generationInterval), color = {0.7, 0.7, 0.7, 1}},
-        {text = string.format("System: %s", thr.enabled and "ENABLED" or "DISABLED"), color = thr.enabled and {0.2, 1, 0.2, 1} or {1, 0.3, 0.3, 1}}
+        {text = string.format("Active Threats: %d", thr.active or 0), color = {1, 0.3, 0.3, 1}},
+        {text = string.format("Templates: %d", thr.templates or 0), color = {0.8, 0.8, 0.8, 1}},
+        {text = string.format("Next ID: %d", thr.nextId or 0), color = {0.7, 0.7, 0.7, 1}},
+        {text = string.format("Gen Timer: %.1f / %.1f", thr.generationTimer or 0, thr.generationInterval or 0), color = {0.7, 0.7, 0.7, 1}},
+        {text = string.format("System: %s", (thr.enabled and "ENABLED") or "DISABLED"), color = (thr.enabled and {0.2, 1, 0.2, 1}) or {1, 0.3, 0.3, 1}}
     }
     self:drawPanel("THREATS", "🚨", x, y, content)
 end
 
 function DebugOverlay:drawUpgradePanel(x, y)
-    local upg = self.cachedData.upgrades
+    local upg = self.cachedData.upgrades or {}
     local content = {
-        {text = string.format("Total Upgrades: %d", upg.total), color = {1, 1, 1, 1}},
-        {text = string.format("Purchased: %d", upg.purchased), color = {0.2, 1, 0.2, 1}},
-        {text = string.format("Trees: %d", upg.trees), color = {0.8, 0.8, 1, 1}}
+        {text = string.format("Total Upgrades: %d", upg.total or 0), color = {1, 1, 1, 1}},
+        {text = string.format("Purchased: %d", upg.purchased or 0), color = {0.2, 1, 0.2, 1}},
+        {text = string.format("Trees: %d", upg.trees or 0), color = {0.8, 0.8, 1, 1}}
     }
     self:drawPanel("UPGRADES", "⬆️", x, y, content)
 end
 
 function DebugOverlay:drawSkillPanel(x, y)
-    local skill = self.cachedData.skills
+    local skill = self.cachedData.skills or {}
     local content = {
-        {text = string.format("Skill Definitions: %d", skill.definitions), color = {1, 1, 1, 1}},
-        {text = string.format("Unlocked: %d", skill.unlockedCount), color = {0.2, 1, 0.2, 1}}
+        {text = string.format("Skill Definitions: %d", skill.definitions or 0), color = {1, 1, 1, 1}},
+        {text = string.format("Unlocked: %d", skill.unlockedCount or 0), color = {0.2, 1, 0.2, 1}}
     }
     self:drawPanel("SKILLS", "🎯", x, y, content)
 end
 
 function DebugOverlay:drawIdlePanel(x, y)
-    local idle = self.cachedData.idle
-    local timeSinceLastSave = (os.time() - idle.lastSaveTime)
+    local idle = self.cachedData.idle or {}
+    local timeSinceLastSave = (os.time() - (idle.lastSaveTime or os.time()))
     local content = {
         {text = string.format("Last Save: %ds ago", timeSinceLastSave), color = {0.8, 0.8, 1, 1}},
-        {text = string.format("Total Earnings: $%.0f", idle.totalEarnings), color = {0.2, 1, 0.2, 1}},
-        {text = string.format("Total Damage: $%.0f", idle.totalDamage), color = {1, 0.3, 0.3, 1}},
-        {text = string.format("Threat Types: %d", idle.threatTypes), color = {0.8, 0.8, 0.8, 1}}
+        {text = string.format("Total Earnings: $%.0f", idle.totalEarnings or 0), color = {0.2, 1, 0.2, 1}},
+        {text = string.format("Total Damage: $%.0f", idle.totalDamage or 0), color = {1, 0.3, 0.3, 1}},
+        {text = string.format("Threat Types: %d", idle.threatTypes or 0), color = {0.8, 0.8, 0.8, 1}}
     }
     self:drawPanel("IDLE SYSTEM", "💤", x, y, content)
 end
 
 function DebugOverlay:drawProgressionPanel(x, y)
-    local prog = self.cachedData.progression
+    local prog = self.cachedData.progression or {}
     local content = {}
     
     if prog.level then
+        local progressPercent = (prog.xpToNextLevel or 0) > 0 and ((prog.xp or 0) / prog.xpToNextLevel * 100) or 0
         content = {
-            {text = string.format("Level: %d", prog.level), color = {1, 0.8, 0.2, 1}},
-            {text = string.format("XP: %.0f / %.0f", prog.xp, prog.xpToNextLevel), color = {0.5, 0.8, 1, 1}},
-            {text = string.format("Progress: %.1f%%", (prog.xp / prog.xpToNextLevel * 100)), color = {0.7, 0.7, 0.7, 1}},
-            {text = string.format("Unlocked: %d features", prog.unlockedFeatures), color = {0.2, 1, 0.2, 1}}
+            {text = string.format("Level: %d", prog.level or 1), color = {1, 0.8, 0.2, 1}},
+            {text = string.format("XP: %.0f / %.0f", prog.xp or 0, prog.xpToNextLevel or 0), color = {0.5, 0.8, 1, 1}},
+            {text = string.format("Progress: %.1f%%", progressPercent), color = {0.7, 0.7, 0.7, 1}},
+            {text = string.format("Unlocked: %d features", prog.unlockedFeatures or 0), color = {0.2, 1, 0.2, 1}}
         }
     else
         content = {
@@ -482,46 +483,47 @@ function DebugOverlay:drawProgressionPanel(x, y)
 end
 
 function DebugOverlay:drawAchievementPanel(x, y)
-    local ach = self.cachedData.achievements
+    local ach = self.cachedData.achievements or {}
+    local completionPercent = (ach.total or 0) > 0 and ((ach.unlocked or 0) / ach.total * 100) or 0
     local content = {
-        {text = string.format("Total: %d", ach.total), color = {1, 1, 1, 1}},
-        {text = string.format("Unlocked: %d", ach.unlocked), color = {0.2, 1, 0.2, 1}},
-        {text = string.format("In Progress: %d", ach.progress), color = {1, 0.8, 0.2, 1}},
-        {text = string.format("Completion: %.1f%%", ach.total > 0 and (ach.unlocked / ach.total * 100) or 0), color = {0.7, 0.7, 0.7, 1}}
+        {text = string.format("Total: %d", ach.total or 0), color = {1, 1, 1, 1}},
+        {text = string.format("Unlocked: %d", ach.unlocked or 0), color = {0.2, 1, 0.2, 1}},
+        {text = string.format("In Progress: %d", ach.progress or 0), color = {1, 0.8, 0.2, 1}},
+        {text = string.format("Completion: %.1f%%", completionPercent), color = {0.7, 0.7, 0.7, 1}}
     }
     self:drawPanel("ACHIEVEMENTS", "🏆", x, y, content)
 end
 
 function DebugOverlay:drawEventPanel(x, y)
-    local evt = self.cachedData.events
+    local evt = self.cachedData.events or {}
     local content = {
-        {text = string.format("Total Events: %d", evt.total), color = {1, 1, 1, 1}},
-        {text = string.format("Active: %d", evt.active), color = {0.2, 1, 0.2, 1}},
-        {text = string.format("Timer: %.1fs / %.1fs", evt.timer, evt.baseInterval), color = {0.8, 0.8, 1, 1}},
-        {text = string.format("Total Weight: %.2f", evt.totalWeight), color = {0.7, 0.7, 0.7, 1}}
+        {text = string.format("Total Events: %d", evt.total or 0), color = {1, 1, 1, 1}},
+        {text = string.format("Active: %d", evt.active or 0), color = {0.2, 1, 0.2, 1}},
+        {text = string.format("Timer: %.1fs / %.1fs", evt.timer or 0, evt.baseInterval or 0), color = {0.8, 0.8, 1, 1}},
+        {text = string.format("Total Weight: %.2f", evt.totalWeight or 0), color = {0.7, 0.7, 0.7, 1}}
     }
     self:drawPanel("EVENTS", "🎲", x, y, content)
 end
 
 function DebugOverlay:drawRNGPanel(x, y)
-    local rng = self.cachedData.rng
+    local rng = self.cachedData.rng or {}
     local content = {
-        {text = string.format("Sample 1: %.6f", rng.sample1), color = {0.8, 0.8, 1, 1}},
-        {text = string.format("Sample 2: %.6f", rng.sample2), color = {0.8, 0.8, 1, 1}},
-        {text = string.format("Sample 3: %.6f", rng.sample3), color = {0.8, 0.8, 1, 1}},
-        {text = string.format("Time: %.2fs", rng.timestamp), color = {0.7, 0.7, 0.7, 1}}
+        {text = string.format("Sample 1: %.6f", rng.sample1 or 0), color = {0.8, 0.8, 1, 1}},
+        {text = string.format("Sample 2: %.6f", rng.sample2 or 0), color = {0.8, 0.8, 1, 1}},
+        {text = string.format("Sample 3: %.6f", rng.sample3 or 0), color = {0.8, 0.8, 1, 1}},
+        {text = string.format("Time: %.2fs", rng.timestamp or 0), color = {0.7, 0.7, 0.7, 1}}
     }
     self:drawPanel("RNG STATE", "🎰", x, y, content)
 end
 
 function DebugOverlay:drawSummaryPanel(x, y)
-    local res = self.cachedData.resources
-    local con = self.cachedData.contracts
-    local spec = self.cachedData.specialists
-    local thr = self.cachedData.threats
+    local res = self.cachedData.resources or {}
+    local con = self.cachedData.contracts or {}
+    local spec = self.cachedData.specialists or {}
+    local thr = self.cachedData.threats or {}
     
-    local netIncome = res.moneyRate
-    local systemsActive = (con.active > 0 and 1 or 0) + (thr.enabled and 1 or 0) + (spec.total > 0 and 1 or 0)
+    local netIncome = res.moneyRate or 0
+    local systemsActive = ((con.active or 0) > 0 and 1 or 0) + (thr.enabled and 1 or 0) + ((spec.total or 0) > 0 and 1 or 0)
     
     local content = {
         {text = string.format("Net Income: $%.1f/s", netIncome), color = netIncome >= 0 and {0.2, 1, 0.2, 1} or {1, 0.3, 0.3, 1}},
