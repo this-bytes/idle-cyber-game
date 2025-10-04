@@ -23,16 +23,16 @@ local GameStateEngine = require("src.systems.game_state_engine")
 
 -- Scene Dependencies
 local MainMenuLuis = require("src.scenes.main_menu_luis") -- Pure LUIS implementation
-local SOCView = require("src.scenes.soc_view")
-local UpgradeShop = require("src.scenes.upgrade_shop")
-local GameOver = require("src.scenes.game_over")
-local IncidentResponse = require("src.scenes.incident_response")
-local AdminMode = require("src.modes.admin_mode")
+local SOCViewLuis = require("src.scenes.soc_view_luis") -- Pure LUIS implementation
+local UpgradeShopLuis = require("src.scenes.upgrade_shop_luis") -- Pure LUIS implementation
+local GameOverLuis = require("src.scenes.game_over_luis") -- Pure LUIS implementation
+local IncidentResponseLuis = require("src.scenes.incident_response_luis") -- Pure LUIS implementation
+local AdminModeLuis = require("src.scenes.admin_mode_luis") -- Pure LUIS implementation
 local IdleDebugScene = require("src.scenes.idle_debug")
 
 -- UI Components
 -- LUIS (Love UI System) - loaded directly, no wrapper
-local StatsOverlay = require("src.ui.stats_overlay")
+local StatsOverlayLuis = require("src.ui.stats_overlay_luis")
 local OverlayManager = require("src.ui.overlay_manager")
 
 
@@ -172,13 +172,13 @@ function SOCGame:initialize()
     self.sceneManager:initialize()
 
     -- 10. Register Scenes
-    -- Use LUIS-based Main Menu (pure LUIS implementation)
+    -- All scenes now use LUIS (Love UI System) for consistent UI framework
     self.sceneManager:registerScene("main_menu", MainMenuLuis.new(self.eventBus, self.luis))
-    self.sceneManager:registerScene("soc_view", SOCView.new(self.eventBus))
-    self.sceneManager:registerScene("upgrade_shop", UpgradeShop.new(self.eventBus))
-    self.sceneManager:registerScene("game_over", GameOver.new(self.eventBus))
-    self.sceneManager:registerScene("incident_response", IncidentResponse.new(self.eventBus))
-    self.sceneManager:registerScene("admin_mode", AdminMode.new())
+    self.sceneManager:registerScene("soc_view", SOCViewLuis.new(self.eventBus, self.luis))
+    self.sceneManager:registerScene("upgrade_shop", UpgradeShopLuis.new(self.eventBus, self.luis))
+    self.sceneManager:registerScene("game_over", GameOverLuis.new(self.eventBus, self.luis))
+    self.sceneManager:registerScene("incident_response", IncidentResponseLuis.new(self.eventBus, self.luis))
+    self.sceneManager:registerScene("admin_mode", AdminModeLuis.new(self.eventBus, self.luis))
     -- Register developer-only debug scene only when explicitly enabled via env var
     local enableIdleDebug = false
     local envVal = os.getenv("IDLE_DEBUG_SCENE")
@@ -200,14 +200,15 @@ function SOCGame:initialize()
     -- self.sceneManager:requestScene("main_menu") -- Commented out - finalizeScenes does this
     
     -- 12. Initialize Stats Overlay (player-facing, overlays on top of any scene)
-    self.statsOverlay = StatsOverlay.new(self.eventBus, self.systems)
+    -- Pass LUIS instance to overlay for direct UI control
+    self.statsOverlay = StatsOverlayLuis.new(self.eventBus, self.systems, self.luis)
 
     -- Create overlay manager and register the stats overlay so it can
     -- capture input when visible. We push the overlay but it will only be
-    -- visible when toggled (StatsOverlay.visible).
+    -- visible when toggled (StatsOverlayLuis.visible).
     self.overlayManager = OverlayManager.new()
     self.overlayManager:push(self.statsOverlay)
-    print("🔎 Stats Overlay registered with OverlayManager (Toggle with F3)")
+    print("🔎 Stats Overlay (LUIS) registered with OverlayManager (Toggle with F3)")
 
     print("✅ SOC Game Systems Initialized!")
     return true
@@ -360,31 +361,6 @@ function SOCGame:initializeCore()
     return true
 end
 
-function SOCGame:keypressed(key, scancode, isrepeat)
-    -- Handle global stats overlay toggle (F3)
-    if key == "f3" then
-        if self.statsOverlay then
-            self.statsOverlay:toggle()
-        end
-        return -- Don't pass F3 to other systems
-    end
-    
-    -- Handle input system first (for global actions)
-    if self.systems.inputSystem then
-        self.systems.inputSystem:keypressed(key, scancode, isrepeat)
-    end
-
-    -- If any overlay consumes the key, stop propagation to scene manager
-    if self.overlayManager and self.overlayManager:keypressed(key) then
-        return
-    end
-
-    -- Then pass to scene manager
-    if self.sceneManager then
-        self.sceneManager:keypressed(key, scancode, isrepeat)
-    end
-end
-
 -- Start the game and calculate offline earnings
 function SOCGame:startGame()
     self.isGameStarted = true
@@ -406,6 +382,14 @@ function SOCGame:startGame()
 end
 
 function SOCGame:keypressed(key, scancode, isrepeat)
+    -- Handle global stats overlay toggle (F3) - MUST BE FIRST
+    if key == "f3" then
+        if self.statsOverlay then
+            self.statsOverlay:toggle()
+        end
+        return -- Don't pass F3 to other systems
+    end
+    
     -- Toggle LUIS debug view with Tab
     if key == "tab" and self.luis then
         self.luis.showGrid = not self.luis.showGrid
