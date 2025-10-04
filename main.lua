@@ -272,6 +272,11 @@ end
 function love.resize(w, h)
     if game then
         game:resize(w, h)
+        -- refresh ui to adapt to new size
+        if DEBUG_UI then
+            print(string.format("[UI DEBUG] Window resized to %dx%d", w, h))
+        end
+        -- love.graphics.resize(w, h)
     end
 end
 

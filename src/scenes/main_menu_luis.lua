@@ -1,229 +1,221 @@
--- Main Menu Scene - Pure LUIS Implementation
--- SOC Game Entry Point using LUIS (Love UI System)
--- No SmartUIManager - Pure community library approach
-
 --[[
-    LUIS INTEGRATION PATTERN FOR SCENES
-    ====================================
-    
-    This scene demonstrates the correct pattern for using LUIS (Love UI System)
-    directly without any wrapper classes. Follow this pattern when migrating
-    other scenes.
-    
-    INITIALIZATION:
-    ---------------
-    1. Scene constructor receives the LUIS instance directly from SOCGame:
-       function Scene.new(eventBus, luis)
-           self.luis = luis  -- Store direct reference, no wrapper
-       end
-    
-    2. LUIS is initialized once in SOCGame.initialize():
-       local initLuis = require("luis.init")
-       self.luis = initLuis("lib/luis/widgets")
-    
-    LAYER LIFECYCLE:
-    ----------------
-    1. CREATE layer in load():
-       self.luis.newLayer(self.layerName)
-       self.luis.setCurrentLayer(self.layerName)  -- Activates and enables layer
-    
-    2. BUILD UI in buildUI():
-       -- Create widgets using luis.newXXX functions
-       local widget = luis.newButton(text, width, height, onClick, onRelease, row, col)
-       
-       -- Add to layer using insertElement (NOT createElement with existing widget)
-       luis.insertElement(self.layerName, widget)
-    
-    3. DISABLE layer in exit():
-       self.luis.disableLayer(self.layerName)  -- Hides layer but preserves it
-       -- OR for complete cleanup:
-       self.luis.removeLayer(self.layerName)   -- Deletes layer entirely
-    
-    WIDGET CREATION:
-    ----------------
-    - Use luis.newXXX() functions to create widgets with grid-based positioning
-    - Grid positions start at (1,1), not (0,0)
-    - Widget signatures follow pattern: (params..., row, col, [theme])
-    - Example: luis.newButton(text, width, height, onClick, onRelease, row, col)
-    
-    IMPORTANT: Use insertElement, NOT createElement for pre-created widgets!
-    - CORRECT:   widget = luis.newButton(...); luis.insertElement(layer, widget)
-    - INCORRECT: luis.createElement(layer, "Button", widget)  -- This creates ANOTHER button!
-    
-    INPUT HANDLING:
-    ---------------
-    LUIS handles input globally in SOCGame:
-    - luis.update(dt) - Called in SOCGame:update()
-    - luis.draw() - Called in SOCGame:draw()
-    - luis.mousepressed/mousereleased/keypressed/etc - Called in SOCGame input handlers
-    
-    Scenes don't need to handle LUIS input unless they need custom behavior.
-    
-    LAYER VISIBILITY:
-    -----------------
-    - setCurrentLayer(name) - Enables and activates a layer
-    - enableLayer(name) - Shows a layer
-    - disableLayer(name) - Hides a layer (preserves elements)
-    - removeLayer(name) - Deletes a layer entirely
-    - isLayerEnabled(name) - Check if layer is visible
-    
-    DEBUGGING:
-    ----------
-    Press TAB to toggle LUIS debug view:
-    - Grid overlay
-    - Element outlines  
-    - Layer names
---]]
+    Main Menu Scene (LUIS)
+    ----------------------
+    This scene inherits from `base_scene_luis.lua` and demonstrates the correct,
+    final pattern for creating a themed UI scene.
+]]
+
+local BaseSceneLuis = require("src.scenes.base_scene_luis")
 
 local MainMenuLuis = {}
 MainMenuLuis.__index = MainMenuLuis
+setmetatable(MainMenuLuis, {__index = BaseSceneLuis})
 
--- Create new main menu scene
+
 function MainMenuLuis.new(eventBus, luis)
-    local self = setmetatable({}, MainMenuLuis)
-    
-    -- Scene state
-    self.eventBus = eventBus
-    self.luis = luis  -- Direct LUIS instance, no wrapper
-    self.layerName = "main_menu"
-    
+    local self = BaseSceneLuis.new(eventBus, luis, "main_menu")
+    setmetatable(self, MainMenuLuis)
+
+    --[[
+        Visuals & Theming
+        -----------------
+        Define the theme table and pass it to the base class's `setTheme` function.
+        This sets the global theme for all UI elements created in this scene.
+    --]]
+    local cyberpunkTheme = {
+        -- Default properties for all widgets
+        textColor = {0, 1, 180/255, 1},                      -- Bright Teal
+        bgColor = {10/255, 25/255, 20/255, 0.8},            -- Dark, semi-transparent green
+        borderColor = {0, 1, 180/255, 0.4},                 -- Semi-transparent teal
+        borderWidth = 1,
+        -- Hover state
+        hoverTextColor = {20/255, 30/255, 25/255, 1},       -- Dark (for contrast)
+        hoverBgColor = {0, 1, 180/255, 1},                    -- Solid bright teal
+        hoverBorderColor = {0, 1, 180/255, 1},
+        -- Active state (when clicked)
+        activeTextColor = {20/255, 30/255, 25/255, 1},
+        activeBgColor = {0.8, 1, 1, 1},                       -- Bright flash color
+        activeBorderColor = {0.8, 1, 1, 1},
+        -- Specific widget types
+        Label = {
+            textColor = {0, 1, 180/255, 0.9},
+        },
+    }
+    self:setTheme(cyberpunkTheme)
+
+    -- Load assets for custom drawing effects
+    self.backgroundImage = love.graphics.newImage("assets/splash.jpeg")
+    self.fontTitle = love.graphics.newFont("assets/fonts/FiraCode-Bold.ttf", 64)
+    self.fontVersion = love.graphics.newFont("assets/fonts/FiraCode-Light.ttf", 14)
+    self.fontDecor = love.graphics.newFont("assets/fonts/FiraCode-Regular.ttf", 12)
+
+    -- Animation state variables
+    self.glitchTimer = 0
+    self.glitchFrequency = 3.0
+    self.glitchDuration = 0.15
+    self.isGlitching = false
+    self.scanlineOffset = 0
+
     return self
 end
 
--- Load/Enter the main menu scene
-function MainMenuLuis:load(data)
-    print("🏠 Main Menu (LUIS): Loading main menu")
-    
-    -- Create dedicated layer for this scene
-    self.luis.newLayer(self.layerName)
-    self.luis.setCurrentLayer(self.layerName)
-    
-    -- Build the UI using LUIS
-    self:buildUI()
-end
 
--- Build the main menu UI with LUIS widgets
+--[[
+    buildUI() - Required Hook
+    ---------------------------
+    This function now arranges buttons in a vertically centered stack.
+--]]
 function MainMenuLuis:buildUI()
     local luis = self.luis
     local screenWidth = love.graphics.getWidth()
     local screenHeight = love.graphics.getHeight()
     
-    print(string.format("🏠 Building UI - Screen: %dx%d, GridSize: %d", screenWidth, screenHeight, luis.gridSize))
-    
-    -- Calculate grid-based positioning
     local gridSize = luis.gridSize
-    local centerCol = math.floor(screenWidth / gridSize / 2)
-    local centerRow = math.floor(screenHeight / gridSize / 2)
+    local numCols = math.floor(screenWidth / gridSize)
+    local numRows = math.floor(screenHeight / gridSize)
     
-    -- Create widgets using newXXX, then insert them with insertElement
-    -- Title Label
-    local titleLabel = luis.newLabel("🛡️ SOC Command Center", 25, 3, centerRow - 10, centerCol - 12)
-    luis.insertElement(self.layerName, titleLabel)
+    -- Define button dimensions in grid units.
+    local buttonWidth = 30
+    local buttonHeight = 3
+    local buttonGap = 2 -- The space between buttons in grid rows.
+
+    -- Calculate horizontal center for the buttons.
+    local centerCol = math.floor((numCols - buttonWidth) / 2)
     
-    -- Start Game Button
-    local startButton = luis.newButton(
-        "▶ Start Game",
-        20, 3,
-        function()
-            print("🎮 Start Game button clicked")
-            if self.eventBus then
-                self.eventBus:publish("request_scene_change", {scene = "soc_view"})
-            end
-        end,
-        nil, -- onRelease
-        centerRow - 4,
-        centerCol - 10
-    )
-    luis.insertElement(self.layerName, startButton)
-    
-    -- Continue Button
-    local continueButton = luis.newButton(
-        "💾 Continue",
-        20, 3,
-        function()
-            print("💾 Continue Game button clicked")
-            if self.eventBus then
-                self.eventBus:publish("request_scene_change", {scene = "soc_view"})
-            end
-        end,
-        nil,
-        centerRow,
-        centerCol - 10
-    )
-    luis.insertElement(self.layerName, continueButton)
-    
-    -- Settings Button
-    local settingsButton = luis.newButton(
-        "⚙ Settings",
-        20, 3,
-        function()
-            print("⚙️ Settings button clicked")
-        end,
-        nil,
-        centerRow + 4,
-        centerCol - 10
-    )
+    -- Calculate vertical center for the entire stack of buttons.
+    local numButtons = 5 -- Increased to 5 to make room for the Admin button
+    local totalStackHeight = (buttonHeight * numButtons) + (buttonGap * (numButtons - 1))
+    local startRow = math.floor((numRows - totalStackHeight) / 2) + 4 -- Nudge the stack down a bit from true center
+
+    local currentRow = startRow
+
+    -- Create the buttons in a vertical stack.
+    local newOpButton = luis.newButton("NEW OPERATION", buttonWidth, buttonHeight, function()
+        self.eventBus:publish("request_scene_change", {scene = "soc_view", new_game = true})
+    end, nil, currentRow, centerCol)
+    luis.insertElement(self.layerName, newOpButton)
+    currentRow = currentRow + buttonHeight + buttonGap
+
+    local loadOpButton = luis.newButton("LOAD OPERATION", buttonWidth, buttonHeight, function()
+        self.eventBus:publish("request_scene_change", {scene = "soc_view"})
+    end, nil, currentRow, centerCol)
+    luis.insertElement(self.layerName, loadOpButton)
+    currentRow = currentRow + buttonHeight + buttonGap
+
+    local settingsButton = luis.newButton("SYSTEM CONFIG", buttonWidth, buttonHeight, function()
+        print("⚙️ System Config button clicked")
+    end, nil, currentRow, centerCol)
     luis.insertElement(self.layerName, settingsButton)
-    
-    -- Quit Button
-    local quitButton = luis.newButton(
-        "❌ Quit",
-        20, 3,
-        function()
-            print("🚪 Quit button clicked")
-            love.event.quit()
-        end,
-        nil,
-        centerRow + 8,
-        centerCol - 10
-    )
+    currentRow = currentRow + buttonHeight + buttonGap
+
+    local quitButton = luis.newButton("TERMINATE", buttonWidth, buttonHeight, function()
+        love.event.quit()
+    end, nil, currentRow, centerCol)
     luis.insertElement(self.layerName, quitButton)
+    currentRow = currentRow + buttonHeight + buttonGap
+
+    -- Add the new Admin Console button
+    local adminButton = luis.newButton("ADMIN CONSOLE", buttonWidth, buttonHeight, function()
+        self.eventBus:publish("request_scene_change", {scene = "incident_admin_luis"})
+    end, nil, currentRow, centerCol)
+    luis.insertElement(self.layerName, adminButton)
     
-    print("🎨 Main Menu UI built with 5 LUIS widgets")
+    print("🎨 Main Menu UI rebuilt with vertical layout and Admin button.")
 end
 
--- Exit the main menu scene
-function MainMenuLuis:exit()
-    print("🏠 MainMenu (LUIS): Exiting main menu")
-    
-    -- CRITICAL: Disable the LUIS layer to hide it from rendering
-    -- This is necessary because LUIS renders ALL enabled layers
-    -- Just clearing elements isn't enough - the layer remains visible!
-    if self.luis.isLayerEnabled(self.layerName) then
-        self.luis.disableLayer(self.layerName)
-        print("🏠 MainMenu (LUIS): Layer '" .. self.layerName .. "' disabled")
+
+--[[
+    onUpdate(dt) - Optional Hook
+--]]
+function MainMenuLuis:onUpdate(dt)
+    self.glitchTimer = self.glitchTimer + dt
+    if self.glitchTimer > self.glitchFrequency then
+        self.glitchTimer = -love.math.random() * 1.5
+        self.isGlitching = true
+        self.glitchEffectTimer = 0
     end
+
+    if self.isGlitching then
+        self.glitchEffectTimer = self.glitchEffectTimer + dt
+        if self.glitchEffectTimer > self.glitchDuration then
+            self.isGlitching = false
+        end
+    end
+
+    self.scanlineOffset = (self.scanlineOffset + dt * 20) % 4
+end
+
+
+--[[
+    onDraw() - Optional Hook
+--]]
+function MainMenuLuis:onDraw()
+    local w = love.graphics.getWidth()
+    local h = love.graphics.getHeight()
+
+    love.graphics.push("all") -- Isolate drawing state.
+
+    -- 1. Background
+    love.graphics.setColor(0.5, 0.5, 0.5, 1)
+    if self.backgroundImage then
+        local scaleX = w / self.backgroundImage:getWidth()
+        local scaleY = h / self.backgroundImage:getHeight()
+        love.graphics.draw(self.backgroundImage, 0, 0, 0, scaleX, scaleY)
+    else
+        love.graphics.clear(0.05, 0.05, 0.1, 1.0)
+    end
+
+    -- 2. Title
+    love.graphics.setFont(self.fontTitle)
+    love.graphics.setColor(0, 1, 180/255, 1)
+    local titleText = "IDLE CYBER OPS"
+    local titleY = h * 0.20 -- Moved title up slightly
+    if self.isGlitching then
+        self:drawGlitchedText(titleText, titleY)
+    else
+        love.graphics.printf(titleText, 0, titleY, w, "center")
+    end
+
+    -- 3. Decorative Text
+    love.graphics.setFont(self.fontVersion)
+    love.graphics.setColor(0, 1, 180/255, 0.7)
+    love.graphics.printf("v0.1.0-alpha // PROTOCOL-7 ACTIVE", 0, titleY + 70, w, "center")
+    love.graphics.setFont(self.fontDecor)
+    love.graphics.setColor(0, 1, 180/255, 0.5)
+    love.graphics.print("SYSTEM STATUS: ONLINE", 20, h - 60)
+    love.graphics.print("UPLINK: SECURE", 20, h - 45)
+    love.graphics.print("THREAT LEVEL: NOMINAL", 20, h - 30)
+    local debugText = "Press TAB for LUIS debug view"
+    local textWidth = self.fontDecor:getWidth(debugText)
+    love.graphics.print(debugText, w - textWidth - 20, h - 30)
+
+    -- 4. Scanline Overlay
+    love.graphics.setColor(0, 0, 0, 0.4)
+    for y = 0, h / 4, 1 do
+        love.graphics.rectangle("fill", 0, y * 4 + self.scanlineOffset, w, 2)
+    end
+
+    love.graphics.pop() -- Restore drawing state.
+end
+
+
+--[[
+    drawGlitchedText(text, y)
+--]]
+function MainMenuLuis:drawGlitchedText(text, y)
+    local w = love.graphics.getWidth()
+    local x_offset = (love.math.random() - 0.5) * 25
+    local y_offset = (love.math.random() - 0.5) * 15
+
+    love.graphics.setColor(1, 0, 0, 0.5)
+    love.graphics.printf(text, x_offset - 2, y + y_offset, w, "center")
     
-    -- Optional: Remove layer entirely if you won't return to this scene
-    -- self.luis.removeLayer(self.layerName)
+    love.graphics.setColor(0, 1, 1, 0.5)
+    love.graphics.printf(text, x_offset + 2, y - y_offset, w, "center")
+
+    love.graphics.setColor(0, 1, 180/255, 1)
+    love.graphics.printf(text, x_offset, y, w, "center")
 end
 
--- Update main menu (LUIS handles its own updates via SOCGame)
-function MainMenuLuis:update(dt)
-    -- Scene-specific updates can go here
-    -- LUIS update is handled globally by SOCGame
-end
-
--- Draw main menu (LUIS handles its own drawing via SOCGame)
-function MainMenuLuis:draw()
-    -- Scene-specific drawing can go here
-    -- LUIS draw is handled globally by SOCGame
-    
-    -- Optional: Draw scene-specific background
-    love.graphics.clear(0.05, 0.05, 0.1, 1.0)
-    
-    -- Draw subtitle/version info
-    love.graphics.setColor(0.5, 0.5, 0.5, 1.0)
-    love.graphics.print("v0.1.0-alpha | Press TAB for debug view", 10, love.graphics.getHeight() - 20)
-end
-
--- Input handlers (LUIS handles input globally, scenes can override if needed)
-function MainMenuLuis:keypressed(key, scancode, isrepeat)
-    -- Scene-specific key handling
-end
-
-function MainMenuLuis:mousepressed(x, y, button, istouch, presses)
-    -- Scene-specific mouse handling
-end
 
 return MainMenuLuis

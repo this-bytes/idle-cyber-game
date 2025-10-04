@@ -28,6 +28,7 @@ local UpgradeShopLuis = require("src.scenes.upgrade_shop_luis") -- Pure LUIS imp
 local GameOverLuis = require("src.scenes.game_over_luis") -- Pure LUIS implementation
 local IncidentResponseLuis = require("src.scenes.incident_response_luis") -- Pure LUIS implementation
 local AdminModeLuis = require("src.scenes.admin_mode_luis") -- Pure LUIS implementation
+local AdminIncidentScene = require("src.scenes.incident_admin_luis") -- Pure LUIS implementation
 local IdleDebugScene = require("src.scenes.idle_debug")
 
 -- UI Components
@@ -174,11 +175,12 @@ function SOCGame:initialize()
     -- 10. Register Scenes
     -- All scenes now use LUIS (Love UI System) for consistent UI framework
     self.sceneManager:registerScene("main_menu", MainMenuLuis.new(self.eventBus, self.luis))
-    self.sceneManager:registerScene("soc_view", SOCViewLuis.new(self.eventBus, self.luis))
-    self.sceneManager:registerScene("upgrade_shop", UpgradeShopLuis.new(self.eventBus, self.luis))
+    self.sceneManager:registerScene("soc_view", SOCViewLuis.new(self.eventBus, self.luis, self.systems))
+    self.sceneManager:registerScene("upgrade_shop", UpgradeShopLuis.new(self.eventBus, self.luis, self.systems))
     self.sceneManager:registerScene("game_over", GameOverLuis.new(self.eventBus, self.luis))
     self.sceneManager:registerScene("incident_response", IncidentResponseLuis.new(self.eventBus, self.luis))
     self.sceneManager:registerScene("admin_mode", AdminModeLuis.new(self.eventBus, self.luis))
+    self.sceneManager:registerScene("incident_admin_luis", AdminIncidentScene.new(self.eventBus, self.luis))
     -- Register developer-only debug scene only when explicitly enabled via env var
     local enableIdleDebug = false
     local envVal = os.getenv("IDLE_DEBUG_SCENE")

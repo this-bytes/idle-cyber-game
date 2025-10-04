@@ -1,116 +1,153 @@
--- Upgrade Shop Scene - SOC Security Infrastructure Management (LUIS Version)
--- Allows purchasing and managing cybersecurity upgrades for the SOC
--- Migrated to LUIS (Love UI System) - Simplified functional version
+--[[
+    Upgrade Shop Scene
+    ------------------
+    Allows the player to purchase permanent upgrades for their SOC.
+]]
 
-local UpgradeShopLuis = {}
-UpgradeShopLuis.__index = UpgradeShopLuis
+local BaseSceneLuis = require("src.scenes.base_scene_luis")
 
-function UpgradeShopLuis.new(eventBus, luis)
-    local self = setmetatable({}, UpgradeShopLuis)
-    
-    self.eventBus = eventBus
-    self.luis = luis
-    self.layerName = "upgrade_shop"
-    self.resourceManager = nil
-    self.securityUpgrades = nil
-    
-    -- Shop state
-    self.selectedCategory = 1
-    self.selectedUpgrade = 1
-    self.categories = {
-        {name = "Infrastructure", key = "infrastructure"},
-        {name = "Security Tools", key = "tools"},
-        {name = "Personnel", key = "personnel"},
-        {name = "Research", key = "research"}
+local UpgradeShopScene = {}
+UpgradeShopScene.__index = UpgradeShopScene
+setmetatable(UpgradeShopScene, {__index = BaseSceneLuis})
+
+
+function UpgradeShopScene.new(eventBus, luis, systems)
+    local self = BaseSceneLuis.new(eventBus, luis, "upgrade_shop")
+    setmetatable(self, UpgradeShopScene)
+
+    self.systems = systems
+
+    -- Set the theme
+    local cyberpunkTheme = {
+        textColor = {0, 1, 180/255, 1},                      
+        bgColor = {10/255, 25/255, 20/255, 0.8},            
+        borderColor = {0, 1, 180/255, 0.4},                 
+        borderWidth = 1,
+        hoverTextColor = {20/255, 30/255, 25/255, 1},       
+        hoverBgColor = {0, 1, 180/255, 1},                    
+        hoverBorderColor = {0, 1, 180/255, 1},
+        activeTextColor = {20/255, 30/255, 25/255, 1},
+        activeBgColor = {0.8, 1, 1, 1},                       
+        activeBorderColor = {0.8, 1, 1, 1},
+        Label = { textColor = {0, 1, 180/255, 0.9} },
+        -- Custom theme for disabled buttons
+        disabledTextColor = {0.5, 0.5, 0.5, 0.5},
+        disabledBgColor = {0.1, 0.1, 0.1, 0.5},
+        disabledBorderColor = {0.3, 0.3, 0.3, 0.5},
     }
-    
-    print("🛒 UpgradeShopLuis: Initialized security upgrade shop")
+    self:setTheme(cyberpunkTheme)
+
+    self.scroll_y = 0
+    self.upgrades = {}
+    self.categories = {}
+
     return self
 end
 
-function UpgradeShopLuis:load(data)
-    print("🛒 UpgradeShopLuis: Entered security upgrade shop")
-    
-    -- Create LUIS layer
-    self.luis.newLayer(self.layerName)
-    self.luis.setCurrentLayer(self.layerName)
-    
-    -- Build UI
+function UpgradeShopScene:onLoad(data)
+    self:updateUpgrades()
+end
+
+function UpgradeShopScene:updateUpgrades()
+    if self.systems and self.systems.upgradeSystem and self.systems.upgradeSystem.getVisibleUpgrades then
+        self.upgrades = self.systems.upgradeSystem:getVisibleUpgrades()
+        self:categorizeUpgrades()
+    else
+        print("WARNING: Could not fetch upgrades from upgradeSystem.")
+        self.upgrades = {}
+    end
+    self:rebuildUI()
+end
+
+function UpgradeShopScene:categorizeUpgrades()
+    self.categories = {}
+    for _, upgrade in ipairs(self.upgrades) do
+        local cat = upgrade.category or "uncategorized"
+        if not self.categories[cat] then
+            self.categories[cat] = {}
+        end
+        table.insert(self.categories[cat], upgrade)
+    end
+end
+
+function UpgradeShopScene:rebuildUI()
+    if not self.luis or not self.luis.isLayerEnabled(self.layerName) then return end
+    self.luis.clearLayer(self.layerName)
     self:buildUI()
 end
 
-function UpgradeShopLuis:buildUI()
+function UpgradeShopScene:buildUI()
     local luis = self.luis
-    local screenWidth = love.graphics.getWidth()
-    local screenHeight = love.graphics.getHeight()
-    local gridSize = luis.gridSize
-    
-    local centerCol = math.floor(screenWidth / gridSize / 2)
-    local centerRow = math.floor(screenHeight / gridSize / 2)
-    
-    -- Title
-    local title = luis.newLabel("🛒 SOC Security Upgrade Shop", 35, 2, 2, centerCol - 17)
-    luis.insertElement(self.layerName, title)
-    
-    -- Category buttons (left side)
-    local leftCol = 2
-    local startRow = 5
-    
-    for i, category in ipairs(self.categories) do
-        local button = luis.newButton(
-            category.name,
-            15, 2,
-            function()
-                self.selectedCategory = i
-                print("Selected category: " .. category.name)
-            end,
-            nil,
-            startRow + (i-1) * 3,
-            leftCol
-        )
-        luis.insertElement(self.layerName, button)
+    local numCols = math.floor(love.graphics.getWidth() / luis.gridSize)
+
+    -- Title and Back Button
+    luis.insertElement(self.layerName, luis.newLabel("UPGRADE SHOP", numCols, 3, 2, 1, "center"))
+    luis.insertElement(self.layerName, luis.newButton("< BACK", 15, 3, function() 
+        self.eventBus:publish("request_scene_change", {scene = "soc_view"}) 
+    end, nil, 2, 3))
+
+    if not self.upgrades or #self.upgrades == 0 then
+        luis.insertElement(self.layerName, luis.newLabel("No upgrades available.", numCols, 3, 10, 1, "center"))
+    else
+        self:buildUpgradeList()
     end
-    
-    -- Info text
-    local info = luis.newLabel("Select a category to view upgrades", 40, 2, centerRow, centerCol - 20)
-    luis.insertElement(self.layerName, info)
-    
-    -- Return button
-    local returnButton = luis.newButton(
-        "↩ Return to SOC View (ESC)",
-        25, 3,
-        function()
-            if self.eventBus then
-                self.eventBus:publish("scene_request", {scene = "soc_view"})
+end
+
+function UpgradeShopScene:buildUpgradeList()
+    local luis = self.luis
+    local numCols = math.floor(love.graphics.getWidth() / luis.gridSize)
+    local cardWidth = numCols - 10
+    local cardCol = 6
+    local currentRow = 6 -- Start below the title
+
+    for categoryName, upgradesInCategory in pairs(self.categories) do
+        -- Category Header
+        luis.insertElement(self.layerName, luis.newLabel(string.upper(categoryName), cardWidth, 2, currentRow, cardCol, "left"))
+        currentRow = currentRow + 2
+
+        for _, upgrade in ipairs(upgradesInCategory) do
+            local canAfford = self.systems.resourceManager:hasSufficientResources(upgrade.cost)
+            local isPurchased = self.systems.upgradeSystem:isPurchased(upgrade.id)
+
+            -- Upgrade Name
+            luis.insertElement(self.layerName, luis.newLabel(upgrade.displayName, cardWidth, 1, currentRow, cardCol, "left"))
+            currentRow = currentRow + 1
+            -- Upgrade Description
+            luis.insertElement(self.layerName, luis.newLabel(upgrade.description, cardWidth, 2, currentRow, cardCol, "left"))
+            currentRow = currentRow + 2
+            -- Upgrade Cost
+            local costString = "Cost: "
+            for currency, amount in pairs(upgrade.cost) do
+                costString = costString .. amount .. " " .. currency .. " "
             end
-        end,
-        nil,
-        centerRow + 15,
-        centerCol - 12
-    )
-    luis.insertElement(self.layerName, returnButton)
-    
-    print("🛒 UpgradeShopLuis: UI built")
-end
+            luis.insertElement(self.layerName, luis.newLabel(costString, cardWidth, 1, currentRow, cardCol, "left"))
+            
+            -- Purchase Button
+            local buttonText = isPurchased and "PURCHASED" or "PURCHASE"
+            local purchaseButton = luis.newButton(buttonText, 20, 2, function() 
+                if not isPurchased and canAfford then
+                    self.systems.upgradeSystem:purchaseUpgrade(upgrade.id)
+                    self:updateUpgrades() -- Refresh the list
+                end
+            end, nil, currentRow - 1, cardCol + cardWidth - 22)
+            
+            if isPurchased or not canAfford then
+                purchaseButton:setDisabled(true)
+            end
+            luis.insertElement(self.layerName, purchaseButton)
 
-function UpgradeShopLuis:update(dt)
-    -- Shop updates
-end
-
-function UpgradeShopLuis:exit()
-    print("🛒 UpgradeShopLuis: Exited security upgrade shop")
-    
-    if self.luis.isLayerEnabled(self.layerName) then
-        self.luis.disableLayer(self.layerName)
+            currentRow = currentRow + 3 -- Add gap for next card
+        end
     end
 end
 
-function UpgradeShopLuis:keypressed(key)
-    if key == "escape" then
-        self.eventBus:publish("scene_request", {scene = "soc_view"})
-    elseif key == "tab" then
-        self.selectedCategory = (self.selectedCategory % #self.categories) + 1
-    end
+function UpgradeShopScene:onDraw()
+    love.graphics.clear(0.05, 0.05, 0.1, 1.0)
 end
 
-return UpgradeShopLuis
+function UpgradeShopScene:wheelmoved(x, y)
+    -- A simple scroll implementation will be needed here
+    -- This is a placeholder for now
+end
+
+return UpgradeShopScene
