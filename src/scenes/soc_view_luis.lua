@@ -1,20 +1,17 @@
 -- SOC View Scene - Main Operational Interface (LUIS Version)
--- This scene has been refactored to use the base_scene_luis.lua class.
-
-local BaseSceneLuis = require("src.scenes.base_scene_luis")
+-- This scene has been refactored to use the correct, efficient UI update pattern.
 
 local SOCViewLuis = {}
 SOCViewLuis.__index = SOCViewLuis
-setmetatable(SOCViewLuis, {__index = BaseSceneLuis})
-
 
 function SOCViewLuis.new(eventBus, luis, systems)
-    local self = BaseSceneLuis.new(eventBus, luis, "soc_view")
-    setmetatable(self, SOCViewLuis)
+    local self = setmetatable({}, SOCViewLuis)
     
+    self.eventBus = eventBus
+    self.luis = luis
     self.systems = systems
+    self.layerName = "soc_view"
     
-    -- Set the theme
     local cyberpunkTheme = {
         textColor = {0, 1, 180/255, 1},                      
         bgColor = {10/255, 25/255, 20/255, 0.8},            
@@ -28,87 +25,111 @@ function SOCViewLuis.new(eventBus, luis, systems)
         activeBorderColor = {0.8, 1, 1, 1},
         Label = { textColor = {0, 1, 180/255, 0.9} },
     }
-    self:setTheme(cyberpunkTheme)
+    if self.luis.setTheme then
+        self.luis.setTheme(cyberpunkTheme)
+    end
     
-    -- Internal State
-    self.resources = {}
-    self.contracts = {}
-    self.specialists = {}
+    self.updateTimer = 0
+    self.isBuilt = false -- Flag to ensure UI is only built once.
+    self.moneyLabel = nil
+    self.repLabel = nil
     
-    -- Subscribe to events to keep data fresh
-    self.eventBus:subscribe("resource_changed", function() self:updateData() end)
-    self.eventBus:subscribe("contract_accepted", function() self:updateData() end)
-    self.eventBus:subscribe("contract_completed", function() self:updateData() end)
-    self.eventBus:subscribe("specialist_hired", function() self:updateData() end)
-    self.eventBus:subscribe("upgrade_purchased", function() self:updateData() end)
+    self.eventBus:subscribe("resource_changed", function() self:updateLabels() end)
     
     return self
 end
 
-function SOCViewLuis:onLoad(data)
+function SOCViewLuis:load(data)
     print("🎮 SOCViewLuis: Entering main SOC operations view")
-    self:updateData()
-end
-
-function SOCViewLuis:updateData()
-    if self.systems.resourceManager then
-        self.resources.money = self.systems.resourceManager:getResource("money") or 0
-        self.resources.reputation = self.systems.resourceManager:getResource("reputation") or 0
+    self.luis.newLayer(self.layerName)
+    self.luis.setCurrentLayer(self.layerName)
+    
+    -- Only build the UI if it hasn't been built yet.
+    if not self.isBuilt then
+        self:buildUI()
+        self.isBuilt = true
     end
-    -- Other data updates would go here
-
-    -- Since LUIS doesn't automatically re-render labels on data change, 
-    -- we need to rebuild the UI to show new values.
-    self:rebuildUI()
+    
+    -- Always update the data labels when the scene is loaded.
+    self:updateLabels()
 end
 
-function SOCViewLuis:rebuildUI()
-    if not self.luis or not self.luis.isLayerEnabled(self.layerName) then return end
-    self.luis.clearLayer(self.layerName)
-    self:buildUI()
+function SOCViewLuis:exit()
+    if self.luis.isLayerEnabled(self.layerName) then
+        self.luis.disableLayer(self.layerName)
+    end
 end
 
+-- This function now ONLY updates the text of existing labels.
+function SOCViewLuis:updateLabels()
+    if not self.systems or not self.systems.resourceManager or not self.isBuilt then return end
+
+    local money = self.systems.resourceManager:getResource("money") or 0
+    local rep = self.systems.resourceManager:getResource("reputation") or 0
+
+    if self.moneyLabel and self.moneyLabel.setText then
+        self.moneyLabel:setText(string.format("💰 Money: $%.0f", money))
+    end
+    if self.repLabel and self.repLabel.setText then
+        self.repLabel:setText(string.format("🌟 Reputation: %.0f", rep))
+    end
+end
+
+-- This function is now only called ONCE.
 function SOCViewLuis:buildUI()
     local luis = self.luis
     local numCols = math.floor(love.graphics.getWidth() / luis.gridSize)
     local numRows = math.floor(love.graphics.getHeight() / luis.gridSize)
     
-    -- Title
     luis.insertElement(self.layerName, luis.newLabel("SOC COMMAND CENTER", numCols, 2, 2, 1, "center"))
     
-    -- Resource Display
-    local moneyText = string.format("💰 Money: $%.0f", self.resources.money or 0)
-    luis.insertElement(self.layerName, luis.newLabel(moneyText, 25, 1, 5, 3))
+    self.moneyLabel = luis.newLabel("", 25, 1, 5, 3)
+    luis.insertElement(self.layerName, self.moneyLabel)
     
-    local repText = string.format("🌟 Reputation: %.0f", self.resources.reputation or 0)
-    luis.insertElement(self.layerName, luis.newLabel(repText, 25, 1, 6, 3))
+    self.repLabel = luis.newLabel("", 25, 1, 6, 3)
+    luis.insertElement(self.layerName, self.repLabel)
 
-    -- Main Action Buttons
     local buttonWidth = 25
     local startCol = math.floor((numCols - buttonWidth) / 2) - 20
     local startRow = 12
+    local buttonGap = 4
 
-    luis.insertElement(self.layerName, luis.newButton("Contracts", buttonWidth, 3, function() print("Contracts Clicked") end, nil, startRow, startCol))
-    luis.insertElement(self.layerName, luis.newButton("Specialists", buttonWidth, 3, function() print("Specialists Clicked") end, nil, startRow + 4, startCol))
+    luis.insertElement(self.layerName, luis.newButton("Contracts", buttonWidth, 3, function() 
+        self.eventBus:publish("request_scene_change", {scene = "contracts_board"})
+    end, nil, startRow, startCol))
+    luis.insertElement(self.layerName, luis.newButton("Specialists", buttonWidth, 3, function() 
+        self.eventBus:publish("request_scene_change", {scene = "specialist_management"})
+    end, nil, startRow + buttonGap, startCol))
     luis.insertElement(self.layerName, luis.newButton("Upgrades", buttonWidth, 3, function() 
         self.eventBus:publish("request_scene_change", {scene = "upgrade_shop"})
-    end, nil, startRow + 8, startCol))
+    end, nil, startRow + buttonGap * 2, startCol))
+    luis.insertElement(self.layerName, luis.newButton("Skills", buttonWidth, 3, function() 
+        self.eventBus:publish("request_scene_change", {scene = "skill_tree"})
+    end, nil, startRow + buttonGap * 3, startCol))
 
-    -- Bottom Nav
+    luis.insertElement(self.layerName, luis.newButton("Test Modal", buttonWidth, 3, function() 
+        self.eventBus:publish("push_scene", {scene = "modal_dialog", data = {title = "LEVEL UP!", message = "You have reached a new level of proficiency."}})
+    end, nil, startRow + buttonGap * 4, startCol))
+
     luis.insertElement(self.layerName, luis.newLabel("ESC: Main Menu", numCols, 1, numRows - 2, 1, "center"))
 end
 
-function SOCViewLuis:onUpdate(dt)
-    -- Game logic updates would go here
+function SOCViewLuis:update(dt)
+    self.updateTimer = self.updateTimer + dt
+    if self.updateTimer > 1.0 then
+        self:updateLabels()
+        self.updateTimer = 0
+    end
 end
 
-function SOCViewLuis:onDraw()
+function SOCViewLuis:draw()
     love.graphics.clear(0.05, 0.05, 0.1, 1.0)
 end
 
 function SOCViewLuis:keypressed(key)
     if key == "escape" then
         self.eventBus:publish("request_scene_change", {scene = "main_menu"})
+        return true
     end
 end
 
