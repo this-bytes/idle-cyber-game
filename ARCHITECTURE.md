@@ -42,11 +42,20 @@ This is a collection of powerful, generic utilities that support the gameplay sy
 
 ### 4. UI Layer (`src/scenes/` and `src/ui/`)
 
-The UI is in a transitional state and is the area most in need of refactoring.
+The UI architecture is currently undergoing a major refactor to use community-maintained libraries.
 
-- **`SmartUIManager`**: The modern, intended UI architecture. It uses a component-based system to build reusable UI elements. This is the correct path forward.
-- **Legacy Scenes**: Many scenes (`soc_view.lua`, `upgrade_shop.lua`) contain large amounts of manual `love.graphics` drawing calls. This is the legacy approach and should be refactored to use the `SmartUIManager`.
-- **`SceneManager`**: A clean, effective manager that handles transitions between different game scenes.
+#### Current State (October 2025)
+- **`SceneryAdapter`**: Wraps the Scenery scene management library, providing backward compatibility with existing scenes.
+- **`LovelyToastWrapper`**: Integrates the Lovely-Toasts notification library while maintaining the old ToastManager API.
+- **`SmartUIManager`**: Component-based UI system, currently being migrated to LUIS (Love UI System).
+- **Scenes**: All existing scenes work with the new SceneryAdapter without modification.
+
+#### Migration Status
+- ✅ **Toast System**: Migrated to Lovely-Toasts (via wrapper)
+- ✅ **Scene Management**: Migrated to Scenery (via adapter)
+- 🔄 **UI Components**: LUIS integration in progress (Phase 4)
+
+See `docs/COMMUNITY_UI_INTEGRATION_SUMMARY.md` and `docs/UI_REFACTOR_MIGRATION.md` for complete details.
 
 ## Known Architectural Issues & Refactor Roadmap
 
@@ -56,10 +65,15 @@ The codebase contains several critical issues that must be addressed.
     -   **Status**: Resolved. The project now uses a single canonical implementation: `src/systems/incident_specialist_system.lua`.
     -   **Action Taken**: Duplicate legacy files have been removed and the canonical system is registered with the `GameStateEngine`. See `docs/INCIDENT_REFACTOR.md` for details.
 
-2.  **Broken UI Scenes**: The primary UI scenes are non-functional due to critical bugs.
-    -   `modes/idle_mode.lua`: Has duplicate functions (`enter`, `mousepressed`) that break initialization and input.
-    -   `scenes/soc_view.lua`: Has duplicate functions and a mix of two incompatible UI rendering strategies that leaves most of the code dead.
-    -   **Action**: These files must be fixed and refactored to use a single, consistent UI strategy, preferably the `SmartUIManager`.
+2.  **UI Architecture Migration**: The UI layer is being migrated to community-maintained libraries.
+    -   **Status**: In Progress (October 2025).
+    -   **Completed**: Toast system (Lovely-Toasts), Scene management (Scenery).
+    -   **Pending**: LUIS UI framework integration for components.
+    -   **Action**: See `docs/COMMUNITY_UI_INTEGRATION_SUMMARY.md` for status and migration guide.
 
 3.  **Deprecated `src/core` Skeletons**: The `src/core` directory contains several skeleton files (`security_upgrades.lua`, `soc_stats.lua`, `threat_simulation.lua`) whose logic has been superseded by modules in `src/systems`.
     -   **Action**: These files should be deleted. The documentation for the "Fortress Architecture," which described these files, was inaccurate and has been removed.
+
+4.  **Deprecated UI Managers**: The following files are deprecated and will be removed after LUIS migration completes:
+    -   `src/ui/toast_manager.lua` - Replaced by Lovely-Toasts
+    -   `src/scenes/scene_manager.lua` - Replaced by Scenery

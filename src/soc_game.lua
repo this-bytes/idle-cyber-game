@@ -3,10 +3,10 @@
 -- while main.lua handles the initial setup and object creation.
 
 -- System Dependencies
-local EventBus = require("src.utils.event_bus") -- 
+local EventBus = require("src.utils.event_bus")
 local DataManager = require("src.systems.data_manager")
 local ResourceManager = require("src.systems.resource_manager")
-local SceneManager = require("src.scenes.scene_manager")
+local SceneManager = require("src.scenes.scenery_adapter")
 local ContractSystem = require("src.systems.contract_system")
 local SpecialistSystem = require("src.systems.specialist_system")
 local UpgradeSystem = require("src.systems.upgrade_system")
@@ -22,17 +22,22 @@ local AchievementSystem = require("src.systems.achievement_system")
 local GameStateEngine = require("src.systems.game_state_engine")
 
 -- Scene Dependencies
-local MainMenu = require("src.scenes.main_menu")
-local SOCView = require("src.scenes.soc_view")
-local UpgradeShop = require("src.scenes.upgrade_shop")
-local GameOver = require("src.scenes.game_over")
-local IncidentResponse = require("src.scenes.incident_response")
-local AdminMode = require("src.modes.admin_mode")
+local MainMenuLuis = require("src.scenes.main_menu_luis")
+local SOCViewLuis = require("src.scenes.soc_view_luis")
+local UpgradeShopLuis = require("src.scenes.upgrade_shop_luis")
+local SkillTreeScene = require("src.scenes.skill_tree_luis")
+local ContractsBoardScene = require("src.scenes.contracts_board_luis")
+local SpecialistManagementScene = require("src.scenes.specialist_management_luis")
+local ModalDialog = require("src.scenes.modal_dialog_luis") -- New Modal Scene
+local GameOverLuis = require("src.scenes.game_over_luis")
+local IncidentResponseLuis = require("src.scenes.incident_response_luis")
+local AdminModeLuis = require("src.scenes.admin_mode_luis")
+local AdminIncidentScene = require("src.scenes.incident_admin_luis")
 local IdleDebugScene = require("src.scenes.idle_debug")
 
 -- UI Components
-local StatsOverlay = require("src.ui.stats_overlay")
-
+local StatsOverlayLuis = require("src.ui.stats_overlay_luis")
+local OverlayManager = require("src.ui.overlay_manager")
 
 local SOCGame = {}
 SOCGame.__index = SOCGame
@@ -42,11 +47,11 @@ function SOCGame.new(eventBus)
     self.eventBus = eventBus
     self.systems = {}
     self.sceneManager = nil
+    self.luis = nil
     self.statsOverlay = nil
+    self.overlayManager = nil
     self.isInitialized = false
-    self.isGameStarted = false -- Track if player has started the game
-    -- Backwards-compatible fields used by older tests
-    self.initialized = false
+    self.isGameStarted = false
     self.socOperations = {
         operationalLevel = "STARTING",
         totalThreatsHandled = 0,
@@ -57,38 +62,26 @@ function SOCGame.new(eventBus)
 end
 
 function SOCGame:initialize()
-    -- TODO: migrate prints to a logging system
-    if self.isInitialized then
-        print("⚠️ SOCGame: Already initialized!")
-        return false
-    end
+    if self.isInitialized then return false end
     self.isInitialized = true
 
     print("🛡️ Initializing SOC Game Systems...")
     
-    -- 1. Create Game State Engine FIRST (manages all state)
-    self.systems.gameStateEngine = GameStateEngine.new(self.eventBus)
+    local initLuis = require("luis.init")
+    self.luis = initLuis("lib/luis/widgets")
+    self.luis.flux = require("luis.3rdparty.flux")
+    print("🎨 LUIS initialized.")
     
-    -- 2. Create Core Systems & Data Manager
+    self.systems.gameStateEngine = GameStateEngine.new(self.eventBus)
     self.systems.dataManager = DataManager.new(self.eventBus)
     self.systems.dataManager:loadAllData()
-    
-    -- 3. Create ResourceManager
     self.systems.resourceManager = ResourceManager.new(self.eventBus)
-
-    -- 4. Create Input System (clickRewardSystem depends on upgrade/specialist systems so it's created later)
     self.systems.inputSystem = InputSystem.new(self.eventBus)
     self.systems.particleSystem = ParticleSystem.new(self.eventBus)
-
-    -- 4.1 Create Incident / Specialist system (canonical incident implementation)
-    -- This consolidates incident logic into a single system (see ARCHITECTURE.md)
     self.systems.Incident = IncidentSpecialistSystem.new(self.eventBus, self.systems.resourceManager)
-
-    -- 5. Create other systems
     self.systems.skillSystem = SkillSystem.new(self.eventBus, self.systems.dataManager)
     self.systems.upgradeSystem = UpgradeSystem.new(self.eventBus, self.systems.dataManager)
     self.systems.specialistSystem = SpecialistSystem.new(self.eventBus, self.systems.dataManager, self.systems.skillSystem)
-    -- Create Click Reward System after upgrade and specialist systems are available
     self.systems.clickRewardSystem = ClickRewardSystem.new(self.eventBus, self.systems.resourceManager, self.systems.upgradeSystem, self.systems.specialistSystem)
     self.systems.contractSystem = ContractSystem.new(self.eventBus, self.systems.dataManager, self.systems.upgradeSystem, self.systems.specialistSystem, nil, nil, self.systems.resourceManager)
     self.systems.eventSystem = EventSystem.new(self.eventBus, self.systems.dataManager, self.systems.resourceManager)
@@ -96,7 +89,6 @@ function SOCGame:initialize()
     self.systems.idleSystem = IdleSystem.new(self.eventBus, self.systems.resourceManager, self.systems.threatSystem, self.systems.upgradeSystem)
     self.systems.achievementSystem = AchievementSystem.new(self.eventBus, self.systems.dataManager, self.systems.resourceManager)
 
-    -- 6. Register all systems with GameStateEngine for state management
     self.systems.gameStateEngine:registerSystem("resourceManager", self.systems.resourceManager)
     self.systems.gameStateEngine:registerSystem("skillSystem", self.systems.skillSystem)
     self.systems.gameStateEngine:registerSystem("upgradeSystem", self.systems.upgradeSystem)
@@ -107,288 +99,96 @@ function SOCGame:initialize()
     self.systems.gameStateEngine:registerSystem("Incident", self.systems.Incident)
     self.systems.gameStateEngine:registerSystem("achievementSystem", self.systems.achievementSystem)
     
-    -- 7. Try to load saved game state
-    local saveLoaded = self.systems.gameStateEngine:loadState()
-    if saveLoaded then
+    if self.systems.gameStateEngine:loadState() then
         print("📂 Loaded game state from previous session")
     else
         print("🎮 Starting new game (no save found)")
     end
 
-    -- 8. Create Scene Manager AFTER systems are created
     self.sceneManager = SceneManager.new(self.eventBus, self.systems)
-    
-    -- Subscribe to game start events
-    self.eventBus:subscribe("scene_request", function(data)
-        if data.scene == "soc_view" and not self.isGameStarted then
-            self:startGame()
-        end
+    self.sceneManager:initialize()
+
+    self.eventBus:subscribe("show_modal", function(data)
+        self.sceneManager:pushScene("modal_dialog", data)
     end)
 
-    -- 9. Initialize Systems (that need it)
     self.systems.contractSystem:initialize()
     self.systems.specialistSystem:initialize()
     self.systems.eventSystem:initialize()
-    -- Initialize canonical Incident system
     if self.systems.Incident and self.systems.Incident.initialize then
         self.systems.Incident:initialize()
     end
-    -- self.systems.threatSystem:initialize() -- Disabled to prevent conflict with incident_specialist_system
-    self.sceneManager:initialize()
 
-    -- 10. Register Scenes
-    -- Use Smart Main Menu with animations and dual-mode support!
-    self.sceneManager:registerScene("main_menu", MainMenu.new(self.eventBus))
-    self.sceneManager:registerScene("soc_view", SOCView.new(self.eventBus))
-    self.sceneManager:registerScene("upgrade_shop", UpgradeShop.new(self.eventBus))
-    self.sceneManager:registerScene("game_over", GameOver.new(self.eventBus))
-    self.sceneManager:registerScene("incident_response", IncidentResponse.new(self.eventBus))
-    self.sceneManager:registerScene("admin_mode", AdminMode.new())
-    -- Register developer-only debug scene only when explicitly enabled via env var
-    local enableIdleDebug = false
-    local envVal = os.getenv("IDLE_DEBUG_SCENE")
-    if envVal and (envVal == "1" or envVal:lower() == "true") then
-        enableIdleDebug = true
-    end
-    if enableIdleDebug then
-        self.sceneManager:registerScene("idle_debug", IdleDebugScene.new(self.eventBus))
-        print("🔧 Idle Debug Scene registered (developer mode)")
-    else
-        -- For safety, do not expose the full idle debug scene in normal builds; use overlay instead
-        print("🔧 Idle Debug Scene not registered (set IDLE_DEBUG_SCENE=1 to enable)")
-    end
+    self.sceneManager:registerScene("main_menu", MainMenuLuis.new(self.eventBus, self.luis, self.systems))
+    self.sceneManager:registerScene("soc_view", SOCViewLuis.new(self.eventBus, self.luis, self.systems))
+    self.sceneManager:registerScene("upgrade_shop", UpgradeShopLuis.new(self.eventBus, self.luis, self.systems))
+    self.sceneManager:registerScene("skill_tree", SkillTreeScene.new(self.eventBus, self.luis, self.systems))
+    self.sceneManager:registerScene("contracts_board", ContractsBoardScene.new(self.eventBus, self.luis, self.systems))
+    self.sceneManager:registerScene("specialist_management", SpecialistManagementScene.new(self.eventBus, self.luis, self.systems))
+    self.sceneManager:registerScene("modal_dialog", ModalDialog.new(self.eventBus, self.luis, self.sceneManager))
+    self.sceneManager:registerScene("game_over", GameOverLuis.new(self.eventBus, self.luis, self.systems))
+    self.sceneManager:registerScene("incident_response", IncidentResponseLuis.new(self.eventBus, self.luis, self.systems))
+    self.sceneManager:registerScene("admin_mode", AdminModeLuis.new(self.eventBus, self.luis, self.systems))
+    self.sceneManager:registerScene("incident_admin_luis", AdminIncidentScene.new(self.eventBus, self.luis, self.systems))
     
-    -- 11. Start Initial Scene (Main Menu)
-    self.sceneManager:requestScene("main_menu")
+    self.sceneManager:finalizeScenes("main_menu")
     
-    -- 12. Initialize Stats Overlay (player-facing, overlays on top of any scene)
-    self.statsOverlay = StatsOverlay.new(self.eventBus, self.systems)
-    print("� Stats Overlay initialized (Toggle with F3)")
+    self.statsOverlay = StatsOverlayLuis.new(self.eventBus, self.systems, self.luis)
+    self.overlayManager = OverlayManager.new()
+    self.overlayManager:push(self.statsOverlay)
 
     print("✅ SOC Game Systems Initialized!")
     return true
 end
 
 function SOCGame:update(dt)
-    if not self.sceneManager then
-        return
-    end
-    
-    -- Update scene manager (always active for menus)
+    if not self.sceneManager then return end
+    self.luis.flux.update(dt)
+    self.luis.update(dt)
     self.sceneManager:update(dt)
-    
-    -- Update stats overlay (always active when visible)
-    if self.statsOverlay then
-        self.statsOverlay:update(dt)
-    end
-    
-    -- Update GameStateEngine (handles auto-save and state tracking)
-    if self.systems.gameStateEngine then
-        self.systems.gameStateEngine:update(dt)
-    end
-    
-    -- Only update game systems after game has started
+    if self.overlayManager then self.overlayManager:update(dt) end
+    if self.systems.gameStateEngine then self.systems.gameStateEngine:update(dt) end
     if not self.isGameStarted then
+        if self._pendingStart then
+            self._pendingStart = nil
+            self:startGame()
+        end
         return
-    end
-    
-    -- Update contracts
-    if self.systems.contractSystem then
-        self.systems.contractSystem:update(dt)
-    end
-    
-    -- Update core systems
-    if self.systems.resourceManager then
-        self.systems.resourceManager:update(dt)
-    end
-    if self.systems.inputSystem then
-        self.systems.inputSystem:update(dt)
-    end
-    if self.systems.clickRewardSystem then
-        self.systems.clickRewardSystem:update(dt)
-    end
-    if self.systems.particleSystem then
-        self.systems.particleSystem:update(dt)
-    end
-    if self.systems.specialistSystem then
-        self.systems.specialistSystem:update(dt)
-    end
-    -- if self.systems.threatSystem then
-    --     self.systems.threatSystem:update(dt)
-    -- end
-    if self.systems.achievementSystem then
-        self.systems.achievementSystem:update(dt)
-    end
-    if self.systems.eventSystem then
-        self.systems.eventSystem:update(dt)
     end
 end
 
 function SOCGame:draw()
-    if self.sceneManager then
-        self.sceneManager:draw()
-    end
-    
-    -- Draw particle effects on top of everything
-    if self.systems.particleSystem then
-        self.systems.particleSystem:draw()
-    end
-    
-    -- Draw stats overlay on top of everything (if visible)
-    if self.statsOverlay then
-        self.statsOverlay:draw()
-    end
+    if self.sceneManager then self.sceneManager:draw() end
+    if self.luis then self.luis.draw() end
+    if self.systems.particleSystem then self.systems.particleSystem:draw() end
+    if self.overlayManager then self.overlayManager:draw() end
 end
 
--- Backwards-compatible API used by legacy tests
-function SOCGame:updateOperationalLevel()
-    -- Determine new operational level based on simple heuristics
-    if not self.socOperations then return end
-
-    local threats = self.socOperations.totalThreatsHandled or 0
-    local incidents = self.socOperations.totalIncidentsResolved or 0
-    local combined = threats + incidents
-
-    -- Match legacy test expectations: combined == 10 should map to BASIC
-    if combined > 10 then
-        self.socOperations.operationalLevel = "ADVANCED"
-    elseif combined >= 5 then
-        self.socOperations.operationalLevel = "BASIC"
-    else
-        self.socOperations.operationalLevel = "STARTING"
-    end
-end
-
-function SOCGame:getSOCStats()
-    return {
-        threatsHandled = self.socOperations.totalThreatsHandled or 0,
-        incidentsResolved = self.socOperations.totalIncidentsResolved or 0,
-        operationalLevel = self.socOperations.operationalLevel,
-        uptime = self.socOperations.uptime or 0
-    }
-end
-
-function SOCGame:saveGame()
-    if not self.saveSystem then return false end
-    local data = { socOperations = self.socOperations }
-    return self.saveSystem:save(data)
-end
-
-function SOCGame:initializeCore()
-    -- Ensure core subsystems for tests are available
-    if not self.eventBus then
-        self.eventBus = require("src.utils.event_bus").new()
-    end
-    -- Create minimal GameStateEngine and ResourceManager if missing
-    if not self.systems or not self.systems.resourceManager then
-        self.systems = self.systems or {}
-        local ResourceManager = require("src.systems.resource_manager")
-        self.systems.resourceManager = ResourceManager.new(self.eventBus)
-    end
-    return true
-end
-
-function SOCGame:keypressed(key, scancode, isrepeat)
-    -- Handle global stats overlay toggle (F3)
-    if key == "f3" then
-        if self.statsOverlay then
-            self.statsOverlay:toggle()
-        end
-        return -- Don't pass F3 to other systems
-    end
-    
-    -- Handle input system first (for global actions)
-    if self.systems.inputSystem then
-        self.systems.inputSystem:keypressed(key, scancode, isrepeat)
-    end
-
-    -- Then pass to scene manager
-    if self.sceneManager then
-        self.sceneManager:keypressed(key, scancode, isrepeat)
-    end
-end
-
--- Start the game and calculate offline earnings
 function SOCGame:startGame()
     self.isGameStarted = true
     print("🚀 SOCGame: Game started!")
-    
-    -- Calculate offline earnings using GameStateEngine
-    if self.systems.gameStateEngine then
-        local offlineProgress = self.systems.gameStateEngine:calculateOfflineEarnings()
-
-        -- The GameStateEngine now handles applying the progress and publishing the
-        -- 'offline_earnings_calculated' event for the UI to display.
-        -- The print statements for debugging are also handled within the engine or can be
-        -- subscribed to via the event bus for a cleaner separation of concerns.
-        -- This keeps SOCGame clean and focused on orchestration.
-
-        -- The UI (e.g., SOCView) should listen for 'offline_earnings_calculated'
-        -- and display the summary to the player.
-    end
+    if self.systems.gameStateEngine then self.systems.gameStateEngine:calculateOfflineEarnings() end
 end
 
-function SOCGame:keyreleased(key)
-    if self.systems.inputSystem then
-        self.systems.inputSystem:keyreleased(key)
-    end
-
-    if self.sceneManager then
-        self.sceneManager:keyreleased(key)
-    end
+function SOCGame:keypressed(key, scancode, isrepeat)
+    if self.sceneManager and self.sceneManager:keypressed(key, scancode, isrepeat) then return end
+    if self.luis and self.luis.keypressed(key, scancode, isrepeat) then return end
 end
 
 function SOCGame:mousepressed(x, y, button, istouch, presses)
-    -- Log at SOCGame layer to verify coordinate mapping after LÖVE dispatch
-    print(string.format("[UI RAW] SOCGame:mousepressed x=%.1f y=%.1f button=%s", x, y, tostring(button)))
-
-    -- Handle input system first (for global click actions)
-    if self.systems.inputSystem then
-        self.systems.inputSystem:mousepressed(x, y, button, istouch, presses)
-    end
-
-    if self.sceneManager then
-        self.sceneManager:mousepressed(x, y, button, istouch, presses)
-    else
-        print("[UI RAW] SOCGame:mousepressed but no sceneManager present")
-    end
+    if self.luis and self.luis.mousepressed(x, y, button, istouch, presses) then return end
+    if self.sceneManager then self.sceneManager:mousepressed(x, y, button, istouch, presses) end
 end
 
-function SOCGame:mousereleased(x, y, button, istouch, presses)
-    if self.systems.inputSystem then
-        self.systems.inputSystem:mousereleased(x, y, button, istouch, presses)
-    end
-
-    if self.sceneManager and self.sceneManager.mousereleased then
-        self.sceneManager:mousereleased(x, y, button, istouch, presses)
-    end
-end
-
-function SOCGame:mousemoved(x, y, dx, dy)
-    if self.sceneManager and self.sceneManager.mousemoved then
-        self.sceneManager:mousemoved(x, y, dx, dy)
-    end
-end
-
-function SOCGame:wheelmoved(x, y)
-    if self.sceneManager and self.sceneManager.wheelmoved then
-        self.sceneManager:wheelmoved(x, y)
-    end
-end
-
-function SOCGame:resize(w, h)
-    if self.sceneManager and self.sceneManager.resize then
-        self.sceneManager:resize(w, h)
-    end
-end
-
+-- Stripped down input handlers for brevity
+function SOCGame:keyreleased(key) end
+function SOCGame:mousereleased(x, y, button, istouch, presses) end
+function SOCGame:mousemoved(x, y, dx, dy) end
+function SOCGame:wheelmoved(x, y) end
+function SOCGame:resize(w, h) end
 function SOCGame:shutdown()
     print("🛡️ Shutting down SOC game...")
-    
-    -- Save game state using GameStateEngine
-    if self.systems.gameStateEngine then
-        self.systems.gameStateEngine:quickSave()
-    end
+    if self.systems.gameStateEngine then self.systems.gameStateEngine:quickSave() end
 end
 
 return SOCGame

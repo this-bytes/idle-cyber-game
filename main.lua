@@ -1,6 +1,23 @@
 -- Idle Sec Ops - Cybersecurity Idle Game
 -- This is the single entry point for the game.
 
+-- LUIS Integration: Override require to translate "luis.*" to "lib/luis/*"
+do
+    local originalRequire = require
+    _G.require = function(moduleName)
+        if moduleName:match("^luis%.") then
+            -- Translate "luis.core" -> "lib.luis.core", "luis.3rdparty.flux" -> "lib.luis.3rdparty.flux"
+            local translatedPath = moduleName:gsub("^luis%.", "lib.luis.")
+            local success, result = pcall(originalRequire, translatedPath)
+            if success then
+                return result
+            end
+            -- If that didn't work, fall through to original require
+        end
+        return originalRequire(moduleName)
+    end
+end
+
 local game
 local ScreenshotTool = require("tools.screenshot_tool")
 
@@ -233,6 +250,8 @@ function love.mousepressed(x, y, button)
 end
 
 function love.mousereleased(x, y, button)
+    -- Log raw coordinates at the engine entry point for diagnostics
+    print(string.format("[UI RAW] love.mousereleased raw x=%.1f y=%.1f button=%s", x, y, tostring(button)))
     if game and game.mousereleased then
         game:mousereleased(x, y, button)
     end
@@ -253,6 +272,11 @@ end
 function love.resize(w, h)
     if game then
         game:resize(w, h)
+        -- refresh ui to adapt to new size
+        if DEBUG_UI then
+            print(string.format("[UI DEBUG] Window resized to %dx%d", w, h))
+        end
+        -- love.graphics.resize(w, h)
     end
 end
 

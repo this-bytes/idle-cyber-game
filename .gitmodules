@@ -1,0 +1,9 @@
+[submodule "lib/lovely-toasts"]
+	path = lib/lovely-toasts
+	url = https://github.com/Loucee/Lovely-Toasts.git
+[submodule "lib/luis"]
+	path = lib/luis
+	url = https://github.com/SiENcE/luis.git
+[submodule "lib/scenery"]
+	path = lib/scenery
+	url = https://github.com/paltze/scenery.git

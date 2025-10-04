@@ -110,6 +110,18 @@ function SOCView.new(eventBus)
                 end
             end
         end)
+
+        -- UI navigation events (from SmartUIManager sidebar)
+        self.eventBus:subscribe("ui_navigation", function(data)
+            if not data or not data.destination then return end
+            -- Accept destinations like 'threats', 'contracts', etc.
+            self.selectedPanel = data.destination
+            if self.uiManager then
+                -- Mark for rebuild so the center panel updates
+                self.uiManager.needsRebuild = true
+                print("[UI DEBUG] SOCView received ui_navigation -> " .. tostring(data.destination))
+            end
+        end)
     end
 
     return self
@@ -632,6 +644,34 @@ function SOCView:handleThreatDetected(threat)
     end
     
     print("🚨 SOCView: Threat detected - " .. incident.name)
+end
+
+-- Handle dynamic in-game events (from dynamic event system)
+function SOCView:handleDynamicEvent(event)
+    -- Defensive: some publishers may send nil or unexpected payloads
+    if not event then return end
+
+    -- Store current event for display; reset timers
+    self.currentEvent = event
+    self.eventDisplayTime = 0
+    self.showingChoiceEvent = false
+
+    -- If the event includes choices, show choice UI
+    if event.choices and type(event.choices) == "table" and #event.choices > 0 then
+        self.showingChoiceEvent = true
+    end
+
+    -- Mark UI for rebuild so any event-driven panels refresh
+    if self.uiManager then self.uiManager.needsRebuild = true end
+
+    -- Optionally surface a notification for the dynamic event
+    if self.notificationPanel and event.title then
+        local msg = event.title
+        if event.subtitle then msg = msg .. " - " .. tostring(event.subtitle) end
+        self.notificationPanel:addNotification(msg, "INFO")
+    end
+
+    print("SOCView: handleDynamicEvent - received event: " .. tostring(event.title or "<anon>"))
 end
 
 -- Handle incident resolution

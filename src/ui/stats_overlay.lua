@@ -40,6 +40,14 @@ function StatsOverlay.new(eventBus, systems)
         events = {},
         rng = {}
     }
+
+    -- Make this overlay modal by default: when visible it should block scene input
+    self.modal = true
+
+    -- Optional helper for complex capture logic
+    function self:shouldCaptureInput()
+        return self.visible and self.modal
+    end
     
     return self
 end
@@ -320,6 +328,34 @@ function StatsOverlay:draw()
     
     -- Draw controls footer
     self:drawFooter()
+end
+
+-- Input handlers so this overlay can capture input when visible.
+function StatsOverlay:mousepressed(x, y, button)
+    if not self.visible then return false end
+    -- If click is inside any panel area, consume it. For simplicity,
+    -- consume all clicks when visible so overlay acts modal.
+    return true
+end
+
+function StatsOverlay:mousereleased(x, y, button)
+    if not self.visible then return false end
+    return true
+end
+
+function StatsOverlay:keypressed(key)
+    if not self.visible then return false end
+    -- ESC closes the overlay
+    if key == 'escape' then
+        self.visible = false
+        return true
+    end
+    return true -- consume other keys while overlay visible
+end
+
+function StatsOverlay:keyreleased(key)
+    if not self.visible then return false end
+    return true
 end
 
 function StatsOverlay:drawHeader()
