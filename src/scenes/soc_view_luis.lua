@@ -30,7 +30,7 @@ function SOCViewLuis.new(eventBus, luis, systems)
     end
     
     self.updateTimer = 0
-    self.isBuilt = false -- Flag to ensure UI is only built once.
+    self.isBuilt = false
     self.moneyLabel = nil
     self.repLabel = nil
     
@@ -44,13 +44,11 @@ function SOCViewLuis:load(data)
     self.luis.newLayer(self.layerName)
     self.luis.setCurrentLayer(self.layerName)
     
-    -- Only build the UI if it hasn't been built yet.
     if not self.isBuilt then
         self:buildUI()
         self.isBuilt = true
     end
     
-    -- Always update the data labels when the scene is loaded.
     self:updateLabels()
 end
 
@@ -60,13 +58,10 @@ function SOCViewLuis:exit()
     end
 end
 
--- This function now ONLY updates the text of existing labels.
 function SOCViewLuis:updateLabels()
     if not self.systems or not self.systems.resourceManager or not self.isBuilt then return end
-
     local money = self.systems.resourceManager:getResource("money") or 0
     local rep = self.systems.resourceManager:getResource("reputation") or 0
-
     if self.moneyLabel and self.moneyLabel.setText then
         self.moneyLabel:setText(string.format("💰 Money: $%.0f", money))
     end
@@ -75,7 +70,6 @@ function SOCViewLuis:updateLabels()
     end
 end
 
--- This function is now only called ONCE.
 function SOCViewLuis:buildUI()
     local luis = self.luis
     local numCols = math.floor(love.graphics.getWidth() / luis.gridSize)
@@ -123,6 +117,8 @@ function SOCViewLuis:update(dt)
 end
 
 function SOCViewLuis:draw()
+    -- *** BUG FIX ***
+    -- Restore a basic background draw call so the screen is not blank.
     love.graphics.clear(0.05, 0.05, 0.1, 1.0)
 end
 

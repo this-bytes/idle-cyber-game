@@ -14,7 +14,6 @@ function ModalDialog.new(eventBus, luis, sceneManager)
     self.sceneManager = sceneManager
     self.layerName = "modal_dialog"
     
-    -- UI element references
     self.titleLabel = nil
     self.messageLabel = nil
 
@@ -42,11 +41,8 @@ function ModalDialog:load(data)
     self.luis.newLayer(self.layerName)
     self.luis.setCurrentLayer(self.layerName)
     
-    -- Build the UI structure first.
     self:buildUI()
 
-    -- Then, populate it with data. This prevents a race condition where
-    -- the modal could draw with empty text.
     if self.titleLabel then
         self.titleLabel:setText(data.title or "ALERT")
     end
@@ -56,7 +52,7 @@ function ModalDialog:load(data)
 end
 
 function ModalDialog:exit()
-    self.luis.disableLayer(self.layerName)
+    self.luis.removeLayer(self.layerName)
 end
 
 function ModalDialog:buildUI()
@@ -74,20 +70,25 @@ function ModalDialog:buildUI()
     bg.onClick = nil
     luis.insertElement(self.layerName, bg)
 
-    -- Create labels with empty text and store references to them.
     self.titleLabel = luis.newLabel("", modalWidth, 2, modalRow + 1, modalCol, "center")
     luis.insertElement(self.layerName, self.titleLabel)
 
     self.messageLabel = luis.newLabel("", modalWidth - 4, 6, modalRow + 4, modalCol + 2, "center")
     luis.insertElement(self.layerName, self.messageLabel)
 
+    -- *** BUG FIX ***
+    -- The 'self' inside the onClick callback refers to the button. We must capture
+    -- the scene's 'self' in a local variable to call the scene manager.
+    local scene_self = self
     local okButton = luis.newButton("OK", 12, 3, function() 
-        self.sceneManager:popScene()
+        scene_self.sceneManager:popScene()
     end, nil, modalRow + modalHeight - 4, modalCol + (modalWidth/2) - 6)
     luis.insertElement(self.layerName, okButton)
 end
 
 function ModalDialog:draw()
+    -- The scene manager draws the underlying scene automatically.
+    -- This scene only needs to exist to provide its UI layer.
 end
 
 function ModalDialog:update(dt) end
