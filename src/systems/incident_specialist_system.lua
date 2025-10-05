@@ -15,6 +15,7 @@ function IncidentSpecialistSystem.new(eventBus, resourceManager)
     
     self.eventBus = eventBus
     self.resourceManager = resourceManager
+    self.contractSystem = nil  -- Will be set externally
     
     -- Global GameState table to hold runtime state
     self.GameState = {
@@ -30,6 +31,11 @@ function IncidentSpecialistSystem.new(eventBus, resourceManager)
     }
     
     return self
+end
+
+-- Set contract system reference for SLA integration
+function IncidentSpecialistSystem:setContractSystem(contractSystem)
+    self.contractSystem = contractSystem
 end
 
 -- Initialize the system
@@ -258,14 +264,43 @@ function IncidentSpecialistSystem:update(dt)
     -- Update incident generation timer
     self:Incident_Generate_and_Check(dt)
     
-    -- Update resolution timers for assigned incidents
-    self:Incident_Resolution_Update(dt)
+    -- Update all active incidents through their stages
+    for _, incident in ipairs(self.GameState.IncidentsQueue) do
+        if incident.stages then
+            -- New format: three-stage lifecycle
+            self:updateIncidentStage(incident, dt)
+        else
+            -- Legacy format: old resolution system
+            -- This handles old save files gracefully
+            self:Incident_Resolution_Update_Legacy(incident, dt)
+        end
+    end
     
     -- Update specialist cooldowns
     self:Specialist_Cooldown_Update(dt)
     
-    -- Attempt auto-assignment for pending incidents
-    self:Specialist_AutoAssign()
+    -- Attempt auto-assignment for pending incidents (legacy only)
+    -- New format auto-assigns in createIncidentFromTemplate
+end
+
+-- Legacy resolution update for backward compatibility
+function IncidentSpecialistSystem:Incident_Resolution_Update_Legacy(incident, dt)
+    if incident.status == "AutoAssigned" or incident.status == "ManualAssigned" then
+        incident.resolutionTimeRemaining = incident.resolutionTimeRemaining - dt
+        
+        -- Check if resolution is complete
+        if incident.resolutionTimeRemaining <= 0 then
+            -- Find the assigned specialist
+            local specialist = self:getSpecialistById(incident.assignedSpecialistId)
+            
+            if specialist then
+                self:Incident_Resolve(incident, specialist)
+                
+                -- Remove from queue
+                self:removeIncident(incident.id)
+            end
+        end
+    end
 end
 
 -- Reset incident timer with randomization for unpredictability
@@ -289,32 +324,49 @@ function IncidentSpecialistSystem:Incident_Generate_and_Check(dt)
             local randomIndex = math.random(1, #self.GameState.ThreatTemplates)
             local template = self.GameState.ThreatTemplates[randomIndex]
             
-            -- Create incident entity
-            local incident = self:createIncidentFromTemplate(template)
+            -- Get active contract if available (for SLA tracking)
+            local contractId = nil
+            if self.contractSystem then
+                local activeContracts = self.contractSystem:getActiveContracts and self.contractSystem:getActiveContracts() or {}
+                if activeContracts and #activeContracts > 0 then
+                    -- Assign to first active contract
+                    local contract = activeContracts[1]
+                    contractId = contract.id
+                end
+            end
             
-            print(string.format("🚨 [%s] Threat detected: %s (Severity: %d)", 
+            -- Create incident entity with three-stage lifecycle
+            local incident = self:createIncidentFromTemplate(template, contractId)
+            
+            print(string.format("🚨 [%s] Threat detected: %s (Severity: %d, Contract: %s)", 
                 os.date("%H:%M:%S"), 
                 incident.name, 
-                incident.trait_value_needed))
+                incident.severity,
+                contractId or "none"))
             
-            -- Run idle resolution check
-            self:Incident_CheckIdleResolve(incident)
+            -- Add to queue (new format doesn't use idle resolution check)
+            table.insert(self.GameState.IncidentsQueue, incident)
         end
     end
 end
 
 -- Create an Incident Entity from a threat template
-function IncidentSpecialistSystem:createIncidentFromTemplate(template)
+function IncidentSpecialistSystem:createIncidentFromTemplate(template, contractId)
+    local severity = template.baseSeverity or 5
+    
     local incident = {
         -- GDD-required fields
-        id = self.GameState.nextIncidentId,
+        id = "incident_" .. self.GameState.nextIncidentId,
+        threatId = template.id,
+        contractId = contractId,  -- CRITICAL: Link incidents to contracts
+        severity = severity,
         trait_required = "Severity",  -- Generic trait for now (using defense stat)
-        trait_value_needed = template.baseSeverity or 5,
+        trait_value_needed = severity,
         time_to_resolve = template.baseTimeToResolve or 60,
         base_reward = {
-            money = (template.baseSeverity or 5) * 50,
-            reputation = math.floor((template.baseSeverity or 5) / 2),
-            xp = (template.baseSeverity or 5) * 10,
+            money = severity * 50,
+            reputation = math.floor(severity / 2),
+            xp = severity * 10,
             missionTokens = 1  -- Mission Tokens are primary reward
         },
         status = "Pending",
@@ -325,13 +377,54 @@ function IncidentSpecialistSystem:createIncidentFromTemplate(template)
         description = template.description or "",
         category = template.category or "unknown",
         
-        -- Tracking data
+        -- NEW: Stage-based lifecycle
+        stages = {
+            detect = {
+                status = "IN_PROGRESS",
+                startTime = love.timer.getTime(),
+                endTime = nil,
+                duration = 0,
+                slaLimit = self:getSLALimitForStage(contractId, "detect"),
+                assignedSpecialists = {},
+                success = nil
+            },
+            respond = {
+                status = "PENDING",
+                startTime = nil,
+                endTime = nil,
+                duration = 0,
+                slaLimit = self:getSLALimitForStage(contractId, "respond"),
+                assignedSpecialists = {},
+                success = nil
+            },
+            resolve = {
+                status = "PENDING",
+                startTime = nil,
+                endTime = nil,
+                duration = 0,
+                slaLimit = self:getSLALimitForStage(contractId, "resolve"),
+                assignedSpecialists = {},
+                success = nil
+            }
+        },
+        
+        currentStage = "detect",  -- Current active stage
+        overallSuccess = nil,     -- Final outcome
+        slaCompliant = nil,       -- Did we meet SLA?
+        
+        -- Tracking data (legacy, for backward compatibility)
         createdTime = os.time(),
         assignedSpecialistId = nil,
         resolutionTimeRemaining = template.baseTimeToResolve or 60
     }
     
     self.GameState.nextIncidentId = self.GameState.nextIncidentId + 1
+    
+    -- Auto-assign specialists to detect stage
+    self:autoAssignSpecialistsToStage(incident, "detect")
+    
+    print(string.format("🔔 New incident created: %s (Contract: %s, Severity: %d)",
+        incident.id, contractId or "none", severity))
     
     return incident
 end
@@ -441,25 +534,18 @@ function IncidentSpecialistSystem:findBestSpecialistForIncident(incident)
     return bestSpecialist
 end
 
--- Update resolution timers for assigned incidents
+-- Update resolution timers for assigned incidents (LEGACY - for old save format)
 function IncidentSpecialistSystem:Incident_Resolution_Update(dt)
     for i = #self.GameState.IncidentsQueue, 1, -1 do
         local incident = self.GameState.IncidentsQueue[i]
         
-        if incident.status == "AutoAssigned" or incident.status == "ManualAssigned" then
-            incident.resolutionTimeRemaining = incident.resolutionTimeRemaining - dt
+        if not incident.stages then
+            -- Only process old format incidents
+            self:Incident_Resolution_Update_Legacy(incident, dt)
             
-            -- Check if resolution is complete
-            if incident.resolutionTimeRemaining <= 0 then
-                -- Find the assigned specialist
-                local specialist = self:getSpecialistById(incident.assignedSpecialistId)
-                
-                if specialist then
-                    self:Incident_Resolve(incident, specialist)
-                    
-                    -- Remove from queue
-                    table.remove(self.GameState.IncidentsQueue, i)
-                end
+            -- Remove if complete
+            if incident.status == "Resolved" then
+                table.remove(self.GameState.IncidentsQueue, i)
             end
         end
     end
@@ -544,12 +630,419 @@ function IncidentSpecialistSystem:getSpecialistById(id)
 end
 
 -- ============================================================================
+-- PHASE 2: THREE-STAGE INCIDENT LIFECYCLE
+-- ============================================================================
+
+-- Get SLA time limits for a specific stage from contract or use defaults
+function IncidentSpecialistSystem:getSLALimitForStage(contractId, stageName)
+    -- Get SLA limits from contract if available
+    if contractId and self.contractSystem then
+        local contract = self.contractSystem:getContract(contractId)
+        if contract and contract.slaRequirements then
+            if stageName == "detect" then
+                return contract.slaRequirements.detectionTimeSLA or 45
+            elseif stageName == "respond" then
+                return contract.slaRequirements.responseTimeSLA or 180
+            elseif stageName == "resolve" then
+                return contract.slaRequirements.resolutionTimeSLA or 600
+            end
+        end
+    end
+    
+    -- Default fallbacks
+    local defaults = {detect = 45, respond = 180, resolve = 600}
+    return defaults[stageName] or 300
+end
+
+-- Get the required stat for a specific stage
+function IncidentSpecialistSystem:getRequiredStatForStage(stageName)
+    if stageName == "detect" then
+        return "trace"     -- Detection requires trace stat
+    elseif stageName == "respond" then
+        return "speed"     -- Response requires speed stat
+    elseif stageName == "resolve" then
+        return "efficiency" -- Resolution requires efficiency stat
+    end
+    return "efficiency"  -- Default fallback
+end
+
+-- Get available specialists (not busy)
+function IncidentSpecialistSystem:getAvailableSpecialists()
+    local available = {}
+    for _, spec in ipairs(self.GameState.Specialists) do
+        if not spec.is_busy and spec.cooldown_timer <= 0 then
+            table.insert(available, spec)
+        end
+    end
+    return available
+end
+
+-- Get incident by ID
+function IncidentSpecialistSystem:getIncident(incidentId)
+    for _, incident in ipairs(self.GameState.IncidentsQueue) do
+        if incident.id == incidentId then
+            return incident
+        end
+    end
+    return nil
+end
+
+-- Remove incident from queue and free specialists
+function IncidentSpecialistSystem:removeIncident(incidentId)
+    for i, incident in ipairs(self.GameState.IncidentsQueue) do
+        if incident.id == incidentId then
+            -- Free assigned specialists from all stages
+            for stageName, stage in pairs(incident.stages or {}) do
+                for _, specId in ipairs(stage.assignedSpecialists) do
+                    local spec = self:getSpecialistById(specId)
+                    if spec then
+                        spec.is_busy = false
+                        spec.cooldown_timer = 0
+                    end
+                end
+            end
+            
+            table.remove(self.GameState.IncidentsQueue, i)
+            return true
+        end
+    end
+    return false
+end
+
+-- Get all incidents for a specific contract
+function IncidentSpecialistSystem:getIncidentsByContract(contractId)
+    local incidents = {}
+    for _, incident in ipairs(self.GameState.IncidentsQueue) do
+        if incident.contractId == contractId then
+            table.insert(incidents, incident)
+        end
+    end
+    return incidents
+end
+
+-- Auto-assign specialists to a stage based on required stat
+function IncidentSpecialistSystem:autoAssignSpecialistsToStage(incident, stageName)
+    if not incident.stages or not incident.stages[stageName] then
+        return
+    end
+    
+    local stage = incident.stages[stageName]
+    local requiredStat = self:getRequiredStatForStage(stageName)
+    
+    -- Find best available specialists for this stat
+    local availableSpecs = self:getAvailableSpecialists()
+    
+    -- Sort by relevant stat (highest first)
+    table.sort(availableSpecs, function(a, b)
+        return (a[requiredStat] or 0) > (b[requiredStat] or 0)
+    end)
+    
+    -- Assign specialists based on severity
+    -- Low severity (1-3): 1 specialist
+    -- Medium severity (4-6): 2 specialists
+    -- High severity (7-10): 3 specialists
+    local numToAssign = math.min(math.ceil(incident.severity / 3), #availableSpecs)
+    numToAssign = math.max(1, numToAssign)  -- At least 1
+    
+    for i = 1, numToAssign do
+        local spec = availableSpecs[i]
+        table.insert(stage.assignedSpecialists, spec.id)
+        spec.is_busy = true
+    end
+    
+    print(string.format("   Assigned %d specialists to %s stage (requires %s)",
+        numToAssign, stageName, requiredStat))
+end
+
+-- Calculate progress for current stage based on specialist stats
+function IncidentSpecialistSystem:calculateStageProgress(incident, stage)
+    if #stage.assignedSpecialists == 0 then
+        return 0  -- No progress without specialists
+    end
+    
+    -- Get stage-specific stat requirements
+    local statType = self:getRequiredStatForStage(incident.currentStage)
+    
+    local totalStat = 0
+    for _, specId in ipairs(stage.assignedSpecialists) do
+        local spec = self:getSpecialistById(specId)
+        if spec then
+            totalStat = totalStat + (spec[statType] or 1.0)
+        end
+    end
+    
+    -- Progress formula: (totalStat * timeDelta) / (severity * baseDifficulty)
+    local baseDifficulty = 10
+    local difficulty = incident.severity * baseDifficulty
+    local progress = (totalStat * stage.duration) / difficulty
+    
+    return math.min(1.0, progress)
+end
+
+-- Update a specific incident stage
+function IncidentSpecialistSystem:updateIncidentStage(incident, dt)
+    if not incident.stages or not incident.currentStage then
+        return  -- Old format incident, skip
+    end
+    
+    local stage = incident.stages[incident.currentStage]
+    
+    if stage.status ~= "IN_PROGRESS" then
+        return
+    end
+    
+    -- Update duration
+    stage.duration = stage.duration + dt
+    
+    -- Calculate progress based on assigned specialists
+    local progress = self:calculateStageProgress(incident, stage)
+    
+    -- Check if stage is complete
+    if progress >= 1.0 then
+        stage.status = "COMPLETED"
+        stage.endTime = love.timer.getTime()
+        stage.success = stage.duration <= stage.slaLimit
+        
+        -- Publish stage completion event
+        if self.eventBus then
+            self.eventBus:publish("incident_stage_completed", {
+                incidentId = incident.id,
+                contractId = incident.contractId,
+                stage = incident.currentStage,
+                duration = stage.duration,
+                slaLimit = stage.slaLimit,
+                slaCompliant = stage.success,
+                specialists = stage.assignedSpecialists
+            })
+        end
+        
+        print(string.format("✅ Incident %s: Stage '%s' completed in %.1fs (SLA: %ds, Compliant: %s)",
+            incident.id, incident.currentStage, stage.duration, stage.slaLimit, tostring(stage.success)))
+        
+        -- Move to next stage
+        self:advanceToNextStage(incident)
+    end
+end
+
+-- Advance incident to next stage
+function IncidentSpecialistSystem:advanceToNextStage(incident)
+    if incident.currentStage == "detect" then
+        incident.currentStage = "respond"
+        local respondStage = incident.stages.respond
+        respondStage.status = "IN_PROGRESS"
+        respondStage.startTime = love.timer.getTime()
+        
+        -- Auto-assign specialists to respond stage
+        self:autoAssignSpecialistsToStage(incident, "respond")
+        
+    elseif incident.currentStage == "respond" then
+        incident.currentStage = "resolve"
+        local resolveStage = incident.stages.resolve
+        resolveStage.status = "IN_PROGRESS"
+        resolveStage.startTime = love.timer.getTime()
+        
+        -- Auto-assign specialists to resolve stage
+        self:autoAssignSpecialistsToStage(incident, "resolve")
+        
+    elseif incident.currentStage == "resolve" then
+        -- Incident fully resolved
+        self:finalizeIncident(incident)
+    end
+end
+
+-- Finalize incident after all stages complete
+function IncidentSpecialistSystem:finalizeIncident(incident)
+    -- Calculate overall success
+    local allStagesSuccess = incident.stages.detect.success and 
+                            incident.stages.respond.success and 
+                            incident.stages.resolve.success
+    
+    incident.overallSuccess = allStagesSuccess
+    incident.slaCompliant = allStagesSuccess
+    
+    -- Calculate total time
+    local totalDuration = incident.stages.detect.duration +
+                         incident.stages.respond.duration +
+                         incident.stages.resolve.duration
+    
+    -- Award rewards based on SLA compliance
+    if incident.slaCompliant then
+        -- Full rewards for SLA-compliant resolution
+        if self.resourceManager then
+            self.resourceManager:addResource("money", incident.base_reward.money)
+            self.resourceManager:addResource("reputation", incident.base_reward.reputation)
+            self.resourceManager:addResource("xp", incident.base_reward.xp)
+            self.resourceManager:addResource("missionTokens", incident.base_reward.missionTokens)
+        end
+        
+        print(string.format("   💰 Full rewards: $%.0f, %d Rep, %d XP, %d Mission Tokens", 
+            incident.base_reward.money, 
+            incident.base_reward.reputation, 
+            incident.base_reward.xp,
+            incident.base_reward.missionTokens))
+    else
+        -- Reduced rewards for SLA breach
+        local reducedReward = {
+            money = incident.base_reward.money * 0.6,
+            reputation = incident.base_reward.reputation * 0.5,
+            xp = incident.base_reward.xp * 0.7,
+            missionTokens = 0  -- No mission tokens for SLA breach
+        }
+        
+        if self.resourceManager then
+            self.resourceManager:addResource("money", reducedReward.money)
+            self.resourceManager:addResource("reputation", reducedReward.reputation)
+            self.resourceManager:addResource("xp", reducedReward.xp)
+        end
+        
+        print(string.format("   ⚠️  Reduced rewards (SLA breach): $%.0f, %.0f Rep, %.0f XP", 
+            reducedReward.money, 
+            reducedReward.reputation, 
+            reducedReward.xp))
+    end
+    
+    -- Award XP to all specialists involved
+    for stageName, stage in pairs(incident.stages) do
+        for _, specId in ipairs(stage.assignedSpecialists) do
+            local spec = self:getSpecialistById(specId)
+            if spec then
+                local xpGain = incident.base_reward.xp / 3  -- Split XP across stages
+                spec.XP = spec.XP + xpGain
+            end
+        end
+    end
+    
+    -- Publish final resolution event
+    if self.eventBus then
+        self.eventBus:publish("incident_fully_resolved", {
+            incidentId = incident.id,
+            contractId = incident.contractId,
+            totalDuration = totalDuration,
+            stageCompliance = {
+                detect = incident.stages.detect.success,
+                respond = incident.stages.respond.success,
+                resolve = incident.stages.resolve.success
+            },
+            overallSLACompliant = incident.slaCompliant
+        })
+    end
+    
+    print(string.format("🎯 Incident %s fully resolved: Total time %.1fs, SLA Compliant: %s",
+        incident.id, totalDuration, tostring(incident.slaCompliant)))
+    
+    -- Remove from active incidents
+    self:removeIncident(incident.id)
+end
+
+-- ============================================================================
 -- STATE MANAGEMENT
 -- ============================================================================
 
--- Get current state for inspection
+-- Get current state for save/inspection
 function IncidentSpecialistSystem:getState()
-    return self.GameState
+    return {
+        Specialists = self.GameState.Specialists,
+        IncidentsQueue = self.GameState.IncidentsQueue,  -- Now has stages
+        ThreatTemplates = self.GameState.ThreatTemplates,
+        SpecialistTemplates = self.GameState.SpecialistTemplates,
+        GlobalAutoResolveStat = self.GameState.GlobalAutoResolveStat,
+        IncidentTimer = self.GameState.IncidentTimer,
+        IncidentTimerMax = self.GameState.IncidentTimerMax,
+        nextIncidentId = self.GameState.nextIncidentId,
+        UnlockedSpecialists = self.GameState.UnlockedSpecialists
+    }
+end
+
+-- Load state from save with migration support
+function IncidentSpecialistSystem:loadState(state)
+    if state then
+        self.GameState.Specialists = state.Specialists or {}
+        self.GameState.IncidentsQueue = state.IncidentsQueue or {}
+        self.GameState.ThreatTemplates = state.ThreatTemplates or {}
+        self.GameState.SpecialistTemplates = state.SpecialistTemplates or {}
+        self.GameState.GlobalAutoResolveStat = state.GlobalAutoResolveStat or 100
+        self.GameState.IncidentTimer = state.IncidentTimer or 0
+        self.GameState.IncidentTimerMax = state.IncidentTimerMax or 10
+        self.GameState.nextIncidentId = state.nextIncidentId or 1
+        self.GameState.UnlockedSpecialists = state.UnlockedSpecialists or {}
+        
+        -- Migrate old incidents to new format if needed
+        for _, incident in ipairs(self.GameState.IncidentsQueue) do
+            if not incident.stages then
+                self:migrateIncidentToStageFormat(incident)
+            end
+        end
+        
+        print("🎯 IncidentSpecialistSystem: State loaded with " .. #self.GameState.IncidentsQueue .. " active incidents")
+    end
+end
+
+-- Migrate old incident format to new three-stage format
+function IncidentSpecialistSystem:migrateIncidentToStageFormat(incident)
+    print("🔄 Migrating incident " .. tostring(incident.id) .. " to stage format")
+    
+    -- If already has stages, skip
+    if incident.stages then
+        return
+    end
+    
+    local severity = incident.trait_value_needed or incident.severity or 5
+    incident.severity = severity
+    
+    -- Initialize stages based on current status
+    incident.stages = {
+        detect = {
+            status = "COMPLETED",
+            startTime = incident.createdTime or os.time(),
+            endTime = incident.createdTime or os.time(),
+            duration = 0,
+            slaLimit = self:getSLALimitForStage(incident.contractId, "detect"),
+            assignedSpecialists = {},
+            success = true
+        },
+        respond = {
+            status = "PENDING",
+            startTime = nil,
+            endTime = nil,
+            duration = 0,
+            slaLimit = self:getSLALimitForStage(incident.contractId, "respond"),
+            assignedSpecialists = {},
+            success = nil
+        },
+        resolve = {
+            status = "PENDING",
+            startTime = nil,
+            endTime = nil,
+            duration = 0,
+            slaLimit = self:getSLALimitForStage(incident.contractId, "resolve"),
+            assignedSpecialists = {},
+            success = nil
+        }
+    }
+    
+    -- Set current stage based on old status
+    if incident.status == "Pending" then
+        incident.currentStage = "detect"
+        incident.stages.detect.status = "IN_PROGRESS"
+        incident.stages.detect.startTime = love.timer.getTime()
+    elseif incident.status == "AutoAssigned" or incident.status == "ManualAssigned" then
+        incident.currentStage = "respond"
+        incident.stages.respond.status = "IN_PROGRESS"
+        incident.stages.respond.startTime = love.timer.getTime()
+        
+        -- Assign the specialist to respond stage
+        if incident.assignedSpecialistId then
+            table.insert(incident.stages.respond.assignedSpecialists, incident.assignedSpecialistId)
+        end
+    else
+        -- Default to detect
+        incident.currentStage = "detect"
+        incident.stages.detect.status = "IN_PROGRESS"
+        incident.stages.detect.startTime = love.timer.getTime()
+    end
+    
+    incident.overallSuccess = nil
+    incident.slaCompliant = nil
 end
 
 -- Get statistics for display
