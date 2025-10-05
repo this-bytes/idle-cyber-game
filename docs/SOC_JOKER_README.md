@@ -1,14 +1,15 @@
-# 🃏 SOC Joker - Card-Based Roguelike Mode
+# SOC Joker - Card-Based Roguelike Mode
 
 > **A Balatro-inspired cybersecurity breach containment game**
+> **NOW THE MAIN GAME MODE!**
 
 ## Quick Start
 
 ### Playing the Game
 1. Launch game: `love .`
-2. Select "NEW OPERATION" or "LOAD OPERATION"
-3. In SOC View, click **"🃏 SOC Joker"** button
-4. Select ante difficulty (1-3)
+2. Select **"NEW OPERATION"** to start a new run
+3. Select **"CONTINUE OPERATION"** to resume your current run
+4. Select your ante difficulty (1-3)
 5. Play cards to defeat threats!
 
 ### How to Play
@@ -21,6 +22,8 @@
 ## Game Overview
 
 SOC Joker is a fast-paced card game where you manage cybersecurity breach containment runs. Build your deck of specialists and tools to defeat increasingly difficult waves of threats.
+
+**This is now the primary game mode** - the old SOC View is available as "Legacy Mode" for development/testing purposes.
 
 ### Core Loop
 ```
@@ -64,30 +67,47 @@ Score points for:
 ## Card Types
 
 ### Specialist Cards (Damage Dealers)
-- **Junior Analyst**: Deal 2 damage
-- **Senior Analyst**: Deal 4 damage
-- **Threat Hunter**: Deal 3 + 1 splash to adjacent
+**Loaded from `src/data/cards.json`**
+- **Junior Analyst**: Deal 2 damage ($50)
+- **Senior Analyst**: Deal 4 damage ($100)
+- **Threat Hunter**: Deal 3 + 1 splash to adjacent ($100)
+- **Incident Responder**: Deal 5 damage ($150)
+- **Penetration Tester**: Deal 4 damage + pierce ($150)
 
 ### Tool Cards (Utilities)
-- **Firewall**: Block 3 damage
-- **EDR Platform**: Deal 2 damage to ALL threats (AOE)
-- **Backup Protocol**: Restore 20 health
+**Loaded from `src/data/cards.json`**
+- **Firewall**: Block 3 damage ($50)
+- **EDR Platform**: Deal 2 damage to ALL threats (AOE) ($200)
+- **SIEM System**: Reveal threats + deal 1 to all ($100)
+- **Backup Protocol**: Restore 20 health ($75)
+- **Honeypot**: Deal 3 damage + stun ($175)
+- **Zero Trust**: Prevent all attacks for one turn ($250)
+
+### Data-Driven Design
+All cards are now stored in JSON format at `src/data/cards.json`, making it easy to:
+- Add new cards without code changes
+- Balance card stats and prices
+- Create card variants and expansions
+- Support modding and community content
 
 ## Implementation Details
 
 ### Architecture
-- **Scene**: `src/scenes/soc_joker.lua` (711 lines)
-- **Systems**: RunManager, DeckManager, ThreatSystem
+- **Scene**: `src/scenes/soc_joker.lua` (711 lines) - Main game mode (PRIMARY)
+- **Card Data**: `src/data/cards.json` - All card definitions in JSON
+- **Systems**: RunManager, DeckManager (with JSON loading), ThreatSystem
 - **UI**: Hybrid LUIS + custom Love2D graphics
 - **Events**: EventBus for inter-system communication
 
 ### File Structure
 ```
-src/scenes/soc_joker.lua          # Main scene implementation
-src/soc_game.lua                  # Scene registration
-src/scenes/soc_view_luis.lua      # Navigation integration
+src/scenes/soc_joker.lua          # Main scene implementation (PRIMARY GAME)
+src/scenes/main_menu_luis.lua     # Updated to launch SOC Joker by default
+src/data/cards.json               # All card data (NEW - data-driven)
+src/systems/deck_manager.lua      # Updated to load from JSON
+src/scenes/soc_view_luis.lua      # Legacy mode (accessible via main menu)
 tests/scene/test_soc_joker.lua    # Unit tests
-docs/SOC_JOKER*.md                # Documentation (4 files)
+docs/SOC_JOKER*.md                # Documentation (5 files)
 ```
 
 ### Key Methods

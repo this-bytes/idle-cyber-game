@@ -261,16 +261,18 @@ end
 function SOCJoker:playCard(cardIndex, threatIndex)
     local hand = self.systems.deckManager:getHand()
     if cardIndex < 1 or cardIndex > #hand then return end
-    if not self.threats[threatIndex] then return end
     
     local card = hand[cardIndex]
-    local threat = self.threats[threatIndex]
+    local threat = nil
+    if threatIndex and self.threats[threatIndex] then
+        threat = self.threats[threatIndex]
+    end
     
     -- Play the card
     local result = self.systems.deckManager:playCard(cardIndex, threat)
     
     -- Apply damage to threat
-    if result.damage > 0 then
+    if result.damage > 0 and threat then
         threat.health = threat.health - result.damage
         print(string.format("💥 %s deals %d damage to %s", card.name, result.damage, threat.name))
         
@@ -285,6 +287,32 @@ function SOCJoker:playCard(cardIndex, threatIndex)
                 self:completeWave()
             end
         end
+    end
+    
+    -- Apply AOE damage
+    if result.aoe and result.aoe > 0 then
+        for i, t in ipairs(self.threats) do
+            t.health = t.health - result.aoe
+            if t.health <= 0 then
+                print(string.format("✅ Defeated: %s (AOE)", t.name))
+                self.systems.runManager:addThreatDefeated()
+            end
+        end
+        -- Remove defeated threats
+        for i = #self.threats, 1, -1 do
+            if self.threats[i].health <= 0 then
+                table.remove(self.threats, i)
+            end
+        end
+        if #self.threats == 0 then
+            self:completeWave()
+        end
+    end
+    
+    -- Apply healing
+    if result.heal and result.heal > 0 then
+        self.playerHealth = math.min(self.maxHealth, self.playerHealth + result.heal)
+        print(string.format("💚 %s heals %d HP! Health: %d/%d", card.name, result.heal, self.playerHealth, self.maxHealth))
     end
     
     -- Track card played
@@ -401,7 +429,7 @@ function SOCJoker:generateShopOfferings()
             id = card.id,
             name = card.name,
             effect = card.effect,
-            cost = 50 + (card.rarity == "uncommon" and 50 or 0) + (card.rarity == "rare" and 150 or 0),
+            cost = card.shopPrice or 50, -- Use shopPrice from card data
             cardData = card
         }
         table.insert(self.shopOfferings, offering)
