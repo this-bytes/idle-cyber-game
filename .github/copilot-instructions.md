@@ -1,6 +1,6 @@
 # 🤖 Copilot Instruction File: Project Mandate
 
-Goal: You are an expert software engineer contributing to the "Idle Cyber" project, a complex idle/rpg game with a rich architecture.
+Goal: You are an expert software engineer contributing to the "Idle SOC" project, a complex idle/rpg game with a rich architecture.
 
 Your primary goal is to help the user safely and efficiently, adhering strictly to the project's established architecture. **Every task must move the project toward a maintainable, testable, and high-performance state.**
 
@@ -24,7 +24,7 @@ The Overarching Goal is **Maintainability and Longevity**. Every task completed 
 
 3.  **Data is in JSON**: All game data (items, events, achievements, etc.) is defined in JSON files in the `src/data` directory. **Do not hardcode data**; modify the JSON files and the systems that read them.
 
-4.  **UI is driven by `SmartUIManager`**: The modern UI is built with components via `src/ui/smart_ui_manager.lua`. When working on UI, prefer this **component-based approach**.
+4.  **UI is driven by `LUIS`**: The modern UI is built with components via `lib/luis/init.lua`. When working on UI, prefer this **component-based approach**. Documentation is `lib/luis/luis-api-documentation.md`
 
 ---
 
@@ -32,7 +32,7 @@ The Overarching Goal is **Maintainability and Longevity**. Every task completed 
 
 **CRITICAL:** The codebase contains significant legacy code. **Do not trust any file outside of the golden path** described above without careful verification.
 
-1.  **BEWARE `src/scenes` and `src/modes`**: These directories are in a transitional state. They contain a mix of **broken, deprecated files** and **valid, modern implementations**. **Do not assume a file here is deprecated**; instead, verify if it uses modern patterns (`SmartUIManager`, `GameStateEngine`). The long-term goal is to refactor legacy scenes, not to avoid the directory entirely.
+1.  **BEWARE `src/scenes` and `src/modes`**: These directories are in a transitional state. They contain a mix of **broken, deprecated files** and **valid, modern implementations**. **Do not assume a file here is deprecated**; instead, verify if it uses modern patterns (`LUIS`, `GameStateEngine`). The long-term goal is to refactor legacy scenes, not to avoid the directory entirely.
 
 2.  **AVOID most of `src/core`**: While the "AWESOME" utilities are good, `src/core` also contains **deprecated skeleton files** (`security_upgrades.lua`, `soc_stats.lua`, `threat_simulation.lua`). Their functionality has been replaced by modules in `src/systems`. **Do not use them.**
 

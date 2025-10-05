@@ -1,10 +1,10 @@
 -- LÖVE 2D Configuration
 function love.conf(t)
-    t.identity = "cyberspace_tycoon"
+    t.identity = "soc_tycoon"
     t.version = "11.3"
     t.console = false
     
-    t.window.title = "Idle Sec Ops - Cybersecurity Consultancy Simulator"
+    t.window.title = "Idle Sec Ops - Security Operations Center Game Simulator"
     t.window.icon = nil
     t.window.width = 1024
     t.window.height = 768
@@ -20,7 +20,8 @@ function love.conf(t)
     t.window.highdpi = false
     t.window.x = nil
     t.window.y = nil
-    t.modules.audio = true
+    -- Disable audio modules to prevent ALSA initialization delay in headless environments (WSL2, Docker, etc.)
+    t.modules.audio = false
     t.modules.event = true
     t.modules.graphics = true
     t.modules.image = true
@@ -29,7 +30,7 @@ function love.conf(t)
     t.modules.math = true
     t.modules.mouse = true
     t.modules.physics = false
-    t.modules.sound = true
+    t.modules.sound = false
     t.modules.system = true
     t.modules.timer = true
     t.modules.touch = false

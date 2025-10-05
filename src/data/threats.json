@@ -184,11 +184,6 @@
         "difficultyMultiplier": 3.0
       }
     }
-  }
-    "hp": 500,
-    "rarity": "epic",
-    "tier": 4,
-    "tags": ["ransomware", "malware", "critical", "encryption"]
   },
   {
     "id": "sql_injection",

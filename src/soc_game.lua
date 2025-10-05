@@ -197,7 +197,19 @@ function SOCGame:startGame()
 end
 
 function SOCGame:keypressed(key, scancode, isrepeat)
+    -- F3 toggles debug overlay (highest priority - works on any scene)
+    if key == 'f3' and self.statsOverlay then
+        self.statsOverlay:toggle()
+        return
+    end
+    
+    -- Route to overlayManager first (modal overlays block other input)
+    if self.overlayManager and self.overlayManager:keypressed(key) then return end
+    
+    -- Then to scene manager
     if self.sceneManager and self.sceneManager:keypressed(key, scancode, isrepeat) then return end
+    
+    -- Finally to LUIS
     if self.luis and self.luis.keypressed(key, scancode, isrepeat) then return end
 end
 
