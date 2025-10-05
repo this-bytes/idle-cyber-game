@@ -20,6 +20,7 @@ local ClickRewardSystem = require("src.systems.click_reward_system")
 local ParticleSystem = require("src.systems.particle_system")
 local AchievementSystem = require("src.systems.achievement_system")
 local GameStateEngine = require("src.systems.game_state_engine")
+local SLASystem = require("src.systems.sla_system")
 
 -- Scene Dependencies
 local MainMenuLuis = require("src.scenes.main_menu_luis")
@@ -88,6 +89,14 @@ function SOCGame:initialize()
     self.systems.threatSystem = ThreatSystem.new(self.eventBus, self.systems.dataManager, self.systems.specialistSystem, self.systems.skillSystem)
     self.systems.idleSystem = IdleSystem.new(self.eventBus, self.systems.resourceManager, self.systems.threatSystem, self.systems.upgradeSystem)
     self.systems.achievementSystem = AchievementSystem.new(self.eventBus, self.systems.dataManager, self.systems.resourceManager)
+    
+    -- Initialize SLA System
+    self.systems.slaSystem = SLASystem.new(
+        self.eventBus,
+        self.systems.contractSystem,
+        self.systems.resourceManager,
+        self.systems.dataManager
+    )
 
     self.systems.gameStateEngine:registerSystem("resourceManager", self.systems.resourceManager)
     self.systems.gameStateEngine:registerSystem("skillSystem", self.systems.skillSystem)
@@ -98,6 +107,7 @@ function SOCGame:initialize()
     self.systems.gameStateEngine:registerSystem("idleSystem", self.systems.idleSystem)
     self.systems.gameStateEngine:registerSystem("Incident", self.systems.Incident)
     self.systems.gameStateEngine:registerSystem("achievementSystem", self.systems.achievementSystem)
+    self.systems.gameStateEngine:registerSystem("slaSystem", self.systems.slaSystem)
     
     if self.systems.gameStateEngine:loadState() then
         print("📂 Loaded game state from previous session")
@@ -118,6 +128,7 @@ function SOCGame:initialize()
     if self.systems.Incident and self.systems.Incident.initialize then
         self.systems.Incident:initialize()
     end
+    self.systems.slaSystem:initialize()
 
     self.sceneManager:registerScene("main_menu", MainMenuLuis.new(self.eventBus, self.luis, self.systems))
     self.sceneManager:registerScene("soc_view", SOCViewLuis.new(self.eventBus, self.luis, self.systems))

@@ -15,34 +15,6 @@
     "tier": 1,
     "effects": {
       "passive": []
-    },
-    "slaRequirements": {
-      "detectionTimeSLA": 60,
-      "responseTimeSLA": 300,
-      "resolutionTimeSLA": 900,
-      "requiredSkillLevels": {
-        "detection": 3,
-        "response": 5,
-        "resolution": 7
-      },
-      "minimumSuccessRate": 0.80,
-      "maxAllowedIncidents": 10
-    },
-    "capacityRequirements": {
-      "minimumSpecialists": 1,
-      "minimumTotalEfficiency": 5,
-      "minimumTotalSpeed": 5,
-      "requiredSkillCoverage": ["basic_analysis"]
-    },
-    "rewards": {
-      "slaComplianceBonus": 150,
-      "perfectPerformanceBonus": 75,
-      "reputationBonus": 1
-    },
-    "penalties": {
-      "slaBreachFine": 200,
-      "contractTerminationPenalty": 400,
-      "reputationLoss": 5
     }
   },
   {
@@ -61,34 +33,6 @@
     "tier": 2,
     "effects": {
       "passive": []
-    },
-    "slaRequirements": {
-      "detectionTimeSLA": 45,
-      "responseTimeSLA": 180,
-      "resolutionTimeSLA": 600,
-      "requiredSkillLevels": {
-        "detection": 5,
-        "response": 7,
-        "resolution": 10
-      },
-      "minimumSuccessRate": 0.85,
-      "maxAllowedIncidents": 15
-    },
-    "capacityRequirements": {
-      "minimumSpecialists": 2,
-      "minimumTotalEfficiency": 10,
-      "minimumTotalSpeed": 8,
-      "requiredSkillCoverage": ["basic_analysis", "network_monitoring"]
-    },
-    "rewards": {
-      "slaComplianceBonus": 600,
-      "perfectPerformanceBonus": 300,
-      "reputationBonus": 3
-    },
-    "penalties": {
-      "slaBreachFine": 900,
-      "contractTerminationPenalty": 1800,
-      "reputationLoss": 10
     }
   },
   {
@@ -107,34 +51,6 @@
     "tier": 4,
     "effects": {
       "passive": []
-    },
-    "slaRequirements": {
-      "detectionTimeSLA": 30,
-      "responseTimeSLA": 120,
-      "resolutionTimeSLA": 450,
-      "requiredSkillLevels": {
-        "detection": 10,
-        "response": 12,
-        "resolution": 15
-      },
-      "minimumSuccessRate": 0.95,
-      "maxAllowedIncidents": 25
-    },
-    "capacityRequirements": {
-      "minimumSpecialists": 5,
-      "minimumTotalEfficiency": 25,
-      "minimumTotalSpeed": 20,
-      "requiredSkillCoverage": ["basic_analysis", "network_monitoring", "threat_response", "incident_management"]
-    },
-    "rewards": {
-      "slaComplianceBonus": 7500,
-      "perfectPerformanceBonus": 5000,
-      "reputationBonus": 30
-    },
-    "penalties": {
-      "slaBreachFine": 10000,
-      "contractTerminationPenalty": 20000,
-      "reputationLoss": 50
     }
   },
   {
@@ -153,34 +69,6 @@
     "tier": 2,
     "effects": {
       "passive": []
-    },
-    "slaRequirements": {
-      "detectionTimeSLA": 40,
-      "responseTimeSLA": 150,
-      "resolutionTimeSLA": 500,
-      "requiredSkillLevels": {
-        "detection": 6,
-        "response": 8,
-        "resolution": 11
-      },
-      "minimumSuccessRate": 0.90,
-      "maxAllowedIncidents": 12
-    },
-    "capacityRequirements": {
-      "minimumSpecialists": 2,
-      "minimumTotalEfficiency": 12,
-      "minimumTotalSpeed": 10,
-      "requiredSkillCoverage": ["basic_analysis", "compliance", "data_protection"]
-    },
-    "rewards": {
-      "slaComplianceBonus": 400,
-      "perfectPerformanceBonus": 250,
-      "reputationBonus": 5
-    },
-    "penalties": {
-      "slaBreachFine": 1200,
-      "contractTerminationPenalty": 2500,
-      "reputationLoss": 15
     }
   },
   {
@@ -199,34 +87,6 @@
     "tier": 3,
     "effects": {
       "passive": []
-    },
-    "slaRequirements": {
-      "detectionTimeSLA": 35,
-      "responseTimeSLA": 140,
-      "resolutionTimeSLA": 480,
-      "requiredSkillLevels": {
-        "detection": 8,
-        "response": 10,
-        "resolution": 13
-      },
-      "minimumSuccessRate": 0.88,
-      "maxAllowedIncidents": 20
-    },
-    "capacityRequirements": {
-      "minimumSpecialists": 3,
-      "minimumTotalEfficiency": 18,
-      "minimumTotalSpeed": 15,
-      "requiredSkillCoverage": ["basic_analysis", "network_monitoring", "infrastructure"]
-    },
-    "rewards": {
-      "slaComplianceBonus": 2500,
-      "perfectPerformanceBonus": 1500,
-      "reputationBonus": 10
-    },
-    "penalties": {
-      "slaBreachFine": 4000,
-      "contractTerminationPenalty": 8000,
-      "reputationLoss": 25
     }
   },
   {

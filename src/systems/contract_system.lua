@@ -113,6 +113,9 @@ function ContractSystem:generateIncome()
         return
     end
 
+    -- Get performance multiplier based on capacity
+    local performanceMultiplier = self:getPerformanceMultiplier()
+
     -- Use AWESOME Backend if available
     if self.effectProcessor and self.itemRegistry then
         for id, contract in pairs(self.activeContracts) do
@@ -172,6 +175,9 @@ function ContractSystem:generateIncome()
 
         totalIncome = totalIncome * incomeModifier
     end
+    
+    -- Apply performance multiplier based on capacity
+    totalIncome = totalIncome * performanceMultiplier
 
     if totalIncome > 0 then
         self.eventBus:publish("resource_add", { money = totalIncome })
@@ -247,7 +253,12 @@ function ContractSystem:generateRandomContract()
         rarity = template.rarity or "common",
         tags = template.tags or {},
         tier = template.tier or 1,
-        effects = template.effects or {}
+        effects = template.effects or {},
+        -- Copy SLA-related fields if present
+        slaRequirements = template.slaRequirements,
+        capacityRequirements = template.capacityRequirements,
+        rewards = template.rewards,
+        penalties = template.penalties
     }
     
     self.availableContracts[self.nextContractId] = newContract
@@ -266,6 +277,18 @@ function ContractSystem:acceptContract(id)
                 contract.clientName, tostring(contract.baseBudget), tostring(contract.baseDuration)))
             return
         end
+        
+        -- Check capacity before accepting
+        local canAccept, message = self:canAcceptContract(contract)
+        if not canAccept then
+            print("❌ Cannot accept contract: " .. message)
+            self.eventBus:publish("contract_rejected", { 
+                contract = contract, 
+                reason = message 
+            })
+            return false
+        end
+        
         self.availableContracts[id] = nil
         
         -- Assign specialists (auto-assign CEO for now)
@@ -273,15 +296,56 @@ function ContractSystem:acceptContract(id)
         contract.reward = contract.baseBudget -- Set reward for income calculation
         contract.duration = contract.baseDuration -- Set duration for income calculation
         contract.remainingTime = contract.baseDuration
+        
+        -- Copy SLA requirements if present
+        if contract.slaRequirements then
+            contract.slaRequirements = contract.slaRequirements
+        end
+        if contract.capacityRequirements then
+            contract.capacityRequirements = contract.capacityRequirements
+        end
+        if contract.rewards then
+            contract.rewards = contract.rewards
+        end
+        if contract.penalties then
+            contract.penalties = contract.penalties
+        end
 
         self.activeContracts[id] = contract
         self.eventBus:publish("contract_accepted", { contract = contract })
+        
+        -- Check if we're over capacity and publish event
+        local capacity = self:calculateWorkloadCapacity()
+        local activeCount = 0
+        for _ in pairs(self.activeContracts) do
+            activeCount = activeCount + 1
+        end
+        
+        if activeCount > capacity then
+            self.eventBus:publish("contract_overloaded", {
+                capacity = capacity,
+                activeCount = activeCount,
+                overload = activeCount - capacity
+            })
+            print(string.format("⚠️ Contracts overloaded! Capacity: %d, Active: %d", capacity, activeCount))
+        end
+        
+        self.eventBus:publish("contract_capacity_changed", {
+            capacity = capacity,
+            activeCount = activeCount
+        })
+        
         print("Accepted contract: " .. contract.clientName .. " (Assigned: CEO)")
+        if message ~= "OK" then
+            print("⚠️ " .. message)
+        end
         
         -- Update income rate when contract is accepted
         self:updateIncomeRate()
+        return true
     else
         print("Error: Tried to accept non-existent contract with id: " .. tostring(id))
+        return false
     end
 end
 
@@ -326,6 +390,9 @@ function ContractSystem:getTotalIncomeRate()
     if #self.activeContracts == 0 then
         return 0
     end
+
+    -- Get performance multiplier based on capacity
+    local performanceMultiplier = self:getPerformanceMultiplier()
 
     -- Use AWESOME Backend if available
     if self.effectProcessor and self.itemRegistry then
@@ -385,6 +452,9 @@ function ContractSystem:getTotalIncomeRate()
         end
     end
     
+    -- Apply performance multiplier based on capacity
+    totalIncome = totalIncome * performanceMultiplier
+    
     return totalIncome
 end
 
@@ -407,6 +477,138 @@ function ContractSystem:getStats()
         completedContracts = completedCount,
         totalIncomeRate = self:getTotalIncomeRate()
     }
+end
+
+-- Calculate workload capacity based on specialists and upgrades
+function ContractSystem:calculateWorkloadCapacity()
+    -- Base capacity: 1 contract per 5 specialists
+    local specialistCount = 0
+    if self.specialistSystem and self.specialistSystem.specialists then
+        specialistCount = #self.specialistSystem.specialists
+    end
+    
+    local baseCapacity = math.floor(specialistCount / 5)
+    
+    -- Get average specialist efficiency
+    local avgEfficiency = self:getAverageSpecialistEfficiency()
+    
+    -- Efficiency multiplier: 50% weight on efficiency above 1.0
+    local efficiencyMultiplier = 1 + (avgEfficiency - 1) * 0.5
+    
+    -- Apply upgrade bonuses
+    local upgradeBonus = 0
+    if self.upgradeSystem then
+        upgradeBonus = self.upgradeSystem:getEffectValue("contract_capacity_bonus") or 0
+    end
+    
+    -- Total capacity
+    local totalCapacity = math.max(1, math.floor(baseCapacity * efficiencyMultiplier + upgradeBonus))
+    
+    return totalCapacity
+end
+
+-- Get average specialist efficiency
+function ContractSystem:getAverageSpecialistEfficiency()
+    if not self.specialistSystem or not self.specialistSystem.specialists then
+        return 1.0
+    end
+    
+    local specialists = self.specialistSystem.specialists
+    if #specialists == 0 then
+        return 1.0
+    end
+    
+    local totalEfficiency = 0
+    for _, specialist in ipairs(specialists) do
+        -- Efficiency based on level and skills
+        local efficiency = 1.0
+        if specialist.level then
+            efficiency = 1.0 + (specialist.level - 1) * 0.1
+        end
+        totalEfficiency = totalEfficiency + efficiency
+    end
+    
+    return totalEfficiency / #specialists
+end
+
+-- Check if we can accept a contract
+function ContractSystem:canAcceptContract(contract)
+    local capacity = self:calculateWorkloadCapacity()
+    local activeCount = 0
+    for _ in pairs(self.activeContracts) do
+        activeCount = activeCount + 1
+    end
+    
+    -- Allow accepting if under capacity
+    if activeCount < capacity then
+        return true, "OK"
+    end
+    
+    -- Can still accept but with performance penalty warning
+    if activeCount < capacity + 3 then
+        return true, "WARNING: Over capacity - performance will degrade"
+    end
+    
+    return false, "Maximum capacity reached"
+end
+
+-- Get performance multiplier based on workload
+function ContractSystem:getPerformanceMultiplier()
+    local capacity = self:calculateWorkloadCapacity()
+    local activeCount = 0
+    for _ in pairs(self.activeContracts) do
+        activeCount = activeCount + 1
+    end
+    
+    -- At or under capacity: 100% performance
+    if activeCount <= capacity then
+        return 1.0
+    end
+    
+    -- Over capacity: degradation
+    -- 1 over: 85%, 2 over: 70%, 3+ over: 50%
+    local overload = activeCount - capacity
+    local degradation = 0.15 * overload
+    local multiplier = math.max(0.5, 1.0 - degradation)
+    
+    return multiplier
+end
+
+-- State management
+function ContractSystem:getState()
+    return {
+        availableContracts = self.availableContracts,
+        activeContracts = self.activeContracts,
+        completedContracts = self.completedContracts,
+        nextContractId = self.nextContractId,
+        contractGenerationTimer = self.contractGenerationTimer,
+        autoAcceptEnabled = self.autoAcceptEnabled,
+        maxActiveContracts = self.maxActiveContracts
+    }
+end
+
+function ContractSystem:loadState(state)
+    if state.availableContracts then
+        self.availableContracts = state.availableContracts
+    end
+    if state.activeContracts then
+        self.activeContracts = state.activeContracts
+    end
+    if state.completedContracts then
+        self.completedContracts = state.completedContracts
+    end
+    if state.nextContractId then
+        self.nextContractId = state.nextContractId
+    end
+    if state.contractGenerationTimer then
+        self.contractGenerationTimer = state.contractGenerationTimer
+    end
+    if state.autoAcceptEnabled ~= nil then
+        self.autoAcceptEnabled = state.autoAcceptEnabled
+    end
+    if state.maxActiveContracts then
+        self.maxActiveContracts = state.maxActiveContracts
+    end
 end
 
 return ContractSystem
