@@ -1,0 +1,25 @@
+{
+  "complianceThresholds": {
+    "excellent": 0.95,
+    "good": 0.85,
+    "acceptable": 0.75,
+    "poor": 0.60
+  },
+  "penaltyMultipliers": {
+    "minor": 0.1,
+    "moderate": 0.25,
+    "severe": 0.5,
+    "critical": 1.0
+  },
+  "rewardMultipliers": {
+    "excellent": 1.5,
+    "good": 1.2,
+    "acceptable": 1.0
+  },
+  "capacitySettings": {
+    "baseSpecialistsPerContract": 5,
+    "efficiencyMultiplierWeight": 0.5,
+    "overloadDegradationRate": 0.15,
+    "minimumPerformanceMultiplier": 0.5
+  }
+}
