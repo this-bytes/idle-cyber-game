@@ -5,8 +5,19 @@
 local IdleSystem = {}
 IdleSystem.__index = IdleSystem
 
+-- System metadata for automatic registration
+IdleSystem.metadata = {
+    priority = 60,
+    dependencies = {
+        "ResourceManager",
+        "ThreatSystem",
+        "UpgradeSystem"
+    },
+    systemName = "IdleSystem"
+}
+
 -- Create new idle system
-function IdleSystem.new(eventBus, resourceSystem, threatSystem, upgradeSystem)
+function IdleSystem.new(eventBus, resourceManager, threatSystem, upgradeSystem)
     local self = setmetatable({}, IdleSystem)
     self.eventBus = eventBus
     self.resourceSystem = resourceSystem

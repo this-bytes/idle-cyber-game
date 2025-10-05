@@ -23,6 +23,13 @@
 local ResourceManager = {}
 ResourceManager.__index = ResourceManager
 
+-- System metadata for automatic registration
+ResourceManager.metadata = {
+    priority = 2,  -- Load early - many systems depend on resources
+    dependencies = {},
+    systemName = "ResourceManager"
+}
+
 function ResourceManager.new(eventBus)
     local self = setmetatable({}, ResourceManager)
     self.eventBus = eventBus

@@ -3,6 +3,13 @@
 local DataManager = {}
 DataManager.__index = DataManager
 
+-- System metadata for automatic registration
+DataManager.metadata = {
+    priority = 1,  -- Load very early - other systems depend on data
+    dependencies = {},
+    systemName = "DataManager"
+}
+
 local dkjson = require("dkjson")
 
 function DataManager.new(eventBus)

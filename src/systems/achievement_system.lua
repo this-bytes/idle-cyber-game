@@ -4,6 +4,16 @@
 local AchievementSystem = {}
 AchievementSystem.__index = AchievementSystem
 
+-- System metadata for automatic registration
+AchievementSystem.metadata = {
+    priority = 70,
+    dependencies = {
+        "DataManager",
+        "ResourceManager"
+    },
+    systemName = "AchievementSystem"
+}
+
 function AchievementSystem.new(eventBus, dataManager, resourceManager)
     local self = setmetatable({}, AchievementSystem)
 

@@ -5,8 +5,20 @@
 local ContractSystem = {}
 ContractSystem.__index = ContractSystem
 
+-- System metadata for automatic registration
+ContractSystem.metadata = {
+    priority = 50,  -- Mid-priority - depends on several other systems
+    dependencies = {
+        "DataManager",
+        "ResourceManager",
+        "UpgradeSystem",
+        "SpecialistSystem"
+    },
+    systemName = "ContractSystem"
+}
+
 -- Create new contract system
-function ContractSystem.new(eventBus, dataManager, upgradeSystem, specialistSystem, itemRegistry, effectProcessor, resourceManager)
+function ContractSystem.new(eventBus, dataManager, resourceManager, upgradeSystem, specialistSystem)
     local self = setmetatable({}, ContractSystem)
     self.eventBus = eventBus
     self.dataManager = dataManager

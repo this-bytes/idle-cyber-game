@@ -163,3 +163,7 @@ function AnalyticsCollector:getRecentEvents(count)
     -- Forwarder: src.core.analytics_collector -> src.systems.analytics_collector
     return require("src.systems.analytics_collector")
 
+end
+
+return AnalyticsCollector
+--

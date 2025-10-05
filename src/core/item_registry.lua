@@ -94,6 +94,7 @@ end
 function ItemRegistry:validateItem(item)
     -- Forwarder: src.core.item_registry -> src.systems.item_registry
     return require("src.systems.item_registry")
+end
 -- Get a single item by its unique ID
 function ItemRegistry:getItem(id)
     return self.itemsById[id]

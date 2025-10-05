@@ -13,4 +13,6 @@ function EffectProcessor.new(eventBus)
     self.effectHandlers = {}
     -- Forwarder: src.core.effect_processor -> src.systems.effect_processor
     return require("src.systems.effect_processor")
-    return self
+end
+
+return self

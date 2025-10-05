@@ -4,6 +4,15 @@
 local SkillSystem = {}
 SkillSystem.__index = SkillSystem
 
+-- System metadata for automatic registration
+SkillSystem.metadata = {
+    priority = 10,  -- Early priority - many systems use skills
+    dependencies = {
+        "DataManager"
+    },
+    systemName = "SkillSystem"
+}
+
 -- No longer need to import this, it's not a real Lua module
 -- local SkillData = require("src.data.skills")
 

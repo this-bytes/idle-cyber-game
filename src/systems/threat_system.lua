@@ -6,6 +6,17 @@
 local ThreatSystem = {}
 ThreatSystem.__index = ThreatSystem
 
+-- System metadata for automatic registration
+ThreatSystem.metadata = {
+    priority = 30,
+    dependencies = {
+        "DataManager",
+        "SpecialistSystem",
+        "SkillSystem"
+    },
+    systemName = "ThreatSystem"
+}
+
 -- Create new threat system
 function ThreatSystem.new(eventBus, dataManager, specialistSystem, skillSystem)
     local self = setmetatable({}, ThreatSystem)

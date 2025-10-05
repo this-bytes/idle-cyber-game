@@ -6,6 +6,15 @@
 local UpgradeSystem = {}
 UpgradeSystem.__index = UpgradeSystem
 
+-- System metadata for automatic registration
+UpgradeSystem.metadata = {
+    priority = 15,  -- Early-mid priority
+    dependencies = {
+        "DataManager"
+    },
+    systemName = "UpgradeSystem"
+}
+
 function UpgradeSystem.new(eventBus, dataManager)
     local self = setmetatable({}, UpgradeSystem)
     self.eventBus = eventBus

@@ -27,3 +27,4 @@ function SOCStats:initialize()
     end
     -- Forwarder: src.core.soc_stats -> src.systems.soc_stats
     return require("src.systems.soc_stats")
+end

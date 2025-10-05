@@ -5,6 +5,16 @@
 local SpecialistSystem = {}
 SpecialistSystem.__index = SpecialistSystem
 
+-- System metadata for automatic registration
+SpecialistSystem.metadata = {
+    priority = 20,  -- Early-mid priority - needed by many systems
+    dependencies = {
+        "DataManager",
+        "SkillSystem"
+    },
+    systemName = "SpecialistSystem"
+}
+
 -- Create new specialist system
 function SpecialistSystem.new(eventBus, dataManager, skillSystem)
     local self = setmetatable({}, SpecialistSystem)

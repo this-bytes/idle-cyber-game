@@ -2,26 +2,17 @@
 -- This file now focuses on managing the core game loop and state,
 -- while main.lua handles the initial setup and object creation.
 
--- System Dependencies
+-- Core Dependencies
 local EventBus = require("src.utils.event_bus")
-local DataManager = require("src.systems.data_manager")
-local ResourceManager = require("src.systems.resource_manager")
-local SceneManager = require("src.scenes.scenery_adapter")
-local ContractSystem = require("src.systems.contract_system")
-local SpecialistSystem = require("src.systems.specialist_system")
-local UpgradeSystem = require("src.systems.upgrade_system")
-local EventSystem = require("src.systems.event_system")
-local ThreatSystem = require("src.systems.threat_system")
-local SkillSystem = require("src.systems.skill_system")
-local IdleSystem = require("src.systems.idle_system")
-local IncidentSpecialistSystem = require("src.systems.incident_specialist_system")
-local InputSystem = require("src.systems.input_system")
-local ClickRewardSystem = require("src.systems.click_reward_system")
-local ParticleSystem = require("src.systems.particle_system")
-local AchievementSystem = require("src.systems.achievement_system")
+local SystemRegistry = require("src.systems.system_registry")
 local GameStateEngine = require("src.systems.game_state_engine")
-local SLASystem = require("src.systems.sla_system")
-local GlobalStatsSystem = require("src.systems.global_stats_system")
+
+-- Legacy systems that still need manual loading (not following *_system.lua pattern)
+local SceneManager = require("src.scenes.scenery_adapter")
+local InputSystem = require("src.systems.input_system")
+local ParticleSystem = require("src.systems.particle_system")
+local IncidentSpecialistSystem = require("src.systems.incident_specialist_system")
+local EventSystem = require("src.systems.event_system")
 
 -- Scene Dependencies
 local MainMenuLuis = require("src.scenes.main_menu_luis")
@@ -30,7 +21,7 @@ local UpgradeShopLuis = require("src.scenes.upgrade_shop_luis")
 local SkillTreeScene = require("src.scenes.skill_tree_luis")
 local ContractsBoardScene = require("src.scenes.contracts_board_luis")
 local SpecialistManagementScene = require("src.scenes.specialist_management_luis")
-local ModalDialog = require("src.scenes.modal_dialog_luis") -- New Modal Scene
+local ModalDialog = require("src.scenes.modal_dialog_luis")
 local GameOverLuis = require("src.scenes.game_over_luis")
 local IncidentResponseLuis = require("src.scenes.incident_response_luis")
 local AdminModeLuis = require("src.scenes.admin_mode_luis")
@@ -49,6 +40,7 @@ function SOCGame.new(eventBus)
     local self = setmetatable({}, SOCGame)
     self.eventBus = eventBus
     self.systems = {}
+    self.systemRegistry = nil
     self.sceneManager = nil
     self.luis = nil
     self.statsOverlay = nil
@@ -70,86 +62,70 @@ function SOCGame:initialize()
 
     print("🛡️ Initializing SOC Game Systems...")
     
+    -- Initialize LUIS UI framework
     local initLuis = require("luis.init")
     self.luis = initLuis("lib/luis/widgets")
     self.luis.flux = require("luis.3rdparty.flux")
     print("🎨 LUIS initialized.")
     
-    self.systems.gameStateEngine = GameStateEngine.new(self.eventBus)
-    self.systems.dataManager = DataManager.new(self.eventBus)
-    self.systems.dataManager:loadAllData()
-    self.systems.resourceManager = ResourceManager.new(self.eventBus)
+    -- Initialize GameStateEngine (special case - needs to be first)
+    local gameStateEngine = GameStateEngine.new(self.eventBus)
+    self.systems.gameStateEngine = gameStateEngine
+    
+    -- 🤖 AUTOMATIC SYSTEM INITIALIZATION
+    -- SystemRegistry handles discovery, dependency injection, and initialization
+    self.systemRegistry = SystemRegistry.new(self.eventBus)
+    local autoSystems = self.systemRegistry:autoInitialize(gameStateEngine)
+    
+    -- Merge auto-discovered systems into self.systems table
+    for name, instance in pairs(autoSystems) do
+        local key = name:sub(1, 1):lower() .. name:sub(2) -- Convert to camelCase
+        self.systems[key] = instance
+    end
+    
+    -- Initialize legacy systems that don't follow naming convention
     self.systems.inputSystem = InputSystem.new(self.eventBus)
     self.systems.particleSystem = ParticleSystem.new(self.eventBus)
-    self.systems.Incident = IncidentSpecialistSystem.new(self.eventBus, self.systems.resourceManager)
-    self.systems.skillSystem = SkillSystem.new(self.eventBus, self.systems.dataManager)
-    self.systems.upgradeSystem = UpgradeSystem.new(self.eventBus, self.systems.dataManager)
-    self.systems.specialistSystem = SpecialistSystem.new(self.eventBus, self.systems.dataManager, self.systems.skillSystem)
-    self.systems.clickRewardSystem = ClickRewardSystem.new(self.eventBus, self.systems.resourceManager, self.systems.upgradeSystem, self.systems.specialistSystem)
-    self.systems.contractSystem = ContractSystem.new(self.eventBus, self.systems.dataManager, self.systems.upgradeSystem, self.systems.specialistSystem, nil, nil, self.systems.resourceManager)
     self.systems.eventSystem = EventSystem.new(self.eventBus, self.systems.dataManager, self.systems.resourceManager)
-    self.systems.threatSystem = ThreatSystem.new(self.eventBus, self.systems.dataManager, self.systems.specialistSystem, self.systems.skillSystem)
-    self.systems.idleSystem = IdleSystem.new(self.eventBus, self.systems.resourceManager, self.systems.threatSystem, self.systems.upgradeSystem)
-    self.systems.achievementSystem = AchievementSystem.new(self.eventBus, self.systems.dataManager, self.systems.resourceManager)
+    self.systems.Incident = IncidentSpecialistSystem.new(self.eventBus, self.systems.resourceManager)
     
-    -- Initialize SLA System
-    self.systems.slaSystem = SLASystem.new(
-        self.eventBus,
-        self.systems.contractSystem,
-        self.systems.resourceManager,
-        self.systems.dataManager
-    )
-    
-    -- Initialize Global Stats System (Phase 3)
-    self.systems.globalStatsSystem = GlobalStatsSystem.new(
-        self.eventBus,
-        self.systems.resourceManager
-    )
-
-    self.systems.gameStateEngine:registerSystem("resourceManager", self.systems.resourceManager)
-    self.systems.gameStateEngine:registerSystem("skillSystem", self.systems.skillSystem)
-    self.systems.gameStateEngine:registerSystem("upgradeSystem", self.systems.upgradeSystem)
-    self.systems.gameStateEngine:registerSystem("specialistSystem", self.systems.specialistSystem)
-    self.systems.gameStateEngine:registerSystem("contractSystem", self.systems.contractSystem)
-    self.systems.gameStateEngine:registerSystem("threatSystem", self.systems.threatSystem)
-    self.systems.gameStateEngine:registerSystem("idleSystem", self.systems.idleSystem)
-    self.systems.gameStateEngine:registerSystem("Incident", self.systems.Incident)
-    self.systems.gameStateEngine:registerSystem("achievementSystem", self.systems.achievementSystem)
-    self.systems.gameStateEngine:registerSystem("slaSystem", self.systems.slaSystem)
-    self.systems.gameStateEngine:registerSystem("globalStatsSystem", self.systems.globalStatsSystem)
-    
-    -- Connect incident system to contract system for SLA integration
-    if self.systems.Incident and self.systems.Incident.setContractSystem then
-        self.systems.Incident:setContractSystem(self.systems.contractSystem)
+    -- Connect incident system to other systems for SLA integration
+    if self.systems.Incident and self.systems.contractSystem then
+        if self.systems.Incident.setContractSystem then
+            self.systems.Incident:setContractSystem(self.systems.contractSystem)
+        end
+        if self.systems.Incident.setSpecialistSystem then
+            self.systems.Incident:setSpecialistSystem(self.systems.specialistSystem)
+        end
     end
     
-    -- Connect incident system to specialist system for manual assignments
-    if self.systems.Incident and self.systems.Incident.setSpecialistSystem then
-        self.systems.Incident:setSpecialistSystem(self.systems.specialistSystem)
+    -- Initialize event system
+    if self.systems.eventSystem and self.systems.eventSystem.initialize then
+        self.systems.eventSystem:initialize()
     end
     
-    if self.systems.gameStateEngine:loadState() then
+    -- Initialize incident system  
+    if self.systems.Incident and self.systems.Incident.initialize then
+        self.systems.Incident:initialize()
+    end
+    
+    -- Load saved game state
+    if gameStateEngine:loadState() then
         print("📂 Loaded game state from previous session")
     else
         print("🎮 Starting new game (no save found)")
     end
 
+    -- Initialize Scene Manager
     self.sceneManager = SceneManager.new(self.eventBus, self.systems)
     self.sceneManager:initialize()
 
+    -- Subscribe to modal dialog events
     self.eventBus:subscribe("show_modal", function(data)
         self.sceneManager:pushScene("modal_dialog", data)
     end)
 
-    self.systems.contractSystem:initialize()
-    self.systems.specialistSystem:initialize()
-    self.systems.eventSystem:initialize()
-    if self.systems.Incident and self.systems.Incident.initialize then
-        self.systems.Incident:initialize()
-    end
-    self.systems.slaSystem:initialize()
-    self.systems.globalStatsSystem:initialize()
-
+    -- Register all scenes
     self.sceneManager:registerScene("main_menu", MainMenuLuis.new(self.eventBus, self.luis, self.systems))
     self.sceneManager:registerScene("soc_view", SOCViewLuis.new(self.eventBus, self.luis, self.systems))
     self.sceneManager:registerScene("upgrade_shop", UpgradeShopLuis.new(self.eventBus, self.luis, self.systems))
@@ -165,6 +141,7 @@ function SOCGame:initialize()
     
     self.sceneManager:finalizeScenes("main_menu")
     
+    -- Initialize UI overlays
     self.statsOverlay = StatsOverlayLuis.new(self.eventBus, self.systems, self.luis)
     self.overlayManager = OverlayManager.new()
     self.overlayManager:push(self.statsOverlay)
