@@ -426,6 +426,188 @@ function ThreatSystem:getState()
     return copy
 end
 
+-- ============================================================
+-- CARD-BASED WAVE GENERATION (For Roguelike Mode)
+-- ============================================================
+
+-- Generate a wave of threat cards for roguelike gameplay
+function ThreatSystem:generateWave(ante, waveNumber)
+    ante = ante or 1
+    waveNumber = waveNumber or 1
+    
+    local wave = {
+        threats = {},
+        ante = ante,
+        waveNumber = waveNumber
+    }
+    
+    -- Wave configuration
+    local config = {
+        [1] = {count = 5, boss = false},
+        [2] = {count = 7, boss = true},
+        [3] = {count = 10, boss = true, mega = true}
+    }
+    
+    local waveConfig = config[waveNumber] or config[1]
+    
+    -- Generate regular threats
+    for i = 1, waveConfig.count do
+        local threatCard = self:createThreatCard(ante)
+        table.insert(wave.threats, threatCard)
+    end
+    
+    -- Add boss threat if configured
+    if waveConfig.boss then
+        local bossCard = self:createBossThreat(ante, waveConfig.mega)
+        table.insert(wave.threats, bossCard)
+    end
+    
+    print(string.format("🌊 Generated wave %d (Ante %d): %d threats", waveNumber, ante, #wave.threats))
+    return wave
+end
+
+-- Create a single threat card from templates
+function ThreatSystem:createThreatCard(ante)
+    ante = ante or 1
+    
+    -- Select random threat template
+    if #self.threatTemplates == 0 then
+        return self:createDefaultThreatCard(ante)
+    end
+    
+    local template = self.threatTemplates[math.random(#self.threatTemplates)]
+    
+    -- Calculate scaled health
+    local baseHealth = template.baseHp or 20
+    local health = self:calculateThreatHealth(baseHealth, ante)
+    
+    return {
+        id = template.id or "threat_" .. math.random(1000),
+        name = template.name or "Unknown Threat",
+        description = template.description or "",
+        type = template.category or "malware",
+        health = health,
+        maxHealth = health,
+        damage = (template.severity or 1) * ante,
+        rarity = self:getThreatRarity(template.severity or 1),
+        effects = template.effects or {},
+        isBoss = false
+    }
+end
+
+-- Create a boss threat card
+function ThreatSystem:createBossThreat(ante, mega)
+    ante = ante or 1
+    mega = mega or false
+    
+    -- Select high severity threat for boss
+    local bossTemplate = nil
+    for _, template in ipairs(self.threatTemplates) do
+        if (template.severity or 1) >= 3 then
+            bossTemplate = template
+            break
+        end
+    end
+    
+    if not bossTemplate and #self.threatTemplates > 0 then
+        bossTemplate = self.threatTemplates[#self.threatTemplates]
+    end
+    
+    if not bossTemplate then
+        return self:createDefaultBossThreat(ante, mega)
+    end
+    
+    -- Boss has significantly more health
+    local baseHealth = (bossTemplate.baseHp or 50) * (mega and 2 or 1.5)
+    local health = self:calculateThreatHealth(baseHealth, ante)
+    
+    local bossName = (mega and "MEGA " or "") .. (bossTemplate.name or "Boss Threat")
+    
+    return {
+        id = "boss_" .. (bossTemplate.id or math.random(1000)),
+        name = bossName,
+        description = bossTemplate.description or "A powerful threat",
+        type = bossTemplate.category or "apt",
+        health = health,
+        maxHealth = health,
+        damage = (bossTemplate.severity or 3) * ante * (mega and 2 or 1.5),
+        rarity = mega and "legendary" or "rare",
+        effects = bossTemplate.effects or {},
+        isBoss = true,
+        isMega = mega
+    }
+end
+
+-- Calculate threat health based on ante difficulty
+function ThreatSystem:calculateThreatHealth(baseHealth, ante)
+    -- Health scales with ante
+    -- Ante 1: 1.0x, Ante 2: 1.5x, Ante 3: 2.0x, etc.
+    local multiplier = 1 + (ante - 1) * 0.5
+    return math.floor(baseHealth * multiplier)
+end
+
+-- Determine threat rarity based on severity
+function ThreatSystem:getThreatRarity(severity)
+    if severity <= 1 then
+        return "common"
+    elseif severity == 2 then
+        return "uncommon"
+    elseif severity == 3 then
+        return "rare"
+    else
+        return "legendary"
+    end
+end
+
+-- Fallback: Create default threat card if no templates
+function ThreatSystem:createDefaultThreatCard(ante)
+    local threats = {
+        {name = "Phishing Attack", health = 15, damage = 2, type = "social"},
+        {name = "Malware", health = 20, damage = 3, type = "malware"},
+        {name = "DDoS Attack", health = 25, damage = 4, type = "network"},
+        {name = "Ransomware", health = 30, damage = 5, type = "malware"}
+    }
+    
+    local template = threats[math.random(#threats)]
+    local health = self:calculateThreatHealth(template.health, ante)
+    
+    return {
+        id = "default_" .. math.random(1000),
+        name = template.name,
+        description = "A cybersecurity threat",
+        type = template.type,
+        health = health,
+        maxHealth = health,
+        damage = template.damage * ante,
+        rarity = "common",
+        effects = {},
+        isBoss = false
+    }
+end
+
+-- Fallback: Create default boss threat
+function ThreatSystem:createDefaultBossThreat(ante, mega)
+    local health = self:calculateThreatHealth(mega and 100 or 75, ante)
+    
+    return {
+        id = "boss_default_" .. math.random(1000),
+        name = (mega and "MEGA " or "") .. "APT Attack",
+        description = "An advanced persistent threat",
+        type = "apt",
+        health = health,
+        maxHealth = health,
+        damage = (mega and 10 or 7) * ante,
+        rarity = mega and "legendary" or "rare",
+        effects = {},
+        isBoss = true,
+        isMega = mega
+    }
+end
+
+-- ============================================================
+-- END CARD-BASED WAVE GENERATION
+-- ============================================================
+
 -- Load saved state (with migration/sanitization)
 function ThreatSystem:loadState(state)
     if not state then return end
