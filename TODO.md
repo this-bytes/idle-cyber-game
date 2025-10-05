@@ -1,24 +1,5 @@
 # Idle Sec Ops - Development TODO
 
-## ✅ COMPLETED: Comprehensive Testing Framework (PRIORITY ACHIEVED)
-
-**Status**: ALL 7 MECHANICS TESTS PASSING ✅
-
-The game now has a robust, headless testing framework that validates all core mechanics:
-- ✅ Idle income generation (passive gameplay)
-- ✅ Contract lifecycle (tycoon mechanics)
-- ✅ Specialist progression (RPG mechanics)
-- ✅ Threat resolution (RTS mechanics)
-- ✅ Resource management integrity
-- ✅ Upgrade system functionality
-- ✅ System integration validation
-
-**Documentation**: See [docs/TESTING_FRAMEWORK.md](docs/TESTING_FRAMEWORK.md) and [docs/TESTING_IMPLEMENTATION_REPORT.md](docs/TESTING_IMPLEMENTATION_REPORT.md)
-
-**Run Tests**: `/usr/bin/lua tests/run_mechanics_tests.lua`
-
----
-
 ## Current Priority: UI Modernization
 
 ### 🎯 Next: Refactor idle_debug.lua to SmartUIManager
