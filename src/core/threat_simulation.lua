@@ -14,3 +14,4 @@ function Adapter.new(eventBus, resourceManager, securityUpgrades)
     self._threatSystem = threat
     -- Forwarder: src.core.threat_simulation -> src.systems.threat_system
     return require("src.systems.threat_system")
+end
