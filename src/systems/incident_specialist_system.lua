@@ -763,8 +763,9 @@ end
 
 -- Calculate progress for current stage based on specialist stats
 function IncidentSpecialistSystem:calculateStageProgress(incident, stage)
+    -- EDGE CASE: No progress without specialists
     if #stage.assignedSpecialists == 0 then
-        return 0  -- No progress without specialists
+        return 0
     end
     
     -- Get stage-specific stat requirements
@@ -778,9 +779,21 @@ function IncidentSpecialistSystem:calculateStageProgress(incident, stage)
         end
     end
     
+    -- EDGE CASE: Guard against division by zero if totalStat is 0
+    if totalStat == 0 then
+        return 0
+    end
+    
     -- Progress formula: (totalStat * timeDelta) / (severity * baseDifficulty)
     local baseDifficulty = 10
-    local difficulty = incident.severity * baseDifficulty
+    local severity = incident.severity or 1
+    local difficulty = severity * baseDifficulty
+    
+    -- EDGE CASE: Guard against division by zero
+    if difficulty == 0 then
+        difficulty = 1
+    end
+    
     local progress = (totalStat * stage.duration) / difficulty
     
     return math.min(1.0, progress)
@@ -1108,9 +1121,36 @@ function IncidentSpecialistSystem:manualAssignSpecialist(specialistId, incidentI
         return false
     end
     
+    -- EDGE CASE: Check if incident is already completed
+    if incident.overallSuccess ~= nil then
+        print("❌ Manual Assignment Failed: Incident already completed")
+        if self.eventBus then
+            self.eventBus:publish("show_modal", {
+                title = "Cannot Assign Specialist",
+                message = "This incident has already been resolved.",
+                type = "error"
+            })
+        end
+        return false
+    end
+    
     local stage = stageName or incident.currentStage
     if not incident.stages or not incident.stages[stage] then
         print("❌ Manual Assignment Failed: Invalid stage: " .. tostring(stage))
+        return false
+    end
+    
+    -- EDGE CASE: Check if stage is already completed
+    local stageData = incident.stages[stage]
+    if stageData.status == "COMPLETED" then
+        print("❌ Manual Assignment Failed: Stage already completed")
+        if self.eventBus then
+            self.eventBus:publish("show_modal", {
+                title = "Cannot Assign Specialist",
+                message = "This incident stage has already been completed.",
+                type = "warning"
+            })
+        end
         return false
     end
     
@@ -1122,7 +1162,6 @@ function IncidentSpecialistSystem:manualAssignSpecialist(specialistId, incidentI
     end
     
     -- Add to stage's assigned specialists
-    local stageData = incident.stages[stage]
     if not stageData.assignedSpecialists then
         stageData.assignedSpecialists = {}
     end
