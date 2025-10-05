@@ -35,6 +35,7 @@ local GameOverLuis = require("src.scenes.game_over_luis")
 local IncidentResponseLuis = require("src.scenes.incident_response_luis")
 local AdminModeLuis = require("src.scenes.admin_mode_luis")
 local AdminIncidentScene = require("src.scenes.incident_admin_luis")
+local AdminModeEnhanced = require("src.scenes.admin_mode_enhanced_luis")
 local IdleDebugScene = require("src.scenes.idle_debug")
 
 -- UI Components
@@ -122,6 +123,11 @@ function SOCGame:initialize()
         self.systems.Incident:setContractSystem(self.systems.contractSystem)
     end
     
+    -- Connect incident system to specialist system for manual assignments
+    if self.systems.Incident and self.systems.Incident.setSpecialistSystem then
+        self.systems.Incident:setSpecialistSystem(self.systems.specialistSystem)
+    end
+    
     if self.systems.gameStateEngine:loadState() then
         print("📂 Loaded game state from previous session")
     else
@@ -154,6 +160,7 @@ function SOCGame:initialize()
     self.sceneManager:registerScene("game_over", GameOverLuis.new(self.eventBus, self.luis, self.systems))
     self.sceneManager:registerScene("incident_response", IncidentResponseLuis.new(self.eventBus, self.luis, self.systems))
     self.sceneManager:registerScene("admin_mode", AdminModeLuis.new(self.eventBus, self.luis, self.systems))
+    self.sceneManager:registerScene("admin_mode_enhanced", AdminModeEnhanced.new(self.eventBus, self.luis, self.systems))
     self.sceneManager:registerScene("incident_admin_luis", AdminIncidentScene.new(self.eventBus, self.luis, self.systems))
     
     self.sceneManager:finalizeScenes("main_menu")
