@@ -1149,12 +1149,14 @@ function IncidentSpecialistSystem:manualAssignSpecialist(specialistId, incidentI
     
     -- Publish event
     if self.eventBus then
-        self.eventBus:publish("specialist_manually_assigned", {
+        local payload = {
             specialistId = specialistId,
             incidentId = incidentId,
             stage = stage,
             timestamp = love.timer.getTime()
-        })
+        }
+        self.eventBus:publish("specialist_manually_assigned", payload)
+        self.eventBus:publish("specialist_assigned", payload)
     end
     
     return true
