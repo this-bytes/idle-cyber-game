@@ -365,7 +365,9 @@ function ContractSystem:completeContract(id)
         self.eventBus:publish("contract_completed", { 
             contract = contract,
             xpAwarded = xpAmount,
-            assignedSpecialists = contract.assignedSpecialists
+            assignedSpecialists = contract.assignedSpecialists,
+            tier = contract.tier or 1,  -- For global stats tracking
+            revenue = contract.reward or 0  -- For global stats tracking
         })
         self.eventBus:publish("resource_change", { money = contract.reward }) -- Assuming direct resource change
         

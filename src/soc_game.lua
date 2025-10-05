@@ -21,6 +21,7 @@ local ParticleSystem = require("src.systems.particle_system")
 local AchievementSystem = require("src.systems.achievement_system")
 local GameStateEngine = require("src.systems.game_state_engine")
 local SLASystem = require("src.systems.sla_system")
+local GlobalStatsSystem = require("src.systems.global_stats_system")
 
 -- Scene Dependencies
 local MainMenuLuis = require("src.scenes.main_menu_luis")
@@ -97,6 +98,12 @@ function SOCGame:initialize()
         self.systems.resourceManager,
         self.systems.dataManager
     )
+    
+    -- Initialize Global Stats System (Phase 3)
+    self.systems.globalStatsSystem = GlobalStatsSystem.new(
+        self.eventBus,
+        self.systems.resourceManager
+    )
 
     self.systems.gameStateEngine:registerSystem("resourceManager", self.systems.resourceManager)
     self.systems.gameStateEngine:registerSystem("skillSystem", self.systems.skillSystem)
@@ -108,6 +115,7 @@ function SOCGame:initialize()
     self.systems.gameStateEngine:registerSystem("Incident", self.systems.Incident)
     self.systems.gameStateEngine:registerSystem("achievementSystem", self.systems.achievementSystem)
     self.systems.gameStateEngine:registerSystem("slaSystem", self.systems.slaSystem)
+    self.systems.gameStateEngine:registerSystem("globalStatsSystem", self.systems.globalStatsSystem)
     
     -- Connect incident system to contract system for SLA integration
     if self.systems.Incident and self.systems.Incident.setContractSystem then
@@ -134,6 +142,7 @@ function SOCGame:initialize()
         self.systems.Incident:initialize()
     end
     self.systems.slaSystem:initialize()
+    self.systems.globalStatsSystem:initialize()
 
     self.sceneManager:registerScene("main_menu", MainMenuLuis.new(self.eventBus, self.luis, self.systems))
     self.sceneManager:registerScene("soc_view", SOCViewLuis.new(self.eventBus, self.luis, self.systems))
@@ -164,6 +173,7 @@ function SOCGame:update(dt)
     self.sceneManager:update(dt)
     if self.overlayManager then self.overlayManager:update(dt) end
     if self.systems.gameStateEngine then self.systems.gameStateEngine:update(dt) end
+    if self.systems.globalStatsSystem then self.systems.globalStatsSystem:update(dt) end
     if not self.isGameStarted then
         if self._pendingStart then
             self._pendingStart = nil
