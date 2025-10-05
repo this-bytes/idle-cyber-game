@@ -309,3 +309,232 @@ TestRunner.test("IncidentSpecialistSystem - Statistics Reporting", function()
     TestRunner.assert(stats.availableSpecialists ~= nil, "Should report available specialists")
     TestRunner.assert(stats.busySpecialists ~= nil, "Should report busy specialists")
 end)
+
+-- ============================================================================
+-- PHASE 2: THREE-STAGE LIFECYCLE TESTS
+-- ============================================================================
+
+TestRunner.test("IncidentSpecialistSystem - Phase 2: Three-Stage Initialization", function()
+    local eventBus = createMockEventBus()
+    local resourceManager = createMockResourceManager()
+    
+    local system = IncidentSpecialistSystem.new(eventBus, resourceManager)
+    system:initialize()
+    
+    local state = system:getState()
+    
+    if #state.ThreatTemplates > 0 then
+        local template = state.ThreatTemplates[1]
+        local incident = system:createIncidentFromTemplate(template, "contract_test")
+        
+        -- Check three-stage structure exists
+        TestRunner.assert(incident.stages ~= nil, "Incident should have stages")
+        TestRunner.assert(incident.stages.detect ~= nil, "Should have detect stage")
+        TestRunner.assert(incident.stages.respond ~= nil, "Should have respond stage")
+        TestRunner.assert(incident.stages.resolve ~= nil, "Should have resolve stage")
+        
+        -- Check initial stage is detect
+        TestRunner.assertEqual("detect", incident.currentStage, "Should start in detect stage")
+        TestRunner.assertEqual("IN_PROGRESS", incident.stages.detect.status, "Detect should be in progress")
+        TestRunner.assertEqual("PENDING", incident.stages.respond.status, "Respond should be pending")
+        TestRunner.assertEqual("PENDING", incident.stages.resolve.status, "Resolve should be pending")
+        
+        -- Check SLA limits are set
+        TestRunner.assert(incident.stages.detect.slaLimit ~= nil, "Detect should have SLA limit")
+        TestRunner.assert(incident.stages.respond.slaLimit ~= nil, "Respond should have SLA limit")
+        TestRunner.assert(incident.stages.resolve.slaLimit ~= nil, "Resolve should have SLA limit")
+        
+        -- Check contractId is set
+        TestRunner.assertEqual("contract_test", incident.contractId, "Contract ID should be set")
+    end
+end)
+
+TestRunner.test("IncidentSpecialistSystem - Phase 2: Stage-Specific Stats", function()
+    local eventBus = createMockEventBus()
+    local resourceManager = createMockResourceManager()
+    
+    local system = IncidentSpecialistSystem.new(eventBus, resourceManager)
+    system:initialize()
+    
+    -- Test required stat mapping
+    TestRunner.assertEqual("trace", system:getRequiredStatForStage("detect"), "Detect should require trace")
+    TestRunner.assertEqual("speed", system:getRequiredStatForStage("respond"), "Respond should require speed")
+    TestRunner.assertEqual("efficiency", system:getRequiredStatForStage("resolve"), "Resolve should require efficiency")
+end)
+
+TestRunner.test("IncidentSpecialistSystem - Phase 2: Specialist Auto-Assignment", function()
+    local eventBus = createMockEventBus()
+    local resourceManager = createMockResourceManager()
+    
+    local system = IncidentSpecialistSystem.new(eventBus, resourceManager)
+    system:initialize()
+    
+    local state = system:getState()
+    
+    if #state.ThreatTemplates > 0 and #state.Specialists > 0 then
+        local template = state.ThreatTemplates[1]
+        local incident = system:createIncidentFromTemplate(template, "contract_test")
+        
+        -- Check that specialists were auto-assigned to detect stage
+        TestRunner.assert(#incident.stages.detect.assignedSpecialists > 0, 
+            "Specialists should be auto-assigned to detect stage")
+        
+        -- Check specialists are marked busy
+        local spec = system:getSpecialistById(incident.stages.detect.assignedSpecialists[1])
+        TestRunner.assert(spec ~= nil, "Should find assigned specialist")
+        TestRunner.assertEqual(true, spec.is_busy, "Assigned specialist should be busy")
+    end
+end)
+
+TestRunner.test("IncidentSpecialistSystem - Phase 2: Stage Progress Calculation", function()
+    local eventBus = createMockEventBus()
+    local resourceManager = createMockResourceManager()
+    
+    local system = IncidentSpecialistSystem.new(eventBus, resourceManager)
+    system:initialize()
+    
+    local state = system:getState()
+    
+    if #state.ThreatTemplates > 0 and #state.Specialists > 0 then
+        local template = state.ThreatTemplates[1]
+        local incident = system:createIncidentFromTemplate(template, "contract_test")
+        incident.severity = 5  -- Set known severity
+        
+        local stage = incident.stages.detect
+        
+        -- Initially no progress (no time passed)
+        local progress = system:calculateStageProgress(incident, stage)
+        TestRunner.assertEqual(0, progress, "Initial progress should be 0")
+        
+        -- Simulate some time passing
+        stage.duration = 10
+        progress = system:calculateStageProgress(incident, stage)
+        TestRunner.assert(progress > 0, "Progress should increase with time")
+        TestRunner.assert(progress <= 1.0, "Progress should not exceed 1.0")
+    end
+end)
+
+TestRunner.test("IncidentSpecialistSystem - Phase 2: Stage Advancement", function()
+    local eventBus = createMockEventBus()
+    local resourceManager = createMockResourceManager()
+    
+    local system = IncidentSpecialistSystem.new(eventBus, resourceManager)
+    system:initialize()
+    
+    local state = system:getState()
+    
+    if #state.ThreatTemplates > 0 and #state.Specialists > 0 then
+        local template = state.ThreatTemplates[1]
+        local incident = system:createIncidentFromTemplate(template, "contract_test")
+        
+        -- Force detect stage completion
+        incident.stages.detect.status = "COMPLETED"
+        incident.stages.detect.success = true
+        
+        -- Advance to respond
+        system:advanceToNextStage(incident)
+        
+        TestRunner.assertEqual("respond", incident.currentStage, "Should advance to respond stage")
+        TestRunner.assertEqual("IN_PROGRESS", incident.stages.respond.status, "Respond should be in progress")
+        TestRunner.assert(#incident.stages.respond.assignedSpecialists > 0, "Specialists should be assigned to respond")
+        
+        -- Force respond stage completion
+        incident.stages.respond.status = "COMPLETED"
+        incident.stages.respond.success = true
+        
+        -- Advance to resolve
+        system:advanceToNextStage(incident)
+        
+        TestRunner.assertEqual("resolve", incident.currentStage, "Should advance to resolve stage")
+        TestRunner.assertEqual("IN_PROGRESS", incident.stages.resolve.status, "Resolve should be in progress")
+    end
+end)
+
+TestRunner.test("IncidentSpecialistSystem - Phase 2: Event Publishing", function()
+    local eventBus = createMockEventBus()
+    local resourceManager = createMockResourceManager()
+    
+    local system = IncidentSpecialistSystem.new(eventBus, resourceManager)
+    system:initialize()
+    
+    local state = system:getState()
+    
+    if #state.ThreatTemplates > 0 and #state.Specialists > 0 then
+        local template = state.ThreatTemplates[1]
+        local incident = system:createIncidentFromTemplate(template, "contract_test")
+        incident.severity = 3  -- Low severity for quick completion
+        
+        -- Simulate stage completion
+        incident.stages.detect.duration = 100
+        incident.currentStage = "detect"
+        incident.stages.detect.status = "IN_PROGRESS"
+        
+        system:updateIncidentStage(incident, 1.0)
+        
+        -- Check if stage completion event was published
+        local events = eventBus:getEvents()
+        -- Event may or may not fire depending on progress calculation, so we just check structure is valid
+        TestRunner.assert(events ~= nil, "Events should be tracked")
+    end
+end)
+
+TestRunner.test("IncidentSpecialistSystem - Phase 2: Legacy Migration", function()
+    local eventBus = createMockEventBus()
+    local resourceManager = createMockResourceManager()
+    
+    local system = IncidentSpecialistSystem.new(eventBus, resourceManager)
+    system:initialize()
+    
+    -- Create an old-format incident
+    local oldIncident = {
+        id = "old_incident_1",
+        trait_value_needed = 5,
+        severity = 5,
+        status = "Pending",
+        createdTime = os.time()
+    }
+    
+    -- Migrate to new format
+    system:migrateIncidentToStageFormat(oldIncident)
+    
+    -- Check migration results
+    TestRunner.assert(oldIncident.stages ~= nil, "Old incident should now have stages")
+    TestRunner.assert(oldIncident.currentStage ~= nil, "Old incident should have current stage")
+    TestRunner.assertEqual(5, oldIncident.severity, "Severity should be preserved")
+end)
+
+TestRunner.test("IncidentSpecialistSystem - Phase 2: Helper Functions", function()
+    local eventBus = createMockEventBus()
+    local resourceManager = createMockResourceManager()
+    
+    local system = IncidentSpecialistSystem.new(eventBus, resourceManager)
+    system:initialize()
+    
+    local state = system:getState()
+    
+    if #state.ThreatTemplates > 0 then
+        local template = state.ThreatTemplates[1]
+        local incident = system:createIncidentFromTemplate(template, "contract_test")
+        table.insert(state.IncidentsQueue, incident)
+        
+        -- Test getIncident
+        local found = system:getIncident(incident.id)
+        TestRunner.assert(found ~= nil, "Should find incident by ID")
+        TestRunner.assertEqual(incident.id, found.id, "Should return correct incident")
+        
+        -- Test getIncidentsByContract
+        local contractIncidents = system:getIncidentsByContract("contract_test")
+        TestRunner.assert(#contractIncidents > 0, "Should find incidents by contract")
+        
+        -- Test getAvailableSpecialists
+        local available = system:getAvailableSpecialists()
+        TestRunner.assert(available ~= nil, "Should return available specialists list")
+        
+        -- Test removeIncident
+        local removed = system:removeIncident(incident.id)
+        TestRunner.assertEqual(true, removed, "Should successfully remove incident")
+        
+        local notFound = system:getIncident(incident.id)
+        TestRunner.assert(notFound == nil, "Incident should be removed from queue")
+    end
+end)

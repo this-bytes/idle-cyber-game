@@ -11,7 +11,24 @@
     "hp": 100,
     "rarity": "common",
     "tier": 1,
-    "tags": ["phishing", "social_engineering", "email"]
+    "tags": ["phishing", "social_engineering", "email"],
+    "stageRequirements": {
+      "detect": {
+        "primaryStat": "trace",
+        "recommendedLevel": 3,
+        "difficultyMultiplier": 1.0
+      },
+      "respond": {
+        "primaryStat": "speed",
+        "recommendedLevel": 5,
+        "difficultyMultiplier": 1.2
+      },
+      "resolve": {
+        "primaryStat": "efficiency",
+        "recommendedLevel": 7,
+        "difficultyMultiplier": 1.5
+      }
+    }
   },
   {
     "id": "ddos_attack",
@@ -25,7 +42,24 @@
     "hp": 250,
     "rarity": "common",
     "tier": 2,
-    "tags": ["ddos", "network_attack", "infrastructure"]
+    "tags": ["ddos", "network_attack", "infrastructure"],
+    "stageRequirements": {
+      "detect": {
+        "primaryStat": "trace",
+        "recommendedLevel": 4,
+        "difficultyMultiplier": 1.2
+      },
+      "respond": {
+        "primaryStat": "speed",
+        "recommendedLevel": 8,
+        "difficultyMultiplier": 1.5
+      },
+      "resolve": {
+        "primaryStat": "efficiency",
+        "recommendedLevel": 10,
+        "difficultyMultiplier": 1.8
+      }
+    }
   },
   {
     "id": "malware_detection",
@@ -39,7 +73,24 @@
     "hp": 150,
     "rarity": "common",
     "tier": 2,
-    "tags": ["malware", "detection", "network"]
+    "tags": ["malware", "detection", "network"],
+    "stageRequirements": {
+      "detect": {
+        "primaryStat": "trace",
+        "recommendedLevel": 3,
+        "difficultyMultiplier": 0.8
+      },
+      "respond": {
+        "primaryStat": "speed",
+        "recommendedLevel": 6,
+        "difficultyMultiplier": 1.3
+      },
+      "resolve": {
+        "primaryStat": "efficiency",
+        "recommendedLevel": 8,
+        "difficultyMultiplier": 1.6
+      }
+    }
   },
   {
     "id": "data_exfiltration",
@@ -53,7 +104,24 @@
     "hp": 300,
     "rarity": "rare",
     "tier": 3,
-    "tags": ["data_breach", "exfiltration", "advanced"]
+    "tags": ["data_breach", "exfiltration", "advanced"],
+    "stageRequirements": {
+      "detect": {
+        "primaryStat": "trace",
+        "recommendedLevel": 8,
+        "difficultyMultiplier": 1.5
+      },
+      "respond": {
+        "primaryStat": "speed",
+        "recommendedLevel": 12,
+        "difficultyMultiplier": 2.0
+      },
+      "resolve": {
+        "primaryStat": "efficiency",
+        "recommendedLevel": 15,
+        "difficultyMultiplier": 2.5
+      }
+    }
   },
   {
     "id": "insider_threat",
@@ -67,7 +135,24 @@
     "hp": 200,
     "rarity": "rare",
     "tier": 3,
-    "tags": ["insider", "privilege_escalation", "advanced"]
+    "tags": ["insider", "privilege_escalation", "advanced"],
+    "stageRequirements": {
+      "detect": {
+        "primaryStat": "trace",
+        "recommendedLevel": 7,
+        "difficultyMultiplier": 1.8
+      },
+      "respond": {
+        "primaryStat": "speed",
+        "recommendedLevel": 10,
+        "difficultyMultiplier": 1.6
+      },
+      "resolve": {
+        "primaryStat": "efficiency",
+        "recommendedLevel": 12,
+        "difficultyMultiplier": 2.0
+      }
+    }
   },
   {
     "id": "ransomware_detection",
@@ -78,6 +163,28 @@
     "baseSeverity": 9,
     "baseTimeToResolve": 180,
     "category": "malware",
+    "hp": 400,
+    "rarity": "epic",
+    "tier": 4,
+    "tags": ["ransomware", "malware", "critical"],
+    "stageRequirements": {
+      "detect": {
+        "primaryStat": "trace",
+        "recommendedLevel": 10,
+        "difficultyMultiplier": 2.0
+      },
+      "respond": {
+        "primaryStat": "speed",
+        "recommendedLevel": 15,
+        "difficultyMultiplier": 2.5
+      },
+      "resolve": {
+        "primaryStat": "efficiency",
+        "recommendedLevel": 20,
+        "difficultyMultiplier": 3.0
+      }
+    }
+  }
     "hp": 500,
     "rarity": "epic",
     "tier": 4,
