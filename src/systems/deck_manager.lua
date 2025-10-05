@@ -68,13 +68,78 @@ end
 function DeckManager:loadAvailableCards()
     self.availableCards = {}
     
-    -- Create starter cards
+    -- Load cards from JSON via DataManager
+    if self.dataManager then
+        local cardsData = self.dataManager:getData("cards")
+        if cardsData then
+            -- Load specialist cards
+            if cardsData.specialists then
+                for _, cardData in ipairs(cardsData.specialists) do
+                    table.insert(self.availableCards, self:createCard(
+                        cardData.id,
+                        CARD_TYPES.SPECIALIST,
+                        {
+                            name = cardData.name or cardData.displayName,
+                            effect = cardData.effect or cardData.description,
+                            damage = cardData.damage or 0,
+                            splash = cardData.splash or 0,
+                            aoe = cardData.aoe or 0,
+                            block = cardData.block or 0,
+                            heal = cardData.heal or 0,
+                            stun = cardData.stun or false,
+                            shield = cardData.shield or false,
+                            cost = cardData.cost or 0,
+                            rarity = cardData.rarity or CARD_RARITIES.COMMON,
+                            shopPrice = cardData.shopPrice or 50
+                        }
+                    ))
+                end
+            end
+            
+            -- Load tool cards
+            if cardsData.tools then
+                for _, cardData in ipairs(cardsData.tools) do
+                    table.insert(self.availableCards, self:createCard(
+                        cardData.id,
+                        CARD_TYPES.TOOL,
+                        {
+                            name = cardData.name or cardData.displayName,
+                            effect = cardData.effect or cardData.description,
+                            damage = cardData.damage or 0,
+                            splash = cardData.splash or 0,
+                            aoe = cardData.aoe or 0,
+                            block = cardData.block or 0,
+                            heal = cardData.heal or 0,
+                            stun = cardData.stun or false,
+                            shield = cardData.shield or false,
+                            cost = cardData.cost or 0,
+                            rarity = cardData.rarity or CARD_RARITIES.COMMON,
+                            shopPrice = cardData.shopPrice or 50
+                        }
+                    ))
+                end
+            end
+            
+            print(string.format("📚 Loaded %d available cards from cards.json", #self.availableCards))
+        else
+            print("⚠️ No cards data found in DataManager, using fallback")
+            self:loadFallbackCards()
+        end
+    else
+        print("⚠️ DataManager not available, using fallback cards")
+        self:loadFallbackCards()
+    end
+end
+
+-- Fallback cards in case JSON loading fails
+function DeckManager:loadFallbackCards()
     table.insert(self.availableCards, self:createCard("junior_analyst", CARD_TYPES.SPECIALIST, {
         name = "Junior Analyst",
         effect = "Deal 2 damage to target threat",
         damage = 2,
         cost = 0,
-        rarity = CARD_RARITIES.COMMON
+        rarity = CARD_RARITIES.COMMON,
+        shopPrice = 50
     }))
     
     table.insert(self.availableCards, self:createCard("firewall", CARD_TYPES.TOOL, {
@@ -82,35 +147,11 @@ function DeckManager:loadAvailableCards()
         effect = "Block 3 damage from network threats",
         block = 3,
         cost = 0,
-        rarity = CARD_RARITIES.COMMON
+        rarity = CARD_RARITIES.COMMON,
+        shopPrice = 50
     }))
     
-    table.insert(self.availableCards, self:createCard("senior_analyst", CARD_TYPES.SPECIALIST, {
-        name = "Senior Analyst",
-        effect = "Deal 4 damage to target threat",
-        damage = 4,
-        cost = 0,
-        rarity = CARD_RARITIES.UNCOMMON
-    }))
-    
-    table.insert(self.availableCards, self:createCard("threat_hunter", CARD_TYPES.SPECIALIST, {
-        name = "Threat Hunter",
-        effect = "Deal 3 damage to target and 1 to adjacent threats",
-        damage = 3,
-        splash = 1,
-        cost = 0,
-        rarity = CARD_RARITIES.UNCOMMON
-    }))
-    
-    table.insert(self.availableCards, self:createCard("edr_platform", CARD_TYPES.TOOL, {
-        name = "EDR Platform",
-        effect = "Deal 2 damage to all threats",
-        aoe = 2,
-        cost = 0,
-        rarity = CARD_RARITIES.RARE
-    }))
-    
-    print(string.format("📚 Loaded %d available cards", #self.availableCards))
+    print(string.format("📚 Loaded %d fallback cards", #self.availableCards))
 end
 
 -- Create card object
@@ -124,8 +165,12 @@ function DeckManager:createCard(id, cardType, properties)
         block = properties.block or 0,
         splash = properties.splash or 0,
         aoe = properties.aoe or 0,
+        heal = properties.heal or 0,
+        stun = properties.stun or false,
+        shield = properties.shield or false,
         cost = properties.cost or 0,
-        rarity = properties.rarity or CARD_RARITIES.COMMON
+        rarity = properties.rarity or CARD_RARITIES.COMMON,
+        shopPrice = properties.shopPrice or 50
     }
 end
 
@@ -279,6 +324,9 @@ function DeckManager:resolveCardEffect(card, target)
     local result = {
         damage = 0,
         block = 0,
+        heal = 0,
+        stun = false,
+        shield = false,
         targets = {}
     }
     
@@ -302,6 +350,21 @@ function DeckManager:resolveCardEffect(card, target)
     -- Block
     if card.block > 0 then
         result.block = card.block
+    end
+    
+    -- Healing
+    if card.heal and card.heal > 0 then
+        result.heal = card.heal
+    end
+    
+    -- Stun effect
+    if card.stun then
+        result.stun = true
+    end
+    
+    -- Shield effect
+    if card.shield then
+        result.shield = true
     end
     
     return result

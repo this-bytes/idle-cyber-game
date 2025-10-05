@@ -72,19 +72,19 @@ function MainMenuLuis:buildUI()
 
     local centerCol = math.floor((numCols - buttonWidth) / 2)
     
-    local numButtons = 5
+    local numButtons = 4
     local totalStackHeight = (buttonHeight * numButtons) + (buttonGap * (numButtons - 1))
     local startRow = math.floor((numRows - totalStackHeight) / 2) + 4
 
     local currentRow = startRow
 
     luis.insertElement(self.layerName, luis.newButton("NEW OPERATION", buttonWidth, buttonHeight, function()
-        self.eventBus:publish("request_scene_change", {scene = "soc_view", new_game = true})
+        self.eventBus:publish("request_scene_change", {scene = "soc_joker", new_run = true})
     end, nil, currentRow, centerCol))
     currentRow = currentRow + buttonHeight + buttonGap
 
-    luis.insertElement(self.layerName, luis.newButton("LOAD OPERATION", buttonWidth, buttonHeight, function()
-        self.eventBus:publish("request_scene_change", {scene = "soc_view"})
+    luis.insertElement(self.layerName, luis.newButton("CONTINUE OPERATION", buttonWidth, buttonHeight, function()
+        self.eventBus:publish("request_scene_change", {scene = "soc_joker"})
     end, nil, currentRow, centerCol))
     currentRow = currentRow + buttonHeight + buttonGap
 
@@ -95,11 +95,6 @@ function MainMenuLuis:buildUI()
 
     luis.insertElement(self.layerName, luis.newButton("TERMINATE", buttonWidth, buttonHeight, function()
         love.event.quit()
-    end, nil, currentRow, centerCol))
-    currentRow = currentRow + buttonHeight + buttonGap
-
-    luis.insertElement(self.layerName, luis.newButton("ADMIN CONSOLE", buttonWidth, buttonHeight, function()
-        self.eventBus:publish("request_scene_change", {scene = "incident_admin_luis"})
     end, nil, currentRow, centerCol))
 end
 

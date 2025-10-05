@@ -28,6 +28,7 @@ local AdminModeLuis = require("src.scenes.admin_mode_luis")
 local AdminIncidentScene = require("src.scenes.incident_admin_luis")
 local AdminModeEnhanced = require("src.scenes.admin_mode_enhanced_luis")
 local IdleDebugScene = require("src.scenes.idle_debug")
+local SOCJoker = require("src.scenes.soc_joker")
 
 -- UI Components
 local StatsOverlayLuis = require("src.ui.stats_overlay_luis")
@@ -138,6 +139,7 @@ function SOCGame:initialize()
     self.sceneManager:registerScene("admin_mode", AdminModeLuis.new(self.eventBus, self.luis, self.systems))
     self.sceneManager:registerScene("admin_mode_enhanced", AdminModeEnhanced.new(self.eventBus, self.luis, self.systems))
     self.sceneManager:registerScene("incident_admin_luis", AdminIncidentScene.new(self.eventBus, self.luis, self.systems))
+    self.sceneManager:registerScene("soc_joker", SOCJoker.new(self.eventBus, self.luis, self.systems))
     
     self.sceneManager:finalizeScenes("main_menu")
     
