@@ -278,6 +278,27 @@ function ContractSystem:acceptContract(id)
             return
         end
         
+        -- EDGE CASE FIX: Check for zero specialists
+        local specialistCount = 0
+        if self.specialistSystem and self.specialistSystem.specialists then
+            specialistCount = #self.specialistSystem.specialists
+        end
+        
+        if specialistCount == 0 then
+            local errorMsg = "You need at least 1 specialist to accept contracts."
+            print("❌ Cannot accept contract: " .. errorMsg)
+            self.eventBus:publish("contract_rejected", { 
+                contract = contract, 
+                reason = errorMsg
+            })
+            self.eventBus:publish("show_modal", {
+                title = "Cannot Accept Contract",
+                message = errorMsg,
+                type = "error"
+            })
+            return false
+        end
+        
         -- Check capacity before accepting
         local canAccept, message = self:canAcceptContract(contract)
         if not canAccept then
@@ -502,13 +523,15 @@ end
 
 -- Calculate workload capacity based on specialists and upgrades
 function ContractSystem:calculateWorkloadCapacity()
-    -- Base capacity: 1 contract per 5 specialists
+    -- PHASE 5 BALANCE: Improved capacity formula (1 contract per 3 specialists)
+    -- Previous: 1 per 5 (too restrictive for new players)
+    -- New: 1 per 3 (more forgiving, allows 1-2 specialists = 1 capacity)
     local specialistCount = 0
     if self.specialistSystem and self.specialistSystem.specialists then
         specialistCount = #self.specialistSystem.specialists
     end
     
-    local baseCapacity = math.floor(specialistCount / 5)
+    local baseCapacity = math.floor(specialistCount / 3)
     
     -- Get average specialist efficiency
     local avgEfficiency = self:getAverageSpecialistEfficiency()
@@ -522,7 +545,7 @@ function ContractSystem:calculateWorkloadCapacity()
         upgradeBonus = self.upgradeSystem:getEffectValue("contract_capacity_bonus") or 0
     end
     
-    -- Total capacity
+    -- Total capacity (ensure minimum of 1 if specialists exist)
     local totalCapacity = math.max(1, math.floor(baseCapacity * efficiencyMultiplier + upgradeBonus))
     
     return totalCapacity

@@ -147,6 +147,33 @@ function SLASystem:onContractCompleted(data)
     -- Update overall compliance rate
     self:updateOverallCompliance()
     
+    -- MEMORY LEAK FIX: Clean up old tracker after finalization
+    -- Keep it briefly for history, then remove
+    self.eventBus:publish("sla_finalized", {
+        contractId = contract.id,
+        complianceScore = complianceScore,
+        rewards = rewards,
+        penalties = penalties
+    })
+    
+    -- Remove tracker after a delay (allow other systems to read it first)
+    -- In a real implementation, you might move to a history table instead
+    -- For now, we'll keep the last 100 completed trackers
+    local completedTrackers = {}
+    for id, tracker in pairs(self.contractSLAs) do
+        if not tracker.active then
+            table.insert(completedTrackers, {id = id, endTime = tracker.endTime or 0})
+        end
+    end
+    
+    -- Sort by end time and remove oldest if we have too many
+    if #completedTrackers > 100 then
+        table.sort(completedTrackers, function(a, b) return a.endTime < b.endTime end)
+        for i = 1, #completedTrackers - 100 do
+            self.contractSLAs[completedTrackers[i].id] = nil
+        end
+    end
+    
     print(string.format("📊 SLASystem: Contract %s completed with %.1f%% compliance", 
         contract.id, complianceScore * 100))
 end
@@ -170,6 +197,14 @@ function SLASystem:onContractFailed(data)
     end
     
     self:updateOverallCompliance()
+    
+    -- MEMORY LEAK FIX: Finalize and allow cleanup
+    self.eventBus:publish("sla_finalized", {
+        contractId = contract.id,
+        complianceScore = 0.0,
+        rewards = 0,
+        penalties = contract.penalties and contract.penalties.contractTerminationPenalty or 0
+    })
     
     print("📊 SLASystem: Contract " .. contract.id .. " failed - severe SLA breach")
 end

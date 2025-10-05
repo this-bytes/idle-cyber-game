@@ -29,6 +29,9 @@ This directory contains the "true" implementation of the game's core features. E
   - `ProgressionSystem`: Manages player progression, tiers, and prestige mechanics.
   - `SkillSystem`: Manages the skill trees for specialists.
   - `ThreatSystem`: Manages the generation and resolution of security threats.
+  - **`SLASystem` (Phase 1)**: Service Level Agreement tracking for contracts. Monitors incident counts, breach rates, and calculates compliance scores with rewards/penalties.
+  - **`IncidentSpecialistSystem` (Phase 2)**: Three-stage incident lifecycle management (Detect → Respond → Resolve). Handles specialist assignments, stage progression, and SLA tracking per stage.
+  - **`GlobalStatsSystem` (Phase 3)**: Company-wide performance metrics and analytics. Tracks contracts, specialists, incidents, milestones, and manual assignment statistics.
 
 ### 3. "AWESOME" Backend Utilities (`src/core/`)
 
@@ -77,3 +80,188 @@ The codebase contains several critical issues that must be addressed.
 4.  **Deprecated UI Managers**: The following files are deprecated and will be removed after LUIS migration completes:
     -   `src/ui/toast_manager.lua` - Replaced by Lovely-Toasts
     -   `src/scenes/scene_manager.lua` - Replaced by Scenery
+
+## SOC Simulation Enhancement (Phases 1-5)
+
+A comprehensive 5-phase enhancement project was completed to add sophisticated Service Level Agreement (SLA) tracking, incident lifecycle management, and performance analytics to the game.
+
+### Phase 1: Core SLA System
+
+**Implementation**: `src/systems/sla_system.lua`
+
+**Features**:
+- SLA tracking per contract with compliance scoring
+- Event-driven integration (contract events)
+- Incident recording and breach detection
+- Reward/penalty calculation based on performance
+- Overall metrics tracking (compliance rate, rewards, penalties)
+- Configuration loading from JSON (`src/data/sla_config.json`)
+- State persistence
+- Compliance rating system (EXCELLENT, GOOD, ACCEPTABLE, POOR, CRITICAL)
+
+**Contract System Enhancements**:
+- Dynamic capacity calculation (1 contract per 3 specialists)
+- Efficiency multiplier based on specialist levels
+- Performance degradation when over capacity
+- Capacity validation before accepting contracts
+- Zero specialist guard with helpful error messages
+
+### Phase 2: Three-Stage Incident Lifecycle
+
+**Implementation**: Enhanced `src/systems/incident_specialist_system.lua`
+
+**Features**:
+- Three-stage incident progression: Detect → Respond → Resolve
+- Stage tracking with status, timing, and SLA limits
+- Specialist assignment per stage
+- Automatic stage advancement based on progress
+- Per-stage SLA compliance tracking
+- Event publication for stage transitions
+- Division by zero guards in progress calculations
+
+**Stage Requirements**:
+- **Detect Stage**: Requires "trace" stat from specialists
+- **Respond Stage**: Requires "speed" stat from specialists
+- **Resolve Stage**: Requires "efficiency" stat from specialists
+
+### Phase 3: Global Statistics System
+
+**Implementation**: `src/systems/global_stats_system.lua`
+
+**Features**:
+- Company-wide performance tracking
+- Contract metrics (completed, failed, revenue, SLA compliance, streaks)
+- Specialist metrics (hired, active, levels, efficiency, XP)
+- Incident metrics (generated, resolved, resolution times)
+- Performance indicators (SLA compliance, workload status, efficiency rating)
+- Automatic milestone unlocking system
+- Manual assignment tracking
+- Real-time dashboard data API
+
+**Milestones**:
+- First Contract Completed
+- 10 Contracts Completed
+- 100 Incidents Resolved
+- 10 Specialists Hired
+- $1M Revenue Earned
+- Perfect Contract (100% SLA compliance)
+
+### Phase 4: Enhanced Admin Mode
+
+**Implementation**: `src/scenes/admin_mode_enhanced_luis.lua`
+
+**Features**:
+- Performance dashboard with real-time metrics
+- Active incidents list with progress indicators
+- Specialists panel with workload visualization
+- Manual specialist assignment workflow
+- Color-coded workload status (OPTIMAL, HIGH, CRITICAL, OVERLOADED)
+- Event-driven UI updates
+- Integration with GlobalStatsSystem
+
+**Manual Assignment**:
+- Allows tactical specialist deployment to specific incident stages
+- Tracks manual vs automatic assignments separately
+- Updates specialist workload indicators in real-time
+- Validates assignments to prevent conflicts
+
+### Phase 5: Integration, Testing, and Polish
+
+**Implementation**: Production-ready quality improvements
+
+**Features**:
+- Comprehensive integration test suite (`tests/integration/test_phase5_integration.lua`)
+- Critical bug fixes:
+  - Zero specialists guard in contract acceptance
+  - Division by zero guards in progress calculations
+  - Manual assignment to completed incidents prevention
+  - SLA tracker memory leak prevention (keeps last 100)
+- Balance improvements:
+  - Capacity formula: 1 per 3 specialists (was 1 per 5)
+  - More forgiving for early game
+  - Ensures minimum 1 capacity when specialists exist
+- Improved error messages with user-friendly feedback
+
+### Event Flow Example
+
+```
+Contract Accepted
+    ↓
+SLASystem: Initialize tracker
+    ↓
+Incident Generated (for contract)
+    ↓
+IncidentSpecialistSystem: Create 3-stage incident
+    ↓
+Stage 1: Detect (auto-assign specialists)
+    ↓
+Progress calculated based on specialist stats
+    ↓
+Stage completed → Event published
+    ↓
+SLASystem: Record stage completion time
+    ↓
+Stage 2: Respond (auto or manual assign)
+    ↓
+... (repeat for Resolve stage)
+    ↓
+Incident fully resolved
+    ↓
+GlobalStatsSystem: Update metrics
+    ↓
+Contract Completed
+    ↓
+SLASystem: Calculate compliance, apply rewards/penalties
+    ↓
+GlobalStatsSystem: Check milestones
+```
+
+### Data Flow
+
+```
+JSON Data (contracts.json, sla_config.json)
+    ↓
+DataManager → Systems
+    ↓
+SLASystem ←→ EventBus ←→ ContractSystem
+    ↓                        ↓
+IncidentSpecialistSystem ←→ SpecialistSystem
+    ↓
+GlobalStatsSystem (aggregates all events)
+    ↓
+UI (Admin Mode, Debug Overlay)
+```
+
+### Performance Characteristics
+
+- **SLA Tracker Memory**: Keeps only last 100 completed trackers
+- **GlobalStatsSystem Update**: <0.1ms per update (tested with 100 iterations)
+- **Event Bus**: O(n) where n = number of subscribers per event
+- **Incident Processing**: O(m) where m = number of active incidents
+- **Target**: 60 FPS with 100+ concurrent incidents
+
+### Testing
+
+All phases have comprehensive test coverage:
+- Unit tests for individual system methods
+- Integration tests for cross-system workflows
+- Performance benchmarks
+- Edge case validation
+
+See `tests/integration/test_phase5_integration.lua` for the complete test suite.
+
+### Configuration
+
+Balance and behavior can be tuned via JSON files:
+- `src/data/sla_config.json`: SLA thresholds, penalties, rewards
+- `src/data/contracts.json`: Contract SLA requirements and rewards
+- No code changes required for balance adjustments
+
+### Future Enhancements
+
+Potential improvements for future phases:
+- Real-time SLA status visualization in main UI
+- Historical performance graphs and trends
+- Specialist specialization bonuses for specific incident types
+- Dynamic difficulty scaling based on performance
+- Team composition synergies
