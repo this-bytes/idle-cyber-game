@@ -384,6 +384,25 @@ function ContractSystem:getActiveContracts()
     return self.activeContracts
 end
 
+-- Get contract by ID (checks both active and available)
+function ContractSystem:getContract(contractId)
+    -- Check active contracts
+    for id, contract in pairs(self.activeContracts) do
+        if id == contractId or contract.id == contractId then
+            return contract
+        end
+    end
+    
+    -- Check available contracts
+    for id, contract in pairs(self.availableContracts) do
+        if id == contractId or contract.id == contractId then
+            return contract
+        end
+    end
+    
+    return nil
+end
+
 function ContractSystem:getTotalIncomeRate()
     local totalIncome = 0
     
