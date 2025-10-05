@@ -327,7 +327,7 @@ function IncidentSpecialistSystem:Incident_Generate_and_Check(dt)
             -- Get active contract if available (for SLA tracking)
             local contractId = nil
             if self.contractSystem then
-                local activeContracts = self.contractSystem:getActiveContracts and self.contractSystem:getActiveContracts() or {}
+                local activeContracts = self.contractSystem:getActiveContracts() and self.contractSystem:getActiveContracts() or {}
                 if activeContracts and #activeContracts > 0 then
                     -- Assign to first active contract
                     local contract = activeContracts[1]

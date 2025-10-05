@@ -243,11 +243,11 @@ end
 
 function GlobalStatsSystem:update(dt)
     -- Periodic performance analysis (every 5 seconds)
+    local currentTime = love.timer.getTime()
     if not self.lastUpdateTime then
-        self.lastUpdateTime = love.timer.getTime()
+        self.lastUpdateTime = currentTime
     end
     
-    local currentTime = love.timer.getTime()
     if currentTime - self.lastUpdateTime >= 5.0 then
         self.lastUpdateTime = currentTime
         self:updatePerformanceMetrics()

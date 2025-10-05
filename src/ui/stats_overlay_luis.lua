@@ -194,6 +194,8 @@ function StatsOverlayLuis:buildUI()
     
     -- Create a semi-transparent background using a large label
     -- This simulates the dark overlay
+    -- NOTE: Using an empty label as a background overlay is a workaround.
+    -- Consider creating a dedicated background widget for better clarity and maintainability.
     local bgWidth = math.floor(screenWidth / gridSize)
     local bgHeight = math.floor(screenHeight / gridSize)
     local background = luis.newLabel("", bgWidth, bgHeight, 0, 0)
