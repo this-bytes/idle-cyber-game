@@ -69,6 +69,13 @@ function GlobalStatsSystem.new(eventBus, resourceManager)
             perfectContract = false,
             hire10Specialists = false,
             reach1MRevenue = false
+        },
+        
+        manualAssignmentStats = {
+            totalManualAssignments = 0,
+            manualAssignmentSuccessRate = 0,
+            averageManualAssignmentTime = 0,
+            lastManualAssignment = nil
         }
     }
     
@@ -124,6 +131,11 @@ function GlobalStatsSystem:initialize()
     -- Subscribe to SLA events
     self.eventBus:subscribe("sla_finalized", function(data)
         self:onSLAFinalized(data)
+    end)
+    
+    -- Subscribe to manual assignment events
+    self.eventBus:subscribe("specialist_manually_assigned", function(data)
+        self:trackManualAssignment(data)
     end)
     
     print("📊 GlobalStatsSystem: Event subscriptions registered")
@@ -222,6 +234,20 @@ end
 function GlobalStatsSystem:onSpecialistUnlocked(data)
     -- Also counts as hired
     self:onSpecialistHired(data)
+end
+
+function GlobalStatsSystem:trackManualAssignment(data)
+    local stats = self.stats.manualAssignmentStats
+    stats.totalManualAssignments = stats.totalManualAssignments + 1
+    stats.lastManualAssignment = {
+        specialistId = data.specialistId,
+        incidentId = data.incidentId,
+        stage = data.stage,
+        timestamp = data.timestamp
+    }
+    
+    print(string.format("📊 Global Stats: Manual assignment tracked (#%d)", 
+        stats.totalManualAssignments))
 end
 
 function GlobalStatsSystem:onSLAFinalized(data)
@@ -477,8 +503,28 @@ function GlobalStatsSystem:getDashboardData()
             reputationTrend = self.stats.performance.reputationTrend,
             financialHealth = self.stats.performance.financialHealth,
             workloadStatus = self.stats.performance.workloadStatus
-        }
+        },
+        
+        -- Enhanced data for Admin Mode
+        workloadPercentage = self:calculateWorkloadPercentage(),
+        slaComplianceRate = self.stats.performance.currentSLACompliance,
+        activeContracts = self.stats.contracts.totalActive,
+        totalSpecialists = self.stats.specialists.totalActive,
+        avgSpecialistLevel = self.stats.specialists.averageLevel,
+        avgResponseTime = self.stats.incidents.averageResolutionTime
     }
+end
+
+function GlobalStatsSystem:calculateWorkloadPercentage()
+    -- Calculate workload as percentage of capacity
+    local contracts = self.stats.contracts.totalActive
+    local specialists = self.stats.specialists.totalActive
+    
+    if specialists == 0 then return 1.0 end
+    
+    local ratio = contracts / specialists
+    -- Normalize to 0-1 range (assuming optimal is 0.5, critical is 1.5)
+    return math.min(1.0, ratio / 1.5)
 end
 
 function GlobalStatsSystem:formatNumber(num)

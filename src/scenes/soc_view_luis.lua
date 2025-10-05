@@ -100,10 +100,14 @@ function SOCViewLuis:buildUI()
     luis.insertElement(self.layerName, luis.newButton("Skills", buttonWidth, 3, function() 
         self.eventBus:publish("request_scene_change", {scene = "skill_tree"})
     end, nil, startRow + buttonGap * 3, startCol))
-
-    luis.insertElement(self.layerName, luis.newButton("Test Modal", buttonWidth, 3, function() 
-        self.eventBus:publish("push_scene", {scene = "modal_dialog", data = {title = "LEVEL UP!", message = "You have reached a new level of proficiency."}})
+    luis.insertElement(self.layerName, luis.newButton("🔧 Enhanced Admin", buttonWidth, 3, function() 
+        self.eventBus:publish("request_scene_change", {scene = "admin_mode_enhanced"})
     end, nil, startRow + buttonGap * 4, startCol))
+
+    -- Test Modal button (kept for testing)
+    -- luis.insertElement(self.layerName, luis.newButton("Test Modal", buttonWidth, 3, function() 
+    --     self.eventBus:publish("push_scene", {scene = "modal_dialog", data = {title = "LEVEL UP!", message = "You have reached a new level of proficiency."}})
+    -- end, nil, startRow + buttonGap * 5, startCol))
 
     luis.insertElement(self.layerName, luis.newLabel("ESC: Main Menu", numCols, 1, numRows - 2, 1, "center"))
 end

@@ -52,6 +52,13 @@ function IncidentSpecialistSystem:initialize()
     -- Reset incident timer with randomization
     self:resetIncidentTimer()
     
+    -- Subscribe to manual assignment events
+    if self.eventBus then
+        self.eventBus:subscribe("manual_assignment_requested", function(data)
+            self:manualAssignSpecialist(data.specialistId, data.incidentId, data.stage)
+        end)
+    end
+    
     print("🎯 IncidentSpecialistSystem: Initialization complete!")
     print(string.format("   - Loaded %d threat templates", #self.GameState.ThreatTemplates))
     print(string.format("   - Loaded %d specialist templates", self:countSpecialistTemplates()))
@@ -1075,6 +1082,87 @@ function IncidentSpecialistSystem:getStatistics()
     end
     
     return stats
+end
+
+-- Get all active incidents (for Admin UI)
+function IncidentSpecialistSystem:getActiveIncidents()
+    local active = {}
+    for _, incident in pairs(self.incidents) do
+        if incident.status == "ACTIVE" or incident.currentStage then
+            table.insert(active, incident)
+        end
+    end
+    return active
+end
+
+-- Get incident by ID
+function IncidentSpecialistSystem:getIncidentById(incidentId)
+    return self.incidents[incidentId]
+end
+
+-- Manually assign a specialist to an incident stage
+function IncidentSpecialistSystem:manualAssignSpecialist(specialistId, incidentId, stageName)
+    local incident = self:getIncidentById(incidentId)
+    if not incident then
+        print("❌ Manual Assignment Failed: Incident not found: " .. tostring(incidentId))
+        return false
+    end
+    
+    local stage = stageName or incident.currentStage
+    if not incident.stages or not incident.stages[stage] then
+        print("❌ Manual Assignment Failed: Invalid stage: " .. tostring(stage))
+        return false
+    end
+    
+    -- Verify specialist exists
+    local specialistSystem = self.specialistSystem or (self.systems and self.systems.specialistSystem)
+    if not specialistSystem or not specialistSystem:getSpecialist(specialistId) then
+        print("❌ Manual Assignment Failed: Specialist not found: " .. tostring(specialistId))
+        return false
+    end
+    
+    -- Add to stage's assigned specialists
+    local stageData = incident.stages[stage]
+    if not stageData.assignedSpecialists then
+        stageData.assignedSpecialists = {}
+    end
+    
+    -- Check if already assigned
+    for _, id in ipairs(stageData.assignedSpecialists) do
+        if id == specialistId then
+            print("⚠️  Specialist already assigned to this stage")
+            return false
+        end
+    end
+    
+    -- Add assignment
+    table.insert(stageData.assignedSpecialists, specialistId)
+    stageData.manuallyAssigned = true
+    
+    -- Track manual assignment in global stats
+    if self.globalStats then
+        self.globalStats.manualAssignments = (self.globalStats.manualAssignments or 0) + 1
+    end
+    
+    print(string.format("✅ Manual Assignment: Specialist %s → Incident %s (Stage: %s)", 
+        specialistId, incidentId, stage))
+    
+    -- Publish event
+    if self.eventBus then
+        self.eventBus:publish("specialist_manually_assigned", {
+            specialistId = specialistId,
+            incidentId = incidentId,
+            stage = stage,
+            timestamp = love.timer.getTime()
+        })
+    end
+    
+    return true
+end
+
+-- Set specialist system reference for manual assignments
+function IncidentSpecialistSystem:setSpecialistSystem(specialistSystem)
+    self.specialistSystem = specialistSystem
 end
 
 return IncidentSpecialistSystem
