@@ -109,6 +109,11 @@ function SOCGame:initialize()
     self.systems.gameStateEngine:registerSystem("achievementSystem", self.systems.achievementSystem)
     self.systems.gameStateEngine:registerSystem("slaSystem", self.systems.slaSystem)
     
+    -- Connect incident system to contract system for SLA integration
+    if self.systems.Incident and self.systems.Incident.setContractSystem then
+        self.systems.Incident:setContractSystem(self.systems.contractSystem)
+    end
+    
     if self.systems.gameStateEngine:loadState() then
         print("📂 Loaded game state from previous session")
     else
