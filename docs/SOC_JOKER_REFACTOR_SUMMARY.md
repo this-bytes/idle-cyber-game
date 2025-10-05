@@ -54,7 +54,6 @@ Main Menu → SOC View → SOC Joker (nested)
 **After:**
 ```
 Main Menu → SOC Joker (direct)
-          → Legacy Mode (old SOC View for testing)
 ```
 
 ### Main Menu Changes
@@ -69,7 +68,6 @@ Main Menu → SOC Joker (direct)
 **NEW BUTTONS:**
 - NEW OPERATION → soc_joker (NEW!)
 - CONTINUE OPERATION → soc_joker (NEW!)
-- LEGACY MODE → soc_view (for testing)
 - SYSTEM CONFIG
 - TERMINATE
 
@@ -77,7 +75,7 @@ Main Menu → SOC Joker (direct)
 - ✅ Card game is now the primary experience
 - ✅ No more nested navigation
 - ✅ Jump straight into gameplay
-- ✅ Legacy mode still accessible for development
+- ✅ Clean, focused game design
 
 ---
 

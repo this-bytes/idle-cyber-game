@@ -1,7 +1,7 @@
 # SOC Joker - Card-Based Roguelike Mode
 
 > **A Balatro-inspired cybersecurity breach containment game**
-> **NOW THE MAIN GAME MODE!**
+> **THE MAIN GAME MODE!**
 
 ## Quick Start
 
@@ -23,7 +23,7 @@
 
 SOC Joker is a fast-paced card game where you manage cybersecurity breach containment runs. Build your deck of specialists and tools to defeat increasingly difficult waves of threats.
 
-**This is now the primary game mode** - the old SOC View is available as "Legacy Mode" for development/testing purposes.
+**This is the primary game mode** - a complete card-based roguelike experience built on top of the existing systems.
 
 ### Core Loop
 ```
@@ -105,7 +105,6 @@ src/scenes/soc_joker.lua          # Main scene implementation (PRIMARY GAME)
 src/scenes/main_menu_luis.lua     # Updated to launch SOC Joker by default
 src/data/cards.json               # All card data (NEW - data-driven)
 src/systems/deck_manager.lua      # Updated to load from JSON
-src/scenes/soc_view_luis.lua      # Legacy mode (accessible via main menu)
 tests/scene/test_soc_joker.lua    # Unit tests
 docs/SOC_JOKER*.md                # Documentation (5 files)
 ```
