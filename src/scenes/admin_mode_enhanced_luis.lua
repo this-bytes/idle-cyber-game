@@ -309,13 +309,7 @@ function AdminModeEnhanced:drawSpecialistsPanel()
     end
     
     -- Convert specialists to array if it's a dictionary
-    local specialistArray = {}
-    for id, spec in pairs(self.availableSpecialists) do
-        if type(spec) == "table" then
-            spec.id = spec.id or id
-            table.insert(specialistArray, spec)
-        end
-    end
+    local specialistArray = self:buildSpecialistArray()
     
     if #specialistArray == 0 then
         love.graphics.setColor(0.6, 0.6, 0.6)
