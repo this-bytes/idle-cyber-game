@@ -91,10 +91,6 @@ function GlobalStatsSystem:initialize()
         self:onContractFailed(data)
     end)
     
-    self.eventBus:subscribe("contract_activated", function(data)
-        self:onContractActivated(data)
-    end)
-    
     self.eventBus:subscribe("contract_accepted", function(data)
         self:onContractActivated(data)
     end)
