@@ -187,6 +187,14 @@ function SOCGame:keypressed(key, scancode, isrepeat)
         return
     end
     
+    -- Tab toggles LUIS debug view
+    if key == "tab" and self.luis then
+        self.luis.showGrid = not self.luis.showGrid
+        self.luis.showLayerNames = not self.luis.showLayerNames
+        self.luis.showElementOutlines = not self.luis.showElementOutlines
+        return
+    end
+    
     -- Route to overlayManager first (modal overlays block other input)
     if self.overlayManager and self.overlayManager:keypressed(key) then return end
     
@@ -204,7 +212,10 @@ end
 
 -- Stripped down input handlers for brevity
 function SOCGame:keyreleased(key) end
-function SOCGame:mousereleased(x, y, button, istouch, presses) end
+function SOCGame:mousereleased(x, y, button, istouch, presses)
+    if self.luis and self.luis.mousereleased(x, y, button, istouch, presses) then return end
+    if self.sceneManager then self.sceneManager:mousereleased(x, y, button, istouch, presses) end
+end
 function SOCGame:mousemoved(x, y, dx, dy) end
 function SOCGame:wheelmoved(x, y) end
 function SOCGame:resize(w, h) end

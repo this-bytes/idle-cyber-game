@@ -293,7 +293,10 @@ function ContractSystem:acceptContract(id)
         -- EDGE CASE FIX: Check for zero specialists
         local specialistCount = 0
         if self.specialistSystem and self.specialistSystem.specialists then
-            specialistCount = #self.specialistSystem.specialists
+            -- Count specialists in dictionary (not array)
+            for _ in pairs(self.specialistSystem.specialists) do
+                specialistCount = specialistCount + 1
+            end
         end
         
         if specialistCount == 0 then
@@ -553,7 +556,7 @@ function ContractSystem:calculateWorkloadCapacity()
     
     -- Apply upgrade bonuses
     local upgradeBonus = 0
-    if self.upgradeSystem then
+    if self.upgradeSystem and self.upgradeSystem.getEffectValue then
         upgradeBonus = self.upgradeSystem:getEffectValue("contract_capacity_bonus") or 0
     end
     

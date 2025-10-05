@@ -20,7 +20,7 @@ IdleSystem.metadata = {
 function IdleSystem.new(eventBus, resourceManager, threatSystem, upgradeSystem)
     local self = setmetatable({}, IdleSystem)
     self.eventBus = eventBus
-    self.resourceSystem = resourceSystem
+    self.resourceSystem = resourceManager
     self.threatSystem = threatSystem
     self.upgradeSystem = upgradeSystem
     

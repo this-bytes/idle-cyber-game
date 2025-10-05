@@ -30,41 +30,16 @@ ResourceManager.metadata = {
     systemName = "ResourceManager"
 }
 
+
 function ResourceManager.new(eventBus)
     local self = setmetatable({}, ResourceManager)
     self.eventBus = eventBus
-    
-    -- Initialize resources with starting amounts
-    self.resources = {
-        money = 10000,           -- Start with enough to hire first specialist
-        reputation = 10,          -- Build reputation through contracts
-        xp = 1,                  -- Experience for progression
-        missionTokens = 0,       -- Special currency from crises
-        
-        -- Tracking
-        totalMoneyEarned = 0,
-        totalMoneySpent = 0,
-        totalReputationEarned = 0
-    }
-    
-    -- Generation rates (per second)
-    self.generationRates = {
-        money = 50,              -- Start at $50/sec from base operations
-        reputation = 0.2,        -- Slow reputation gain
-        xp = 1.0                 -- Steady XP gain
-    }
-    
-    -- Multipliers from upgrades/specialists
-    self.multipliers = {
-        money = 10.0,
-        reputation = 1.0,
-        xp = 1.0
-    }
-    
-    -- Resource change tracking for visual feedback
+    -- Only set up empty tables; do not set defaults here
+    self.resources = {}
+    self.generationRates = {}
+    self.multipliers = {}
     self.recentChanges = {}
     self.changeDisplayTime = 2.0
-    
     -- Subscribe to resource events from other systems
     if eventBus then
         eventBus:subscribe("resource_add", function(event)
@@ -73,23 +48,42 @@ function ResourceManager.new(eventBus)
             end
         end)
     end
-    
-    print("💰 ResourceManager initialized with starting resources:")
-    print(string.format("   Money: $%d", self.resources.money))
-    print(string.format("   Generation: $%.0f/sec", self.generationRates.money))
-    
     return self
+end
+
+-- Set all resources to default values (for new game only)
+function ResourceManager:resetToDefaults()
+    self.resources = {
+        money = 10000,           -- Start with enough to hire first specialist
+        reputation = 10,         -- Build reputation through contracts
+        xp = 1,                  -- Experience for progression
+        missionTokens = 0,       -- Special currency from crises
+        -- Tracking
+        totalMoneyEarned = 0,
+        totalMoneySpent = 0,
+        totalReputationEarned = 0
+    }
+    self.generationRates = {
+        money = 50,              -- Start at $50/sec from base operations
+        reputation = 0.2,        -- Slow reputation gain
+        xp = 1.0                 -- Steady XP gain
+    }
+    self.multipliers = {
+        money = 10.0,
+        reputation = 1.0,
+        xp = 1.0
+    }
+    self.recentChanges = {}
 end
 
 -- Initialize method required by some systems/tests
 function ResourceManager:initialize()
-    -- Placeholder initialization for compatibility with legacy callers
-    -- Ensure generationRates and resources are set to sane defaults
-    if not self.resources then
-        self.resources = { money = 1000, reputation = 0, xp = 0, missionTokens = 0 }
-    end
-    if not self.generationRates then
-        self.generationRates = { money = 0, reputation = 0, xp = 0 }
+    -- Only set defaults if resources or generationRates are empty (i.e., new game or test)
+    local needsDefaults = (not self.resources or not next(self.resources))
+        or (not self.generationRates or not next(self.generationRates))
+        or (not self.multipliers or not next(self.multipliers))
+    if needsDefaults then
+        self:resetToDefaults()
     end
     return true
 end
@@ -312,25 +306,27 @@ function ResourceManager:getState()
 end
 
 -- Load save data
+
 function ResourceManager:loadSaveData(data)
+    -- Overwrite all state with saved data
     if data.resources then
+        self.resources = {}
         for k, v in pairs(data.resources) do
             self.resources[k] = v
         end
     end
-    
     if data.generationRates then
+        self.generationRates = {}
         for k, v in pairs(data.generationRates) do
             self.generationRates[k] = v
         end
     end
-    
     if data.multipliers then
+        self.multipliers = {}
         for k, v in pairs(data.multipliers) do
             self.multipliers[k] = v
         end
     end
-    
     print("💰 Resources loaded from save")
 end
 

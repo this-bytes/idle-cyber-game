@@ -121,9 +121,28 @@ function SOCViewLuis:update(dt)
 end
 
 function SOCViewLuis:draw()
-    -- *** BUG FIX ***
-    -- Restore a basic background draw call so the screen is not blank.
-    love.graphics.clear(0.05, 0.05, 0.1, 1.0)
+    -- Modern gradient background
+    local width, height = love.graphics.getWidth(), love.graphics.getHeight()
+    
+    -- Create a subtle gradient background
+    for y = 0, height, 1 do
+        local alpha = 0.02 + (y / height) * 0.05  -- Gradient from top to bottom
+        love.graphics.setColor(0.05, 0.08, 0.15, alpha)
+        love.graphics.line(0, y, width, y)
+    end
+    
+    -- Add some subtle grid lines for a tech feel
+    love.graphics.setColor(0.1, 0.15, 0.25, 0.1)
+    local gridSize = 50
+    for x = 0, width, gridSize do
+        love.graphics.line(x, 0, x, height)
+    end
+    for y = 0, height, gridSize do
+        love.graphics.line(0, y, width, y)
+    end
+    
+    -- Reset color
+    love.graphics.setColor(1, 1, 1, 1)
 end
 
 function SOCViewLuis:keypressed(key)

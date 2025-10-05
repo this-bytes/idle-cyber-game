@@ -30,18 +30,12 @@ local MANAGER_PATTERN = "_manager%.lua$"  -- Matches *_manager.lua files (DataMa
 local IGNORE_FILES = {
     "system_registry.lua",
     "game_state_engine.lua",  -- Special case - initialized first
-    "crisis_system.lua",       -- Broken syntax
-    "network_save_system.lua", -- Missing dependencies
-    "player_system.lua",       -- Missing dependencies
     "effect_processor.lua",    -- Utility, not a system
     "formula_engine.lua",      -- Utility, not a system
     "item_registry.lua",       -- Utility, not a system
     "proc_gen.lua",            -- Utility, not a system
     "synergy_detector.lua",    -- Utility, not a system
     "analytics_collector.lua", -- Utility, not a system
-    "save_system.lua",         -- Deprecated - GameStateEngine handles saves
-    "soc_stats.lua",           -- Deprecated
-    "soc_idle_operations.lua"  -- Deprecated
 }
 
 function SystemRegistry.new(eventBus)
