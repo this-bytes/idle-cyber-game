@@ -71,7 +71,7 @@ function OverlayManager:mousepressed(x, y, button)
                     return true
                 end
                 -- Only treat modal overlays as capturing when they're visible
-                if o.modal and (o.visible == nil or o.visible) then
+                if o.modal and o.visible == true then
                     print(string.format("[UI DEBUG] OverlayManager:mousepressed captured by modal overlay at index=%d", i))
                     return true
                 end
@@ -96,7 +96,7 @@ function OverlayManager:mousereleased(x, y, button)
                     print(string.format("[UI DEBUG] OverlayManager:mousereleased captured by overlay.shouldCaptureInput at index=%d", i))
                     return true
                 end
-                if o.modal and (o.visible == nil or o.visible) then
+                if o.modal and o.visible == true then
                     print(string.format("[UI DEBUG] OverlayManager:mousereleased captured by modal overlay at index=%d", i))
                     return true
                 end
@@ -121,7 +121,7 @@ function OverlayManager:mousemoved(x, y, dx, dy)
                     print(string.format("[UI DEBUG] OverlayManager:mousemoved captured by overlay.shouldCaptureInput at index=%d", i))
                     return true
                 end
-                if o.modal and (o.visible == nil or o.visible) then
+                if o.modal and o.visible == true then
                     print(string.format("[UI DEBUG] OverlayManager:mousemoved captured by modal overlay at index=%d", i))
                     return true
                 end
@@ -146,7 +146,7 @@ function OverlayManager:wheelmoved(x, y)
                     print(string.format("[UI DEBUG] OverlayManager:wheelmoved captured by overlay.shouldCaptureInput at index=%d", i))
                     return true
                 end
-                if o.modal and (o.visible == nil or o.visible) then
+                if o.modal and o.visible == true then
                     print(string.format("[UI DEBUG] OverlayManager:wheelmoved captured by modal overlay at index=%d", i))
                     return true
                 end
@@ -181,7 +181,7 @@ function OverlayManager:keypressed(key)
                     print(string.format("[UI DEBUG] OverlayManager:keypressed captured by overlay.shouldCaptureInput at index=%d key=%s", i, tostring(key)))
                     return true
                 end
-                if o.modal and (o.visible == nil or o.visible) then
+                if o.modal and o.visible == true then
                     print(string.format("[UI DEBUG] OverlayManager:keypressed captured by modal overlay at index=%d key=%s", i, tostring(key)))
                     return true
                 end
@@ -206,7 +206,7 @@ function OverlayManager:keyreleased(key)
                     print(string.format("[UI DEBUG] OverlayManager:keyreleased captured by overlay.shouldCaptureInput at index=%d key=%s", i, tostring(key)))
                     return true
                 end
-                if o.modal and (o.visible == nil or o.visible) then
+                if o.modal and o.visible == true then
                     print(string.format("[UI DEBUG] OverlayManager:keyreleased captured by modal overlay at index=%d key=%s", i, tostring(key)))
                     return true
                 end

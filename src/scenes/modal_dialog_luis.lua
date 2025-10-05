@@ -77,8 +77,9 @@ function ModalDialog:buildUI()
     luis.insertElement(self.layerName, self.messageLabel)
 
     -- *** BUG FIX ***
-    -- The 'self' inside the onClick callback refers to the button. We must capture
-    -- the scene's 'self' in a local variable to call the scene manager.
+    -- The 'self' inside the onClick callback refers to the button, not the scene.
+    -- Always capture the scene's 'self' in a local variable for use in LUIS callbacks.
+    -- This closure pattern should be documented in the development guide as a common LUIS pitfall.
     local scene_self = self
     local okButton = luis.newButton("OK", 12, 3, function() 
         scene_self.sceneManager:popScene()

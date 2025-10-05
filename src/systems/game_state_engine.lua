@@ -13,6 +13,22 @@ GameStateEngine.__index = GameStateEngine
 
 local json = require("src.utils.dkjson")
 
+-- Deep copy utility to prevent reference issues during state collection
+local function deepCopy(orig)
+    local orig_type = type(orig)
+    local copy
+    if orig_type == 'table' then
+        copy = {}
+        for orig_key, orig_value in next, orig, nil do
+            copy[deepCopy(orig_key)] = deepCopy(orig_value)
+        end
+        setmetatable(copy, deepCopy(getmetatable(orig)))
+    else
+        copy = orig
+    end
+    return copy
+end
+
 -- Create new game state engine
 function GameStateEngine.new(eventBus)
     local self = setmetatable({}, GameStateEngine)
@@ -102,7 +118,8 @@ function GameStateEngine:getCompleteState()
             end)
             
             if success and systemState then
-                completeState.systems[name] = systemState
+                -- Deep copy the state to prevent reference issues
+                completeState.systems[name] = deepCopy(systemState)
             else
                 print("⚠️  Failed to get state from system: " .. name)
                 if not success then
@@ -116,12 +133,74 @@ function GameStateEngine:getCompleteState()
             end)
             
             if success and systemState then
-                completeState.systems[name] = systemState
+                completeState.systems[name] = deepCopy(systemState)
             end
         end
     end
     
+    -- Validate state for duplicate IDs
+    self:validateState(completeState)
+    
     return completeState
+end
+
+-- Validate state for common issues (duplicate IDs, etc.)
+function GameStateEngine:validateState(state)
+    if not state or not state.systems then return end
+    
+    local seenIds = {}
+    local warnings = {}
+    
+    -- Check specialists for duplicate IDs
+    if state.systems.specialistSystem and state.systems.specialistSystem.specialists then
+        local specialists = state.systems.specialistSystem.specialists
+        local specialistIds = {}
+        
+        for id, specialist in pairs(specialists) do
+            if specialistIds[id] then
+                table.insert(warnings, string.format("⚠️  Duplicate specialist ID detected: %s", tostring(id)))
+            end
+            specialistIds[id] = true
+            
+            if specialist.id and specialist.id ~= tonumber(id) and specialist.id ~= id then
+                table.insert(warnings, string.format("⚠️  Specialist ID mismatch: key='%s' but specialist.id='%s'", tostring(id), tostring(specialist.id)))
+            end
+        end
+    end
+    
+    -- Check threats for duplicate IDs
+    if state.systems.threatSystem and state.systems.threatSystem.activeThreats then
+        local threats = state.systems.threatSystem.activeThreats
+        local threatIds = {}
+        
+        for id, threat in pairs(threats) do
+            if threatIds[id] then
+                table.insert(warnings, string.format("⚠️  Duplicate threat ID detected: %s", tostring(id)))
+            end
+            threatIds[id] = true
+        end
+    end
+    
+    -- Check contracts for duplicate IDs
+    if state.systems.contractSystem then
+        local contracts = state.systems.contractSystem.activeContracts or {}
+        local contractIds = {}
+        
+        for id, contract in pairs(contracts) do
+            if contractIds[id] then
+                table.insert(warnings, string.format("⚠️  Duplicate contract ID detected: %s", tostring(id)))
+            end
+            contractIds[id] = true
+        end
+    end
+    
+    -- Print all warnings
+    if #warnings > 0 then
+        print("🔍 State Validation Warnings:")
+        for _, warning in ipairs(warnings) do
+            print("   " .. warning)
+        end
+    end
 end
 
 -- Load state into all systems

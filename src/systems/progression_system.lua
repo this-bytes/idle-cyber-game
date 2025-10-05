@@ -54,7 +54,7 @@ end
 function ProgressionSystem:loadConfig()
     local config = {}
     local success, data = pcall(function()
-        local json = require("src.utils.json")
+        local json = require("src.utils.dkjson")
         local file = io.open("src/data/progression_config.json", "r")
         if file then
             local content = file:read("*all")

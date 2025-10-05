@@ -1,0 +1,101 @@
+{
+  "defaultSLA": {
+    "detectionTimeSLA": 45,
+    "responseTimeSLA": 180,
+    "resolutionTimeSLA": 600,
+    "minimumSuccessRate": 0.85,
+    "maxAllowedIncidents": 25
+  },
+  
+  "tierMultipliers": {
+    "1": 1.5,
+    "2": 1.2,
+    "3": 1.0,
+    "4": 0.8,
+    "5": 0.6
+  },
+  
+  "performanceBands": {
+    "excellent": {
+      "threshold": 0.95,
+      "bonusMultiplier": 1.5,
+      "description": "Outstanding performance - exceeds all expectations"
+    },
+    "good": {
+      "threshold": 0.85,
+      "bonusMultiplier": 1.0,
+      "description": "Good performance - meets SLA requirements"
+    },
+    "acceptable": {
+      "threshold": 0.75,
+      "bonusMultiplier": 0.5,
+      "description": "Acceptable performance - below target but not breached"
+    },
+    "poor": {
+      "threshold": 0.70,
+      "penaltyMultiplier": 1.0,
+      "description": "Poor performance - SLA at risk"
+    },
+    "critical": {
+      "threshold": 0.0,
+      "penaltyMultiplier": 1.5,
+      "description": "Critical failure - SLA breached"
+    }
+  },
+  
+  "warningThresholds": {
+    "minor": {
+      "scoreBelow": 0.85,
+      "message": "Contract performance slightly below target"
+    },
+    "moderate": {
+      "scoreBelow": 0.80,
+      "message": "Contract performance needs improvement"
+    },
+    "severe": {
+      "scoreBelow": 0.75,
+      "message": "Contract performance critical - SLA breach imminent"
+    }
+  },
+  
+  "complianceWeights": {
+    "successRate": 0.7,
+    "timingCompliance": 0.3
+  },
+  
+  "timingStageWeights": {
+    "detect": 0.25,
+    "respond": 0.35,
+    "resolve": 0.40
+  },
+  
+  "penaltyScaling": {
+    "minor": {
+      "scoreRange": [0.70, 0.85],
+      "multiplier": 0.5
+    },
+    "moderate": {
+      "scoreRange": [0.50, 0.70],
+      "multiplier": 1.0
+    },
+    "severe": {
+      "scoreRange": [0.0, 0.50],
+      "multiplier": 1.5
+    }
+  },
+  
+  "rewardScaling": {
+    "standard": {
+      "scoreRange": [0.85, 0.90],
+      "multiplier": 1.0
+    },
+    "excellent": {
+      "scoreRange": [0.90, 0.95],
+      "multiplier": 1.25
+    },
+    "perfect": {
+      "scoreRange": [0.95, 1.0],
+      "multiplier": 1.5
+    }
+  }
+}

@@ -78,6 +78,5 @@ function IncidentSystem:loadState(state)
     end
 end
 
-return Wrapper
+return Wrapper, IncidentSystem
 
-return IncidentSystem

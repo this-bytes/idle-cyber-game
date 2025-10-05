@@ -109,7 +109,14 @@ end
 function ContractSystem:generateIncome()
     local totalIncome = 0
     
-    if #self.activeContracts == 0 then
+    -- Count active contracts (can't use # on dictionary)
+    local hasActiveContracts = false
+    for _ in pairs(self.activeContracts) do
+        hasActiveContracts = true
+        break
+    end
+    
+    if not hasActiveContracts then
         return
     end
 
@@ -276,7 +283,8 @@ function ContractSystem:acceptContract(id)
 
         self.activeContracts[id] = contract
         self.eventBus:publish("contract_accepted", { contract = contract })
-        print("Accepted contract: " .. contract.clientName .. " (Assigned: CEO)")
+        print(string.format("✅ Contract accepted: %s ($%d, %ds, $%.2f/sec)", 
+            contract.clientName, contract.reward, contract.duration, contract.reward / contract.duration))
         
         -- Update income rate when contract is accepted
         self:updateIncomeRate()
@@ -407,6 +415,96 @@ function ContractSystem:getStats()
         completedContracts = completedCount,
         totalIncomeRate = self:getTotalIncomeRate()
     }
+end
+
+-- Get state for saving
+function ContractSystem:getState()
+    return {
+        nextContractId = self.nextContractId,
+        contractGenerationTimer = self.contractGenerationTimer,
+        contractGenerationInterval = self.contractGenerationInterval,
+        incomeTimer = self.incomeTimer,
+        incomeInterval = self.incomeInterval,
+        autoAcceptEnabled = self.autoAcceptEnabled,
+        maxActiveContracts = self.maxActiveContracts,
+        availableContracts = self.availableContracts,
+        activeContracts = self.activeContracts,
+        completedContracts = self.completedContracts
+    }
+end
+
+-- Load state from save
+function ContractSystem:loadState(state)
+    if not state then return end
+    
+    -- Restore ID counter
+    if state.nextContractId then
+        self.nextContractId = state.nextContractId
+    end
+    
+    -- Restore timers
+    if state.contractGenerationTimer then
+        self.contractGenerationTimer = state.contractGenerationTimer
+    end
+    if state.contractGenerationInterval then
+        self.contractGenerationInterval = state.contractGenerationInterval
+    end
+    if state.incomeTimer then
+        self.incomeTimer = state.incomeTimer
+    end
+    if state.incomeInterval then
+        self.incomeInterval = state.incomeInterval
+    end
+    
+    -- Restore settings
+    if state.autoAcceptEnabled ~= nil then
+        self.autoAcceptEnabled = state.autoAcceptEnabled
+    end
+    if state.maxActiveContracts then
+        self.maxActiveContracts = state.maxActiveContracts
+    end
+    
+    -- Restore contracts
+    if state.availableContracts then
+        self.availableContracts = state.availableContracts
+        -- Ensure nextContractId is higher than any loaded contract ID
+        for id in pairs(self.availableContracts) do
+            local numId = tonumber(id)
+            if numId and numId >= self.nextContractId then
+                self.nextContractId = numId + 1
+            end
+        end
+    end
+    
+    if state.activeContracts then
+        self.activeContracts = state.activeContracts
+        -- Ensure nextContractId is higher than any loaded contract ID
+        for id in pairs(self.activeContracts) do
+            local numId = tonumber(id)
+            if numId and numId >= self.nextContractId then
+                self.nextContractId = numId + 1
+            end
+        end
+    end
+    
+    if state.completedContracts then
+        self.completedContracts = state.completedContracts
+    end
+    
+    print(string.format("📜 ContractSystem loaded: nextId=%d, %d available, %d active, %d completed", 
+        self.nextContractId,
+        self:countTable(self.availableContracts),
+        self:countTable(self.activeContracts),
+        #self.completedContracts))
+end
+
+-- Helper to count table entries
+function ContractSystem:countTable(tbl)
+    local count = 0
+    for _ in pairs(tbl) do
+        count = count + 1
+    end
+    return count
 end
 
 return ContractSystem

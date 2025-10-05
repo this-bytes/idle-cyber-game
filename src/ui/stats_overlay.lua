@@ -347,7 +347,7 @@ function StatsOverlay:keypressed(key)
     if not self.visible then return false end
     -- ESC closes the overlay
     if key == 'escape' then
-        self.visible = false
+        self:hide()
         return true
     end
     return true -- consume other keys while overlay visible

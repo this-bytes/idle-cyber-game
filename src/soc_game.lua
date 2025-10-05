@@ -38,6 +38,7 @@ local IdleDebugScene = require("src.scenes.idle_debug")
 -- UI Components
 local StatsOverlayLuis = require("src.ui.stats_overlay_luis")
 local OverlayManager = require("src.ui.overlay_manager")
+local lovelyToasts = require("lib.lovely-toasts.lovelyToasts")
 
 local SOCGame = {}
 SOCGame.__index = SOCGame
@@ -50,6 +51,7 @@ function SOCGame.new(eventBus)
     self.luis = nil
     self.statsOverlay = nil
     self.overlayManager = nil
+    self.toasts = lovelyToasts
     self.isInitialized = false
     self.isGameStarted = false
     self.socOperations = {
@@ -111,6 +113,14 @@ function SOCGame:initialize()
     self.eventBus:subscribe("show_modal", function(data)
         self.sceneManager:pushScene("modal_dialog", data)
     end)
+    
+    -- Start game when entering soc_view (main gameplay scene)
+    self.eventBus:subscribe("request_scene_change", function(data)
+        if data and data.scene == "soc_view" and not self.isGameStarted then
+            print("🎮 Starting game systems (entering soc_view)...")
+            self._pendingStart = true
+        end
+    end)
 
     self.systems.contractSystem:initialize()
     self.systems.specialistSystem:initialize()
@@ -130,15 +140,108 @@ function SOCGame:initialize()
     self.sceneManager:registerScene("incident_response", IncidentResponseLuis.new(self.eventBus, self.luis, self.systems))
     self.sceneManager:registerScene("admin_mode", AdminModeLuis.new(self.eventBus, self.luis, self.systems))
     self.sceneManager:registerScene("incident_admin_luis", AdminIncidentScene.new(self.eventBus, self.luis, self.systems))
+    self.sceneManager:registerScene("IdleDebugScene", IdleDebugScene.new(self.eventBus, self.luis, self.systems))
     
     self.sceneManager:finalizeScenes("main_menu")
     
     self.statsOverlay = StatsOverlayLuis.new(self.eventBus, self.systems, self.luis)
     self.overlayManager = OverlayManager.new()
     self.overlayManager:push(self.statsOverlay)
+    
+    -- Configure toast notifications
+    self.toasts.canvasSize = {love.graphics.getWidth(), love.graphics.getHeight()}
+    
+    -- Subscribe to game events for notifications
+    self:setupNotifications()
 
     print("✅ SOC Game Systems Initialized!")
     return true
+end
+
+function SOCGame:setupNotifications()
+    -- Offline earnings display
+    self.eventBus:subscribe("offline_earnings_calculated", function(data)
+        local timeAway = data.idleTime or 0
+        local minutes = math.floor(timeAway / 60)
+        local hours = math.floor(minutes / 60)
+        minutes = minutes % 60
+        
+        local timeStr = ""
+        if hours > 0 then
+            timeStr = string.format("%dh %dm", hours, minutes)
+        else
+            timeStr = string.format("%dm", minutes)
+        end
+        
+        if data.netGain > 0 then
+            local message = string.format("💤 Welcome back! You earned $%d while away (%s)", 
+                math.floor(data.netGain), timeStr)
+            self.toasts.show(message, 5.0, "middle")
+        elseif data.netGain < 0 then
+            local message = string.format("💤 While away (%s): $%d income, $%d losses = $%d net", 
+                timeStr, 
+                math.floor(data.earnings), 
+                math.floor(data.damage), 
+                math.floor(data.netGain))
+            self.toasts.show(message, 6.0, "middle")
+        end
+    end)
+    
+    -- Threat notifications
+    self.eventBus:subscribe("threat_detected", function(data)
+        local threat = data.threat
+        local message = string.format("🚨 Threat Detected: %s", threat.name or "Unknown Threat")
+        self.toasts.show(message, 3.0, "top")
+    end)
+    
+    self.eventBus:subscribe("threat_resolved", function(data)
+        local threat = data.threat
+        if data.status == "success" then
+            local message = string.format("✅ Threat Resolved: %s", threat.name or "Threat")
+            self.toasts.show(message, 2.5, "top")
+        else
+            local message = string.format("⚠️ Threat Failed: %s", threat.name or "Threat")
+            self.toasts.show(message, 3.0, "top")
+        end
+    end)
+    
+    -- Contract notifications
+    self.eventBus:subscribe("contract_accepted", function(data)
+        local message = "📋 Contract Accepted"
+        self.toasts.show(message, 2.0, "top")
+    end)
+    
+    self.eventBus:subscribe("contract_completed", function(data)
+        local message = "✅ Contract Completed!"
+        self.toasts.show(message, 2.5, "top")
+    end)
+    
+    -- Specialist notifications
+    self.eventBus:subscribe("specialist_hired", function(data)
+        local message = "👥 New Specialist Hired!"
+        self.toasts.show(message, 2.0, "top")
+    end)
+    
+    self.eventBus:subscribe("specialist_level_up", function(data)
+        local message = string.format("⭐ %s leveled up to %d!", data.name or "Specialist", data.newLevel or 0)
+        self.toasts.show(message, 3.0, "top")
+    end)
+    
+    -- Achievement notifications
+    self.eventBus:subscribe("achievement_unlocked", function(data)
+        local achievement = data.achievement
+        local message = string.format("🏆 Achievement: %s", achievement.name or "Unlocked!")
+        self.toasts.show(message, 4.0, "top")
+    end)
+    
+    -- Event notifications
+    self.eventBus:subscribe("dynamic_event_triggered", function(data)
+        local event = data.event
+        if event.title then
+            local message = string.format("🎲 %s", event.title)
+            self.toasts.show(message, 3.0, "top")
+        end
+    end)
 end
 
 function SOCGame:update(dt)
@@ -147,7 +250,12 @@ function SOCGame:update(dt)
     self.luis.update(dt)
     self.sceneManager:update(dt)
     if self.overlayManager then self.overlayManager:update(dt) end
+    if self.toasts then self.toasts.update(dt) end
+    
+    -- Update game state engine (for auto-save)
     if self.systems.gameStateEngine then self.systems.gameStateEngine:update(dt) end
+    
+    -- Update individual gameplay systems
     if not self.isGameStarted then
         if self._pendingStart then
             self._pendingStart = nil
@@ -155,6 +263,14 @@ function SOCGame:update(dt)
         end
         return
     end
+    
+    -- Update all core gameplay systems
+    if self.systems.contractSystem then self.systems.contractSystem:update(dt) end
+    if self.systems.threatSystem then self.systems.threatSystem:update(dt) end
+    if self.systems.eventSystem then self.systems.eventSystem:update(dt) end
+    if self.systems.specialistSystem then self.systems.specialistSystem:update(dt) end
+    if self.systems.achievementSystem then self.systems.achievementSystem:update(dt) end
+    if self.systems.Incident then self.systems.Incident:update(dt) end
 end
 
 function SOCGame:draw()
@@ -162,22 +278,67 @@ function SOCGame:draw()
     if self.luis then self.luis.draw() end
     if self.systems.particleSystem then self.systems.particleSystem:draw() end
     if self.overlayManager then self.overlayManager:draw() end
+    if self.toasts then self.toasts.draw() end
 end
 
 function SOCGame:startGame()
     self.isGameStarted = true
     print("🚀 SOCGame: Game started!")
-    if self.systems.gameStateEngine then self.systems.gameStateEngine:calculateOfflineEarnings() end
+    
+    -- Calculate offline earnings
+    if self.systems.gameStateEngine then 
+        self.systems.gameStateEngine:calculateOfflineEarnings() 
+    end
+    
+    -- Show welcome message for new players
+    if self.toasts and self.systems.gameStateEngine then
+        local hasExistingSave = self.systems.gameStateEngine:saveExists()
+        if not hasExistingSave then
+            -- New game - show welcome tutorial
+            self.toasts.show("🛡️ Welcome to SOC Command Center!", 4.0, "middle")
+            -- Schedule subsequent hints
+            self.eventBus:publish("show_tutorial_hint", {step = 1})
+        else
+            -- Returning player
+            self.toasts.show("🛡️ Welcome back, Commander!", 2.5, "top")
+        end
+    end
 end
 
 function SOCGame:keypressed(key, scancode, isrepeat)
-    if self.sceneManager and self.sceneManager:keypressed(key, scancode, isrepeat) then return end
-    if self.luis and self.luis.keypressed(key, scancode, isrepeat) then return end
+    if key == "f1" then
+        self.eventBus:publish("show_tutorial_hint", {step = 0})
+        return
+    end
+    -- Need to switch to the debug overlay scene when F3 is pressed
+    if key == "f3" then
+        self.eventBus:publish("request_scene_change", "idle_debug")
+        return
+    end
+    if self.sceneManager then
+        local handled = self.sceneManager:keypressed(key, scancode, isrepeat)
+        if handled then
+            return
+        end
+    end
+    if self.luis then
+        local handled = self.luis.keypressed(key, scancode, isrepeat)
+        if handled then
+            return
+        end
+    end
 end
 
 function SOCGame:mousepressed(x, y, button, istouch, presses)
-    if self.luis and self.luis.mousepressed(x, y, button, istouch, presses) then return end
-    if self.sceneManager then self.sceneManager:mousepressed(x, y, button, istouch, presses) end
+    if self.luis then
+        local handled = self.luis.mousepressed(x, y, button, istouch, presses)
+        if handled then
+            return
+        end
+    end
+    if self.sceneManager then
+        self.sceneManager:mousepressed(x, y, button, istouch, presses)
+    end
 end
 
 -- Stripped down input handlers for brevity

@@ -86,7 +86,9 @@ function ToastWrapper:error(message, duration)
 end
 
 -- Dismiss method (Lovely-Toasts doesn't support direct dismissal by ID)
--- This is a no-op for compatibility
+-- This is a no-op for compatibility.
+-- NOTE: This method always returns false because Lovely-Toasts does not support manual dismissal of toasts by ID.
+-- If your code relies on dismiss() returning true for successful dismissal, you must implement your own tracking or switch to a toast library that supports this feature.
 function ToastWrapper:dismiss(toastId)
     -- Lovely-Toasts handles dismissal automatically
     -- Manual dismissal not supported by library

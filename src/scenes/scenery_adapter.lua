@@ -94,12 +94,17 @@ function SceneryAdapter:popScene(isSwitching)
     end
     table.remove(self.sceneStack)
 
-    -- If we are not in the middle of a full switch, load the new top scene
+    -- If we are not in the middle of a full switch, resume the new top scene
     if not isSwitching then
         local newTopScene = self:getCurrentScene()
-        if newTopScene and newTopScene.load then
-            -- We reload the scene underneath to refresh its UI state
-            newTopScene:load()
+        if newTopScene then
+            if newTopScene.onResume then
+                -- Prefer efficient state restoration
+                newTopScene:onResume()
+            elseif newTopScene.load then
+                -- Fallback to full reload if no onResume is provided
+                newTopScene:load()
+            end
         end
     end
 end

@@ -1,0 +1,236 @@
+[
+  {
+    "id": "basic_soc_monitoring",
+    "type": "contract",
+    "clientName": "Small Tech Company",
+    "displayName": "Basic SOC Monitoring",
+    "description": "Entry-level security monitoring for a small technology company. Handle basic threats with reasonable response times.",
+    "baseBudget": 3000,
+    "baseDuration": 180,
+    "reputationReward": 5,
+    "riskLevel": "LOW",
+    "tier": 1,
+    "rarity": "common",
+    "tags": ["entry", "tech", "basic"],
+    
+    "slaRequirements": {
+      "detectionTimeSLA": 60,
+      "responseTimeSLA": 240,
+      "resolutionTimeSLA": 900,
+      "requiredSkillLevels": {
+        "detection": 3,
+        "response": 5,
+        "resolution": 7
+      },
+      "minimumSuccessRate": 0.80,
+      "maxAllowedIncidents": 30
+    },
+    
+    "capacityRequirements": {
+      "minimumSpecialists": 1,
+      "minimumTotalEfficiency": 5,
+      "minimumTotalSpeed": 5,
+      "requiredSkillCoverage": ["basic_monitoring"]
+    },
+    
+    "rewards": {
+      "slaComplianceBonus": 1000,
+      "perfectPerformanceBonus": 500,
+      "reputationBonus": 3
+    },
+    
+    "penalties": {
+      "slaBreachFine": 1500,
+      "contractTerminationPenalty": 2500,
+      "reputationLoss": 8
+    }
+  },
+  
+  {
+    "id": "startup_security_package",
+    "type": "contract",
+    "clientName": "FinTech Startup",
+    "displayName": "Startup Security Package",
+    "description": "Comprehensive security monitoring for a growing financial technology startup. Handle moderate threats with good response times.",
+    "baseBudget": 8000,
+    "baseDuration": 240,
+    "reputationReward": 12,
+    "riskLevel": "MEDIUM",
+    "tier": 2,
+    "rarity": "common",
+    "tags": ["startup", "fintech", "moderate"],
+    
+    "slaRequirements": {
+      "detectionTimeSLA": 45,
+      "responseTimeSLA": 180,
+      "resolutionTimeSLA": 600,
+      "requiredSkillLevels": {
+        "detection": 5,
+        "response": 7,
+        "resolution": 10
+      },
+      "minimumSuccessRate": 0.85,
+      "maxAllowedIncidents": 25
+    },
+    
+    "capacityRequirements": {
+      "minimumSpecialists": 2,
+      "minimumTotalEfficiency": 10,
+      "minimumTotalSpeed": 8,
+      "requiredSkillCoverage": ["basic_analysis", "network_monitoring"]
+    },
+    
+    "rewards": {
+      "slaComplianceBonus": 3000,
+      "perfectPerformanceBonus": 1500,
+      "reputationBonus": 6
+    },
+    
+    "penalties": {
+      "slaBreachFine": 4000,
+      "contractTerminationPenalty": 6000,
+      "reputationLoss": 15
+    }
+  },
+  
+  {
+    "id": "enterprise_24x7_soc",
+    "type": "contract",
+    "clientName": "Global Financial Services",
+    "displayName": "Enterprise 24/7 SOC",
+    "description": "Round-the-clock security operations center for a major financial institution. Handle critical threats with strict SLA requirements.",
+    "baseBudget": 25000,
+    "baseDuration": 300,
+    "reputationReward": 30,
+    "riskLevel": "HIGH",
+    "tier": 3,
+    "rarity": "rare",
+    "tags": ["enterprise", "financial", "24/7", "critical"],
+    
+    "slaRequirements": {
+      "detectionTimeSLA": 30,
+      "responseTimeSLA": 120,
+      "resolutionTimeSLA": 300,
+      "requiredSkillLevels": {
+        "detection": 8,
+        "response": 10,
+        "resolution": 12
+      },
+      "minimumSuccessRate": 0.90,
+      "maxAllowedIncidents": 20
+    },
+    
+    "capacityRequirements": {
+      "minimumSpecialists": 4,
+      "minimumTotalEfficiency": 25,
+      "minimumTotalSpeed": 20,
+      "requiredSkillCoverage": ["threat_hunting", "incident_response", "forensics"]
+    },
+    
+    "rewards": {
+      "slaComplianceBonus": 10000,
+      "perfectPerformanceBonus": 5000,
+      "reputationBonus": 15
+    },
+    
+    "penalties": {
+      "slaBreachFine": 12000,
+      "contractTerminationPenalty": 20000,
+      "reputationLoss": 35
+    }
+  },
+  
+  {
+    "id": "government_contract",
+    "type": "contract",
+    "clientName": "Federal Agency",
+    "displayName": "Government Security Contract",
+    "description": "Highly classified security monitoring for a federal government agency. Zero-tolerance policy for security breaches.",
+    "baseBudget": 50000,
+    "baseDuration": 360,
+    "reputationReward": 50,
+    "riskLevel": "CRITICAL",
+    "tier": 4,
+    "rarity": "epic",
+    "tags": ["government", "classified", "critical", "zero-tolerance"],
+    
+    "slaRequirements": {
+      "detectionTimeSLA": 20,
+      "responseTimeSLA": 90,
+      "resolutionTimeSLA": 240,
+      "requiredSkillLevels": {
+        "detection": 10,
+        "response": 12,
+        "resolution": 15
+      },
+      "minimumSuccessRate": 0.95,
+      "maxAllowedIncidents": 15
+    },
+    
+    "capacityRequirements": {
+      "minimumSpecialists": 6,
+      "minimumTotalEfficiency": 40,
+      "minimumTotalSpeed": 35,
+      "requiredSkillCoverage": ["advanced_threat_hunting", "forensics", "incident_response", "malware_analysis"]
+    },
+    
+    "rewards": {
+      "slaComplianceBonus": 20000,
+      "perfectPerformanceBonus": 15000,
+      "reputationBonus": 25
+    },
+    
+    "penalties": {
+      "slaBreachFine": 25000,
+      "contractTerminationPenalty": 50000,
+      "reputationLoss": 60
+    }
+  },
+  
+  {
+    "id": "healthcare_hipaa_compliance",
+    "type": "contract",
+    "clientName": "Regional Hospital Network",
+    "displayName": "Healthcare HIPAA Compliance",
+    "description": "HIPAA-compliant security monitoring for a regional hospital network. Protect patient data with strict regulatory requirements.",
+    "baseBudget": 18000,
+    "baseDuration": 270,
+    "reputationReward": 22,
+    "riskLevel": "HIGH",
+    "tier": 3,
+    "rarity": "rare",
+    "tags": ["healthcare", "hipaa", "compliance", "patient-data"],
+    
+    "slaRequirements": {
+      "detectionTimeSLA": 35,
+      "responseTimeSLA": 150,
+      "resolutionTimeSLA": 420,
+      "requiredSkillLevels": {
+        "detection": 7,
+        "response": 9,
+        "resolution": 11
+      },
+      "minimumSuccessRate": 0.88,
+      "maxAllowedIncidents": 18
+    },
+    
+    "capacityRequirements": {
+      "minimumSpecialists": 3,
+      "minimumTotalEfficiency": 20,
+      "minimumTotalSpeed": 18,
+      "requiredSkillCoverage": ["compliance_monitoring", "data_protection", "incident_response"]
+    },
+    
+    "rewards": {
+      "slaComplianceBonus": 7000,
+      "perfectPerformanceBonus": 3500,
+      "reputationBonus": 11
+    },
+    
+    "penalties": {
+      "slaBreachFine": 10000,
+      "contractTerminationPenalty": 18000,
+      "reputationLoss": 30
+    }
+  }
+]
